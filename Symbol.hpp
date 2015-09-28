@@ -4,6 +4,7 @@
 #ifndef SYMBOL_DEF
 #define SYMBOL_DEF
 
+#include <iostream>
 #include <string>
 
 class Symbol
