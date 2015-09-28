@@ -9,12 +9,12 @@
 #include <vector>
 #include <map>
 #include <stddef.h>
+
 #include "Symbol.cpp"
-using namespace std;
 
 class SymbolTable
 {
-   typedef map<string, Symbol> Scope;
+   typedef std::map<std::string, Symbol> Scope;
 
    public:
       SymbolTable();
@@ -23,43 +23,53 @@ class SymbolTable
       ~SymbolTable();
 
       /**
-      @param[in] name String itentifier for the symbol
-      @param[in] symbol Data for the symbol
-      @return If insert succeeded or not
+      Inserts a symbol in the most recent (last) scope.
+
+      @param[in] symbol Symbol to add.
+      @return True if the insert was successful. False if not.
       **/
-      bool insertSymbol(const string& name, const Symbol& symbol);
+      bool insert(const Symbol& symbol);
 
       /**
-      @param[in] name String itentifier for the symbol
-      @param[out] symbol Data for the symbol
-      @return If lookup succeeded or not
+      Finds a symbol in the all scopes with the passed name. The search
+      begins in the most recent (last) scope.
+
+      @param[in] name Name of the symbol.
+      @param[out] symbol Symbol that was found (unmodified if not found).
+      @return True if symbol was found. False if not.
       **/
-      bool findSymbol(const string& name, Symbol& symbol);
+      bool find(const std::string& name, Symbol& symbol);
 
       /**
-      @return If a new empty scope was pushed
+      Pushes an empty scope onto the table.
       **/
-      bool pushScope();
+      void pushScope();
 
       /**
-      @param[out] scope Scope containing all identifiers and their Symbols
-      @return If a scope was popped or not
+      Pops the most recent (last) scope off the table. Scopes are
+      typedef-ed map<string, Symbol> and can be accessed as such.
+
+      @param[out] scope Scope that was found (unmodified if not found).
+      @return True if table was not empty. False if table was empty.
       **/
       bool popScope(Scope& scope);
 
       /**
-      @param[in] level Scope level to print
-      @return If scope at level exists or not
+      Prints the specified scope to STDOUT.
+
+      @param[in] level Level of scope to print. (Last = size() - 1)
+      @return True if printed. False if table is empty or level
+      was out of bounds.
       **/
-      bool printScope(const size_t& level);
+      bool print(const size_t& level);
 
       /**
-      @return Total number of levels (scopes) in the table
+      @return Total number of levels (scopes) in the table.
       **/
       size_t size();
 
    private:
-      vector<Scope> table;
+      std::vector<Scope> table;
 };
 
 #endif
