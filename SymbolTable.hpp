@@ -4,19 +4,22 @@
 #ifndef SYMBOL_TABLE_DEF
 #define SYMBOL_TABLE_DEF
 
+#include <iostream>
 #include <string>
 #include <vector>
 #include <map>
 #include <stddef.h>
-#include "Symbol.h"
+#include "Symbol.cpp"
 using namespace std;
 
 class SymbolTable
 {
+	typedef map<string, Symbol> Scope;
+
 	public:
 		SymbolTable();
 		SymbolTable(const SymbolTable&);
-		SymbolTable& operator=(const SymbolTable&);
+		const SymbolTable& operator=(const SymbolTable&);
 		~SymbolTable();
 
 		/**
@@ -42,7 +45,7 @@ class SymbolTable
 		@param[out] scope Scope containing all identifiers and their Symbols
 		@return If a scope was popped or not
 		**/
-		bool popScope(map<string, Symbol>& scope);
+		bool popScope(Scope& scope);
 
 		/**
 		@param[in] level Scope level to print
@@ -56,7 +59,7 @@ class SymbolTable
 		size_t size();
 
 	private:
-		vector<map<string, Symbol>> table;
+		vector<Scope> table;
 };
 
 #endif

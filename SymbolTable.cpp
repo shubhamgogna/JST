@@ -1,13 +1,10 @@
 /******************************************************************************
-@file SymbolTable.hpp
+@file SymbolTable.cpp
 ******************************************************************************/
 #ifndef SYMBOL_TABLE_IMPL
 #define SYMBOL_TABLE_IMPL
 
-#include "SymbolTable.h"
-
-// 'using' NEEDED?
-using namespace std;
+#include "SymbolTable.hpp"
 
 SymbolTable::SymbolTable()
 {
@@ -15,14 +12,15 @@ SymbolTable::SymbolTable()
 	// If so, they should be placed in a map here before
 	// being pushed into the vector
 
-	table.push_back(map<string, Symbol>());
+	table.push_back(Scope());
 }
 
 SymbolTable::SymbolTable(const SymbolTable& src)
 {
+	std::vector<Scope>::const_iterator it;
+
 	table.clear();
 
-	vector<map<string, Symbol>::iterator it;
 	for(it = src.table.begin(); it != src.table.end(); ++it)
 	{
 		table.push_back(*it);
@@ -30,13 +28,14 @@ SymbolTable::SymbolTable(const SymbolTable& src)
 }
 
 
-SymbolTable::SymbolTable& operator=(const SymbolTable& src)
+const SymbolTable& SymbolTable::operator=(const SymbolTable& src)
 {
-	if(src == NULL || &src == this) { return src; }
+	if(&src == this) { return src; }
+
+	std::vector<Scope>::const_iterator it;
 
 	table.clear();
 
-	vector<map<string, Symbol>::iterator it;
 	for(it = src.table.begin(); it != src.table.end(); ++it)
 	{
 		table.push_back(*it);
@@ -55,7 +54,7 @@ SymbolTable::~SymbolTable()
 **/
 bool SymbolTable::insertSymbol(const string& name, const Symbol& symbol)
 {
-	pair<string, Symbol> elemToInsert(name, symbol);
+	std::pair<string, Symbol> elemToInsert(name, symbol);
 
 	table.back().insert(elemToInsert);
 }
@@ -67,15 +66,15 @@ bool SymbolTable::insertSymbol(const string& name, const Symbol& symbol)
 **/
 bool SymbolTable::findSymbol(const string& name, Symbol& symbol)
 {
-	vector<map<string, Symbol>::iterator it;
+	std::vector<Scope>::iterator it;
 
-	for(it = src.table.begin(); it != src.table.end(); ++it)
+	for(it = table.begin(); it != table.end(); ++it)
 	{
-		map<string, Symbol>::iterator elemIter = it -> find(name);
+		Scope::iterator elemIter = it -> find(name);
 
 		if(elemIter != it -> end())
 		{
-			symbol = *elemIter;
+			symbol = elemIter -> second;
 			return true;
 		}
 
@@ -91,14 +90,14 @@ bool SymbolTable::findSymbol(const string& name, Symbol& symbol)
 **/
 bool SymbolTable::pushScope()
 {
-	table.push_back(map<string, Symbol>());
+	table.push_back(Scope());
 }
 
 /**
 @param[out] scope Scope containing all identifiers and their Symbols
 @return If a scope was popped or not
 **/
-bool SymbolTable::popScope(map<string, Symbol>& scope)
+bool SymbolTable::popScope(Scope& scope)
 {
 	if(table.empty()) { return false; }
 
@@ -114,12 +113,12 @@ bool SymbolTable::popScope(map<string, Symbol>& scope)
 **/
 bool SymbolTable::printScope(const size_t& level)
 {
-	if(table.empty()) { return false; }
+	if(table.empty() || level >= table.size()) { return false; }
 
-	map<string, Symbol>& closestScope = table.back();
-	map<string, Symbol>::iterator it;
+	Scope& scope = table[level];
+	Scope::iterator it;
 
-	for(it = closestScope.begin(); it != closestScope.end(); ++it)
+	for(it = scope.begin(); it != scope.end(); ++it)
 	{
 		cout << (it -> first) << ": " << (it -> second) << endl;
 	}
