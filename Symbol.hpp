@@ -9,27 +9,27 @@
 class Symbol
 {
    public:
-      Symbol(const std::string&);
-      Symbol(const Symbol&);
+      Symbol(const std::string& name);
+      Symbol(const Symbol& src);
       const Symbol& operator=(const Symbol&);
       ~Symbol();
 
       /**
-      @param[in] name String itentifier for the symbol
-      @param[in] symbol Data for the symbol
-      @return If insert succeeded or not
-      **/
-      bool setName(const std::string&);
-
-      /**
-      @return Identifier
+      @return Name of the symbol.
       **/
       const std::string& getName();
 
-   private:
-      std::string identifier;
+      /**
+      Output stream operator overload.
 
-      friend std::ostream& operator<<(std::ostream&, const Symbol&);
+      @param[in] stream Stream to output to.
+      @param[in] symbol Symbol to print.
+      @return The same 'stream' object that was passed into the function.
+      **/
+      friend std::ostream& operator<<(std::ostream& stream, const Symbol& symbol);
+
+   private:
+      const std::string name;
 };
 
 #endif

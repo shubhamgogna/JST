@@ -6,36 +6,22 @@
 
 #include "Symbol.hpp"
 
-Symbol::Symbol(const std::string& name)
-{
-   identifier = name;
-}
+Symbol::Symbol(const std::string& name) : name(name) {}
 
-Symbol::Symbol(const Symbol& src)
-{
-   identifier = src.identifier;
-}
+Symbol::Symbol(const Symbol& src) : name(src.name) {}
 
 const Symbol& Symbol::operator=(const Symbol& src)
 {
    if(&src == this) { return src; }
 
-   identifier = src.identifier;
+   // Reserved for future non-const member variables
+
+   return *this;
 }
 
 Symbol::~Symbol()
 {
-   identifier.clear();
-}
-
-/**
-@param[in] name String itentifier for the symbol
-@param[in] symbol Data for the symbol
-@return If insert succeeded or not
-**/
-bool Symbol::setName(const std::string& name)
-{
-   identifier = name;
+   // Reserved for future non-const member variables
 }
 
 /**
@@ -43,12 +29,12 @@ bool Symbol::setName(const std::string& name)
 **/
 const std::string& Symbol::getName()
 {
-   return identifier;
+   return name;
 }
 
 std::ostream& operator<<(std::ostream& stream, const Symbol& symbol)
 {
-   stream << symbol.identifier;
+   stream << symbol.name;
    return stream;
 }
 
