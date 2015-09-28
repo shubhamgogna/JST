@@ -5,14 +5,13 @@
 #define SYMBOL_DEF
 
 #include <string>
-using namespace std;
 
 class Symbol
 {
 	public:
-		Symbol();
+		Symbol() {};
 		Symbol(const Symbol&);
-		Symbol& operator=(const Symbol&);
+		const Symbol& operator=(const Symbol&);
 		~Symbol();
 
 		/**
@@ -20,15 +19,17 @@ class Symbol
 		@param[in] symbol Data for the symbol
 		@return If insert succeeded or not
 		**/
-		bool setName(const string&);
+		bool setName(const std::string&);
 
 		/**
 		@return Identifier
 		**/
-		const string& getName();
+		const std::string& getName();
 
 	private:
-		string identifier;
+		std::string identifier;
+
+		friend std::ostream& operator<<(std::ostream&, const Symbol&);
 };
 
 #endif
