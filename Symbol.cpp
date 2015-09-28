@@ -6,6 +6,11 @@
 
 #include "Symbol.hpp"
 
+Symbol::Symbol(const std::string& name)
+{
+   identifier = name;
+}
+
 Symbol::Symbol(const Symbol& src)
 {
    identifier = src.identifier;

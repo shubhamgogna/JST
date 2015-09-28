@@ -9,7 +9,7 @@
 class Symbol
 {
    public:
-      Symbol() {};
+      Symbol(const std::string&);
       Symbol(const Symbol&);
       const Symbol& operator=(const Symbol&);
       ~Symbol();
