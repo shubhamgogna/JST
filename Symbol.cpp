@@ -8,19 +8,19 @@
 
 Symbol::Symbol(const Symbol& src)
 {
-	identifier = src.identifier;
+   identifier = src.identifier;
 }
 
 const Symbol& Symbol::operator=(const Symbol& src)
 {
-	if(&src == this) { return src; }
+   if(&src == this) { return src; }
 
-	identifier = src.identifier;
+   identifier = src.identifier;
 }
 
 Symbol::~Symbol()
 {
-	identifier.clear();
+   identifier.clear();
 }
 
 /**
@@ -30,7 +30,7 @@ Symbol::~Symbol()
 **/
 bool Symbol::setName(const std::string& name)
 {
-	identifier = name;
+   identifier = name;
 }
 
 /**
@@ -38,13 +38,13 @@ bool Symbol::setName(const std::string& name)
 **/
 const std::string& Symbol::getName()
 {
-	return identifier;
+   return identifier;
 }
 
 std::ostream& operator<<(std::ostream& stream, const Symbol& symbol)
 {
-	stream << symbol.identifier;
-	return stream;
+   stream << symbol.identifier;
+   return stream;
 }
 
 #endif

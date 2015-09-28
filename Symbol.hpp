@@ -8,28 +8,28 @@
 
 class Symbol
 {
-	public:
-		Symbol() {};
-		Symbol(const Symbol&);
-		const Symbol& operator=(const Symbol&);
-		~Symbol();
+   public:
+      Symbol() {};
+      Symbol(const Symbol&);
+      const Symbol& operator=(const Symbol&);
+      ~Symbol();
 
-		/**
-		@param[in] name String itentifier for the symbol
-		@param[in] symbol Data for the symbol
-		@return If insert succeeded or not
-		**/
-		bool setName(const std::string&);
+      /**
+      @param[in] name String itentifier for the symbol
+      @param[in] symbol Data for the symbol
+      @return If insert succeeded or not
+      **/
+      bool setName(const std::string&);
 
-		/**
-		@return Identifier
-		**/
-		const std::string& getName();
+      /**
+      @return Identifier
+      **/
+      const std::string& getName();
 
-	private:
-		std::string identifier;
+   private:
+      std::string identifier;
 
-		friend std::ostream& operator<<(std::ostream&, const Symbol&);
+      friend std::ostream& operator<<(std::ostream&, const Symbol&);
 };
 
 #endif

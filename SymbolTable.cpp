@@ -8,43 +8,43 @@
 
 SymbolTable::SymbolTable()
 {
-	// Are there any symbols that should be inserted by default?
-	// If so, they should be placed in a map here before
-	// being pushed into the vector
+   // Are there any symbols that should be inserted by default?
+   // If so, they should be placed in a map here before
+   // being pushed into the vector
 
-	table.push_back(Scope());
+   table.push_back(Scope());
 }
 
 SymbolTable::SymbolTable(const SymbolTable& src)
 {
-	std::vector<Scope>::const_iterator it;
+   std::vector<Scope>::const_iterator it;
 
-	table.clear();
+   table.clear();
 
-	for(it = src.table.begin(); it != src.table.end(); ++it)
-	{
-		table.push_back(*it);
-	}
+   for(it = src.table.begin(); it != src.table.end(); ++it)
+   {
+      table.push_back(*it);
+   }
 }
 
 
 const SymbolTable& SymbolTable::operator=(const SymbolTable& src)
 {
-	if(&src == this) { return src; }
+   if(&src == this) { return src; }
 
-	std::vector<Scope>::const_iterator it;
+   std::vector<Scope>::const_iterator it;
 
-	table.clear();
+   table.clear();
 
-	for(it = src.table.begin(); it != src.table.end(); ++it)
-	{
-		table.push_back(*it);
-	}
+   for(it = src.table.begin(); it != src.table.end(); ++it)
+   {
+      table.push_back(*it);
+   }
 }
 
 SymbolTable::~SymbolTable()
 {
-	table.clear();
+   table.clear();
 }
 
 /**
@@ -54,9 +54,9 @@ SymbolTable::~SymbolTable()
 **/
 bool SymbolTable::insertSymbol(const string& name, const Symbol& symbol)
 {
-	std::pair<string, Symbol> elemToInsert(name, symbol);
+   std::pair<string, Symbol> elemToInsert(name, symbol);
 
-	table.back().insert(elemToInsert);
+   table.back().insert(elemToInsert);
 }
 
 /**
@@ -66,23 +66,23 @@ bool SymbolTable::insertSymbol(const string& name, const Symbol& symbol)
 **/
 bool SymbolTable::findSymbol(const string& name, Symbol& symbol)
 {
-	std::vector<Scope>::iterator it;
+   std::vector<Scope>::iterator it;
 
-	for(it = table.begin(); it != table.end(); ++it)
-	{
-		Scope::iterator elemIter = it -> find(name);
+   for(it = table.begin(); it != table.end(); ++it)
+   {
+      Scope::iterator elemIter = it -> find(name);
 
-		if(elemIter != it -> end())
-		{
-			symbol = elemIter -> second;
-			return true;
-		}
+      if(elemIter != it -> end())
+      {
+         symbol = elemIter -> second;
+         return true;
+      }
 
-		// TODO It's possible a variable is being shadowed.
-		// Maybe return an ENUM in that case?
-	}
+      // TODO It's possible a variable is being shadowed.
+      // Maybe return an ENUM in that case?
+   }
 
-	return false;
+   return false;
 }
 
 /**
@@ -90,7 +90,7 @@ bool SymbolTable::findSymbol(const string& name, Symbol& symbol)
 **/
 bool SymbolTable::pushScope()
 {
-	table.push_back(Scope());
+   table.push_back(Scope());
 }
 
 /**
@@ -99,12 +99,12 @@ bool SymbolTable::pushScope()
 **/
 bool SymbolTable::popScope(Scope& scope)
 {
-	if(table.empty()) { return false; }
+   if(table.empty()) { return false; }
 
-	scope = table.back();
-	table.pop_back();
+   scope = table.back();
+   table.pop_back();
 
-	return true;
+   return true;
 }
 
 /**
@@ -113,17 +113,17 @@ bool SymbolTable::popScope(Scope& scope)
 **/
 bool SymbolTable::printScope(const size_t& level)
 {
-	if(table.empty() || level >= table.size()) { return false; }
+   if(table.empty() || level >= table.size()) { return false; }
 
-	Scope& scope = table[level];
-	Scope::iterator it;
+   Scope& scope = table[level];
+   Scope::iterator it;
 
-	for(it = scope.begin(); it != scope.end(); ++it)
-	{
-		cout << (it -> first) << ": " << (it -> second) << endl;
-	}
+   for(it = scope.begin(); it != scope.end(); ++it)
+   {
+      cout << (it -> first) << ": " << (it -> second) << endl;
+   }
 
-	return true;
+   return true;
 }
 
 /**
@@ -131,7 +131,7 @@ bool SymbolTable::printScope(const size_t& level)
 **/
 size_t SymbolTable::size()
 {
-	return table.size();
+   return table.size();
 }
 
 #endif
