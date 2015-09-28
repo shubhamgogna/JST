@@ -18,7 +18,7 @@ class Symbol
       /**
       @return Name of the symbol.
       **/
-      const std::string& getName();
+      const std::string& getName() const;
 
       /**
       Output stream operator overload.

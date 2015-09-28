@@ -27,7 +27,7 @@ Symbol::~Symbol()
 /**
 @return Identifier
 **/
-const std::string& Symbol::getName()
+const std::string& Symbol::getName() const
 {
    return name;
 }
