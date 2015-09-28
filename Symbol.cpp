@@ -24,9 +24,6 @@ Symbol::~Symbol()
    // Reserved for future non-const member variables
 }
 
-/**
-@return Identifier
-**/
 const std::string& Symbol::getName() const
 {
    return name;
