@@ -1,6 +1,9 @@
 /******************************************************************************
-@file SymbolTable.cpp
+@file SymbolTable.hpp
 ******************************************************************************/
+#ifndef SYMBOL_TABLE_DEF
+#define SYMBOL_TABLE_DEF
+
 #include <string>
 #include <vector>
 #include <map>
@@ -55,3 +58,5 @@ class SymbolTable
 	private:
 		vector<map<string, Symbol>> table;
 };
+
+#endif

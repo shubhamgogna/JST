@@ -1,6 +1,9 @@
 /******************************************************************************
-@file Symbol.cpp
+@file Symbol.hpp
 ******************************************************************************/
+#ifndef SYMBOL_DEF
+#define SYMBOL_DEF
+
 #include <string>
 using namespace std;
 
@@ -27,3 +30,5 @@ class Symbol
 	private:
 		string identifier;
 };
+
+#endif
