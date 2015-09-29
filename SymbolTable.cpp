@@ -91,7 +91,7 @@ std::ostream& operator<<(std::ostream& stream, const SymbolTable& symbolTable)
 
    for(it = symbolTable.table.begin(); it != symbolTable.table.end(); ++it)
    {
-      stream << *it << std::endl;
+      stream << *it;
    }
 
    return stream;
