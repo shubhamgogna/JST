@@ -11,11 +11,10 @@
 #include <stddef.h>
 
 #include "Symbol.cpp"
+#include "Scope.cpp"
 
 class SymbolTable
 {
-   typedef std::map<std::string, Symbol> Scope;
-
    public:
       SymbolTable();
       SymbolTable(const SymbolTable&);
@@ -23,50 +22,43 @@ class SymbolTable
       ~SymbolTable();
 
       /**
-      Inserts a symbol in the most recent (last) scope.
-
-      @param[in] symbol Symbol to add.
-      @return True if the insert was successful. False if not.
-      **/
-      bool insert(const Symbol& symbol);
-
-      /**
-      Finds a symbol in the all scopes with the passed name. The search
-      begins in the most recent (last) scope.
-
-      @param[in] name Name of the symbol.
-      @param[out] symbol Symbol that was found (unmodified if not found).
-      @return True if symbol was found. False if not.
-      **/
-      bool find(const std::string& name, Symbol& symbol);
-
-      /**
       Pushes an empty scope onto the table.
       **/
-      void pushScope();
+      void push();
 
       /**
-      Pops the most recent (last) scope off the table. Scopes are
-      typedef-ed map<string, Symbol> and can be accessed as such.
-
-      @param[out] scope Scope that was found (unmodified if not found).
-      @return True if table was not empty. False if table was empty.
+      Pops the most recent (last) scope off the table.
+      @return A pointer to the Scope which will be 'nullptr' if not found.
       **/
-      bool popScope(Scope& scope);
+      Scope* pop();
 
       /**
-      Prints the specified scope to STDOUT.
-
-      @param[in] level Level of scope to print. (Last = size() - 1)
-      @return True if printed. False if table is empty or level
-      was out of bounds.
+      @param[in] index Level of Scope to access.
+      @returns Reference to the index-th Scope.
+      @throws std::out_of_range exceptions when index is out of range.
       **/
-      bool print(const size_t& level);
+      Scope& operator[](int index);
+
+      /**
+      @return Reference to the last (top of the stack) Scope.
+      @throws std::out_of_range exceptions when index is out of range.
+      **/
+      Scope& top();
 
       /**
       @return Total number of levels (scopes) in the table.
       **/
       size_t size();
+
+      /**
+      Output stream operator overload.
+
+      @param[in] stream Stream to output to.
+      @param[in] scope SymbolTable to print.
+      @return The same 'stream' object that was passed into the function.
+      **/
+      friend std::ostream& operator<<(std::ostream& stream,
+         const SymbolTable& symbolTable);
 
    private:
       std::vector<Scope> table;
