@@ -66,6 +66,18 @@ int main()
          std::string("[ SymbolTable::operator[] ] Index out of range!")) == 0);
    }
 
+   SymbolTable copy(sym);
+
+   copy.pop();
+   copy.push();
+   copy.push();
+   copy.push();
+   copy.top().insert(Symbol("Something"));
+   copy.top().insert(Symbol("Different"));
+
+   std::cout << sym << std::endl;
+   std::cout << copy << std::endl;
+
    return 0;
 }
 
