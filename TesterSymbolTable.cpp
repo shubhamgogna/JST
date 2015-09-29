@@ -4,65 +4,86 @@
 #include <iostream>
 #include "SymbolTable.cpp"
 
-void testFind(SymbolTable& sym, const std::string& name);
+void assertTrue(const char* testName, bool result);
+
+void assertFalse(const char* testName, bool result);
+
+bool find(Scope& scope, const std::string& name);
 
 int main()
 {
 	SymbolTable sym;
-	std::map<std::string, Symbol> tempScope;
 
-	std::cout << "[Testing] insert() and pushScope()" << std::endl;
+	sym.top().insert(Symbol("a"));
+	sym.top().insert(Symbol("b"));
 
-	sym.insert(Symbol("a"));
-	sym.insert(Symbol("b"));
-	sym.pushScope();
+	assertTrue("Top contains 'a'",
+		find(sym.top(), "a"));
+	assertTrue("Top contains 'b'",
+		find(sym.top(), "b"));
+	assertFalse("Top does not contain 'c'",
+		find(sym.top(), "c"));
 
-	sym.insert(Symbol("c"));
-	sym.insert(Symbol("d"));
-	sym.pushScope();
+	assertTrue("SymbolTable size is 1", sym.size() == 1);
+	sym.pop();
+	assertTrue("SymbolTable size is 0", sym.size() == 0);
 
-	sym.insert(Symbol("e"));
-	sym.insert(Symbol("f"));
-	sym.pushScope();
-
-	sym.insert(Symbol("c"));
-
-	std::cout << "\n[Testing] print()" << std::endl;
-
-	for(int i = sym.size() - 1; i >= 0; --i)
+	try
 	{
-		sym.print(i);
+		sym.top().insert(Symbol("a"));
+	}
+	catch(std::out_of_range ex)
+	{
+		assertTrue("Attempt to access top of empty table throws exception",
+			std::string(ex.what()).compare(
+			std::string("[ SymbolTable::top() ] Table is empty!")) == 0);
 	}
 
-	std::cout << "\n[Testing] find()" << std::endl;
+	sym.push();
+	sym.top().insert(Symbol("a"));
+	sym.top().insert(Symbol("b"));
+	sym.push();
+	sym.top().insert(Symbol("c"));
+	sym.top().insert(Symbol("d"));
 
-	testFind(sym, std::string("a"));
-	testFind(sym, std::string("b"));
-	testFind(sym, std::string("c"));
-	testFind(sym, std::string("d"));
-	testFind(sym, std::string("e"));
-	testFind(sym, std::string("f"));
-	testFind(sym, std::string("g"));
+	assertTrue("SymbolTable[0] contains 'a'",
+		find(sym[0], "a"));
+	assertFalse("SymbolTable[0] does not contain 'c'",
+		find(sym[0], "c"));
+	assertFalse("SymbolTable[1] does not contain 'b'",
+		find(sym[1], "b"));
+	assertTrue("SymbolTable[1] contains 'd'",
+		find(sym[1], "d"));
 
-	std::cout << "\n[Testing] popScope()" << std::endl;
-
-	sym.popScope(tempScope);
-	sym.popScope(tempScope);
-
-	std::cout << "\n[Testing] print()" << std::endl;
-
-	for(int i = sym.size() - 1; i >= 0; --i)
+	try
 	{
-		sym.print(i);
+		sym[1000].insert(Symbol("a"));
+	}
+	catch(std::out_of_range ex)
+	{
+		assertTrue("Attempt to access out of range Scope throws exception",
+			std::string(ex.what()).compare(
+			std::string("[ SymbolTable::operator[] ] Index out of range!")) == 0);
 	}
 
 	return 0;
 }
 
-void testFind(SymbolTable& sym, const std::string& name)
+void assertTrue(const char* testName, bool result)
 {
-	Symbol temp("?");
+	std::cout << ((result) ? "[Success] " : "[Failure] ") << testName << std::endl;
+}
 
-	std::cout << "Does table contain '" << name << "'? "
-		<< ((sym.find(name, temp)) ? "Yes" : "No") << std::endl;
+void assertFalse(const char* testName, bool result)
+{
+	assertTrue(testName, !result);
+}
+
+bool find(Scope& scope, const std::string& name)
+{
+	Symbol* symbolPtr = scope.find(name);
+
+	if(symbolPtr == nullptr) { return false; }
+
+	return (symbolPtr -> getName()).compare(name) == 0;
 }
