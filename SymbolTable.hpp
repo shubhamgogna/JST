@@ -37,7 +37,7 @@ class SymbolTable
       @returns Reference to the index-th Scope.
       @throws std::out_of_range exceptions when index is out of range.
       **/
-      Scope& operator[](int index);
+      Scope& operator[](size_t index);
 
       /**
       @return Reference to the last (top of the stack) Scope.

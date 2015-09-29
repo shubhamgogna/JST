@@ -33,6 +33,8 @@ const SymbolTable& SymbolTable::operator=(const SymbolTable& src)
    {
       table.push_back(*it);
    }
+
+   return *this;
 }
 
 SymbolTable::~SymbolTable()
@@ -58,9 +60,9 @@ Scope* SymbolTable::pop()
    return scopePtr;
 }
 
-Scope& SymbolTable::operator[](int index)
+Scope& SymbolTable::operator[](size_t index)
 {
-   if(table.empty() || index < 0 || index >= table.size())
+   if(table.empty() || index >= table.size())
    {
       throw std::out_of_range("[ SymbolTable::operator[] ] Index out of range!");
    }
