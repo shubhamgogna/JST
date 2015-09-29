@@ -8,21 +8,18 @@
 
 SymbolTable::SymbolTable()
 {
-   table.push_back(Scope());
+   table.push_back(Scope(0));
 }
 
 SymbolTable::SymbolTable(const SymbolTable& src)
 {
    std::vector<Scope>::const_iterator it;
 
-   table.clear();
-
    for(it = src.table.begin(); it != src.table.end(); ++it)
    {
       table.push_back(*it);
    }
 }
-
 
 const SymbolTable& SymbolTable::operator=(const SymbolTable& src)
 {
@@ -43,74 +40,59 @@ SymbolTable::~SymbolTable()
    table.clear();
 }
 
-bool SymbolTable::insert(const Symbol& symbol)
+void SymbolTable::push()
 {
-   std::pair<std::string, Symbol> elemToInsert(symbol.getName(), symbol);
+   Scope newScope(table.size());
 
-   // TODO
-   // Symbol can be shadowed. Check can be done here and an appropriate
-   // status code can be returned.
-
-   table.back().insert(elemToInsert);
+   table.push_back(newScope);
 }
 
-bool SymbolTable::find(const std::string& name, Symbol& symbol)
+Scope* SymbolTable::pop()
 {
-   std::vector<Scope>::iterator it;
+   if(table.empty()) { return nullptr; }
 
-   for(it = table.begin(); it != table.end(); ++it)
-   {
-      Scope::iterator elemIter = it -> find(name);
+   Scope* scopePtr = &(table.back());
 
-      if(elemIter != it -> end())
-      {
-         symbol = elemIter -> second;
-         return true;
-      }
-   }
-
-   return false;
-}
-
-void SymbolTable::pushScope()
-{
-   table.push_back(Scope());
-}
-
-bool SymbolTable::popScope(Scope& scope)
-{
-   if(table.empty()) { return false; }
-
-   scope = table.back();
    table.pop_back();
 
-   return true;
+   return scopePtr;
 }
 
-bool SymbolTable::print(const size_t& level)
+Scope& SymbolTable::operator[](int index)
 {
-   if(table.empty() || level < 0 || level >= table.size())
+   if(table.empty() || index < 0 || index >= table.size())
    {
-      return false;
+      throw std::out_of_range("[ SymbolTable::operator[] ] Index out of range!");
    }
 
-   Scope& scope = table[level];
-   Scope::iterator it;
+   return table[index];
+}
 
-   std::cout << "Level " << level << std::endl;
-   for(it = scope.begin(); it != scope.end(); ++it)
+Scope& SymbolTable::top()
+{
+   if(table.empty())
    {
-      std::cout << "  " << (it -> first)
-         << ": " << (it -> second)
-         << std::endl;
+      throw std::out_of_range("[ SymbolTable::top() ] Table is empty!");
    }
 
-   return true;
+   return table.back();
 }
 
 size_t SymbolTable::size()
 {
    return table.size();
+}
+
+std::ostream& operator<<(std::ostream& stream, const SymbolTable& symbolTable)
+{
+   std::vector<Scope>::const_iterator it;
+
+   for(it = symbolTable.table.begin(); it != symbolTable.table.end(); ++it)
+   {
+      stream << *it << std::endl;
+   }
+
+   return stream;
 }
 
 #endif
