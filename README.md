@@ -1,7 +1,12 @@
 # JST
 Compiler for the C Language
 
-#### Status: `Symbol table testing in progress`
+#### Status: 
+- `Testing symbol table`
+- `Starting scanner and parser`
+
+## Commands for Compiling/Testing
+- SymbolTable: `g++ -std=c++11 -Wall -Werror -g TesterSymbolTable.cpp`
 
 ## Contributers
 - **J**anelle Blankenburg
