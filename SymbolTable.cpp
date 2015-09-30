@@ -63,6 +63,45 @@ bool SymbolTable::pop(Scope* dest)
    return true;
 }
 
+InsertResult SymbolTable::insert(const Symbol& symbol)
+{
+   InsertResult result = InsertResult::SUCCESS;
+   std::vector<Scope>::iterator it;
+
+   for(it = table.begin(); it != table.end(); ++it)
+   {
+      if(it -> find(symbol.getName(), nullptr))
+      {
+         if(it != table.back())
+         {
+            result = InsertResult::SHADOWED;
+         }
+         else
+         {
+            return InsertResult::EXISTS;
+         }
+      }
+   }
+
+   table.back().insert(symbol);
+   return result;
+}
+
+bool SymbolTable::find(const std::string& name, Symbol* dest)
+{
+   std::vector<Scope>::iterator it;
+
+   for(it = table.rbegin(); it != table.rend(); ++it)
+   {
+      if(it -> find(symbol.getName(), dest))
+      {
+         return true;
+      }
+   }
+
+   return false;
+}
+
 Scope& SymbolTable::operator[](size_t index)
 {
    if(table.empty() || index >= table.size())
