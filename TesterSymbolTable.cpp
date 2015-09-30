@@ -26,10 +26,11 @@ int main()
    try
    {
       sym.top().insert(Symbol("a"));
+      assertTrue("Access to top of empty table throws exception", false);
    }
    catch(const std::out_of_range& ex)
    {
-      assertTrue("Attempt to access top of empty table throws exception",
+      assertTrue("Access to top of empty table throws exception",
          std::string(ex.what()).compare(
          std::string("[ SymbolTable::top() ] Table is empty!")) == 0);
    }
@@ -54,10 +55,11 @@ int main()
    try
    {
       sym[1000].insert(Symbol("a"));
+      assertTrue("Access to out of range Scope throws exception", false);
    }
    catch(const std::out_of_range& ex)
    {
-      assertTrue("Attempt to access out of range Scope throws exception",
+      assertTrue("Access to out of range Scope throws exception",
          std::string(ex.what()).compare(
          std::string("[ SymbolTable::operator[] ] Index out of range!")) == 0);
    }
