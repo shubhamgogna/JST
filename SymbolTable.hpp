@@ -16,6 +16,21 @@
 class SymbolTable
 {
    public:
+      /**
+      Enums for the result of SymbolTable::insert().
+      **/
+      enum class InsertResult
+      {
+         /* Inserted with no errors. */
+         SUCCESS,
+
+         /* Not inserted because symbol already exists in the top scope. */
+         EXISTS,
+
+         /* Inserted into the top scope, but exists in previous scopes. */
+         SHADOWED
+      };
+
       SymbolTable();
       SymbolTable(const SymbolTable&);
       const SymbolTable& operator=(const SymbolTable&);
@@ -83,21 +98,6 @@ class SymbolTable
       **/
       friend std::ostream& operator<<(std::ostream& stream,
          const SymbolTable& symbolTable);
-
-      /**
-      Enums for the result of SymbolTable::insert().
-      **/
-      enum class InsertResult
-      {
-         /* Inserted with no errors. */
-         SUCCESS,
-
-         /* Not inserted because symbol already exists in the top scope. */
-         EXISTS,
-
-         /* Inserted into the top scope, but exists in previous scopes. */
-         SHADOWED
-      };
 
    private:
       std::vector<Scope> table;

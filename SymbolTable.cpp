@@ -63,16 +63,19 @@ bool SymbolTable::pop(Scope* dest)
    return true;
 }
 
-InsertResult SymbolTable::insert(const Symbol& symbol)
+SymbolTable::InsertResult SymbolTable::insert(const Symbol& symbol)
 {
    InsertResult result = InsertResult::SUCCESS;
    std::vector<Scope>::iterator it;
+
+   std::vector<Scope>::iterator backElemIter = table.end();
+   --backElemIter;
 
    for(it = table.begin(); it != table.end(); ++it)
    {
       if(it -> find(symbol.getName(), nullptr))
       {
-         if(it != table.back())
+         if(it != backElemIter)
          {
             result = InsertResult::SHADOWED;
          }
@@ -89,11 +92,11 @@ InsertResult SymbolTable::insert(const Symbol& symbol)
 
 bool SymbolTable::find(const std::string& name, Symbol* dest)
 {
-   std::vector<Scope>::iterator it;
+   std::vector<Scope>::reverse_iterator it;
 
    for(it = table.rbegin(); it != table.rend(); ++it)
    {
-      if(it -> find(symbol.getName(), dest))
+      if(it -> find(name, dest))
       {
          return true;
       }
