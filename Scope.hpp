@@ -48,7 +48,7 @@ class Scope
       friend std::ostream& operator<<(std::ostream& stream, const Scope& scope);
 
    private:
-      const int level;
+      int level;
       std::map<std::string, Symbol> map;
 };
 

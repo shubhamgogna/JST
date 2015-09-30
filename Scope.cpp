@@ -22,12 +22,9 @@ const Scope& Scope::operator=(const Scope& src)
 {
    if(&src == this) { return src; }
 
-   if(src.level != level)
-   {
-      throw "[ Scope::operator=() ] Levels do not match!";
-   }
-
    std::map<std::string, Symbol>::const_iterator it;
+
+   level = src.level;
 
    map.clear();
 
