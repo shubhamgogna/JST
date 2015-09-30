@@ -51,16 +51,21 @@ void Scope::insert(const Symbol& symbol)
    map.insert(elemToInsert);
 }
 
-Symbol* Scope::find(const std::string& name)
+bool Scope::find(const std::string& name, Symbol* dest)
 {
    std::map<std::string, Symbol>::iterator it = map.find(name);
 
    if(it != map.end())
    {
-      return &(it -> second);
+      if(dest != nullptr)
+      {
+         (*dest) = (it -> second);
+      }
+
+      return true;
    }
 
-   return nullptr;
+   return false;
 }
 
 int Scope::getLevel() const

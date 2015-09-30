@@ -49,15 +49,18 @@ void SymbolTable::push()
    table.push_back(newScope);
 }
 
-Scope* SymbolTable::pop()
+bool SymbolTable::pop(Scope* dest)
 {
-   if(table.empty()) { return nullptr; }
+   if(table.empty()) { return false; }
 
-   Scope* scopePtr = &(table.back());
+   if(dest != nullptr)
+   {
+      (*dest) = table.back();
+   }
 
    table.pop_back();
 
-   return scopePtr;
+   return true;
 }
 
 Scope& SymbolTable::operator[](size_t index)

@@ -28,9 +28,12 @@ class SymbolTable
 
       /**
       Pops the most recent (last) scope off the table.
-      @return A pointer to the Scope which will be 'nullptr' if not found.
+
+      @param[out] dest Pointer to the Scope to copy to. If
+      this is 'nullptr', the copy will not be performed.
+      @return True if popped and false if not.
       **/
-      Scope* pop();
+      bool pop(Scope* dest);
 
       /**
       @param[in] index Level of Scope to access.
