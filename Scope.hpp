@@ -26,7 +26,7 @@ class Scope
       this is 'nullptr', the copy will not be performed.
       @return True if found and false if not.
       **/
-      bool find(const std::string& name, Symbol* dest);
+      bool find(const std::string& name, Symbol* dest = nullptr);
 
       /**
       @return Level of the scope.

@@ -48,7 +48,7 @@ class SymbolTable
       this is 'nullptr', the copy will not be performed.
       @return True if popped and false if not.
       **/
-      bool pop(Scope* dest);
+      bool pop(Scope* dest = nullptr);
 
       /**
       @param[int] dest Pointer to the Scope to copy to. If
@@ -66,7 +66,7 @@ class SymbolTable
       this is 'nullptr', the copy will not be performed.
       @return True if found and false if not.
       **/
-      bool find(const std::string& name, Symbol* dest);
+      bool find(const std::string& name, Symbol* dest = nullptr);
 
       /**
       The top of the stack is at [size() - 1]. The bottom of the stack
