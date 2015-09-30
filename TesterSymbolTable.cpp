@@ -12,15 +12,15 @@ int main()
 {
    SymbolTable sym;
 
-   sym.top().insert(Symbol("a"));
-   sym.top().insert(Symbol("b"));
+   sym.insert(Symbol("a"));
+   sym.insert(Symbol("b"));
 
    assertTrue("Top contains 'a'",
-      sym.top().find("a", nullptr));
+      sym.find("a", nullptr));
    assertTrue("Top contains 'b'",
-      sym.top().find("b", nullptr));
+      sym.find("b", nullptr));
    assertFalse("Top does not contain 'c'",
-      sym.top().find("c", nullptr));
+      sym.find("c", nullptr));
 
    assertTrue("SymbolTable size is 1", sym.size() == 1);
    sym.pop(nullptr);
@@ -30,7 +30,7 @@ int main()
    {
       sym.top().insert(Symbol("a"));
    }
-   catch(std::out_of_range ex)
+   catch(const std::out_of_range& ex)
    {
       assertTrue("Attempt to access top of empty table throws exception",
          std::string(ex.what()).compare(
@@ -38,11 +38,11 @@ int main()
    }
 
    sym.push();
-   sym.top().insert(Symbol("a"));
-   sym.top().insert(Symbol("b"));
+   sym.insert(Symbol("a"));
+   sym.insert(Symbol("b"));
    sym.push();
-   sym.top().insert(Symbol("c"));
-   sym.top().insert(Symbol("d"));
+   sym.insert(Symbol("c"));
+   sym.insert(Symbol("d"));
 
    assertTrue("SymbolTable[0] contains 'a'",
       sym[0].find("a", nullptr));
@@ -53,11 +53,16 @@ int main()
    assertTrue("SymbolTable[1] contains 'd'",
       sym[1].find("d", nullptr));
 
+   assertTrue("Insert 'd' into SymbolTable again",
+      sym.insert(Symbol("d")) == SymbolTable::InsertResult::EXISTS);
+      assertTrue("Inserted shadowed 'b' into SymbolTable",
+      sym.insert(Symbol("b")) == SymbolTable::InsertResult::SHADOWED);
+
    try
    {
       sym[1000].insert(Symbol("a"));
    }
-   catch(std::out_of_range ex)
+   catch(const std::out_of_range& ex)
    {
       assertTrue("Attempt to access out of range Scope throws exception",
          std::string(ex.what()).compare(
