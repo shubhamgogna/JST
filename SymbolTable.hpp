@@ -16,37 +16,76 @@
 class SymbolTable
 {
    public:
+      /**
+      Enums for the result of SymbolTable::insert().
+      **/
+      enum class InsertResult
+      {
+         /* Inserted with no errors. */
+         SUCCESS,
+
+         /* Not inserted because symbol already exists in the top scope. */
+         EXISTS,
+
+         /* Inserted into the top scope, but exists in previous scopes. */
+         SHADOWED
+      };
+
       SymbolTable();
       SymbolTable(const SymbolTable&);
       const SymbolTable& operator=(const SymbolTable&);
       ~SymbolTable();
 
       /**
-      Pushes an empty scope onto the table.
+      Pushes an empty scope onto the stack.
       **/
       void push();
 
       /**
-      Pops the most recent (last) scope off the table.
-      @return A pointer to the Scope which will be 'nullptr' if not found.
+      Pops the most recent (top) scope off the stack.
+
+      @param[out] dest Pointer to the Scope to copy to. If
+      this is 'nullptr', the copy will not be performed.
+      @return True if popped and false if not.
       **/
-      Scope* pop();
+      bool pop(Scope* dest = nullptr);
 
       /**
+      @param[int] dest Pointer to the Scope to copy to. If
+      this is 'nullptr', the copy will not be performed.
+      @return InsertResult enum.
+      **/
+      InsertResult insert(const Symbol& symbol);
+
+      /**
+      This method will search the top scope first before
+      searching the rest of the stack.
+
+      @param[in] name Name of the symbol.
+      @param[out] dest Pointer to the Symbol to copy to. If
+      this is 'nullptr', the copy will not be performed.
+      @return True if found and false if not.
+      **/
+      bool find(const std::string& name, Symbol* dest = nullptr);
+
+      /**
+      The top of the stack is at [size() - 1]. The bottom of the stack
+      is at [0].
+
       @param[in] index Level of Scope to access.
       @returns Reference to the index-th Scope.
-      @throws std::out_of_range exceptions when index is out of range.
+      @throws std::out_of_range exception when index is out of range.
       **/
       Scope& operator[](size_t index);
 
       /**
-      @return Reference to the last (top of the stack) Scope.
-      @throws std::out_of_range exceptions when index is out of range.
+      @return Reference to the Scope at the top of the stack.
+      @throws std::out_of_range exception when the stack is empty.
       **/
       Scope& top();
 
       /**
-      @return Total number of levels (scopes) in the table.
+      @return Number of Scopes in the stack.
       **/
       size_t size();
 

@@ -22,12 +22,9 @@ const Scope& Scope::operator=(const Scope& src)
 {
    if(&src == this) { return src; }
 
-   if(src.level != level)
-   {
-      throw "[ Scope::operator=() ] Levels do not match!";
-   }
-
    std::map<std::string, Symbol>::const_iterator it;
+
+   level = src.level;
 
    map.clear();
 
@@ -51,16 +48,21 @@ void Scope::insert(const Symbol& symbol)
    map.insert(elemToInsert);
 }
 
-Symbol* Scope::find(const std::string& name)
+bool Scope::find(const std::string& name, Symbol* dest)
 {
    std::map<std::string, Symbol>::iterator it = map.find(name);
 
    if(it != map.end())
    {
-      return &(it -> second);
+      if(dest != nullptr)
+      {
+         (*dest) = (it -> second);
+      }
+
+      return true;
    }
 
-   return nullptr;
+   return false;
 }
 
 int Scope::getLevel() const

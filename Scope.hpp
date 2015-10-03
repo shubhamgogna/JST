@@ -16,15 +16,17 @@ class Scope
       ~Scope();
 
       /**
-      @param symbol Symbol to add (or overwrite if one exists).
+      @param[in] symbol Symbol to add (or overwrite if one exists).
       **/
       void insert(const Symbol& symbol);
 
       /**
-      @param name Name of the symbol.
-      @return A pointer to the Symbol which will be 'nullptr' if not found.
+      @param[in] name Name of the symbol.
+      @param[out] dest Pointer to the Symbol to copy to. If
+      this is 'nullptr', the copy will not be performed.
+      @return True if found and false if not.
       **/
-      Symbol* find(const std::string& name);
+      bool find(const std::string& name, Symbol* dest = nullptr);
 
       /**
       @return Level of the scope.
@@ -46,7 +48,7 @@ class Scope
       friend std::ostream& operator<<(std::ostream& stream, const Scope& scope);
 
    private:
-      const int level;
+      int level;
       std::map<std::string, Symbol> map;
 };
 

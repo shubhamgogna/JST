@@ -14,14 +14,14 @@ const Symbol& Symbol::operator=(const Symbol& src)
 {
    if(&src == this) { return src; }
 
-   // Reserved for future non-const member variables
+   name = src.name;
 
    return *this;
 }
 
 Symbol::~Symbol()
 {
-   // Reserved for future non-const member variables
+   // Reserved for future member variables
 }
 
 const std::string& Symbol::getName() const

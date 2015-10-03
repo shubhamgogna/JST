@@ -30,7 +30,7 @@ class Symbol
       friend std::ostream& operator<<(std::ostream& stream, const Symbol& symbol);
 
    private:
-      const std::string name;
+      std::string name;
 };
 
 #endif
