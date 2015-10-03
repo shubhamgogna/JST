@@ -13,6 +13,11 @@ SymbolTable
 g++ -std=c++11 -Wall -Werror -g TesterSymbolTable.cpp
 ```
 
+## To-Do List
+- Scanner
+- Parser
+- Insert/Lookup mode for Symbol Table
+
 ## Contributers
 - **J**anelle Blankenburg
 - **S**hubham Gogna
