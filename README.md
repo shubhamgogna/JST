@@ -1,22 +1,24 @@
 # JST
-Compiler for the C Language
+Compiler for a subset of the C Language
 
 ## Status
 ```
-Testing symbol table
-Starting scanner and parser
+Testing Symbol Table
+Adding to Scanner
+Adding to Parser
 ```
 
+## Requirements
+- bintrees `sudo pip3 install bintrees`
+
 ## Commands for Compiling/Testing
-SymbolTable 
-```
-g++ -std=c++11 -Wall -Werror -g TesterSymbolTable.cpp
-```
+- SymbolTable `python3 TestSymbolTable.py`
 
 ## To-Do List
 - Scanner
 - Parser
 - Insert/Lookup mode for Symbol Table
+- Unit testing instead of test files
 
 ## Contributers
 - **J**anelle Blankenburg
