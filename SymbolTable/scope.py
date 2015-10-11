@@ -1,4 +1,4 @@
-from Symbol import Symbol
+from symbol import Symbol
 from bintrees import RBTree
 
 class Scope(object):
