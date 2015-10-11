@@ -16,8 +16,9 @@ import ply.lex as lex
 
 
 class Lexer(object):
-    def __init__(self, **kwargs):
+    def __init__(self, symbol_table=None, **kwargs):
         self.lexer = lex.lex(module=self, **kwargs)
+        self.symbol_table = symbol_table
 
     def input(self, data):
         self.lexer.input(data)
@@ -137,6 +138,13 @@ class Lexer(object):
     reserved_map = {r.lower(): r for r in reserved}
     # for r in reserved:
     #     reserved_map[r.lower()] = r
+
+
+
+    def t_DUMP_SYMBOl_TABLE(self, t):
+        r'!!S'
+        print(self.symbol_table)
+
 
     def t_ID(self, t):
         r'[A-Za-z_][\w_]*'

@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/Parser.iml" filepath="$PROJECT_DIR$/.idea/Parser.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/JSTCC.iml" filepath="$PROJECT_DIR$/.idea/JSTCC.iml" />
     </modules>
   </component>
 </project>

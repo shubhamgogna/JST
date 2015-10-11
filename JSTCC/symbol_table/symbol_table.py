@@ -15,10 +15,13 @@
 
 class SymbolTable(object):
     def __init__(self):
-        pass
+        self.insert_mode = False
 
     def push_scope(self):
         pass
 
     def pop_scope(self):
         pass
+
+    def __repr__(self):
+        return "I'm a symbol table!"

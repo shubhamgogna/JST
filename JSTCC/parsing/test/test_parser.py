@@ -71,16 +71,36 @@ class TestParser(unittest.TestCase):
 
     def test_declare_and_call_function(self):
         data = """
-        int do_stuff(char c);
+            int do_stuff(char c);
 
-        int main() {
-          do_stuff('f');
-          return 0;
-        }
+            int main() {
+              do_stuff('f');
+              return 0;
+            }
 
-        int do_stuff(char c) {
-            return c + c;
-        }
+            int do_stuff(char c) {
+                return c + c;
+            }
+        """
+        self.parser.parse(data)
+        self.assertTrue(True, 'No exceptions = Parser successfully parsed.')
+
+    def test_declare_struct(self):
+        data = """
+            struct Pixel {
+                char r;
+                char g;
+                char b;
+            };
+
+            int main() {
+              struct Pixel pixel;
+              pixel.r = 255;
+              pixel.g = 0;
+              pixel.b = 0;
+
+              return 0;
+            }
         """
         self.parser.parse(data)
         self.assertTrue(True, 'No exceptions = Parser successfully parsed.')

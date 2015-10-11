@@ -22,14 +22,17 @@ class Parser(object):
     NO_DEBUG = 0
     DEBUG_PRODUCTIONS = 1
 
-    def __init__(self, lexer):
-        self.lexer = lexer
-        self.tokens = lexer.tokens
-        self.parser = yacc.yacc(module=self)
-
+    def __init__(self, lexer, **kwargs):
         self.symbol_table = SymbolTable()
 
-        self.debug_level = Parser.NO_DEBUG
+        self.lexer = lexer
+        self.tokens = lexer.tokens
+        self.lexer.symbol_table = self.symbol_table
+
+        self.parser = yacc.yacc(module=self)
+
+
+        self.debug_level = Parser.DEBUG_PRODUCTIONS
         self.dout = sys.stdout
 
     def teardown(self):
@@ -106,6 +109,7 @@ class Parser(object):
     def p_declaration_2(self, t):
         """declaration : declaration_specifiers SEMI"""
         self.debug_out('PRODUCTION: declaration -> declaration_specifiers SEMI')
+        self.symbol_table.insert()
 
     #
     # declaration-list:
@@ -401,8 +405,8 @@ class Parser(object):
         self.debug_out('PRODUCTION: direct_declarator : LPAREN declarator RPAREN')
 
     def p_direct_declarator_3(self, t):
-        """direct_declarator : direct_declarator LBRACKET constant_expression_opt RBRACKET"""
-        self.debug_out('PRODUCTION: direct_declarator : direct_declarator LBRACKET constant_expression_opt RBRACKET')
+        """direct_declarator : direct_declarator LBRACKET constant_expression_option RBRACKET"""
+        self.debug_out('PRODUCTION: direct_declarator : direct_declarator LBRACKET constant_expression_option RBRACKET')
 
     def p_direct_declarator_4(self, t):
         """direct_declarator : direct_declarator LPAREN parameter_type_list RPAREN"""
@@ -476,8 +480,8 @@ class Parser(object):
         self.debug_out('PRODUCTION: parameter_declaration : declaration_specifiers declarator')
 
     def p_parameter_declaration_2(self, t):
-        """parameter_declaration : declaration_specifiers abstract_declarator_opt"""
-        self.debug_out('PRODUCTION: parameter_declaration : declaration_specifiers abstract_declarator_opt')
+        """parameter_declaration : declaration_specifiers abstract_declarator_option"""
+        self.debug_out('PRODUCTION: parameter_declaration : declaration_specifiers abstract_declarator_option')
 
     #
     # identifier-list:
@@ -520,16 +524,16 @@ class Parser(object):
     # type-name:
     #
     def p_type_name(self, t):
-        """type_name : specifier_qualifier_list abstract_declarator_opt"""
-        self.debug_out('PRODUCTION: type_name : specifier_qualifier_list abstract_declarator_opt')
+        """type_name : specifier_qualifier_list abstract_declarator_option"""
+        self.debug_out('PRODUCTION: type_name : specifier_qualifier_list abstract_declarator_option')
 
-    def p_abstract_declarator_opt_1(self, t):
-        """abstract_declarator_opt : empty"""
-        self.debug_out('PRODUCTION: abstract_declarator_opt : empty')
+    def p_abstract_declarator_option_1(self, t):
+        """abstract_declarator_option : empty"""
+        self.debug_out('PRODUCTION: abstract_declarator_option : empty')
 
-    def p_abstract_declarator_opt_2(self, t):
-        """abstract_declarator_opt : abstract_declarator"""
-        self.debug_out('PRODUCTION: abstract_declarator_opt : abstract_declarator')
+    def p_abstract_declarator_option_2(self, t):
+        """abstract_declarator_option : abstract_declarator"""
+        self.debug_out('PRODUCTION: abstract_declarator_option : abstract_declarator')
 
     #
     # abstract-declarator:
@@ -554,39 +558,39 @@ class Parser(object):
         self.debug_out('PRODUCTION: direct_abstract_declarator : LPAREN abstract_declarator RPAREN')
 
     def p_direct_abstract_declarator_2(self, t):
-        """direct_abstract_declarator : direct_abstract_declarator LBRACKET constant_expression_opt RBRACKET"""
-        self.debug_out('PRODUCTION: direct_abstract_declarator : direct_abstract_declarator LBRACKET constant_expression_opt RBRACKET')
+        """direct_abstract_declarator : direct_abstract_declarator LBRACKET constant_expression_option RBRACKET"""
+        self.debug_out('PRODUCTION: direct_abstract_declarator : direct_abstract_declarator LBRACKET constant_expression_option RBRACKET')
 
     def p_direct_abstract_declarator_3(self, t):
-        """direct_abstract_declarator : LBRACKET constant_expression_opt RBRACKET"""
-        self.debug_out('PRODUCTION: direct_abstract_declarator : LBRACKET constant_expression_opt RBRACKET')
+        """direct_abstract_declarator : LBRACKET constant_expression_option RBRACKET"""
+        self.debug_out('PRODUCTION: direct_abstract_declarator : LBRACKET constant_expression_option RBRACKET')
 
     def p_direct_abstract_declarator_4(self, t):
-        """direct_abstract_declarator : direct_abstract_declarator LPAREN parameter_type_list_opt RPAREN"""
-        self.debug_out('PRODUCTION: direct_abstract_declarator : direct_abstract_declarator LPAREN parameter_type_list_opt RPAREN')
+        """direct_abstract_declarator : direct_abstract_declarator LPAREN parameter_type_list_option RPAREN"""
+        self.debug_out('PRODUCTION: direct_abstract_declarator : direct_abstract_declarator LPAREN parameter_type_list_option RPAREN')
 
     def p_direct_abstract_declarator_5(self, t):
-        """direct_abstract_declarator : LPAREN parameter_type_list_opt RPAREN"""
-        self.debug_out('PRODUCTION: direct_abstract_declarator : LPAREN parameter_type_list_opt RPAREN')
+        """direct_abstract_declarator : LPAREN parameter_type_list_option RPAREN"""
+        self.debug_out('PRODUCTION: direct_abstract_declarator : LPAREN parameter_type_list_option RPAREN')
 
     #
     # Optional fields in abstract declarators
     #
-    def p_constant_expression_opt_1(self, t):
-        """constant_expression_opt : empty"""
-        self.debug_out('PRODUCTION: constant_expression_opt : empty')
+    def p_constant_expression_option_1(self, t):
+        """constant_expression_option : empty"""
+        self.debug_out('PRODUCTION: constant_expression_option : empty')
 
-    def p_constant_expression_opt_2(self, t):
-        """constant_expression_opt : constant_expression"""
-        self.debug_out('PRODUCTION: constant_expression_opt : constant_expression')
+    def p_constant_expression_option_2(self, t):
+        """constant_expression_option : constant_expression"""
+        self.debug_out('PRODUCTION: constant_expression_option : constant_expression')
 
-    def p_parameter_type_list_opt_1(self, t):
-        """parameter_type_list_opt : empty"""
-        self.debug_out('PRODUCTION: parameter_type_list_opt : empty')
+    def p_parameter_type_list_option_1(self, t):
+        """parameter_type_list_option : empty"""
+        self.debug_out('PRODUCTION: parameter_type_list_option : empty')
 
-    def p_parameter_type_list_opt_2(self, t):
-        """parameter_type_list_opt : parameter_type_list"""
-        self.debug_out('PRODUCTION: parameter_type_list_opt : parameter_type_list')
+    def p_parameter_type_list_option_2(self, t):
+        """parameter_type_list_option : parameter_type_list"""
+        self.debug_out('PRODUCTION: parameter_type_list_option : parameter_type_list')
 
     #
     # statement:
@@ -601,7 +605,7 @@ class Parser(object):
     
     def p_statement_compound(self, t):
         """statement : compound_statement"""
-        self.debug_out('PRODUCTION: statement -> compund_statement')
+        self.debug_out('PRODUCTION: statement -> compound_statement')
     
     def p_statement_selection(self, t):
         """statement : selection_statement"""
@@ -634,22 +638,22 @@ class Parser(object):
     # expression-statement:
     #
     def p_expression_statement(self, t):
-        """expression_statement : expression_opt SEMI"""
-        self.debug_out('PRODUCTION: expression_statement : expression_opt SEMI')
+        """expression_statement : expression_option SEMI"""
+        self.debug_out('PRODUCTION: expression_statement : expression_option SEMI')
 
     #
     # compound-statement:
     #
     def p_compound_statement_1(self, t):
-        """compound_statement : LBRACE declaration_list statement_list RBRACE"""
+        """compound_statement : LBRACE enter_scope insert_mode declaration_list statement_list lookup_mode leave_scope RBRACE"""
         self.debug_out('PRODUCTION: compound_statement : LBRACE declaration_list statement_list RBRACE')
 
     def p_compound_statement_2(self, t):
-        """compound_statement : LBRACE statement_list RBRACE"""
+        """compound_statement : LBRACE enter_scope statement_list lookup_mode leave_scope RBRACE"""
         self.debug_out('PRODUCTION: compound_statement : LBRACE statement_list RBRACE')
 
     def p_compound_statement_3(self, t):
-        """compound_statement : LBRACE declaration_list RBRACE"""
+        """compound_statement : LBRACE enter_scope insert_mode declaration_list lookup_mode leave_scope RBRACE"""
         self.debug_out('PRODUCTION: compound_statement : LBRACE declaration_list RBRACE')
 
     def p_compound_statement_4(self, t):
@@ -690,8 +694,8 @@ class Parser(object):
         self.debug_out('PRODUCTION: iteration_statement : WHILE LPAREN expression RPAREN statement')
 
     def p_iteration_statement_2(self, t):
-        """iteration_statement : FOR LPAREN expression_opt SEMI expression_opt SEMI expression_opt RPAREN statement"""
-        self.debug_out('PRODUCTION: iteration_statement : FOR LPAREN expression_opt SEMI expression_opt SEMI expression_opt RPAREN statement')
+        """iteration_statement : FOR LPAREN expression_option SEMI expression_option SEMI expression_option RPAREN statement"""
+        self.debug_out('PRODUCTION: iteration_statement : FOR LPAREN expression_option SEMI expression_option SEMI expression_option RPAREN statement')
 
     def p_iteration_statement_3(self, t):
         """iteration_statement : DO statement WHILE LPAREN expression RPAREN SEMI"""
@@ -713,16 +717,16 @@ class Parser(object):
         self.debug_out('PRODUCTION: jump_statement : BREAK SEMI')
 
     def p_jump_statement_4(self, t):
-        """jump_statement : RETURN expression_opt SEMI"""
-        self.debug_out('PRODUCTION: jump_statement : RETURN expression_opt SEMI')
+        """jump_statement : RETURN expression_option SEMI"""
+        self.debug_out('PRODUCTION: jump_statement : RETURN expression_option SEMI')
 
-    def p_expression_opt_1(self, t):
-        """expression_opt : empty"""
-        self.debug_out('PRODUCTION: ')
+    def p_expression_option_1(self, t):
+        """expression_option : empty"""
+        self.debug_out('PRODUCTION: empty')
 
-    def p_expression_opt_2(self, t):
-        """expression_opt : expression"""
-        self.debug_out('PRODUCTION: expression_opt : empty')
+    def p_expression_option_2(self, t):
+        """expression_option : expression"""
+        self.debug_out('PRODUCTION: expression_option : expression')
 
     #
     # expression:
@@ -1111,3 +1115,28 @@ class Parser(object):
     def p_empty(self, t):
         """empty : """
         pass
+
+    #
+    # dummy utility productions
+    #
+    def p_enter_scope(self, t):
+        """enter_scope : empty """
+        self.debug_out('Entering a new scope')
+        self.symbol_table.push_scope()
+
+    def p_insert_mode(self, t):
+        """insert_mode : empty """
+        self.debug_out('Insert mode.')
+        self.symbol_table.insert_mode = True
+
+    def p_leave_scope(self, t):
+        """leave_scope : empty"""
+        self.debug_out('Leaving a scope')
+        self.symbol_table.pop_scope()
+
+    def p_lookup_mode(self, t):
+        """lookup_mode : empty """
+        self.debug_out('Lookup mode.')
+        self.symbol_table.insert_mode = False
+
+    # TODO: do we need a dummy production for 'reset_current_symbol'?
