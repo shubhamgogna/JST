@@ -36,8 +36,7 @@ class Lexer(object):
 
     tokens = reserved + (
         # Literals (identifier, integer constant, float constant, string constant, char const)
-        # NOTE: also need to include Enumeration Const!
-        'ID', 'TYPEID', 'ICONST', 'FCONST', 'SCONST', 'CCONST', 'ECONST',
+        'ID', 'TYPEID', 'ICONST', 'FCONST', 'SCONST', 'CCONST',
 
         # Operators (+,-,*,/,%,|,&,~,^,<<,>>, ||, &&, !, <, <=, >, >=, ==, !=)
         'PLUS', 'MINUS', 'TIMES', 'DIVIDE', 'MOD',
@@ -47,7 +46,7 @@ class Lexer(object):
 
         # Assignment (=, *=, /=, %=, +=, -=, <<=, >>=, &=, ^=, |=)
         'EQUALS', 'TIMESEQUAL', 'DIVEQUAL', 'MODEQUAL', 'PLUSEQUAL', 'MINUSEQUAL',
-        'LSHIFTEQUAL','RSHIFTEQUAL', 'ANDEFQUAL', 'XOREQUAL', 'OREQUAL',
+        'LSHIFTEQUAL','RSHIFTEQUAL', 'ANDEQUAL', 'XOREQUAL', 'OREQUAL',
 
         # Increment/decrement (++,--)
         'PLUSPLUS', 'MINUSMINUS',
@@ -66,9 +65,6 @@ class Lexer(object):
 
         # Ellipsis (...)
         'ELLIPSIS',
-
-        # NOTE: we must also include range
-        'RANGE',
         )
 
     # Completely ignored characters
@@ -138,7 +134,7 @@ class Lexer(object):
     t_COLON            = r':'
     t_ELLIPSIS         = r'\.\.\.'
 
-    # Identifiers and reserved words (so they are ignored in RE check)
+    # Identifiers and reserved words
     reserved_map = {r.lower(): r for r in reserved}
     # for r in reserved:
     #     reserved_map[r.lower()] = r
@@ -150,7 +146,6 @@ class Lexer(object):
         print(self.symbol_table)
 
 
-    # NOTE: \w is equivalent to [A-Za-z0-9]
     def t_ID(self, t):
         r'[A-Za-z_][\w_]*'
         t.type = self.reserved_map.get(t.value,"ID")
@@ -167,14 +162,6 @@ class Lexer(object):
 
     # Character constant 'c' or L'c'
     t_CCONST = r'(L)?\'([^\\\n]|(\\.))*?\''
-
-    # NOTE: Enumeration Constant
-    #       For now this should be used as ID instead - and a error will be pointed out in parser
-    #t_ECONST = r''
-
-    # NOTE: Typedef name ( TypeID )
-    #       For now this should be used as ID instead - and a error will be pointed out in parser
-    #t_TYPEID = r''
 
     # Comments
     def t_comment(self, t):
