@@ -176,3 +176,25 @@ class Lexer(object):
     def t_error(self, t):
         print("Illegal character %s" % repr(t.value[0]))
         t.lexer.skip(1)
+
+
+
+
+lexer = Lexer() 
+
+data = '''
+3 + 4 * 10
+  + -20 *2
+'''
+
+lexer.input(data)
+while True:
+  tok = lexer.token()
+  if not tok:
+    break
+  print(tok)
+  #print("HIIIIIII!")
+
+
+
+

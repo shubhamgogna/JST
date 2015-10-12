@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
 import ply.lex as lex
-
+import sys
 
 class Lexer(object):
 
@@ -32,10 +32,10 @@ class Lexer(object):
         self.symbol_table = symbol_table
 
         # have to add in way to change debug level based on input?
-        self.debug_level = DEBUG_TOKENS
+        self.debug_level =  Lexer.DEBUG_TOKENS
 
         # if no -o option, default to stdout for now, will need to change later.
-        if token_file == NONE:
+        if Lexer.TOKEN_FILE == None:
             self.dout = sys.stdout
         else:
             self.dout = open(token_file, 'w')
@@ -44,18 +44,21 @@ class Lexer(object):
         self.lexer.input(data)
 
     def token(self):
-        return self.lexer.token()
+        token = self.lexer.token()
+        if token != None:
+            self.debug_out_tokens(token.type, token.value)
+        return token
 
-    def debug_out_tokens(self,message):
+    def debug_out_tokens(self,tok_type, tok_value):
         # Confirm with Terence the way of doing this?
         if self.debug_level == Lexer.DEBUG_TOKENS:
-            self.dout.write(message + '\n')
+            self.dout.write(str(tok_type) + ' ' + str(tok_value) + '\n')
 
     def debug_out_source(self,message):
         # Confirm with Terence the way of doing this?
-        if self.debug_level == Lexer.SOURCE_CODE:
+        if self.debug_level == Lexer.DEBUG_SOURCE_CODE:
             self.dout.write(message + '\n')
-
+  
 
     # Reserved words
     reserved = (
@@ -78,7 +81,7 @@ class Lexer(object):
 
         # Assignment (=, *=, /=, %=, +=, -=, <<=, >>=, &=, ^=, |=)
         'EQUALS', 'TIMESEQUAL', 'DIVEQUAL', 'MODEQUAL', 'PLUSEQUAL', 'MINUSEQUAL',
-        'LSHIFTEQUAL','RSHIFTEQUAL', 'ANDEFQUAL', 'XOREQUAL', 'OREQUAL',
+        'LSHIFTEQUAL','RSHIFTEQUAL', 'ANDEQUAL', 'XOREQUAL', 'OREQUAL',
 
         # Increment/decrement (++,--)
         'PLUSPLUS', 'MINUSMINUS',
@@ -108,15 +111,15 @@ class Lexer(object):
     # Newlines
     def t_NEWLINE(self, t):
         r'\n+'
-        # Handle writing Newline token
-        self.debug_out_tokens('\\n')
+        
+        #Note: Newline is not a token and thus will not be printed for DEBUG_TOKENS
 
         # Handle writing source code line
-        self.debug_out_source("Implement prinint source code by line",)
+        self.debug_out_source("Implement prinint source code by line")
 
         # deal with line and col numbers
         t.lexer.lineno += t.value.count("\n")
-        t.lexer.colno = t.lexer.lexpos -1
+        t.lexer.current = t.lexer.lexpos -1
 
     # Operators
     t_PLUS             = r'\+'
@@ -186,6 +189,7 @@ class Lexer(object):
 
     def t_DUMP_SYMBOl_TABLE(self, t):
         r'!!S'
+        #Note: since !!S is not token, it will not be printed for DEBUG_TOKENS.
         print(self.symbol_table)
 
 
@@ -229,7 +233,40 @@ class Lexer(object):
 
       # NOTE: Still need to add in the source code line where the error was, not just symbol!
 
-        print 'ERROR: line ' + str(t.lexer.lineno) + \
-', column: ' + str(t.lexer.lexpos - t.lexer.current) \
+        print('ERROR: line ' + str(t.lexer.lineno) + ', column: ' + str(t.lexer.lexpos - t.lexer.current)  )
         print(".  Illegal character %s" % repr(t.value[0]))
         t.lexer.skip(1)
+
+
+
+
+# # Testing!!!!!!
+# lexer = Lexer() 
+
+# data = '''
+# /* The "hello world" program in C
+# Date written 2/12/5
+# */
+# void main(String args[])
+# {
+# printf("hello, world");
+# } 
+
+# \\
+
+# 기
+
+
+# "kdfhghkkjhg"ggg"gggfgdfgsdfg"
+# "this is still part of that string"
+
+# '''
+
+# lexer.input(data)
+# while True:
+#   tok = lexer.token()
+#   if not tok:
+#     break
+#   print(tok)
+
+
