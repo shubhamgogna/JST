@@ -16,15 +16,46 @@ import ply.lex as lex
 
 
 class Lexer(object):
+
+
+    # NOTE:  These aren't the S and L debug things that Harris had
+    #             Not sure how to set debugging for symbol table...
+    NO_DEBUG = 0
+    DEBUG_TOKENS = 1
+    DEBUG_SOURCE_CODE = 2
+
+    TOKEN_FILE = None
+
+    # need to add in a possible token file name is option -o is given
     def __init__(self, symbol_table=None, **kwargs):
         self.lexer = lex.lex(module=self, **kwargs)
         self.symbol_table = symbol_table
+
+        # have to add in way to change debug level based on input?
+        self.debug_level = DEBUG_TOKENS
+
+        # if no -o option, default to stdout for now, will need to change later.
+        if token_file == NONE:
+            self.dout = sys.stdout
+        else:
+            self.dout = open(token_file, 'w')
 
     def input(self, data):
         self.lexer.input(data)
 
     def token(self):
         return self.lexer.token()
+
+    def debug_out_tokens(self,message):
+        # Confirm with Terence the way of doing this?
+        if self.debug_level == Lexer.DEBUG_TOKENS:
+            self.dout.write(message + '\n')
+
+    def debug_out_source(self,message):
+        # Confirm with Terence the way of doing this?
+        if self.debug_level == Lexer.SOURCE_CODE:
+            self.dout.write(message + '\n')
+
 
     # Reserved words
     reserved = (
@@ -77,7 +108,15 @@ class Lexer(object):
     # Newlines
     def t_NEWLINE(self, t):
         r'\n+'
+        # Handle writing Newline token
+        self.debug_out_tokens('\\n')
+
+        # Handle writing source code line
+        self.debug_out_source("Implement prinint source code by line",)
+
+        # deal with line and col numbers
         t.lexer.lineno += t.value.count("\n")
+        t.lexer.colno = t.lexer.lexpos -1
 
     # Operators
     t_PLUS             = r'\+'
@@ -187,5 +226,10 @@ class Lexer(object):
         t.lineno += 1
 
     def t_error(self, t):
-        print("Illegal character %s" % repr(t.value[0]))
+
+      # NOTE: Still need to add in the source code line where the error was, not just symbol!
+
+        print 'ERROR: line ' + str(t.lexer.lineno) + \
+', column: ' + str(t.lexer.lexpos - t.lexer.current) \
+        print(".  Illegal character %s" % repr(t.value[0]))
         t.lexer.skip(1)
