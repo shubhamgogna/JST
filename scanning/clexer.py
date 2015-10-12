@@ -236,37 +236,3 @@ class Lexer(object):
         print('ERROR: line ' + str(t.lexer.lineno) + ', column: ' + str(t.lexer.lexpos - t.lexer.current)  )
         print(".  Illegal character %s" % repr(t.value[0]))
         t.lexer.skip(1)
-
-
-
-
-# # Testing!!!!!!
-# lexer = Lexer() 
-
-# data = '''
-# /* The "hello world" program in C
-# Date written 2/12/5
-# */
-# void main(String args[])
-# {
-# printf("hello, world");
-# } 
-
-# \\
-
-# 기
-
-
-# "kdfhghkkjhg"ggg"gggfgdfgsdfg"
-# "this is still part of that string"
-
-# '''
-
-# lexer.input(data)
-# while True:
-#   tok = lexer.token()
-#   if not tok:
-#     break
-#   print(tok)
-
-
