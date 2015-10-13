@@ -10,8 +10,11 @@ Adding to Parser
 
 ## Requirements
 - bintrees `sudo pip3 install bintrees`
+- PLY `sudo pip3 install ply`
 
 ## Commands for Compiling/Testing
+- To make and run the program run `python3 bin/jstcc.py` (with the project directory as your working directory.
+- To run all tests, run `python3 -m unittest` from the top of the project directory.
 - SymbolTable `python3 TestSymbolTable.py`
 
 ## To-Do List
@@ -20,7 +23,7 @@ Adding to Parser
 - Insert/Lookup mode for Symbol Table
 - Unit testing instead of test files
 
-## Contributers
+## Contributors
 - **J**anelle Blankenburg
 - **S**hubham Gogna
 - **T**erence Henriod

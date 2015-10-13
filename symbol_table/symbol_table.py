@@ -1,5 +1,6 @@
-from scope import Scope
-from symbol import Symbol
+from symbol_table.scope import Scope
+from symbol_table.symbol import Symbol
+
 
 class SymbolTable(object):
 

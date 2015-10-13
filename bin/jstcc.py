@@ -15,18 +15,22 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import sys
+from loggers.parser_logger import ParserLogger
+
+sys.path.insert(1, os.path.join(sys.path[0], '../'))
 
 import argparse
 from parsing.cparser import Parser
 from scanning.clexer import Lexer
 
 
-dummy_data = """int main() {int i; !!S return 0;}"""
+dummy_data = """int main(int argc, char** argv) {int i; return 0;}"""
 
 def main():
     arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument("input", type=str, help="The C program code file to compile.")
+    # arg_parser.add_argument("input", type=str, help="The C program code file to compile.")
     arg_parser.add_argument("-o", "--outfile", type=str, default='',
                             help="The name of the file output file. Defaults to $(TODO).")
     arg_parser.add_argument("-s", "--scandebug", type=int, choices=[0, 1], default=0,
@@ -43,6 +47,7 @@ def main():
     data = dummy_data
 
     parser = Parser(lexer=Lexer())
+    parser.logger.add_switch(ParserLogger.PRODUCTION)
     parser.parse(data)
 
     parser.teardown()

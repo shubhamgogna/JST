@@ -14,6 +14,7 @@
 # along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
 import unittest
 import time
+from loggers.parser_logger import ParserLogger
 from parsing.cparser import Parser
 from scanning.clexer import Lexer
 
@@ -86,22 +87,29 @@ class TestParser(unittest.TestCase):
         self.assertTrue(True, 'No exceptions = Parser successfully parsed.')
 
     def test_declare_struct(self):
-        data = """
+        self.parser.logger.add_switch(ParserLogger.PRODUCTION)
+
+        data =  """
+            int global;
+
+            // a comment
+
             struct Pixel {
                 char r;
-                char g;
-                char b;
+                // char g;
+                // char b;
             };
 
             int main() {
               struct Pixel pixel;
               pixel.r = 255;
-              pixel.g = 0;
-              pixel.b = 0;
+              // pixel.g = 0;
+              // pixel.b = 0;
 
               return 0;
             }
         """
+
         self.parser.parse(data)
         self.assertTrue(True, 'No exceptions = Parser successfully parsed.')
 

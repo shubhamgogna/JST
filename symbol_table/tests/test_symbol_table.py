@@ -1,5 +1,6 @@
-from symbol_table import SymbolTable
-from symbol import Symbol
+from symbol_table.symbol import Symbol
+from symbol_table.symbol_table import SymbolTable
+
 
 def assertTrue(name, cond):
    if cond:
