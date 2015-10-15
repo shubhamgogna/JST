@@ -13,8 +13,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
 import ply.yacc as yacc
+
 from loggers.parser_logger import ParserLogger
 from symbol_table.scope import Scope
 from symbol_table.symbol_builder import SymbolBuilder
@@ -34,8 +34,8 @@ class Parser(object):
 
         self.parser = yacc.yacc(module=self, start='translation_unit')
 
-        self.in_insert_mode = False
-        self.current_symbol = SymbolBuilder()
+        self.in_insert_mode = True
+        self.most_recently_observed_type = None
 
         self.logger = ParserLogger()
 
@@ -76,8 +76,7 @@ class Parser(object):
         self.logger.production('external_declaration -> function_definition')
 
         self.logger.info('Creating a function symbol in the table')
-        self.symbol_table.insert(self.current_symbol.build())
-        self.current_symbol = SymbolBuilder()
+        # self.symbol_table.insert(t[1].build)
 
     def p_external_declaration_2(self, t):
         """external_declaration : declaration"""
@@ -85,11 +84,10 @@ class Parser(object):
 
         if self.in_insert_mode:
             self.logger.info('Addinng a symbol to the symbol table')
-            self.symbol_table.insert(self.current_symbol.build())
-            self.current_symbol = SymbolBuilder()
+            # self.symbol_table.insert(t[1].build())
         else:
             self.logger.info('Verifying that symbol <insert id here> is in the table')
-            self.symbol_table.find('<insert id here>')
+            # self.symbol_table.find('<insert id here>')
 
     #
     # function-definition:
@@ -160,28 +158,39 @@ class Parser(object):
         """declaration_specifiers : type_qualifier"""
         self.logger.production('declaration_specifiers : type_qualifier')
 
+
     #
     # storage-class-specifier
     #
     def p_storage_class_specifier_auto(self, t):
         """storage_class_specifier : AUTO"""
         self.logger.production('storage_class_specifier -> AUTO')
+
+        t[0] = SymbolBuilder(storage_specifiers=['auto'])
     
     def p_storage_class_specifie_register(self, t):
         """storage_class_specifier : REGISTER"""
         self.logger.production('storage_class_specifier -> REGISTER')
+
+        t[0] = SymbolBuilder(storage_specifiers=['register'])
     
     def p_storage_class_specifier_static(self, t):
         """storage_class_specifier : STATIC"""
         self.logger.production('storage_class_specifier -> STATIC')
+
+        t[0] = SymbolBuilder(storage_specifiers=['static'])
     
     def p_storage_class_specifier_extern(self, t):
         """storage_class_specifier : EXTERN"""
         self.logger.production('storage_class_specifier -> EXTERN')
-    
+
+        t[0] = SymbolBuilder(storage_specifiers=['extern'])
+
     def p_storage_class_specifier_typedef(self, t):
         """storage_class_specifier : TYPEDEF"""
         self.logger.production('storage_class_specifier -> TYPEDEF')
+
+        t[0] = t[1]  # TODO: unsure of correct action
 
     #
     # type-specifier:
@@ -190,68 +199,74 @@ class Parser(object):
         """type_specifier : VOID"""
         self.logger.production('type_specifier -> VOID')
 
-        self.current_symbol.type.type_name = 'void'
+        self.most_recently_observed_type = 'void'
     
     def p_type_specifier_char(self, t):
         """type_specifier : CHAR"""
         self.logger.production('type_specifier -> CHAR')
 
-        self.current_symbol.type.type_name = 'char'
+        self.most_recently_observed_type = 'char'
     
     def p_type_specifier_short(self, t):
         """type_specifier : SHORT"""
         self.logger.production('type_specifier -> SHORT')
 
-        self.current_symbol.type.type_name = 'short'
+        self.most_recently_observed_type = 'short'
     
     def p_type_specifier_int(self, t):
         """type_specifier : INT"""
         self.logger.production('type_specifier -> INT')
 
-        self.current_symbol.type.type_name = 'int'
+        self.most_recently_observed_type = 'int'
     
     def p_type_specifier_long(self, t):
         """type_specifier : LONG"""
         self.logger.production('type_specifier -> LONG')
         # TODO: refactor grammar to put signed/unsigned befor other types (long too)
-        self.current_symbol.type.type_name = 'long'
+        self.most_recently_observed_type = 'long'
     
     def p_type_specifier_float(self, t):
         """type_specifier : FLOAT"""
         self.logger.production('type_specifier -> FLOAT')
 
-        self.current_symbol.type.type_name = 'float'
+        self.most_recently_observed_type = 'float'
     
     def p_type_specifier_double(self, t):
         """type_specifier : DOUBLE"""
         self.logger.production('type_specifier -> DOUBLE')
 
-        self.current_symbol.type.type_name = 'double'
+        self.most_recently_observed_type = 'double'
     
     def p_type_specifier_signed(self, t):
         """type_specifier : SIGNED"""
         # TODO: refactor grammar to put signed/unsigned befor other types (long too)
         self.logger.production('type_specifier -> SIGNED')
 
-        self.current_symbol.type.type_name = 'signed'
+        self.most_recently_observed_type = 'signed'
     
     def p_type_specifier_unsigned(self, t):
         """type_specifier : UNSIGNED"""
         self.logger.production('type_specifier -> UNSIGNED')
         # TODO: refactor grammar to put signed/unsigned befor other types (long too)
-        self.current_symbol.type.type_name = 'unsigned'
+        self.most_recently_observed_type = 'unsigned'
     
     def p_type_specifier_struct_or_union(self, t):
         """type_specifier : struct_or_union_specifier"""
         self.logger.production('type_specifier -> struct_or_union_specifier')
-    
+
+        self.most_recently_observed_type = t[1]  # TODO: unsure of correct action
+
     def p_type_specifier_enum(self, t):
         """type_specifier : enum_specifier"""
         self.logger.production('type_specifier -> enum_specifier')
+
+        self.most_recently_observed_type = t[1]  # TODO: unsure of correct action
     
     def p_type_specifier_typeid(self, t):
         """type_specifier : TYPEID"""
         self.logger.production('type_specifier -> TYPEID')
+
+        self.most_recently_observed_type = t[1]  # TODO: unsure of correct action
 
     #
     # type-qualifier:
@@ -260,9 +275,13 @@ class Parser(object):
         """type_qualifier : CONST"""
         self.logger.production('type_qualifier -> CONST')
 
+        t[0] = SymbolBuilder(type_qualifier=['const'])
+
     def p_type_qualifier_volatile(self, t):
         """type_qualifier : VOLATILE"""
         self.logger.production('type_qualifier -> VOLATILE')
+
+        t[0] = SymbolBuilder(type_qualifier=['volatile'])
 
     #
     # struct-or-union-specifier
@@ -382,13 +401,19 @@ class Parser(object):
         """enum_specifier : ENUM identifier LBRACE enumerator_list RBRACE"""
         self.logger.production('enum_specifier : ENUM identifier LBRACE enumerator_list RBRACE')
 
+        t[0] = SymbolBuilder(is_enum=True, enum_members=t[4]).combine(t[2])  # TODO: is identifier string or symbol?
+
     def p_enum_specifier_2(self, t):
         """enum_specifier : ENUM LBRACE enumerator_list RBRACE"""
         self.logger.production('enum_specifier : ENUM LBRACE enumerator_list RBRACE')
 
+        t[0] = SymbolBuilder(is_enum=True, enum_members=t[3])
+
     def p_enum_specifier_3(self, t):
         """enum_specifier : ENUM identifier"""
         self.logger.production('enum_specifier : ENUM identifier')
+
+        t[0] = SymbolBuilder(is_enum=True)
 
     #
     # enumerator_list:
@@ -397,9 +422,13 @@ class Parser(object):
         """enumerator_list : enumerator"""
         self.logger.production('enumerator_list : enumerator')
 
+        t[0] = t[1]
+
     def p_enumerator_list_2(self, t):
         """enumerator_list : enumerator_list COMMA enumerator"""
         self.logger.production('enumerator_list : enumerator_list COMMA enumerator')
+
+        t[0] = t[1].append_enum_member(t[3])
 
     #
     # enumerator:
@@ -408,9 +437,13 @@ class Parser(object):
         """enumerator : identifier"""
         self.logger.production('enumerator : identifier')
 
+        t[0] = (t[1], None)
+
     def p_enumerator_2(self, t):
         """enumerator : identifier EQUALS constant_expression"""
         self.logger.production('enumerator : identifier EQUALS constant_expression')
+
+        t[0] = (t[1], t[3])  # TODO: unpack the constant value?
 
     #
     # declarator:
@@ -419,9 +452,13 @@ class Parser(object):
         """declarator : pointer direct_declarator"""
         self.logger.production('declarator : pointer direct_declarator')
 
+        t[0] = t[1].combine(t[2])
+
     def p_declarator_2(self, t):
         """declarator : direct_declarator"""
         self.logger.production('declarator : direct_declarator')
+
+        t[0] = t[1]
 
     #
     # direct-declarator:
@@ -430,25 +467,38 @@ class Parser(object):
         """direct_declarator : identifier"""
         self.logger.production('direct_declarator : identifier')
 
+        t[0] = SymbolBuilder(identifier=t[1])  # TODO: correct?
+
     def p_direct_declarator_2(self, t):
         """direct_declarator : LPAREN declarator RPAREN"""
         self.logger.production('direct_declarator : LPAREN declarator RPAREN')
+
+        t[0] = t[1]  # declarator should have been initialized by the time it gets here
 
     def p_direct_declarator_3(self, t):
         """direct_declarator : direct_declarator LBRACKET constant_expression_option RBRACKET"""
         self.logger.production('direct_declarator : direct_declarator LBRACKET constant_expression_option RBRACKET')
 
+        t[0] = SymbolBuilder(array_dims=[t[3]]).combine(t[1])
+
     def p_direct_declarator_4(self, t):
         """direct_declarator : direct_declarator LPAREN parameter_type_list RPAREN"""
         self.logger.production('direct_declarator : direct_declarator LPAREN parameter_type_list RPAREN')
+
+        t[0] = SymbolBuilder.combine(t[1]).combine(t[3])  # TODO: correct?
 
     def p_direct_declarator_5(self, t):
         """direct_declarator : direct_declarator LPAREN identifier_list RPAREN"""
         self.logger.production('direct_declarator : direct_declarator LPAREN identifier_list RPAREN')
 
+        t[0] = SymbolBuilder.combine(t[1]).combine(t[3])  # TODO: correct?
+
     def p_direct_declarator_6(self, t):
         """direct_declarator : direct_declarator LPAREN RPAREN"""
         self.logger.production('direct_declarator : direct_declarator LPAREN RPAREN')
+
+        symbol_builder = SymbolBuilder(is_function=True,)
+        t[0] = symbol_builder.combine(t[1])  # TODO: correct?
 
     #
     # pointer:
@@ -457,17 +507,31 @@ class Parser(object):
         """pointer : TIMES type_qualifier_list"""
         self.logger.production('pointer : TIMES type_qualifier_list')
 
+        symbol_builder = SymbolBuilder(pointer_count=1)
+        t[0] = symbol_builder.combine(t[2])  # TODO: correct action?
+
     def p_pointer_2(self, t):
         """pointer : TIMES"""
         self.logger.production('pointer : TIMES')
+
+        t[0] = SymbolBuilder(pointer_count=1)
 
     def p_pointer_3(self, t):
         """pointer : TIMES type_qualifier_list pointer"""
         self.logger.production('pointer : TIMES type_qualifier_list pointer')
 
+        # TODO: double check this
+        # TODO: what do type qualifiers between pointer stars do? Should we shortcut around them?
+        symbol_builder = SymbolBuilder(pointer_count=1)
+        symbol_builder.combine(t[2])  # TODO: this might not be the correct way to go about things
+        t[0] = symbol_builder.combine(t[3])
+
     def p_pointer_4(self, t):
         """pointer : TIMES pointer"""
         self.logger.production('pointer : TIMES pointer')
+
+        symbol_builder = SymbolBuilder(pointer_count=1)
+        t[0] = symbol_builder.combine(t[2])
 
     #
     # type-qualifier-list:
@@ -520,9 +584,13 @@ class Parser(object):
         """identifier_list : identifier"""
         self.logger.production('identifier_list : identifier')
 
+        t[0] = [t[1]]
+
     def p_identifier_list_2(self, t):
         """identifier_list : identifier_list COMMA identifier"""
         self.logger.production('identifier_list : identifier_list COMMA identifier')
+
+        t[0] = t[1].append(t[3])
 
     #
     # initializer:
@@ -1059,6 +1127,8 @@ class Parser(object):
         """postfix_expression : primary_expression"""
         self.logger.production('postfix_expression : primary_expression')
 
+        t[0] = t[1]
+
     def p_postfix_expression_2(self, t):
         """postfix_expression : postfix_expression LBRACKET expression RBRACKET"""
         self.logger.production('postfix_expression : postfix_expression LBRACKET expression RBRACKET')
@@ -1094,17 +1164,40 @@ class Parser(object):
         """primary_expression :  identifier"""
         self.logger.production('primary_expression : identifier')
 
+        t[0] = t[1]
+
     def p_primary_expression_constant(self, t):
         """primary_expression : constant"""
         self.logger.production('primary_expression : constant')
 
-    def p_primary_expression_sconst(self, t):
-        """primary_expression : SCONST"""
-        self.logger.production('primary_expression : SCONST')
+        t[0] = t[1]
 
-    def p_primary_expression_parentesized(self, t):
+############
+    def p_primary_expression_string_literal_opt(self, t):
+        """primary_expression : string_literal_list"""
+        self.logger.production('primary_expression : string_literal_list')
+        t[0] = SymbolBuilder(type='string_literal', is_constant_literal=True, literal_value=t[1])
+
+    def p_string_literal_list_to_sconst(self, t):
+        """string_literal_list : SCONST"""
+        self.logger.production('string_literal_list : SCONST')
+
+        t[0] = t[1]
+
+    def p_string_literal_list_to_string_literal_list_sconst(self, t):
+        """string_literal_list : string_literal_list SCONST"""
+        self.logger.production('string_literal_list : string_literal_list SCONST')
+
+        # concatenate the string fragments into a single string literal by trimming off the quote marks
+        t[0] = t[1][ :-1] + t[2][1: ]
+#############
+
+    def p_primary_expression_parenthesized(self, t):
         """primary_expression : LPAREN expression RPAREN"""
         self.logger.production('primary_expression : LPAREN expression RPAREN')
+
+        # a parenthesised expression evaluates to the expression itself
+        t[0] = t[2]
 
     #
     # argument-expression-list:
@@ -1113,24 +1206,37 @@ class Parser(object):
         """argument_expression_list :  assignment_expression"""
         self.logger.production('argument_expression_list :  assignment_expression')
 
+        # expecting t[1] to be a symbol builder
+        t[0] = t[1]
+
     def p_argument_expression_list_list_comma_expression(self, t):
         """argument_expression_list : argument_expression_list COMMA assignment_expression"""
         self.logger.production('argument_expression_list : argument_expression_list COMMA assignment_expression')
+
+        t[1].add_argument(t[3])
+        t[0] = t[1]
 
     #
     # constant:
     #
     def p_constant_int(self, t):
-       """constant : ICONST"""
-       self.logger.production('constant : ICONST')
+        """constant : ICONST"""
+        self.logger.production('constant : ICONST')
+
+        t[0] = SymbolBuilder(type='int_literal', is_constant_literal=True, literal_value=t[1])
 
     def p_constant_float(self, t):
-       """constant : FCONST"""
-       self.logger.production('constant : FCONST')
+        """constant : FCONST"""
+        self.logger.production('constant : FCONST')
+
+        t[0] = SymbolBuilder(type='float_literal', is_constant_literal=True, literal_value=t[1])
 
     def p_constant_char(self, t):
-       """constant : CCONST"""
-       self.logger.production('constant : CCONST')
+        """constant : CCONST"""
+        self.logger.production('constant : CCONST')
+
+        t[0] = SymbolBuilder(type='char_literal', is_constant_literal=True, literal_value=t[1])
+
 
     #
     # identifier:
@@ -1139,7 +1245,19 @@ class Parser(object):
         """identifier : ID"""
         self.logger.production('identifier : ID')
 
-        self.current_symbol.id = t[1]
+        symbol = self.symbol_table.find(t[1])
+        if self.in_insert_mode:
+            if symbol is None:
+                symbol_builer = SymbolBuilder()
+                symbol_builer.identifier = t[1]
+                t[0] = symbol_builer
+            else:
+                t[0] = symbol
+        else:
+            if symbol is None:
+                raise Exception('Undeclared identifier: ' + t[1])  # TODO: use the parser error exception
+            else:
+                t[0] = symbol
 
     #
     # empty:

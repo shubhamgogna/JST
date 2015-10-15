@@ -86,6 +86,34 @@ class TestParser(unittest.TestCase):
         self.parser.parse(data)
         self.assertTrue(True, 'No exceptions = Parser successfully parsed.')
 
+    def test_declare_string_literal_char_star(self):
+        data = """
+            char* literal_string = "hello there";
+
+            int main() {
+              char array_string[] = "hey";
+              return 0;
+            }
+        """
+        self.parser.parse(data)
+        self.assertTrue(True, 'No exceptions = Parser successfully parsed.')
+
+    def test_declare_segmented_string_literal(self):
+        print('segmented')
+        self.parser.logger.add_switch(ParserLogger.PRODUCTION)
+
+        data = """
+            char* literal_string = "hello "
+                                   "world";
+
+            int main() {
+              char array_string[] = "hey";
+              return 0;
+            }
+        """
+        self.parser.parse(data)
+        self.assertTrue(True, 'No exceptions = Parser successfully parsed.')
+
     def test_declare_struct(self):
         self.parser.logger.add_switch(ParserLogger.PRODUCTION)
 

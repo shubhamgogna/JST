@@ -1,7 +1,6 @@
 from bintrees import RBTree
 from symbol_table.symbol import Symbol
 
-
 class Scope(object):
 
    def __init__(self):
