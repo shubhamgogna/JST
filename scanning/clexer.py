@@ -150,7 +150,7 @@ class Lexer(object):
         'RANGE',
 
         # Need to include error token for warning issues?
-        #'ERROR'
+        'ERROR'
         )
 
     # Completely ignored characters
@@ -295,7 +295,7 @@ class Lexer(object):
 
     def t_error(self, t):
         # Note: Will need to change to actual error token later perhaps??
-        self.debug_out_tokens('ERROR', 'ERROR')
+        self.debug_out_tokens(t.type, t.value[0])
         sys.stderr.write('ERROR: line ' + str(t.lexer.lineno) + ', column: ' + str(t.lexer.lexpos - t.lexer.current) + '\n' )
         sys.stderr.write("Illegal character %s \n" % repr(t.value[0]))
         self.print_source_line()    
