@@ -1,23 +1,23 @@
-# This file is part of Parser.
+# This file is part of JST.
 #
-# Parser is free software: you can redistribute it and/or modify
+# JST is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
-# Parser is distributed in the hope that it will be useful,
+#
+# JST is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-#  
+#
 # You should have received a copy of the GNU General Public License
-# along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+# along with JST.  If not, see <http://www.gnu.org/licenses/>.
+
 import ply.lex as lex
 import sys
 
+
 class Lexer(object):
-
-
     # NOTE:  These aren't the S and L debug things that Harris had
     #             Not sure how to set debugging for symbol table...
     NO_DEBUG = 0
@@ -101,7 +101,7 @@ class Lexer(object):
         for i in range(0, (self.lexer.lexpos - self.lexer.current - 1)):
             spacing = spacing + ' '
         sys.stderr.write( spacing + '^\n')
-        
+
     # def check_overflow(self, value):
     #     if int(str(value)) != value:
     #         return True
@@ -163,7 +163,7 @@ class Lexer(object):
     # Newlines
     def t_NEWLINE(self, t):
         r'\n+'
-        
+
         #Note: Newline is not a token and thus will not be printed for DEBUG_TOKENS
 
         # Handle writing source code line
@@ -309,6 +309,6 @@ class Lexer(object):
         self.debug_out_tokens(t.type, t.value[0])
         sys.stderr.write('ERROR: line ' + str(t.lexer.lineno) + ', column: ' + str(t.lexer.lexpos - t.lexer.current) + '\n' )
         sys.stderr.write("Illegal character %s \n" % repr(t.value[0]))
-        self.print_source_line()    
+        self.print_source_line()
         t.lexer.skip(1)
 
