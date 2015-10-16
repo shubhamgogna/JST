@@ -28,8 +28,8 @@ class Lexer(object):
     # to keep track of current source code line
     CURRENT_LINE_START = 0
 
-    # to keep track of file names
-    TOKEN_FILE = None
+    # to keep track of file name for the token file
+    TOKEN_FILE = "tokens.txt"
 
     # need to add in a possible token file name is option -o is given
     def __init__(self, symbol_table=None, **kwargs):
@@ -44,7 +44,7 @@ class Lexer(object):
         if Lexer.TOKEN_FILE == None:
             self.dout = sys.stdout
         else:
-            self.dout = open(token_file, 'w')
+            self.dout = open(Lexer.TOKEN_FILE, 'w')
 
     def input(self, data):
         self.lexer.input(data)
