@@ -4,17 +4,17 @@
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # Parser is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-#  
+#
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+
 import unittest
-import time
-from loggers.parser_logger import ParserLogger
+from loggers.logger import Logger
 from parsing.cparser import Parser
 from scanning.clexer import Lexer
 
@@ -23,8 +23,10 @@ class TestParser(unittest.TestCase):
     def setUp(self):
         self.lexer = Lexer()
         self.parser = Parser(self.lexer)
+        self.parser.logger.add_switch(Logger.TOKEN)
 
     def tearDown(self):
+        self.parser.logger.remove_switch(Logger.TOKEN)
         self.parser.teardown()
         self.parser = None
         self.lexer = None
@@ -100,8 +102,6 @@ class TestParser(unittest.TestCase):
 
     def test_declare_segmented_string_literal(self):
         print('segmented')
-        self.parser.logger.add_switch(ParserLogger.PRODUCTION)
-
         data = """
             char* literal_string = "hello "
                                    "world";
@@ -115,8 +115,6 @@ class TestParser(unittest.TestCase):
         self.assertTrue(True, 'No exceptions = Parser successfully parsed.')
 
     def test_declare_struct(self):
-        self.parser.logger.add_switch(ParserLogger.PRODUCTION)
-
         data =  """
             int global;
 

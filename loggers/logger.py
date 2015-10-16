@@ -21,6 +21,7 @@ class Logger(object):
     DEBUG = 'DEBUG'
     CRITICAL = 'CRITICAL'
     IMPLEMENT_ME = 'IMPLEMENT_ME'
+    TOKEN = 'TOKEN'
     PRODUCTION = 'PRODUCTION'
 
     def __init__(self, file = sys.stdout, switches = set()):
@@ -51,6 +52,9 @@ class Logger(object):
 
     def production(self, message):
         self.log(Logger.PRODUCTION, message)
+
+    def token(self, message):
+        self.log(Logger.TOKEN, message)
 
     def move_to_file(self, file):
         self.finalize()
