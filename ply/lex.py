@@ -140,6 +140,7 @@ class Lexer:
         self.lexmodule = None         # Module
         self.lineno = 1               # Current line number
         self.lexoptimize = False      # Optimized mode
+        self.current = -1             # Keep track of column number
 
     def clone(self, object=None):
         c = copy.copy(self)
