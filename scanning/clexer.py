@@ -28,23 +28,27 @@ class Lexer(object):
     # to keep track of current source code line
     CURRENT_LINE_START = 0
 
-    # to keep track of file name for the token file
+    # to keep track of file name for the token and symbol table files
     TOKEN_FILE = "tokens.txt"
+    SYMBOL_TABLE_FILE = "symbol_table.txt"
 
     # need to add in a possible token file name is option -o is given
     def __init__(self, symbol_table=None, **kwargs):
         self.lexer = lex.lex(module=self, **kwargs)
         self.symbol_table = symbol_table
 
-
         # have to add in way to change debug level based on input?
-        self.debug_level =  Lexer.DEBUG_TOKENS
+        self.debug_level =  Lexer.DEBGUG_SOURCE_AND_TOKENS
 
-        # if no -o option, default to stdout for now, will need to change later.
+        # if no -o option, default to stdout for now, will need to change this later.
         if Lexer.TOKEN_FILE == None:
             self.dout = sys.stdout
         else:
             self.dout = open(Lexer.TOKEN_FILE, 'w')
+
+        # open file for symbol table dubugging dumps
+        self.symbolout = open(Lexer.SYMBOL_TABLE_FILE, 'w')
+
 
     def input(self, data):
         self.lexer.input(data)
@@ -64,8 +68,9 @@ class Lexer(object):
 
     def debug_out_source(self,message):
         # Confirm with Terence the way of doing this?
+
         if self.debug_level == Lexer.DEBUG_SOURCE_CODE or self.debug_level == Lexer.DEBGUG_SOURCE_AND_TOKENS:
-            self.dout.write(message + '\n')
+            self.dout.write('\nSource Code for Above Tokens: ' + '\n' + message + '\n-----\n\n')
 
     def print_source_debug(self):
         source_code = self.lexer.lexdata
@@ -74,7 +79,7 @@ class Lexer(object):
         t = source_code[i]
 
         # output of source code ignores block comments
-        if t + source_code[i+1] != '/*':
+        if t + source_code[i+1] != '/*' and t != '\n':
             while t != '\n':
                current_ln = current_ln + t
                i = i+1
@@ -233,7 +238,8 @@ class Lexer(object):
     def t_DUMP_SYMBOl_TABLE(self, t):
         r'!!S'
         #Note: since !!S is not token, it will not be printed for DEBUG_TOKENS.
-        print(self.symbol_table)
+        print("SYMBOL TABLE BEING DUMPED")
+        self.symbolout.write(self.symbol_table)
 
 
     # NOTE: \w is equivalent to [A-Za-z0-9]
