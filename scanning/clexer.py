@@ -23,13 +23,19 @@ class Lexer(object):
     NO_DEBUG = 0
     DEBUG_TOKENS = 1
     DEBUG_SOURCE_CODE = 2
+    DEBGUG_SOURCE_AND_TOKENS = 3
 
+    # to keep track of current source code line
+    CURRENT_LINE_START = 0
+
+    # to keep track of file names
     TOKEN_FILE = None
 
     # need to add in a possible token file name is option -o is given
     def __init__(self, symbol_table=None, **kwargs):
         self.lexer = lex.lex(module=self, **kwargs)
         self.symbol_table = symbol_table
+
 
         # have to add in way to change debug level based on input?
         self.debug_level =  Lexer.DEBUG_TOKENS
@@ -47,18 +53,52 @@ class Lexer(object):
         token = self.lexer.token()
         if token != None:
             self.debug_out_tokens(token.type, token.value)
+            #self.CURRENT_LINE_START = self.CURRENT_LINE_START + len(token.value)
+            #print(self.CURRENT_LINE_START)
         return token
 
     def debug_out_tokens(self,tok_type, tok_value):
         # Confirm with Terence the way of doing this?
-        if self.debug_level == Lexer.DEBUG_TOKENS:
+        if self.debug_level == Lexer.DEBUG_TOKENS or self.debug_level == Lexer.DEBGUG_SOURCE_AND_TOKENS:
             self.dout.write(str(tok_type) + ' ' + str(tok_value) + '\n')
 
     def debug_out_source(self,message):
         # Confirm with Terence the way of doing this?
-        if self.debug_level == Lexer.DEBUG_SOURCE_CODE:
+        if self.debug_level == Lexer.DEBUG_SOURCE_CODE or self.debug_level == Lexer.DEBGUG_SOURCE_AND_TOKENS:
             self.dout.write(message + '\n')
-  
+
+    def print_source_debug(self):
+        source_code = self.lexer.lexdata
+        current_ln = ''
+        i = self.CURRENT_LINE_START
+        t = source_code[i]
+
+        # output of source code ignores block comments
+        if t + source_code[i+1] != '/*':
+            while t != '\n':
+               current_ln = current_ln + t
+               i = i+1
+               t = source_code[i]
+            self.debug_out_source(current_ln)
+
+    def print_source_line(self):
+        source_code = self.lexer.lexdata
+        current_ln = ''
+        i = self.CURRENT_LINE_START
+        t = source_code[i]
+        while t != '\n':
+           current_ln = current_ln + t
+           i = i+1
+           t = source_code[i]
+        print(current_ln)
+
+        spacing = ''
+        for i in range(0, (self.lexer.lexpos - self.lexer.current - 1)):
+            spacing = spacing + ' '
+        print( spacing + '^')
+        
+
+
 
     # Reserved words
     reserved = (
@@ -115,7 +155,10 @@ class Lexer(object):
         #Note: Newline is not a token and thus will not be printed for DEBUG_TOKENS
 
         # Handle writing source code line
-        self.debug_out_source("Implement prinint source code by line")
+        self.print_source_debug()
+
+        # reset current line start
+        self.CURRENT_LINE_START = t.lexer.lexpos
 
         # deal with line and col numbers
         t.lexer.lineno += t.value.count("\n")
@@ -230,9 +273,34 @@ class Lexer(object):
         t.lineno += 1
 
     def t_error(self, t):
-
-      # NOTE: Still need to add in the source code line where the error was, not just symbol!
-
         print('ERROR: line ' + str(t.lexer.lineno) + ', column: ' + str(t.lexer.lexpos - t.lexer.current)  )
-        print(".  Illegal character %s" % repr(t.value[0]))
+        print("Illegal character %s" % repr(t.value[0]))
+        self.print_source_line()    
         t.lexer.skip(1)
+
+
+
+
+
+# import sys
+
+# from clexer import Lexer
+
+# # Testing!!!!!!
+# lexer = Lexer() 
+
+# data = '''
+# /* The "hello world" program in C
+# Date written 2/12/5
+
+# 사랑해
+# */
+
+# '''
+
+# lexer.input(data)
+# while True:
+#   tok = lexer.token()
+#   if not tok:
+#     break
+#   print(tok)
