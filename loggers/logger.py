@@ -11,7 +11,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+# along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
 
@@ -23,7 +23,7 @@ class Logger(object):
     IMPLEMENT_ME = 'IMPLEMENT_ME'
     PRODUCTION = 'PRODUCTION'
 
-    def __init__(self, file=sys.stdout, switches=set()):
+    def __init__(self, file = sys.stdout, switches = set()):
         self.switches = switches.union({Logger.IMPLEMENT_ME})
         self.file = file
 

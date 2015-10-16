@@ -1,29 +1,27 @@
-# This file is part of Parser.
+# This file is part of JST.
 #
-# Parser is free software: you can redistribute it and/or modify
+# JST is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
-# Parser is distributed in the hope that it will be useful,
+#
+# JST is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-#  
+#
 # You should have received a copy of the GNU General Public License
-# along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+# along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
 import ply.yacc as yacc
 
-from loggers.parser_logger import ParserLogger
+from loggers.logger import Logger
 from symbol_table.scope import Scope
 from symbol_table.symbol_builder import SymbolBuilder
 from symbol_table.symbol_table import SymbolTable
 
 
 class Parser(object):
-    NO_DEBUG = 0
-    DEBUG_PRODUCTIONS = 1
 
     def __init__(self, lexer, **kwargs):
         self.symbol_table = SymbolTable()
@@ -37,7 +35,7 @@ class Parser(object):
         self.in_insert_mode = True
         self.most_recently_observed_type = None
 
-        self.logger = ParserLogger()
+        self.logger = Logger()
 
     def teardown(self):
         self.logger.finalize()
@@ -167,19 +165,19 @@ class Parser(object):
         self.logger.production('storage_class_specifier -> AUTO')
 
         t[0] = SymbolBuilder(storage_specifiers=['auto'])
-    
+
     def p_storage_class_specifie_register(self, t):
         """storage_class_specifier : REGISTER"""
         self.logger.production('storage_class_specifier -> REGISTER')
 
         t[0] = SymbolBuilder(storage_specifiers=['register'])
-    
+
     def p_storage_class_specifier_static(self, t):
         """storage_class_specifier : STATIC"""
         self.logger.production('storage_class_specifier -> STATIC')
 
         t[0] = SymbolBuilder(storage_specifiers=['static'])
-    
+
     def p_storage_class_specifier_extern(self, t):
         """storage_class_specifier : EXTERN"""
         self.logger.production('storage_class_specifier -> EXTERN')
@@ -200,56 +198,56 @@ class Parser(object):
         self.logger.production('type_specifier -> VOID')
 
         self.most_recently_observed_type = 'void'
-    
+
     def p_type_specifier_char(self, t):
         """type_specifier : CHAR"""
         self.logger.production('type_specifier -> CHAR')
 
         self.most_recently_observed_type = 'char'
-    
+
     def p_type_specifier_short(self, t):
         """type_specifier : SHORT"""
         self.logger.production('type_specifier -> SHORT')
 
         self.most_recently_observed_type = 'short'
-    
+
     def p_type_specifier_int(self, t):
         """type_specifier : INT"""
         self.logger.production('type_specifier -> INT')
 
         self.most_recently_observed_type = 'int'
-    
+
     def p_type_specifier_long(self, t):
         """type_specifier : LONG"""
         self.logger.production('type_specifier -> LONG')
         # TODO: refactor grammar to put signed/unsigned befor other types (long too)
         self.most_recently_observed_type = 'long'
-    
+
     def p_type_specifier_float(self, t):
         """type_specifier : FLOAT"""
         self.logger.production('type_specifier -> FLOAT')
 
         self.most_recently_observed_type = 'float'
-    
+
     def p_type_specifier_double(self, t):
         """type_specifier : DOUBLE"""
         self.logger.production('type_specifier -> DOUBLE')
 
         self.most_recently_observed_type = 'double'
-    
+
     def p_type_specifier_signed(self, t):
         """type_specifier : SIGNED"""
         # TODO: refactor grammar to put signed/unsigned befor other types (long too)
         self.logger.production('type_specifier -> SIGNED')
 
         self.most_recently_observed_type = 'signed'
-    
+
     def p_type_specifier_unsigned(self, t):
         """type_specifier : UNSIGNED"""
         self.logger.production('type_specifier -> UNSIGNED')
         # TODO: refactor grammar to put signed/unsigned befor other types (long too)
         self.most_recently_observed_type = 'unsigned'
-    
+
     def p_type_specifier_struct_or_union(self, t):
         """type_specifier : struct_or_union_specifier"""
         self.logger.production('type_specifier -> struct_or_union_specifier')
@@ -261,7 +259,7 @@ class Parser(object):
         self.logger.production('type_specifier -> enum_specifier')
 
         self.most_recently_observed_type = t[1]  # TODO: unsure of correct action
-    
+
     def p_type_specifier_typeid(self, t):
         """type_specifier : TYPEID"""
         self.logger.production('type_specifier -> TYPEID')
@@ -696,23 +694,23 @@ class Parser(object):
     def p_statement_labeled(self, t):
         """statement : labeled_statement"""
         self.logger.production('statement -> labeled_statement')
-    
+
     def p_statement_expression(self, t):
         """statement : expression_statement"""
         self.logger.production('statement -> expression_statment')
-    
+
     def p_statement_compound(self, t):
         """statement : compound_statement"""
         self.logger.production('statement -> compound_statement')
-    
+
     def p_statement_selection(self, t):
         """statement : selection_statement"""
         self.logger.production('statement ->selection_statement')
-    
+
     def p_statement_iteration(self, t):
         """statement : iteration_statement"""
         self.logger.production('statement ->iteration_statement')
-    
+
     def p_statement_jump(self, t):
         """statement : jump_statement"""
         self.logger.production('statement -> jump_statement')
@@ -854,43 +852,43 @@ class Parser(object):
     def p_assignment_operator_equals(self, t):
         """assignment_operator : EQUALS"""
         self.logger.production('assignment_operator -> EQUALS')
-    
+
     def p_assignment_operator_times(self, t):
         """assignment_operator : TIMESEQUAL"""
         self.logger.production('assignment_operator -> TIMESEQUAL')
-    
+
     def p_assignment_operator_div(self, t):
         """assignment_operator : DIVEQUAL"""
         self.logger.production('assignment_operator -> DIVEQUAL')
-    
+
     def p_assignment_operator_mod(self, t):
         """assignment_operator : MODEQUAL"""
         self.logger.production('assignment_operator -> MODEQUAL')
-    
+
     def p_assignment_operator_plus(self, t):
         """assignment_operator : PLUSEQUAL"""
         self.logger.production('assignment_operator -> PLUSEQUAL')
-    
+
     def p_assignment_operator_minus(self, t):
         """assignment_operator : MINUSEQUAL"""
         self.logger.production('assignment_operator -> MINUSEQUAL')
-    
+
     def p_assignment_operator_left_shift(self, t):
         """assignment_operator : LSHIFTEQUAL"""
         self.logger.production('assignment_operator -> LSHIFTEQUAL')
-    
+
     def p_assignment_operator_right_shift(self, t):
         """assignment_operator : RSHIFTEQUAL"""
         self.logger.production('assignment_operator -> RSHIFTEQUAL')
-    
+
     def p_assignment_operator_and(self, t):
         """assignment_operator : ANDEQUAL"""
         self.logger.production('assignment_operator -> ANDEQUAL')
-    
+
     def p_assignment_operator_or(self, t):
         """assignment_operator : OREQUAL"""
         self.logger.production('assignment_operator -> OREQUAL')
-    
+
     def p_assignment_operator_xor(self, t):
         """assignment_operator : XOREQUAL"""
         self.logger.production('assignment_operator -> XOREQUAL')
