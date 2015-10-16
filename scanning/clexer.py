@@ -13,18 +13,101 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
 import ply.lex as lex
-
+import sys
 
 class Lexer(object):
+
+
+    # NOTE:  These aren't the S and L debug things that Harris had
+    #             Not sure how to set debugging for symbol table...
+    NO_DEBUG = 0
+    DEBUG_TOKENS = 1
+    DEBUG_SOURCE_CODE = 2
+    DEBUG_SOURCE_AND_TOKENS = 3
+
+    # to keep track of current source code line
+    CURRENT_LINE_START = 0
+
+    # to keep track of file name for the token and symbol table files
+    TOKEN_FILE = "scanner_dump_tokens.txt"
+    SYMBOL_TABLE_FILE = "scanner_dump_symbol_table.txt"
+
+    # need to add in a possible token file name is option -o is given
     def __init__(self, symbol_table=None, **kwargs):
         self.lexer = lex.lex(module=self, **kwargs)
         self.symbol_table = symbol_table
+
+        # have to add in way to change debug level based on input?
+        self.debug_level =  Lexer.DEBUG_SOURCE_AND_TOKENS
+
+        # if no -o option, default to stdout for now, will need to change this later.
+        if Lexer.TOKEN_FILE == None:
+            self.dout = sys.stdout
+        else:
+            self.dout = open(Lexer.TOKEN_FILE, 'w')
+
+        # open file for symbol table dubugging dumps
+        self.symbolout = open(Lexer.SYMBOL_TABLE_FILE, 'w')
+
 
     def input(self, data):
         self.lexer.input(data)
 
     def token(self):
-        return self.lexer.token()
+        token = self.lexer.token()
+        if token != None:
+            self.debug_out_tokens(token.type, token.value)
+            #self.CURRENT_LINE_START = self.CURRENT_LINE_START + len(token.value)
+            #print(self.CURRENT_LINE_START)
+        return token
+
+    def debug_out_tokens(self,tok_type, tok_value):
+        # Confirm with Terence the way of doing this?
+        if self.debug_level == Lexer.DEBUG_TOKENS or self.debug_level == Lexer.DEBUG_SOURCE_AND_TOKENS:
+            self.dout.write(str(tok_type) + ' ' + str(tok_value) + '\n')
+
+    def debug_out_source(self,message):
+        # Confirm with Terence the way of doing this?
+
+        if self.debug_level == Lexer.DEBUG_SOURCE_CODE or self.debug_level == Lexer.DEBUG_SOURCE_AND_TOKENS:
+            self.dout.write('\nSource Code: ' + '\n' + message + '\n-----\n\n')
+
+    def print_source_debug(self):
+        source_code = self.lexer.lexdata
+        current_ln = ''
+        i = self.CURRENT_LINE_START
+        t = source_code[i]
+
+        # output of source code ignores block comments
+        if t + source_code[i+1] != '/*' and t != '\n':
+            while t != '\n':
+               current_ln = current_ln + t
+               i = i+1
+               t = source_code[i]
+            self.debug_out_source(current_ln)
+
+    def print_source_line(self):
+        source_code = self.lexer.lexdata
+        current_ln = ''
+        i = self.CURRENT_LINE_START
+        t = source_code[i]
+        while t != '\n':
+           current_ln = current_ln + t
+           i = i+1
+           t = source_code[i]
+        sys.stderr.write(current_ln + '\n')
+
+        spacing = ''
+        for i in range(0, (self.lexer.lexpos - self.lexer.current - 1)):
+            spacing = spacing + ' '
+        sys.stderr.write( spacing + '^\n')
+        
+    # def check_overflow(self, value):
+    #     if int(str(value)) != value:
+    #         return True
+    #     else:
+    #         return False
+
 
     # Reserved words
     reserved = (
@@ -36,7 +119,8 @@ class Lexer(object):
 
     tokens = reserved + (
         # Literals (identifier, integer constant, float constant, string constant, char const)
-        'ID', 'TYPEID', 'ICONST', 'FCONST', 'SCONST', 'CCONST',
+        # NOTE: also need to include Enumeration Const!
+        'ID', 'TYPEID', 'ICONST', 'FCONST', 'SCONST', 'CCONST', 'ECONST',
 
         # Operators (+,-,*,/,%,|,&,~,^,<<,>>, ||, &&, !, <, <=, >, >=, ==, !=)
         'PLUS', 'MINUS', 'TIMES', 'DIVIDE', 'MOD',
@@ -65,6 +149,12 @@ class Lexer(object):
 
         # Ellipsis (...)
         'ELLIPSIS',
+
+        # NOTE: we must also include range
+        'RANGE',
+
+        # Need to include error token for warning issues?
+        'ERROR'
         )
 
     # Completely ignored characters
@@ -73,7 +163,18 @@ class Lexer(object):
     # Newlines
     def t_NEWLINE(self, t):
         r'\n+'
+        
+        #Note: Newline is not a token and thus will not be printed for DEBUG_TOKENS
+
+        # Handle writing source code line
+        self.print_source_debug()
+
+        # reset current line start
+        self.CURRENT_LINE_START = t.lexer.lexpos
+
+        # deal with line and col numbers
         t.lexer.lineno += t.value.count("\n")
+        t.lexer.current = t.lexer.lexpos -1
 
     # Operators
     t_PLUS             = r'\+'
@@ -126,15 +227,28 @@ class Lexer(object):
     t_RPAREN           = r'\)'
     t_LBRACKET         = r'\['
     t_RBRACKET         = r'\]'
-    t_LBRACE           = r'\{'
-    t_RBRACE           = r'\}'
+
+    def t_LBRACE(self,t):
+        r'\{'
+        self.symbolout.write("Opening brace encountered, symbol table dumped: \n")
+        #self.symbolout.write(self.symbol_table)
+        self.symbolout.write('\n')
+        return t
+
+    def t_RBRACE(self,t):
+        r'\}'
+        self.symbolout.write("Closing brace encountered, symbol table dumped: \n")
+        #self.symbolout.write(self.symbol_table)
+        self.symbolout.write('\n')
+        return t
+
     t_COMMA            = r','
     t_PERIOD           = r'\.'
     t_SEMI             = r';'
     t_COLON            = r':'
     t_ELLIPSIS         = r'\.\.\.'
 
-    # Identifiers and reserved words
+    # Identifiers and reserved words (so they are ignored in RE check)
     reserved_map = {r.lower(): r for r in reserved}
     # for r in reserved:
     #     reserved_map[r.lower()] = r
@@ -143,16 +257,25 @@ class Lexer(object):
 
     def t_DUMP_SYMBOl_TABLE(self, t):
         r'!!S'
-        print(self.symbol_table)
+        #Note: since !!S is not token, it will not be printed for DEBUG_TOKENS.
+        self.symbolout.write("!!S encountered, symbol table dumped: \n")
+        #self.symbolout.write(self.symbol_table)
+        self.symbolout.write('\n')
 
 
+    # NOTE: \w is equivalent to [A-Za-z0-9]
     def t_ID(self, t):
         r'[A-Za-z_][\w_]*'
         t.type = self.reserved_map.get(t.value,"ID")
         return t
 
     # Integer literal
-    t_ICONST = r'\d+([uU]|[lL]|[uU][lL]|[lL][uU])?'
+    def t_ICONST(self, t):
+        r'\d+([uU]|[lL]|[uU][lL]|[lL][uU])?'
+        # if self.check_overflow(t.value):
+        #     t.type = self.reserved_map.get(t.value,"ERROR")
+        #     self.t_error(t)
+        return t
 
     # Floating literal
     t_FCONST = r'((\d+)(\.\d+)(e(\+|-)?(\d+))? | (\d+)e(\+|-)?(\d+))([lL]|[fF])?'
@@ -162,6 +285,14 @@ class Lexer(object):
 
     # Character constant 'c' or L'c'
     t_CCONST = r'(L)?\'([^\\\n]|(\\.))*?\''
+
+    # NOTE: Enumeration Constant
+    #       For now this should be used as ID instead - and a error will be pointed out in parser
+    #t_ECONST = r''
+
+    # NOTE: Typedef name ( TypeID )
+    #       For now this should be used as ID instead - and a error will be pointed out in parser
+    #t_TYPEID = r''
 
     # Comments
     def t_comment(self, t):
@@ -174,5 +305,10 @@ class Lexer(object):
         t.lineno += 1
 
     def t_error(self, t):
-        print("Illegal character %s" % repr(t.value[0]))
+        # Note: Will need to change to actual error token later perhaps??
+        self.debug_out_tokens(t.type, t.value[0])
+        sys.stderr.write('ERROR: line ' + str(t.lexer.lineno) + ', column: ' + str(t.lexer.lexpos - t.lexer.current) + '\n' )
+        sys.stderr.write("Illegal character %s \n" % repr(t.value[0]))
+        self.print_source_line()    
         t.lexer.skip(1)
+
