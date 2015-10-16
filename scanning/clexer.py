@@ -15,6 +15,7 @@
 
 import ply.lex as lex
 import sys
+from symbol_table.symbol import Symbol
 
 
 class Lexer(object):
@@ -102,12 +103,18 @@ class Lexer(object):
             spacing = spacing + ' '
         sys.stderr.write( spacing + '^\n')
 
-    # def check_overflow(self, value):
-    #     if int(str(value)) != value:
-    #         return True
-    #     else:
-    #         return False
+    @staticmethod
+    def does_int_overflow(value):
+        int_representation = int(value)
+        if int_representation >= 0:
+            return int_representation <= ((2 * sys.maxsize) + 1), int_representation
+        else:
+            return int_representation > -sys.maxsize - 1
 
+    @staticmethod
+    def float_is_acceptable(value):
+        float_representation = float(value)
+        return not (float_representation == float("inf") or float_representation == -float("inf"))
 
     # Reserved words
     reserved = (
@@ -267,7 +274,25 @@ class Lexer(object):
     def t_ID(self, t):
         r'[A-Za-z_][\w_]*'
         t.type = self.reserved_map.get(t.value,"ID")
-        return t
+
+        if t.type is not "ID":
+            return t.type
+
+        inserting = False  # TODO: add driver class, use the flag in the driver
+        if inserting:
+            symbol = Symbol(t.value)
+            result = self.symbol_table.insert(symbol)
+            if result is "SHADOWED":
+                raise NotImplemented("Do shit about shadowing")
+            elif result is "EXISTS":
+                raise Exception("Redeclaration of {} not allowed.".format(t.value))
+            
+            return symbol
+        else:
+            symbol = self.symbol_table.find(t.value)
+            if symbol is None:
+                raise Exception("{} was not declared in this scope.".format(t.value))
+            return symbol
 
     # Integer literal
     def t_ICONST(self, t):
@@ -275,6 +300,9 @@ class Lexer(object):
         # if self.check_overflow(t.value):
         #     t.type = self.reserved_map.get(t.value,"ERROR")
         #     self.t_error(t)
+
+        if Lexer.does_int_overflow(t.value[0]):
+            raise Exception("Specified constant integer value ({}) unacceptable".format(t.value[0]))
         return t
 
     # Floating literal
@@ -306,6 +334,8 @@ class Lexer(object):
 
     def t_error(self, t):
         # Note: Will need to change to actual error token later perhaps??
+        raise Exception('Illegal character: ' + t.value[0])
+
         self.debug_out_tokens(t.type, t.value[0])
         sys.stderr.write('ERROR: line ' + str(t.lexer.lineno) + ', column: ' + str(t.lexer.lexpos - t.lexer.current) + '\n' )
         sys.stderr.write("Illegal character %s \n" % repr(t.value[0]))

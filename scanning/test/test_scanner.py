@@ -24,6 +24,18 @@ class TestLexer(unittest.TestCase):
     def tearDown(self):
          self.lexer = None
 
+    def test_int_verify_no_overflow(self):
+        self.assertFalse(Lexer.does_int_overflow(int("4"), 64, False), "4 should be acceptable")
+
+    def test_int_verify_overflow(self):
+        self.assertTrue(Lexer.does_int_overflow(int("9999999999999999999999999999999999999999"), 64, False), "That should should overflow")
+
+    def test_float_acceptable(self):
+        self.assertTrue(Lexer.float_is_acceptable('1.123'), "1.23 is an acceptable float")
+
+    def test_float_unacceptable(self):
+        self.assertFalse(Lexer.float_is_acceptable('1.8E+308'), "'1.8E+308' is too big")
+
     def test_plain_main(self):
         data = """int main() {return 0;}"""
         self.lexer.input(data)
@@ -56,11 +68,11 @@ class TestLexer(unittest.TestCase):
                 return 0;
             }
             """
-        self.lexer.input(data)
-        while True:
-          tok = self.lexer.token()
-          if not tok:
-            break
+            self.lexer.input(data)
+            while True:
+                tok = self.lexer.token()
+                if not tok:
+                    break
 
     def test_declare_global_constant(self):
         data = """
