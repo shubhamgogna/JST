@@ -17,6 +17,7 @@ import unittest
 from symbol_table.symbol import Symbol
 from symbol_table.symbol_table import SymbolTable
 
+
 class TestSymbolTable(unittest.TestCase):
 
     def setUp(self):
