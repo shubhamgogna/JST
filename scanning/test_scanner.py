@@ -21,10 +21,8 @@ class TestLexer(unittest.TestCase):
     def setUp(self):
         self.lexer = Lexer()
 
-    # def tearDown(self):
-    #     self.parser.teardown()
-    #     self.parser = None
-    #     self.lexer = None
+    def tearDown(self):
+         self.lexer = None
 
     def test_plain_main(self):
         data = """int main() {return 0;}"""
@@ -34,15 +32,6 @@ class TestLexer(unittest.TestCase):
           if not tok:
             break
         self.assertTrue(True, 'No exceptions = Lexer successfully parsed.')
-
-    def test_malformed_main_fails(self):
-        with self.assertRaises(Exception):
-            data = 'badmain(] {return 0;}'
-        self.lexer.input(data)
-        while True:
-          tok = self.lexer.token()
-          if not tok:
-            break
 
     def test_declare_var(self):
         data = """
@@ -57,6 +46,21 @@ class TestLexer(unittest.TestCase):
           if not tok:
             break
         self.assertTrue(True, 'No exceptions = Lexer successfully parsed.')
+
+    def test_illegal_character(self):
+        with self.assertRaises(Exception):
+            data = """
+            int main() {
+                int i = 0;
+                char 사랑 = 4;
+                return 0;
+            }
+            """
+        self.lexer.input(data)
+        while True:
+          tok = self.lexer.token()
+          if not tok:
+            break
 
     def test_declare_global_constant(self):
         data = """
@@ -87,7 +91,62 @@ class TestLexer(unittest.TestCase):
             break
         self.assertTrue(True, 'No exceptions = Lexer successfully parsed.')
 
+    def test_block_comments(self):
+        data = """
+        /* this is a comment */
+        int main() {
+
+          int i = 0;
+
+          /* this is another comment */
+          return 0;
+        }
+        """
+        self.lexer.input(data)
+        while True:
+          tok = self.lexer.token()
+          if not tok:
+            break
+        self.assertTrue(True, 'No exceptions = Lexer successfully parsed.')
+
+    def test_const_tokens(self):
+        data = """
+            int main() {
+                int i = 0;
+                int j = 5.6;
+                printf("STRINGCONSTTT");
+                char f = 'k';
+                return 0;
+            }
+            """
+        self.lexer.input(data)
+        while True:
+          tok = self.lexer.token()
+          if not tok:
+            break
+        self.assertTrue(True, 'No exceptions = Lexer successfully parsed.')
+
     def test_declare_and_call_function(self):
+        data = """
+            int do_stuff(char c);
+
+            int main() {
+              do_stuff('f');
+              return 0;
+            }
+
+            int do_stuff(char c) {
+                return c + c;
+            }
+        """
+        self.lexer.input(data)
+        while True:
+          tok = self.lexer.token()
+          if not tok:
+            break
+        self.assertTrue(True, 'No exceptions = Lexer successfully parsed.')
+
+    def test_bang_bang_S(self):
         data = """
             int do_stuff(char c);
 
@@ -123,6 +182,65 @@ class TestLexer(unittest.TestCase):
 
               return 0;
             }
+        """
+        self.lexer.input(data)
+        while True:
+          tok = self.lexer.token()
+          if not tok:
+            break
+        self.assertTrue(True, 'No exceptions = Lexer successfully parsed.')
+
+    def test_token_symbols(self):
+        data = """
+        +,-,*,/,%,|,&,~,^,<<,>>, ||, &&, !, <, <=, >, >=, ==, !=
+        =, *=, /=, %=, +=, -=, <<=, >>=, &=, ^=, |=
+        ++,--
+        ->
+        ?
+        () [] {} , . ; :
+        ...
+        """
+        self.lexer.input(data)
+        while True:
+          tok = self.lexer.token()
+          if not tok:
+            break
+        self.assertTrue(True, 'No exceptions = Lexer successfully parsed.')
+
+    def test_token_words(self):
+        data = """
+        auto
+        break
+        case
+        char
+        const
+        continue
+        default
+        do
+        double
+        else
+        enum
+        extern
+        float
+        for
+        goto
+        if
+        int
+        long
+        register
+        return
+        short
+        signed
+        sizeof
+        static
+        struct
+        switch
+        typedef
+        union
+        unsigned
+        void
+        volatile
+        while
         """
         self.lexer.input(data)
         while True:
@@ -168,7 +286,7 @@ class TestLexer(unittest.TestCase):
           if not tok:
             break
         self.assertTrue(True, 'No exceptions = Lexer successfully parsed.')
-
+        
 
 if __name__ == '__main__':
     unittest.main()
