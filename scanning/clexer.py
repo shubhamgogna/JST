@@ -23,14 +23,14 @@ class Lexer(object):
     NO_DEBUG = 0
     DEBUG_TOKENS = 1
     DEBUG_SOURCE_CODE = 2
-    DEBGUG_SOURCE_AND_TOKENS = 3
+    DEBUG_SOURCE_AND_TOKENS = 3
 
     # to keep track of current source code line
     CURRENT_LINE_START = 0
 
     # to keep track of file name for the token and symbol table files
-    TOKEN_FILE = "tokens.txt"
-    SYMBOL_TABLE_FILE = "symbol_table.txt"
+    TOKEN_FILE = "scanner_dump_tokens.txt"
+    SYMBOL_TABLE_FILE = "scanner_dump_symbol_table.txt"
 
     # need to add in a possible token file name is option -o is given
     def __init__(self, symbol_table=None, **kwargs):
@@ -38,7 +38,7 @@ class Lexer(object):
         self.symbol_table = symbol_table
 
         # have to add in way to change debug level based on input?
-        self.debug_level =  Lexer.DEBGUG_SOURCE_AND_TOKENS
+        self.debug_level =  Lexer.DEBUG_SOURCE_AND_TOKENS
 
         # if no -o option, default to stdout for now, will need to change this later.
         if Lexer.TOKEN_FILE == None:
@@ -63,14 +63,14 @@ class Lexer(object):
 
     def debug_out_tokens(self,tok_type, tok_value):
         # Confirm with Terence the way of doing this?
-        if self.debug_level == Lexer.DEBUG_TOKENS or self.debug_level == Lexer.DEBGUG_SOURCE_AND_TOKENS:
+        if self.debug_level == Lexer.DEBUG_TOKENS or self.debug_level == Lexer.DEBUG_SOURCE_AND_TOKENS:
             self.dout.write(str(tok_type) + ' ' + str(tok_value) + '\n')
 
     def debug_out_source(self,message):
         # Confirm with Terence the way of doing this?
 
-        if self.debug_level == Lexer.DEBUG_SOURCE_CODE or self.debug_level == Lexer.DEBGUG_SOURCE_AND_TOKENS:
-            self.dout.write('\nSource Code for Above Tokens: ' + '\n' + message + '\n-----\n\n')
+        if self.debug_level == Lexer.DEBUG_SOURCE_CODE or self.debug_level == Lexer.DEBUG_SOURCE_AND_TOKENS:
+            self.dout.write('\nSource Code: ' + '\n' + message + '\n-----\n\n')
 
     def print_source_debug(self):
         source_code = self.lexer.lexdata
@@ -220,8 +220,19 @@ class Lexer(object):
     t_RPAREN           = r'\)'
     t_LBRACKET         = r'\['
     t_RBRACKET         = r'\]'
-    t_LBRACE           = r'\{'
-    t_RBRACE           = r'\}'
+
+    def t_LBRACE(self,t):
+        r'\{'
+        self.symbolout.write("Opening brace encountered, symbol table dumped: \n")
+        #self.symbolout.write(self.symbol_table)
+        self.symbolout.write('\n')
+
+    def t_RBRACE(self,t):
+        r'\}'
+        self.symbolout.write("Closing brace encountered, symbol table dumped: \n")
+        #self.symbolout.write(self.symbol_table)
+        self.symbolout.write('\n')
+
     t_COMMA            = r','
     t_PERIOD           = r'\.'
     t_SEMI             = r';'
@@ -238,8 +249,9 @@ class Lexer(object):
     def t_DUMP_SYMBOl_TABLE(self, t):
         r'!!S'
         #Note: since !!S is not token, it will not be printed for DEBUG_TOKENS.
-        print("SYMBOL TABLE BEING DUMPED")
-        self.symbolout.write(self.symbol_table)
+        self.symbolout.write("!!S encountered, symbol table dumped: \n")
+        #self.symbolout.write(self.symbol_table)
+        self.symbolout.write('\n')
 
 
     # NOTE: \w is equivalent to [A-Za-z0-9]
