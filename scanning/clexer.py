@@ -102,7 +102,11 @@ class Lexer(object):
             spacing = spacing + ' '
         sys.stderr.write( spacing + '^\n')
         
-
+    # def check_overflow(self, value):
+    #     if int(str(value)) != value:
+    #         return True
+    #     else:
+    #         return False
 
 
     # Reserved words
@@ -229,12 +233,14 @@ class Lexer(object):
         self.symbolout.write("Opening brace encountered, symbol table dumped: \n")
         #self.symbolout.write(self.symbol_table)
         self.symbolout.write('\n')
+        return t
 
     def t_RBRACE(self,t):
         r'\}'
         self.symbolout.write("Closing brace encountered, symbol table dumped: \n")
         #self.symbolout.write(self.symbol_table)
         self.symbolout.write('\n')
+        return t
 
     t_COMMA            = r','
     t_PERIOD           = r'\.'
@@ -264,7 +270,12 @@ class Lexer(object):
         return t
 
     # Integer literal
-    t_ICONST = r'\d+([uU]|[lL]|[uU][lL]|[lL][uU])?'
+    def t_ICONST(self, t):
+        r'\d+([uU]|[lL]|[uU][lL]|[lL][uU])?'
+        # if self.check_overflow(t.value):
+        #     t.type = self.reserved_map.get(t.value,"ERROR")
+        #     self.t_error(t)
+        return t
 
     # Floating literal
     t_FCONST = r'((\d+)(\.\d+)(e(\+|-)?(\d+))? | (\d+)e(\+|-)?(\d+))([lL]|[fF])?'
@@ -301,30 +312,3 @@ class Lexer(object):
         self.print_source_line()    
         t.lexer.skip(1)
 
-
-
-
-
-
-# import sys
-
-# from clexer import Lexer
-
-# # Testing!!!!!!
-# lexer = Lexer() 
-
-# data = '''
-# /* The "hello world" program in C
-# Date written 2/12/5
-
-# 사랑해
-# */
-
-# '''
-
-# lexer.input(data)
-# while True:
-#   tok = lexer.token()
-#   if not tok:
-#     break
-#   print(tok)
