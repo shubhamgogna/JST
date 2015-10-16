@@ -95,12 +95,12 @@ class Lexer(object):
            current_ln = current_ln + t
            i = i+1
            t = source_code[i]
-        print(current_ln)
+        sys.stderr.write(current_ln + '\n')
 
         spacing = ''
         for i in range(0, (self.lexer.lexpos - self.lexer.current - 1)):
             spacing = spacing + ' '
-        print( spacing + '^')
+        sys.stderr.write( spacing + '^\n')
         
 
 
@@ -148,6 +148,9 @@ class Lexer(object):
 
         # NOTE: we must also include range
         'RANGE',
+
+        # Need to include error token for warning issues?
+        #'ERROR'
         )
 
     # Completely ignored characters
@@ -291,10 +294,13 @@ class Lexer(object):
         t.lineno += 1
 
     def t_error(self, t):
-        print('ERROR: line ' + str(t.lexer.lineno) + ', column: ' + str(t.lexer.lexpos - t.lexer.current)  )
-        print("Illegal character %s" % repr(t.value[0]))
+        # Note: Will need to change to actual error token later perhaps??
+        self.debug_out_tokens('ERROR', 'ERROR')
+        sys.stderr.write('ERROR: line ' + str(t.lexer.lineno) + ', column: ' + str(t.lexer.lexpos - t.lexer.current) + '\n' )
+        sys.stderr.write("Illegal character %s \n" % repr(t.value[0]))
         self.print_source_line()    
         t.lexer.skip(1)
+
 
 
 
