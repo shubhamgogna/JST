@@ -39,7 +39,6 @@ class TestParser(unittest.TestCase):
         self.parser.parse(data)
         self.assertTrue(True, 'No exceptions = Parser successfully parsed.')
 
-
     def test_declare_primitive_variable(self):
         data = """
             int main() {
@@ -100,6 +99,20 @@ class TestParser(unittest.TestCase):
 
         int main() {
           int i = GLOBAL_CONSTANT;
+          return 0;
+        }
+        """
+        self.parser.parse(data)
+        self.assertTrue(True, 'No exceptions = Parser successfully parsed.')
+
+    def test_declare_typedef(self):
+        self.enable_parser_debugging()
+
+        data = """
+        typedef int GlorifiedInt;
+
+        int main() {
+          GlorifiedInt i = 3;
           return 0;
         }
         """
@@ -241,20 +254,18 @@ class TestParser(unittest.TestCase):
         self.assertTrue(True, 'No exceptions = Parser successfully parsed.')
 
     def test_declare_struct(self):
-        data =  """
-            int global;
-
+        data = """
             struct Pixel {
                 char r;
-                // char g;
-                // char b;
+                char g;
+                char b;
             };
 
             int main() {
               struct Pixel pixel;
               pixel.r = 255;
-              // pixel.g = 0;
-              // pixel.b = 0;
+              pixel.g = 255;
+              pixel.b = 255;
 
               return 0;
             }
@@ -302,3 +313,7 @@ class TestParser(unittest.TestCase):
         with self.assertRaises(Exception):
             data = 'badmain(] {return 0;}'
             self.parser.parse(data)
+
+    def enable_parser_debugging(self):
+        self.parser.logger.add_switch(Logger.PRODUCTION)
+        self.parser.logger.add_switch(Logger.INFO)

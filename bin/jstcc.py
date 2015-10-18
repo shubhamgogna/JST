@@ -17,12 +17,11 @@
 
 import os
 import sys
-from compiler.compiler_state import CompilerState
-from loggers.logger import Logger
-
 sys.path.insert(1, os.path.join(sys.path[0], '../'))
 
 import argparse
+from compiler.compiler_state import CompilerState
+from loggers.logger import Logger
 from parsing.cparser import Parser
 from scanning.clexer import Lexer
 

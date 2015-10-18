@@ -20,6 +20,9 @@ from scanning.clexer import Lexer
 
 
 class TestLexer(unittest.TestCase):
+
+    SIMPLE_MAIN_TOKEN_TYPES = ['INT', 'ID', 'LPAREN', 'RPAREN', 'LBRACE', 'RETURN', 'ICONST', 'SEMI', 'RBRACE']
+
     def setUp(self):
         self.compiler_state = CompilerState()
         self.lexer = Lexer(compiler_state=self.compiler_state)
@@ -28,33 +31,46 @@ class TestLexer(unittest.TestCase):
         self.lexer = None
         self.compiler_state = None
 
-    def test_int_verify_no_overflow(self):
-        self.assertFalse(Lexer.string_to_int_fails("4"), "4 should be acceptable")
-
-    def test_int_verify_overflow(self):
-        self.assertTrue(Lexer.string_to_int_fails("9999999999999999999999999999999999999999"),
-                        "That should should overflow")
-
-    def test_float_acceptable(self):
-        self.assertTrue(Lexer.string_to_float_fails('1.123'), "1.23 is an acceptable float")
-
-    def test_float_unacceptable(self):
-        self.assertFalse(Lexer.string_to_float_fails('1.8E+308'), "'1.8E+308' is too big")
-
     def test_plain_main(self):
         data = """int main() {return 0;}"""
-        expected_token_types = ['INT', 'ID', 'LPAREN', 'RPAREN', 'LBRACE', 'RETURN', 'ICONST', 'SEMI', 'RBRACE']
+        self.compare_token_output(data, expected_token_types=TestLexer.SIMPLE_MAIN_TOKEN_TYPES)
 
-        self.lexer.input(data)
+    def test_regular_comments_get_eaten(self):
+        data = """
+            // this is a comment
+            int main() {return 0;}
+        """
+        self.compare_token_output(data, expected_token_types=TestLexer.SIMPLE_MAIN_TOKEN_TYPES)
 
-        for given, expected in itertools.zip_longest(self.lexer.lexer, expected_token_types):
-            self.assertTrue(given.type, expected)
+    def test_regular_comments_after_code_get_eaten(self):
+        data = """
+            int main() {// this is a comment
+              return 0;
+            }
+        """
+        self.compare_token_output(data, expected_token_types=TestLexer.SIMPLE_MAIN_TOKEN_TYPES)
 
-        # while True:
-        #   tok = self.lexer.token()
-        #   if not tok:
-        #     break
-        # self.assertTrue(True, 'No exceptions = Lexer successfully parsed.')
+    def test_block_comments_get_eaten(self):
+        data = """
+            /* This is a block comment */
+            int main() {return 0;}
+        """
+        self.compare_token_output(data, expected_token_types=TestLexer.SIMPLE_MAIN_TOKEN_TYPES)
+
+    def test_block_comments_within_code_get_eaten(self):
+        data = """int main(/* This is a block comment */) {return 0;}"""
+        self.compare_token_output(data, expected_token_types=TestLexer.SIMPLE_MAIN_TOKEN_TYPES)
+
+    def test_mulitiline_block_comments_get_eaten(self):
+        data = """
+        int main() {
+          /**
+           * Input: None
+           * Returns: Error status of program execution.
+           */
+          return 0;
+        }"""
+        self.compare_token_output(data, expected_token_types=TestLexer.SIMPLE_MAIN_TOKEN_TYPES)
 
     def test_declare_var(self):
         data = """
@@ -65,9 +81,9 @@ class TestLexer(unittest.TestCase):
             """
         self.lexer.input(data)
         while True:
-          tok = self.lexer.token()
-          if not tok:
-            break
+            tok = self.lexer.token()
+            if not tok:
+                break
         self.assertTrue(True, 'No exceptions = Lexer successfully parsed.')
 
     def test_illegal_character(self):
@@ -95,9 +111,9 @@ class TestLexer(unittest.TestCase):
         """
         self.lexer.input(data)
         while True:
-          tok = self.lexer.token()
-          if not tok:
-            break
+            tok = self.lexer.token()
+            if not tok:
+                break
         self.assertTrue(True, 'No exceptions = Lexer successfully parsed.')
 
     def test_declare_array(self):
@@ -109,9 +125,9 @@ class TestLexer(unittest.TestCase):
         """
         self.lexer.input(data)
         while True:
-          tok = self.lexer.token()
-          if not tok:
-            break
+            tok = self.lexer.token()
+            if not tok:
+                break
         self.assertTrue(True, 'No exceptions = Lexer successfully parsed.')
 
     def test_block_comments(self):
@@ -127,9 +143,9 @@ class TestLexer(unittest.TestCase):
         """
         self.lexer.input(data)
         while True:
-          tok = self.lexer.token()
-          if not tok:
-            break
+            tok = self.lexer.token()
+            if not tok:
+                break
         self.assertTrue(True, 'No exceptions = Lexer successfully parsed.')
 
     def test_const_tokens(self):
@@ -144,9 +160,9 @@ class TestLexer(unittest.TestCase):
             """
         self.lexer.input(data)
         while True:
-          tok = self.lexer.token()
-          if not tok:
-            break
+            tok = self.lexer.token()
+            if not tok:
+                break
         self.assertTrue(True, 'No exceptions = Lexer successfully parsed.')
 
     def test_declare_and_call_function(self):
@@ -164,9 +180,9 @@ class TestLexer(unittest.TestCase):
         """
         self.lexer.input(data)
         while True:
-          tok = self.lexer.token()
-          if not tok:
-            break
+            tok = self.lexer.token()
+            if not tok:
+                break
         self.assertTrue(True, 'No exceptions = Lexer successfully parsed.')
 
     def test_bang_bang_S(self):
@@ -184,9 +200,9 @@ class TestLexer(unittest.TestCase):
         """
         self.lexer.input(data)
         while True:
-          tok = self.lexer.token()
-          if not tok:
-            break
+            tok = self.lexer.token()
+            if not tok:
+                break
         self.assertTrue(True, 'No exceptions = Lexer successfully parsed.')
 
     def test_declare_struct(self):
@@ -198,20 +214,14 @@ class TestLexer(unittest.TestCase):
             };
 
             int main() {
-              struct Pixel pixel;
-              pixel.r = 255;
-              pixel.g = 0;
-              pixel.b = 0;
-
               return 0;
             }
         """
-        self.lexer.input(data)
-        while True:
-          tok = self.lexer.token()
-          if not tok:
-            break
-        self.assertTrue(True, 'No exceptions = Lexer successfully parsed.')
+        expected_token_types = ['STRUCT', 'ID', 'LBRACE', 'CHAR', 'ID', 'SEMI', 'CHAR', 'ID', 'SEMI', 'CHAR', 'ID',
+                                'SEMI', 'RBRACE', 'SEMI', 'INT', 'ID', 'LPAREN', 'RPAREN', 'LBRACE', 'RETURN', 'ICONST',
+                                'SEMI', 'RBRACE']
+
+        self.compare_token_output(data, expected_token_types)
 
     def test_token_symbols(self):
         data = """
@@ -225,9 +235,9 @@ class TestLexer(unittest.TestCase):
         """
         self.lexer.input(data)
         while True:
-          tok = self.lexer.token()
-          if not tok:
-            break
+            tok = self.lexer.token()
+            if not tok:
+                break
         self.assertTrue(True, 'No exceptions = Lexer successfully parsed.')
 
     def test_reserved_words(self):
@@ -267,9 +277,9 @@ class TestLexer(unittest.TestCase):
         """
         self.lexer.input(data)
         while True:
-          tok = self.lexer.token()
-          if not tok:
-            break
+            tok = self.lexer.token()
+            if not tok:
+                break
         self.assertTrue(True, 'No exceptions = Lexer successfully parsed.')
 
     def test_declare_function_pointer_typedef(self):
@@ -305,10 +315,29 @@ class TestLexer(unittest.TestCase):
         """
         self.lexer.input(data)
         while True:
-          tok = self.lexer.token()
-          if not tok:
-            break
+            tok = self.lexer.token()
+            if not tok:
+                break
         self.assertTrue(True, 'No exceptions = Lexer successfully parsed.')
+
+    def test_int_verify_no_overflow(self):
+        self.assertFalse(Lexer.string_to_int_fails("4"), "4 should be acceptable")
+
+    def test_int_verify_overflow(self):
+        self.assertTrue(Lexer.string_to_int_fails("9999999999999999999999999999999999999999"),
+                        "That should should overflow")
+
+    def test_float_acceptable(self):
+        self.assertTrue(Lexer.string_to_float_fails('1.123'), "1.23 is an acceptable float")
+
+    def test_float_unacceptable(self):
+        self.assertFalse(Lexer.string_to_float_fails('1.8E+308'), "'1.8E+308' is too big")
+
+    def compare_token_output(self, data, expected_token_types):
+        self.lexer.input(data)
+
+        for given, expected in itertools.zip_longest(self.lexer.lexer, expected_token_types):
+            self.assertEqual(given.type, expected)
 
 
 if __name__ == '__main__':

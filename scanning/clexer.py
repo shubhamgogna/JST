@@ -106,19 +106,6 @@ class Lexer(object):
             spacing = spacing + ' '
         sys.stderr.write( spacing + '^\n')
 
-    @staticmethod
-    def string_to_int_fails(value):
-        int_representation = int(value)
-        if int_representation >= 0:
-            return ((2 * sys.maxsize) + 1) < int_representation
-        else:
-            return int_representation < -sys.maxsize - 1
-
-    @staticmethod
-    def string_to_float_fails(value):
-        float_representation = float(value)
-        return not (float_representation == float("inf") or float_representation == -float("inf"))
-
     # Reserved words
     reserved = (
         'AUTO', 'BREAK', 'CASE', 'CHAR', 'CONST', 'CONTINUE', 'DEFAULT', 'DO', 'DOUBLE',
@@ -262,8 +249,6 @@ class Lexer(object):
 
     # Identifiers and reserved words (so they are ignored in RE check)
     reserved_map = {r.lower(): r for r in reserved}
-    # for r in reserved:
-    #     reserved_map[r.lower()] = r
 
 
 
@@ -278,8 +263,7 @@ class Lexer(object):
         r'!!P(.*)!'
         # This allows us to use "!!P(this is a debug message)!" in code we test and have the message printed
         message = t.value
-        message.replace('!!P(', '')
-        message.replace(')!', '')
+        message = message.replace('!!P(', '').replace(')!', '')
         print(message)
 
     # NOTE: \w is equivalent to [A-Za-z0-9]
@@ -296,7 +280,7 @@ class Lexer(object):
             t.value = symbol
         elif t.type is "TYPEID":
             t.value = self.compiler_state.symbol_table.find_type(t.value)
-        elif t.type is "ENUMERATION_CONSTANT":
+        elif t.type is "ECONST":
             t.type = 'ECONST'
             t.value = self.compiler_state.symbol_table.find_enum_constant_value(t.value)
 
@@ -323,20 +307,6 @@ class Lexer(object):
         #
         # return t
 
-    def get_identifier_type(self, identifier):
-        keyword_value = self.reserved_map.get(identifier, None)
-        typedef_name = self.compiler_state.symbol_table.find_type(identifier)
-        enum_value = self.compiler_state.symbol_table.find_enum_constant_value(identifier)
-
-        if keyword_value is not None:
-            return keyword_value
-        elif typedef_name is not None:
-            return 'TYPEDEF_NAME'
-        elif enum_value is not None:
-            return 'ENUMERATION_CONSTANT'
-        else:
-            return 'ID'
-
     # Integer literal
     def t_ICONST(self, t):
         r'\d+([uU]|[lL]|[uU][lL]|[lL][uU])?'
@@ -356,9 +326,6 @@ class Lexer(object):
         t.value = float(t.value)
         return t
 
-    # Floating literal
-    # t_FCONST = r'((\d+)(\.\d+)(e(\+|-)?(\d+))? | (\d+)e(\+|-)?(\d+))([lL]|[fF])?'
-
     # String literal
     t_SCONST = r'\"([^\\\n]|(\\.))*?\"'
 
@@ -375,7 +342,7 @@ class Lexer(object):
 
     # Comments
     def t_comment(self, t):
-        r' /\*(.|\n)*?\*/'
+        r' (/\*(.|\n)*?\*/)|(//.*\n)'
         t.lineno += t.value.count('\n')
 
     # Preprocessor directive (ignored)
@@ -393,3 +360,29 @@ class Lexer(object):
         self.print_source_line()
         t.lexer.skip(1)
 
+    def get_identifier_type(self, identifier):
+        keyword_value = self.reserved_map.get(identifier, None)
+        typedef_name = self.compiler_state.symbol_table.find_type(identifier)
+        enum_value = self.compiler_state.symbol_table.find_enum_constant_value(identifier)
+
+        if keyword_value is not None:
+            return keyword_value
+        elif typedef_name is not None:
+            return 'TYPEID'
+        elif enum_value is not None:
+            return 'ECONST'
+        else:
+            return 'ID'
+
+    @staticmethod
+    def string_to_int_fails(value):
+        int_representation = int(value)
+        if int_representation >= 0:
+            return ((2 * sys.maxsize) + 1) < int_representation
+        else:
+            return int_representation < -sys.maxsize - 1
+
+    @staticmethod
+    def string_to_float_fails(value):
+        float_representation = float(value)
+        return not (float_representation == float("inf") or float_representation == -float("inf"))

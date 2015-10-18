@@ -42,6 +42,9 @@ class Parser(object):
     # p_error
     #
     def p_error(self, t):
+        print('--- ERROR ---')
+        print('Last token: {}'.format(self.lexer.last_token))
+
         self.logger.implement_me("p_error")
         raise NotImplemented("p_error")
 
@@ -172,7 +175,7 @@ class Parser(object):
         """storage_class_specifier : TYPEDEF"""
         self.logger.production('storage_class_specifier -> TYPEDEF')
 
-        t[0] = t[1]  # TODO: unsure of correct action
+        t[0] = t[1]
 
     #
     # type-specifier:
@@ -236,19 +239,13 @@ class Parser(object):
         """type_specifier : struct_or_union_specifier"""
         self.logger.production('type_specifier -> struct_or_union_specifier')
 
-        self.most_recently_observed_type = t[1]  # TODO: unsure of correct action
-
     def p_type_specifier_enum(self, t):
         """type_specifier : enum_specifier"""
         self.logger.production('type_specifier -> enum_specifier')
 
-        self.most_recently_observed_type = t[1]  # TODO: unsure of correct action
-
     def p_type_specifier_typeid(self, t):
         """type_specifier : TYPEID"""
         self.logger.production('type_specifier -> TYPEID')
-
-        self.most_recently_observed_type = t[1]  # TODO: unsure of correct action
 
     #
     # type-qualifier:
@@ -273,9 +270,11 @@ class Parser(object):
         self.logger.production(
             'struct_or_union_specifier : struct_or_union identifier LBRACE struct_declaration_list RBRACE')
 
+        if t[1] is "struct":
+            t[2].add_struct_members(t[4])
+        elif t[1] is "union":
+            t[2].add_union_members(t[4])
 
-        t[2].is_struct = True  # TODO:
-        t[2].add_struct_members(t[4])
         t[0] = t[2]
 
     def p_struct_or_union_specifier_2(self, t):
@@ -288,10 +287,6 @@ class Parser(object):
         """struct_or_union_specifier : struct_or_union identifier"""
         self.logger.production('struct_or_union_specifier : struct_or_union identifier')
 
-        t[2].is_struct = True
-        t[0] = t[2]
-
-
     #
     # struct-or-union:
     #
@@ -299,13 +294,13 @@ class Parser(object):
         """struct_or_union : STRUCT"""
         self.logger.production('struct_or_union -> STRUCT')
 
-        t[0] = 'struct'
+        t[0] = t[1]
 
     def p_struct_or_union_union(self, t):
         """struct_or_union : UNION"""
         self.logger.production('struct_or_union -> UNION')
 
-        t[0] = 'union'
+        t[0] = t[1]
 
     #
     # struct-declaration-list:
@@ -317,10 +312,11 @@ class Parser(object):
         t[0] = [t[1]]
 
     def p_struct_declaration_list_2(self, t):
-        """struct_declaration_list : struct_declarator_list struct_declaration"""
-        self.logger.production('struct_declaration_list : struct_declarator_list struct_declaration')
+        """struct_declaration_list : struct_declaration_list struct_declaration"""
+        # I changed 'struct_declarator_list' to 'struct_declaration_list'
+        self.logger.production('struct_declaration_list : struct_declaration_list struct_declaration')
 
-        t[0] = t[1] + t[2]
+        # t[0] = t[1] + t[2]
 
     #
     # init-declarator-list:

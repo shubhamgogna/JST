@@ -56,6 +56,9 @@ class Symbol(object):
     def add_struct_members(self, members):
         pass
 
+    def add_union_members(self, members):
+        pass
+
     def add_enum_members(self, members):
         pass
 
