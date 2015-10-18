@@ -14,36 +14,47 @@
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
+import itertools
+from compiler.compiler_state import CompilerState
 from scanning.clexer import Lexer
 
 
 class TestLexer(unittest.TestCase):
     def setUp(self):
-        self.lexer = Lexer()
+        self.compiler_state = CompilerState()
+        self.lexer = Lexer(compiler_state=self.compiler_state)
 
     def tearDown(self):
-         self.lexer = None
+        self.lexer = None
+        self.compiler_state = None
 
     def test_int_verify_no_overflow(self):
-        self.assertFalse(Lexer.does_int_overflow(int("4"), 64, False), "4 should be acceptable")
+        self.assertFalse(Lexer.string_to_int_fails("4"), "4 should be acceptable")
 
     def test_int_verify_overflow(self):
-        self.assertTrue(Lexer.does_int_overflow(int("9999999999999999999999999999999999999999"), 64, False), "That should should overflow")
+        self.assertTrue(Lexer.string_to_int_fails("9999999999999999999999999999999999999999"),
+                        "That should should overflow")
 
     def test_float_acceptable(self):
-        self.assertTrue(Lexer.float_is_acceptable('1.123'), "1.23 is an acceptable float")
+        self.assertTrue(Lexer.string_to_float_fails('1.123'), "1.23 is an acceptable float")
 
     def test_float_unacceptable(self):
-        self.assertFalse(Lexer.float_is_acceptable('1.8E+308'), "'1.8E+308' is too big")
+        self.assertFalse(Lexer.string_to_float_fails('1.8E+308'), "'1.8E+308' is too big")
 
     def test_plain_main(self):
         data = """int main() {return 0;}"""
+        expected_token_types = ['INT', 'ID', 'LPAREN', 'RPAREN', 'LBRACE', 'RETURN', 'ICONST', 'SEMI', 'RBRACE']
+
         self.lexer.input(data)
-        while True:
-          tok = self.lexer.token()
-          if not tok:
-            break
-        self.assertTrue(True, 'No exceptions = Lexer successfully parsed.')
+
+        for given, expected in itertools.zip_longest(self.lexer.lexer, expected_token_types):
+            self.assertTrue(given.type, expected)
+
+        # while True:
+        #   tok = self.lexer.token()
+        #   if not tok:
+        #     break
+        # self.assertTrue(True, 'No exceptions = Lexer successfully parsed.')
 
     def test_declare_var(self):
         data = """
@@ -219,7 +230,7 @@ class TestLexer(unittest.TestCase):
             break
         self.assertTrue(True, 'No exceptions = Lexer successfully parsed.')
 
-    def test_token_words(self):
+    def test_reserved_words(self):
         data = """
         auto
         break

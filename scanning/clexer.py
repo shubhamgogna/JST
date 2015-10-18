@@ -34,9 +34,10 @@ class Lexer(object):
     SYMBOL_TABLE_FILE = "scanner_dump_symbol_table.txt"
 
     # need to add in a possible token file name is option -o is given
-    def __init__(self, symbol_table=None, **kwargs):
+    def __init__(self, compiler_state=None, **kwargs):
         self.lexer = lex.lex(module=self, **kwargs)
-        self.symbol_table = symbol_table
+
+        self.compiler_state = compiler_state
 
         # have to add in way to change debug level based on input?
         self.debug_level =  Lexer.DEBUG_SOURCE_AND_TOKENS
@@ -50,17 +51,19 @@ class Lexer(object):
         # open file for symbol table dubugging dumps
         self.symbolout = open(Lexer.SYMBOL_TABLE_FILE, 'w')
 
+        self.last_token = None
+
 
     def input(self, data):
         self.lexer.input(data)
 
     def token(self):
-        token = self.lexer.token()
-        if token != None:
-            self.debug_out_tokens(token.type, token.value)
+        self.last_token = self.lexer.token()
+        if self.last_token != None:
+            self.debug_out_tokens(self.last_token.type, self.last_token.value)
             #self.CURRENT_LINE_START = self.CURRENT_LINE_START + len(token.value)
             #print(self.CURRENT_LINE_START)
-        return token
+        return self.last_token
 
     def debug_out_tokens(self,tok_type, tok_value):
         # Confirm with Terence the way of doing this?
@@ -104,15 +107,15 @@ class Lexer(object):
         sys.stderr.write( spacing + '^\n')
 
     @staticmethod
-    def does_int_overflow(value):
+    def string_to_int_fails(value):
         int_representation = int(value)
         if int_representation >= 0:
-            return int_representation <= ((2 * sys.maxsize) + 1), int_representation
+            return ((2 * sys.maxsize) + 1) < int_representation
         else:
-            return int_representation > -sys.maxsize - 1
+            return int_representation < -sys.maxsize - 1
 
     @staticmethod
-    def float_is_acceptable(value):
+    def string_to_float_fails(value):
         float_representation = float(value)
         return not (float_representation == float("inf") or float_representation == -float("inf"))
 
@@ -158,10 +161,12 @@ class Lexer(object):
         'ELLIPSIS',
 
         # NOTE: we must also include range
-        'RANGE',
+        # 'RANGE',  # TODO: I propose we throw this out. -Terence
 
         # Need to include error token for warning issues?
-        'ERROR'
+        #'ERROR'  # TODO: if we decide we want the parser to handle all errors/error reporting this will be good
+                 # TODO: otherwise let's toss it (I'm in favor of passing all errors to the parser for unified
+                 # TODO: error management, but it will take some figuring out. -Terence)
         )
 
     # Completely ignored characters
@@ -262,51 +267,97 @@ class Lexer(object):
 
 
 
-    def t_DUMP_SYMBOl_TABLE(self, t):
+    def t_DUMP_SYMBOL_TABLE(self, t):
         r'!!S'
         #Note: since !!S is not token, it will not be printed for DEBUG_TOKENS.
         self.symbolout.write("!!S encountered, symbol table dumped: \n")
         #self.symbolout.write(self.symbol_table)
         self.symbolout.write('\n')
 
+    def t_PRINT_DEBUG_MESSAGE(self, t):
+        r'!!P(.*)!'
+        # This allows us to use "!!P(this is a debug message)!" in code we test and have the message printed
+        message = t.value
+        message.replace('!!P(', '')
+        message.replace(')!', '')
+        print(message)
 
     # NOTE: \w is equivalent to [A-Za-z0-9]
     def t_ID(self, t):
         r'[A-Za-z_][\w_]*'
-        t.type = self.reserved_map.get(t.value,"ID")
 
-        if t.type is not "ID":
-            return t.type
+        t.type = self.get_identifier_type(identifier=t.value)
 
-        inserting = False  # TODO: add driver class, use the flag in the driver
-        if inserting:
-            symbol = Symbol(t.value)
-            result = self.symbol_table.insert(symbol)
-            if result is "SHADOWED":
-                raise NotImplemented("Do shit about shadowing")
-            elif result is "EXISTS":
-                raise Exception("Redeclaration of {} not allowed.".format(t.value))
-            
-            return symbol
-        else:
-            symbol = self.symbol_table.find(t.value)
+        if t.type is "ID":
+            symbol = self.compiler_state.symbol_table.find(name=t.value)
             if symbol is None:
-                raise Exception("{} was not declared in this scope.".format(t.value))
-            return symbol
+                symbol = Symbol(identifier=t.value)
+                self.compiler_state.symbol_table.insert(symbol)
+            t.value = symbol
+        elif t.type is "TYPEID":
+            t.value = self.compiler_state.symbol_table.find_type(t.value)
+        elif t.type is "ENUMERATION_CONSTANT":
+            t.type = 'ECONST'
+            t.value = self.compiler_state.symbol_table.find_enum_constant_value(t.value)
+
+        return t
+
+        # Terence:
+        # Taking out the 'lookup mode' stuff here, no one else seems to use it
+        #
+        # if self.compiler_state is not None:  # like in the case of unit testing the lexer
+        #     if self.compiler_state.insert_mode:
+        #         symbol = Symbol(t.value)
+        #         result = self.compiler_state.symbol_table.insert(symbol)
+        #         if result is "SHADOWED":
+        #             raise NotImplemented("Do shit about shadowing")
+        #         elif result is "EXISTS":
+        #             raise Exception("Redeclaration of {} not allowed.".format(t.value))
+        #
+        #         t.value = symbol
+        #     else:
+        #         symbol = self.compiler_state.symbol_table.find(t.value)
+        #         if symbol is None:
+        #             raise Exception("{} was not declared in this scope.".format(t.value))
+        #         t.value = symbol
+        #
+        # return t
+
+    def get_identifier_type(self, identifier):
+        keyword_value = self.reserved_map.get(identifier, None)
+        typedef_name = self.compiler_state.symbol_table.find_type(identifier)
+        enum_value = self.compiler_state.symbol_table.find_enum_constant_value(identifier)
+
+        if keyword_value is not None:
+            return keyword_value
+        elif typedef_name is not None:
+            return 'TYPEDEF_NAME'
+        elif enum_value is not None:
+            return 'ENUMERATION_CONSTANT'
+        else:
+            return 'ID'
 
     # Integer literal
     def t_ICONST(self, t):
         r'\d+([uU]|[lL]|[uU][lL]|[lL][uU])?'
-        # if self.check_overflow(t.value):
-        #     t.type = self.reserved_map.get(t.value,"ERROR")
-        #     self.t_error(t)
 
-        if Lexer.does_int_overflow(t.value[0]):
-            raise Exception("Specified constant integer value ({}) unacceptable".format(t.value[0]))
+        if Lexer.string_to_int_fails(t.value):
+            raise Exception("Specified constant integer value ({}) is unacceptable".format(t.value))
+
+        t.value = int(t.value)
+        return t
+
+    def t_FCONST(self, t):
+        r'((\d+)(\.\d+)(e(\+|-)?(\d+))? | (\d+)e(\+|-)?(\d+))([lL]|[fF])?'
+
+        if Lexer.string_to_float_fails(t.value):
+            raise Exception("Specified constant float value ({}) is unacceptable.".format(t.value))
+
+        t.value = float(t.value)
         return t
 
     # Floating literal
-    t_FCONST = r'((\d+)(\.\d+)(e(\+|-)?(\d+))? | (\d+)e(\+|-)?(\d+))([lL]|[fF])?'
+    # t_FCONST = r'((\d+)(\.\d+)(e(\+|-)?(\d+))? | (\d+)e(\+|-)?(\d+))([lL]|[fF])?'
 
     # String literal
     t_SCONST = r'\"([^\\\n]|(\\.))*?\"'

@@ -1,0 +1,4 @@
+Opening brace encountered, symbol table dumped: 
+
+Closing brace encountered, symbol table dumped: 
+

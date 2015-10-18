@@ -14,6 +14,7 @@
 # along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
+from compiler.compiler_state import CompilerState
 from loggers.logger import Logger
 from parsing.cparser import Parser
 from scanning.clexer import Lexer
@@ -21,8 +22,9 @@ from scanning.clexer import Lexer
 
 class TestParser(unittest.TestCase):
     def setUp(self):
-        self.lexer = Lexer()
-        self.parser = Parser(self.lexer)
+        self.compiler_state = CompilerState()
+        self.lexer = Lexer(compiler_state=self.compiler_state)
+        self.parser = Parser(compiler_state=self.compiler_state, lexer=self.lexer)
         self.parser.logger.add_switch(Logger.TOKEN)
 
     def tearDown(self):
@@ -30,21 +32,62 @@ class TestParser(unittest.TestCase):
         self.parser.teardown()
         self.parser = None
         self.lexer = None
+        self.compiler_state = None
 
     def test_plain_main(self):
         data = """int main() {return 0;}"""
         self.parser.parse(data)
         self.assertTrue(True, 'No exceptions = Parser successfully parsed.')
 
-    def test_malformed_main_fails(self):
-        with self.assertRaises(Exception):
-            data = 'badmain(] {return 0;}'
-            self.parser.parse(data)
 
-    def test_declare_var(self):
+    def test_declare_primitive_variable(self):
+        data = """
+            int main() {
+                int i;
+                return 0;
+            }
+            """
+        self.parser.parse(data)
+        self.assertTrue(True, 'No exceptions = Parser successfully parsed.')
+
+    def test_declare_and_assign_primitive_variable(self):
+        data = """
+            int main() {
+                int i = 5;
+                return 0;
+            }
+            """
+        self.parser.parse(data)
+        self.assertTrue(True, 'No exceptions = Parser successfully parsed.')
+
+    def test_modify_primitive_variable(self):
+        self.parser.logger.add_switch(Logger.PRODUCTION)
+        self.parser.logger.add_switch(Logger.INFO)
+
         data = """
             int main() {
                 int i = 0;
+                i += 5;
+                return 0;
+            }
+            """
+        self.parser.parse(data)
+        self.assertTrue(True, 'No exceptions = Parser successfully parsed.')
+
+    def test_declare_pointer_variable(self):
+        data = """
+            int main() {
+                int* i;
+                return 0;
+            }
+            """
+        self.parser.parse(data)
+        self.assertTrue(True, 'No exceptions = Parser successfully parsed.')
+
+    def test_declare_deep_pointer_variable(self):
+        data = """
+            int main() {
+                int*** i;
                 return 0;
             }
             """
@@ -56,6 +99,40 @@ class TestParser(unittest.TestCase):
         const int GLOBAL_CONSTANT = 5;
 
         int main() {
+          int i = GLOBAL_CONSTANT;
+          return 0;
+        }
+        """
+        self.parser.parse(data)
+        self.assertTrue(True, 'No exceptions = Parser successfully parsed.')
+
+    def test_while_loop(self):
+        data = """
+        int main() {
+          while (1) {}
+          return 0;
+        }
+        """
+        self.parser.parse(data)
+        self.assertTrue(True, 'No exceptions = Parser successfully parsed.')
+
+    def test_for_loop(self):
+        data = """
+        int main() {
+          int i;
+          for (i = 0; i < 3; i++) {}
+
+          return 0;
+        }
+        """
+        self.parser.parse(data)
+        self.assertTrue(True, 'No exceptions = Parser successfully parsed.')
+
+    def test_do_while_loop(self):
+        data = """
+        int main() {
+          int i = 1;
+          do {i++;} while(i);
           return 0;
         }
         """
@@ -72,7 +149,56 @@ class TestParser(unittest.TestCase):
         self.parser.parse(data)
         self.assertTrue(True, 'No exceptions = Parser successfully parsed.')
 
-    def test_declare_and_call_function(self):
+    def test_declare_array_with_constant_expression_in_subscript(self):
+        data = """
+        int main() {
+          int my_array[5 + 5];
+          return 0;
+        }
+        """
+        self.parser.parse(data)
+        self.assertTrue(True, 'No exceptions = Parser successfully parsed.')
+
+    def test_access_array(self):
+        data = """
+        int main() {
+          int i = 0;
+          int my_array[10];
+
+          int first_element = my_array[0];
+          int some_other_element = my_array[i];
+
+          return 0;
+        }
+        """
+        self.parser.parse(data)
+        self.assertTrue(True, 'No exceptions = Parser successfully parsed.')
+
+    def test_declare_function(self):
+        data = """
+            int do_stuff(char c);
+
+            int main() {
+              return 0;
+            }
+        """
+        self.parser.parse(data)
+        self.assertTrue(True, 'No exceptions = Parser successfully parsed.')
+
+    def test_declare_function_implementation(self):
+        data = """
+            int do_stuff(char c) {
+                return c + c;
+            }
+
+            int main() {
+              return 0;
+            }
+        """
+        self.parser.parse(data)
+        self.assertTrue(True, 'No exceptions = Parser successfully parsed.')
+
+    def test_call_function(self):
         data = """
             int do_stuff(char c);
 
@@ -117,8 +243,6 @@ class TestParser(unittest.TestCase):
     def test_declare_struct(self):
         data =  """
             int global;
-
-            // a comment
 
             struct Pixel {
                 char r;
@@ -173,5 +297,8 @@ class TestParser(unittest.TestCase):
         self.parser.parse(data)
         self.assertTrue(True, 'No exceptions = Parser successfully parsed.')
 
-
-
+    # TODO: don't put a lot of emphasis on bad cases until things are strong with the good cases
+    def test_malformed_main_fails(self):
+        with self.assertRaises(Exception):
+            data = 'badmain(] {return 0;}'
+            self.parser.parse(data)

@@ -28,6 +28,7 @@ class TestSymbolTable(unittest.TestCase):
 
     def test_insert(self):
         self.assertTrue(self.sym.insert(Symbol('A')) == 'SUCCESS')
+        self.assertTrue(self.sym.find('A') is not None)
         self.assertTrue(self.sym.insert(Symbol('B')) == 'SUCCESS')
         self.assertTrue(self.sym.insert(Symbol('C')) == 'SUCCESS')
 

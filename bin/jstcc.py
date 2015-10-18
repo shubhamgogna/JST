@@ -17,6 +17,7 @@
 
 import os
 import sys
+from compiler.compiler_state import CompilerState
 from loggers.logger import Logger
 
 sys.path.insert(1, os.path.join(sys.path[0], '../'))
@@ -46,7 +47,9 @@ def main():
 
     data = dummy_data
 
-    parser = Parser(lexer=Lexer())
+    compiler_state = CompilerState()
+
+    parser = Parser(compiler_state=compiler_state, lexer=Lexer(compiler_state=compiler_state))
     parser.logger.add_switch(Logger.PRODUCTION)
     parser.parse(data)
 

@@ -13,7 +13,8 @@ Adding to Parser
 - PLY `sudo pip3 install ply`
 
 ## Commands for Compiling/Testing
-- To make and run the program run `python3 bin/jstcc.py` (with the project directory as your working directory.
+- To make and run the program run `python3 bin/jstcc.py` (preferably with the project directory as your working
+  directory).
 - To run all tests, run `python3 -m unittest` from the top of the project directory.
 - SymbolTable `python3 TestSymbolTable.py`
 

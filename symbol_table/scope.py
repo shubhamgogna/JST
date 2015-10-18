@@ -23,7 +23,7 @@ class Scope(object):
 
    def insert(self, symbol):
       if type(symbol) is Symbol:
-         self.map[symbol.name] = symbol
+         self.map[symbol.identifier] = symbol
       else:
          raise TypeError("'symbol' is not an instance of Symbol.")
 

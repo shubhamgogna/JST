@@ -16,24 +16,19 @@
 import ply.yacc as yacc
 
 from loggers.logger import Logger
-from symbol_table.scope import Scope
-from symbol_table.symbol_builder import SymbolBuilder
-from symbol_table.symbol_table import SymbolTable
+from scanning.clexer import Lexer
 
 
 class Parser(object):
+    def __init__(self, compiler_state, lexer=None, **kwargs):
+        self.compiler_state = compiler_state
 
-    def __init__(self, lexer, **kwargs):
-        self.symbol_table = SymbolTable()
-
+        if lexer is None:
+            lexer = Lexer(compiler_state)
         self.lexer = lexer
         self.tokens = lexer.tokens
-        self.lexer.symbol_table = self.symbol_table
 
         self.parser = yacc.yacc(module=self, start='translation_unit')
-
-        self.in_insert_mode = True
-        self.most_recently_observed_type = None
 
         self.logger = Logger()
 
@@ -48,8 +43,7 @@ class Parser(object):
     #
     def p_error(self, t):
         self.logger.implement_me("p_error")
-        print("Error encountered!")
-        raise Exception("Error encountered!")
+        raise NotImplemented("p_error")
 
     #
     # translation-unit:
@@ -73,26 +67,17 @@ class Parser(object):
         """external_declaration : function_definition"""
         self.logger.production('external_declaration -> function_definition')
 
-        self.logger.info('Creating a function symbol in the table')
-        # self.symbol_table.insert(t[1].build)
-
     def p_external_declaration_2(self, t):
         """external_declaration : declaration"""
         self.logger.production('external_declaration -> declaration')
-
-        if self.in_insert_mode:
-            self.logger.info('Addinng a symbol to the symbol table')
-            # self.symbol_table.insert(t[1].build())
-        else:
-            self.logger.info('Verifying that symbol <insert id here> is in the table')
-            # self.symbol_table.find('<insert id here>')
 
     #
     # function-definition:
     #
     def p_function_definition_1(self, t):
         """function_definition : declaration_specifiers declarator declaration_list compound_statement"""
-        self.logger.production('function_definition -> declaration_specifiers declarator declaration_list compound_statement')
+        self.logger.production(
+            'function_definition -> declaration_specifiers declarator declaration_list compound_statement')
 
     def p_function_definition_2(self, t):
         """function_definition : declarator declaration_list compound_statement"""
@@ -116,7 +101,6 @@ class Parser(object):
     def p_declaration_2(self, t):
         """declaration : declaration_specifiers SEMI"""
         self.logger.production('declaration -> declaration_specifiers SEMI')
-        # self.symbol_table.insert()
 
     #
     # declaration-list:
@@ -164,25 +148,25 @@ class Parser(object):
         """storage_class_specifier : AUTO"""
         self.logger.production('storage_class_specifier -> AUTO')
 
-        t[0] = SymbolBuilder(storage_specifiers=['auto'])
+        t[0] = t[1]
 
     def p_storage_class_specifie_register(self, t):
         """storage_class_specifier : REGISTER"""
         self.logger.production('storage_class_specifier -> REGISTER')
 
-        t[0] = SymbolBuilder(storage_specifiers=['register'])
+        t[0] = t[1]
 
     def p_storage_class_specifier_static(self, t):
         """storage_class_specifier : STATIC"""
         self.logger.production('storage_class_specifier -> STATIC')
 
-        t[0] = SymbolBuilder(storage_specifiers=['static'])
+        t[0] = t[1]
 
     def p_storage_class_specifier_extern(self, t):
         """storage_class_specifier : EXTERN"""
         self.logger.production('storage_class_specifier -> EXTERN')
 
-        t[0] = SymbolBuilder(storage_specifiers=['extern'])
+        t[0] = t[1]
 
     def p_storage_class_specifier_typedef(self, t):
         """storage_class_specifier : TYPEDEF"""
@@ -220,7 +204,7 @@ class Parser(object):
     def p_type_specifier_long(self, t):
         """type_specifier : LONG"""
         self.logger.production('type_specifier -> LONG')
-        # TODO: refactor grammar to put signed/unsigned befor other types (long too)
+        # TODO: refactor grammar to put signed/unsigned before other types (long too)
         self.most_recently_observed_type = 'long'
 
     def p_type_specifier_float(self, t):
@@ -273,28 +257,40 @@ class Parser(object):
         """type_qualifier : CONST"""
         self.logger.production('type_qualifier -> CONST')
 
-        t[0] = SymbolBuilder(type_qualifier=['const'])
+        t[0] = t[1]
 
     def p_type_qualifier_volatile(self, t):
         """type_qualifier : VOLATILE"""
         self.logger.production('type_qualifier -> VOLATILE')
 
-        t[0] = SymbolBuilder(type_qualifier=['volatile'])
+        t[0] = t[1]
 
     #
     # struct-or-union-specifier
     #
     def p_struct_or_union_specifier_1(self, t):
         """struct_or_union_specifier : struct_or_union identifier LBRACE struct_declaration_list RBRACE"""
-        self.logger.production('struct_or_union_specifier : struct_or_union identifier LBRACE struct_declaration_list RBRACE')
+        self.logger.production(
+            'struct_or_union_specifier : struct_or_union identifier LBRACE struct_declaration_list RBRACE')
+
+
+        t[2].is_struct = True  # TODO:
+        t[2].add_struct_members(t[4])
+        t[0] = t[2]
 
     def p_struct_or_union_specifier_2(self, t):
         """struct_or_union_specifier : struct_or_union LBRACE struct_declaration_list RBRACE"""
         self.logger.production('struct_or_union_specifier : struct_or_union LBRACE struct_declaration_list RBRACE')
 
+        raise NotImplemented('p_struct_or_union_specifier_2; how to do anonymous struct?')
+
     def p_struct_or_union_specifier_3(self, t):
         """struct_or_union_specifier : struct_or_union identifier"""
         self.logger.production('struct_or_union_specifier : struct_or_union identifier')
+
+        t[2].is_struct = True
+        t[0] = t[2]
+
 
     #
     # struct-or-union:
@@ -303,9 +299,13 @@ class Parser(object):
         """struct_or_union : STRUCT"""
         self.logger.production('struct_or_union -> STRUCT')
 
+        t[0] = 'struct'
+
     def p_struct_or_union_union(self, t):
         """struct_or_union : UNION"""
         self.logger.production('struct_or_union -> UNION')
+
+        t[0] = 'union'
 
     #
     # struct-declaration-list:
@@ -314,9 +314,13 @@ class Parser(object):
         """struct_declaration_list : struct_declaration"""
         self.logger.production('struct_declaration_list : struct_declaration')
 
+        t[0] = [t[1]]
+
     def p_struct_declaration_list_2(self, t):
         """struct_declaration_list : struct_declarator_list struct_declaration"""
         self.logger.production('struct_declaration_list : struct_declarator_list struct_declaration')
+
+        t[0] = t[1] + t[2]
 
     #
     # init-declarator-list:
@@ -399,19 +403,22 @@ class Parser(object):
         """enum_specifier : ENUM identifier LBRACE enumerator_list RBRACE"""
         self.logger.production('enum_specifier : ENUM identifier LBRACE enumerator_list RBRACE')
 
-        t[0] = SymbolBuilder(is_enum=True, enum_members=t[4]).combine(t[2])  # TODO: is identifier string or symbol?
+        t[2].is_enum = True
+        t[2].add_enum_members(t[4])
+        t[0] = t[2]
 
     def p_enum_specifier_2(self, t):
         """enum_specifier : ENUM LBRACE enumerator_list RBRACE"""
         self.logger.production('enum_specifier : ENUM LBRACE enumerator_list RBRACE')
 
-        t[0] = SymbolBuilder(is_enum=True, enum_members=t[3])
+        raise NotImplemented('p_enum_specifier_2; how to do anonymous enum?')
 
     def p_enum_specifier_3(self, t):
         """enum_specifier : ENUM identifier"""
         self.logger.production('enum_specifier : ENUM identifier')
 
-        t[0] = SymbolBuilder(is_enum=True)
+        t[2].is_enum = True
+        t[0] = t[2]
 
     #
     # enumerator_list:
@@ -435,13 +442,15 @@ class Parser(object):
         """enumerator : identifier"""
         self.logger.production('enumerator : identifier')
 
-        t[0] = (t[1], None)
+        t[0] = t[1].set_constant_value(-1)  # TODO: create an enum value ticket counter
 
     def p_enumerator_2(self, t):
         """enumerator : identifier EQUALS constant_expression"""
         self.logger.production('enumerator : identifier EQUALS constant_expression')
 
-        t[0] = (t[1], t[3])  # TODO: unpack the constant value?
+        t[0] = t[1].set_constant_value(int(t[3][1]))  # t[3] should be a tuple like (value, type)
+        # not checking for negativity, we can allow negative values for enums
+        # TODO: create an enum value ticket counter
 
     #
     # declarator:
@@ -449,8 +458,6 @@ class Parser(object):
     def p_declarator_1(self, t):
         """declarator : pointer direct_declarator"""
         self.logger.production('declarator : pointer direct_declarator')
-
-        t[0] = t[1].combine(t[2])
 
     def p_declarator_2(self, t):
         """declarator : direct_declarator"""
@@ -465,7 +472,7 @@ class Parser(object):
         """direct_declarator : identifier"""
         self.logger.production('direct_declarator : identifier')
 
-        t[0] = SymbolBuilder(identifier=t[1])  # TODO: correct?
+        t[0] = t[1]  #whatever the declaration, it should have been built up by now
 
     def p_direct_declarator_2(self, t):
         """direct_declarator : LPAREN declarator RPAREN"""
@@ -477,26 +484,19 @@ class Parser(object):
         """direct_declarator : direct_declarator LBRACKET constant_expression_option RBRACKET"""
         self.logger.production('direct_declarator : direct_declarator LBRACKET constant_expression_option RBRACKET')
 
-        t[0] = SymbolBuilder(array_dims=[t[3]]).combine(t[1])
-
     def p_direct_declarator_4(self, t):
         """direct_declarator : direct_declarator LPAREN parameter_type_list RPAREN"""
         self.logger.production('direct_declarator : direct_declarator LPAREN parameter_type_list RPAREN')
-
-        t[0] = SymbolBuilder.combine(t[1]).combine(t[3])  # TODO: correct?
 
     def p_direct_declarator_5(self, t):
         """direct_declarator : direct_declarator LPAREN identifier_list RPAREN"""
         self.logger.production('direct_declarator : direct_declarator LPAREN identifier_list RPAREN')
 
-        t[0] = SymbolBuilder.combine(t[1]).combine(t[3])  # TODO: correct?
+        t[0] = t[1].add_arguments(t[3])
 
     def p_direct_declarator_6(self, t):
         """direct_declarator : direct_declarator LPAREN RPAREN"""
         self.logger.production('direct_declarator : direct_declarator LPAREN RPAREN')
-
-        symbol_builder = SymbolBuilder(is_function=True,)
-        t[0] = symbol_builder.combine(t[1])  # TODO: correct?
 
     #
     # pointer:
@@ -505,14 +505,9 @@ class Parser(object):
         """pointer : TIMES type_qualifier_list"""
         self.logger.production('pointer : TIMES type_qualifier_list')
 
-        symbol_builder = SymbolBuilder(pointer_count=1)
-        t[0] = symbol_builder.combine(t[2])  # TODO: correct action?
-
     def p_pointer_2(self, t):
         """pointer : TIMES"""
         self.logger.production('pointer : TIMES')
-
-        t[0] = SymbolBuilder(pointer_count=1)
 
     def p_pointer_3(self, t):
         """pointer : TIMES type_qualifier_list pointer"""
@@ -520,16 +515,10 @@ class Parser(object):
 
         # TODO: double check this
         # TODO: what do type qualifiers between pointer stars do? Should we shortcut around them?
-        symbol_builder = SymbolBuilder(pointer_count=1)
-        symbol_builder.combine(t[2])  # TODO: this might not be the correct way to go about things
-        t[0] = symbol_builder.combine(t[3])
 
     def p_pointer_4(self, t):
         """pointer : TIMES pointer"""
         self.logger.production('pointer : TIMES pointer')
-
-        symbol_builder = SymbolBuilder(pointer_count=1)
-        t[0] = symbol_builder.combine(t[2])
 
     #
     # type-qualifier-list:
@@ -582,7 +571,7 @@ class Parser(object):
         """identifier_list : identifier"""
         self.logger.production('identifier_list : identifier')
 
-        t[0] = [t[1]]
+        t[0] = [t[1]]  # this begins the list parameter in the production below
 
     def p_identifier_list_2(self, t):
         """identifier_list : identifier_list COMMA identifier"""
@@ -655,7 +644,8 @@ class Parser(object):
 
     def p_direct_abstract_declarator_2(self, t):
         """direct_abstract_declarator : direct_abstract_declarator LBRACKET constant_expression_option RBRACKET"""
-        self.logger.production('direct_abstract_declarator : direct_abstract_declarator LBRACKET constant_expression_option RBRACKET')
+        self.logger.production(
+            'direct_abstract_declarator : direct_abstract_declarator LBRACKET constant_expression_option RBRACKET')
 
     def p_direct_abstract_declarator_3(self, t):
         """direct_abstract_declarator : LBRACKET constant_expression_option RBRACKET"""
@@ -663,7 +653,8 @@ class Parser(object):
 
     def p_direct_abstract_declarator_4(self, t):
         """direct_abstract_declarator : direct_abstract_declarator LPAREN parameter_type_list_option RPAREN"""
-        self.logger.production('direct_abstract_declarator : direct_abstract_declarator LPAREN parameter_type_list_option RPAREN')
+        self.logger.production(
+            'direct_abstract_declarator : direct_abstract_declarator LPAREN parameter_type_list_option RPAREN')
 
     def p_direct_abstract_declarator_5(self, t):
         """direct_abstract_declarator : LPAREN parameter_type_list_option RPAREN"""
@@ -741,11 +732,12 @@ class Parser(object):
     # compound-statement:
     #
     def p_compound_statement_1(self, t):
-        """compound_statement : LBRACE enter_scope insert_mode declaration_list statement_list lookup_mode leave_scope RBRACE"""
+        """compound_statement : LBRACE enter_scope insert_mode declaration_list lookup_mode statement_list leave_scope RBRACE"""
         self.logger.production('compound_statement : LBRACE declaration_list statement_list RBRACE')
+        # TODO: is this the right place to go into lookup mode?
 
     def p_compound_statement_2(self, t):
-        """compound_statement : LBRACE enter_scope statement_list lookup_mode leave_scope RBRACE"""
+        """compound_statement : LBRACE enter_scope lookup_mode statement_list leave_scope RBRACE"""
         self.logger.production('compound_statement : LBRACE statement_list RBRACE')
 
     def p_compound_statement_3(self, t):
@@ -791,7 +783,9 @@ class Parser(object):
 
     def p_iteration_statement_2(self, t):
         """iteration_statement : FOR LPAREN expression_option SEMI expression_option SEMI expression_option RPAREN statement"""
-        self.logger.production('iteration_statement : FOR LPAREN expression_option SEMI expression_option SEMI expression_option RPAREN statement')
+        self.logger.production(
+            'iteration_statement : FOR LPAREN expression_option SEMI expression_option SEMI expression_option RPAREN '
+            'statement')
 
     def p_iteration_statement_3(self, t):
         """iteration_statement : DO statement WHILE LPAREN expression RPAREN SEMI"""
@@ -902,7 +896,8 @@ class Parser(object):
 
     def p_conditional_expression_2(self, t):
         """conditional_expression : logical_or_expression CONDOP expression COLON conditional_expression"""
-        self.logger.production('conditional_expression : logical_or_expression CONDOP expression COLON conditional_expression')
+        self.logger.production(
+            'conditional_expression : logical_or_expression CONDOP expression COLON conditional_expression')
 
     #
     # constant-expression
@@ -1170,25 +1165,24 @@ class Parser(object):
 
         t[0] = t[1]
 
-############
-    def p_primary_expression_string_literal_opt(self, t):
-        """primary_expression : string_literal_list"""
+    def p_primary_expression_string_literal(self, t):
+        """primary_expression : string_literal"""
         self.logger.production('primary_expression : string_literal_list')
-        t[0] = SymbolBuilder(type='string_literal', is_constant_literal=True, literal_value=t[1])
 
-    def p_string_literal_list_to_sconst(self, t):
-        """string_literal_list : SCONST"""
+        t[0] = t[1]
+
+    def p_string_literal_fragment(self, t):
+        """string_literal : SCONST"""
         self.logger.production('string_literal_list : SCONST')
 
         t[0] = t[1]
 
-    def p_string_literal_list_to_string_literal_list_sconst(self, t):
-        """string_literal_list : string_literal_list SCONST"""
+    def p_string_literal_plus_string_literal_fragment(self, t):
+        """string_literal : string_literal SCONST"""
         self.logger.production('string_literal_list : string_literal_list SCONST')
 
         # concatenate the string fragments into a single string literal by trimming off the quote marks
-        t[0] = t[1][ :-1] + t[2][1: ]
-#############
+        t[0] = t[1][:-1] + t[2][1:]
 
     def p_primary_expression_parenthesized(self, t):
         """primary_expression : LPAREN expression RPAREN"""
@@ -1204,15 +1198,12 @@ class Parser(object):
         """argument_expression_list :  assignment_expression"""
         self.logger.production('argument_expression_list :  assignment_expression')
 
-        # expecting t[1] to be a symbol builder
-        t[0] = t[1]
+
 
     def p_argument_expression_list_list_comma_expression(self, t):
         """argument_expression_list : argument_expression_list COMMA assignment_expression"""
         self.logger.production('argument_expression_list : argument_expression_list COMMA assignment_expression')
 
-        t[1].add_argument(t[3])
-        t[0] = t[1]
 
     #
     # constant:
@@ -1221,19 +1212,19 @@ class Parser(object):
         """constant : ICONST"""
         self.logger.production('constant : ICONST')
 
-        t[0] = SymbolBuilder(type='int_literal', is_constant_literal=True, literal_value=t[1])
+        t[0] = (int(t[1]), 'int')  # value of the token, type
 
     def p_constant_float(self, t):
         """constant : FCONST"""
         self.logger.production('constant : FCONST')
 
-        t[0] = SymbolBuilder(type='float_literal', is_constant_literal=True, literal_value=t[1])
+        t[0] = (float(t[1]), 'float')  # value of the token, type
 
     def p_constant_char(self, t):
         """constant : CCONST"""
         self.logger.production('constant : CCONST')
 
-        t[0] = SymbolBuilder(type='char_literal', is_constant_literal=True, literal_value=t[1])
+        t[0] = (t[1], 'char')  # value of the token, type
 
 
     #
@@ -1243,19 +1234,8 @@ class Parser(object):
         """identifier : ID"""
         self.logger.production('identifier : ID')
 
-        symbol = self.symbol_table.find(t[1])
-        if self.in_insert_mode:
-            if symbol is None:
-                symbol_builer = SymbolBuilder()
-                symbol_builer.identifier = t[1]
-                t[0] = symbol_builer
-            else:
-                t[0] = symbol
-        else:
-            if symbol is None:
-                raise Exception('Undeclared identifier: ' + t[1])  # TODO: use the parser error exception
-            else:
-                t[0] = symbol
+        # the scanner passes a symbol reference to the parser
+        t[0] = t[1]
 
     #
     # empty:
@@ -1270,24 +1250,21 @@ class Parser(object):
     def p_enter_scope(self, t):
         """enter_scope : empty """
         self.logger.info('Entering new scope')
-        self.symbol_table.push(Scope())
 
     def p_insert_mode(self, t):
         """insert_mode : empty """
-        self.logger.info('Insert mode.')
-        self.in_insert_mode = True
-        self.symbol_table.insert_mode = True
+        self.logger.info('Entering insert mode.')
+
+        self.compiler_state.insert_mode = True
 
     def p_leave_scope(self, t):
         """leave_scope : empty"""
         self.logger.info('Leaving a scope')
-        self.in_insert_mode = False
-        self.symbol_table.pop()
 
     def p_lookup_mode(self, t):
         """lookup_mode : empty """
-        self.logger.info('Lookup mode.')
-        self.in_insert_mode = False
-        self.symbol_table.insert_mode = False
+        self.logger.info('Entering lookup mode.')
 
-    # TODO: do we need a dummy production for 'reset_current_symbol'?
+        self.insert_mode = False
+
+        # TODO: do we need a dummy production for 'reset_current_symbol'?

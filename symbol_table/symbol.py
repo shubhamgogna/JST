@@ -14,19 +14,54 @@
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
 class Symbol(object):
-    def __init__(self, name, identifier='', type=None):
-        self.name = name
-        self.__type = ''  # int, float, etc.
-        self.__identifier = identifier
-        self.__pointer_count = 0
-        self.__array_dim_count = 0
-        self.__array_dims = []
-        self.__storage_specifiers = []  # auto, static, extern, etc.
-        self.__type_qualifier = None    # const, volatile
+    EMPTY_ARRAY_DiM = -1
+
+    def __init__(self, identifier='', type=None):
+        self.type = ''  # int, float, etc.
+        self.identifier = identifier
+        self.pointer_level = 0
+        self.array_dims = []
+        self.storage_specifiers = []  # auto, static, extern, etc.
+        self.type_qualifier = None    # const, volatile
+        self.parameters = []
+        self.is_struct = False
+        self.is_enum = False
+        self.is_function = False
+
+    def __str__(self):
+        # TODO: lots...
+
+        if self.is_function:
+            return 'function: {} {}({})'.format(self.type, self.name, self.parameters, self.type)
+        else:
+            pointer_str = self.pointer_level * '*'
+            array_str = ''
+            for dim in self.array_dims:
+                array_str += '[{}]'.format(dim if dim is not Symbol.EMPTY_ARRAY_DiM else '')
+
+            return '{}{} {}{}'.format(self.type, pointer_str, self.identifier, array_str)
 
     def __repr__(self):
-        return self.__type + (self.__pointer_count * '*') + self.__identifier
-        # TODO: add arrays and args
+        return str(self)
+
+    def add_storage_specifier(self, specifier):
+        pass
+
+    def add_type_qualifier(self, qualifier):
+        pass
+
+    def add_to_pointer_level(self, addition):
+        pass
+
+    def add_struct_members(self, members):
+        pass
+
+    def add_enum_members(self, members):
+        pass
+
+    def add_arguments(self, arguments):
+        self.is_function = True
+        pass
 
 
 class FunctionSymbol(Symbol):
