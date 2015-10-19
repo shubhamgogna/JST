@@ -64,3 +64,15 @@ class TestSymbolTable(unittest.TestCase):
 
         self.sym.pop()
         self.assertTrue(self.sym.size() == 0)
+
+    def test_symbol_table_clone(self):
+        self.sym.insert(Symbol('A'))
+        self.sym.push()
+        self.sym.insert(Symbol('B'))
+        clone = self.sym.clone()
+        self.assertTrue(self.sym.size() == clone.size())
+        self.assertTrue(self.sym.find('A') == clone.find('A'))
+        self.assertTrue(self.sym.find('B') == clone.find('B'))
+        self.sym.pop()
+        self.assertTrue(self.sym.size() == clone.size() - 1)
+        self.assertTrue(self.sym.find('B') is None and clone.find('B') is not None)

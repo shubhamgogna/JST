@@ -73,7 +73,6 @@ class SymbolTable(object):
         result.table = []
         for scope in self.table:
             result.table.append(scope.clone())
-
         return result
 
     def __repr__(self):

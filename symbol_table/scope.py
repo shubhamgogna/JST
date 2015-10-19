@@ -16,32 +16,31 @@
 from bintrees import RBTree
 from symbol_table.symbol import Symbol
 
+
 class Scope(object):
+    def __init__(self):
+        self.map = RBTree()
 
-   def __init__(self):
-      self.map = RBTree()
+    def insert(self, symbol):
+        if type(symbol) is Symbol:
+            self.map[symbol.identifier] = symbol
+        else:
+            raise TypeError("'symbol' is not an instance of Symbol.")
 
-   def insert(self, symbol):
-      if type(symbol) is Symbol:
-         self.map[symbol.identifier] = symbol
-      else:
-         raise TypeError("'symbol' is not an instance of Symbol.")
+    def find(self, name):
+        return self.map.get(name, None)
 
-   def find(self, name):
-      return self.map.get(name, None)
+    def size(self):
+        return len(self.map)
 
-   def size(self):
-      return len(self.map)
+    def clone(self):
+        result = Scope()
+        for iden, value in self.map.items():
+            result.insert(value)
+        return result
 
-   def clone(self):
-      result = Scope()
-      for symbol in self.map:
-         if type(self.map[symbol]) is Symbol:
-             result.insert(self.map[symbol].clone())                
-      return result
-
-   def __repr__(self):
-      symbols = []
-      for key, value in self.map.items():
-         symbols.append("  " + key + " : " + repr(value))
-      return "\n".join(symbols)
+    def __repr__(self):
+        symbols = []
+        for key, value in self.map.items():
+            symbols.append("  " + key + " : " + repr(value))
+        return "\n".join(symbols)
