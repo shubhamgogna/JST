@@ -72,7 +72,7 @@ class SymbolTable(object):
         result = SymbolTable()
         result.table = []
         for scope in self.table:
-            result.append(scope)
+            result.append(scope.clone())
         return result
 
     def __repr__(self):
