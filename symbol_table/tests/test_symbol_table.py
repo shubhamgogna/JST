@@ -11,7 +11,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with JST.  If not, see <http://www.gnu.org/licenses/>..
+# along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
 from symbol_table.symbol import Symbol
@@ -19,7 +19,6 @@ from symbol_table.symbol_table import SymbolTable
 
 
 class TestSymbolTable(unittest.TestCase):
-
     def setUp(self):
         self.sym = SymbolTable()
 

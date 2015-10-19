@@ -9,7 +9,7 @@
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-#p
+#
 # You should have received a copy of the GNU General Public License
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -41,13 +41,11 @@ class TestLexer(unittest.TestCase):
 
     #NOTE: Don't have any RE for Ptrs!!!! - only tokenize them as MULT ID ....
     #NOTE: Also, TYPEID is never used here....
-    TEST_FPTR_TOKEN_TYPES = ['TYPEDEF','INT','LPAREN','TIMES','ID','RPAREN','LPAREN','INT','ID','COMMA','INT','ID','RPAREN','SEMI'] + ['INT','ID','LPAREN','INT','ID','COMMA','INT','ID','COMMA','ID','ID','RPAREN','SEMI'] + ['INT','ID','LPAREN','INT','ID','COMMA','INT','ID','RPAREN','SEMI'] + ['INT','ID','LPAREN','INT','ID','COMMA','INT','ID','RPAREN','SEMI'] + SIMPLE_MAIN_START_TOKEN_TYPES + ['INT','ID','SEMI','INT','ID','SEMI'] + ['ID','EQUALS','ID','LPAREN','ICONST','COMMA','ICONST','COMMA','ID','RPAREN','SEMI'] + ['ID','EQUALS','ID','LPAREN','ICONST','COMMA','ICONST','COMMA','ID','RPAREN','SEMI'] + SIMPLE_MAIN_END_TOKEN_TYPES + ['INT','ID','LPAREN','INT','ID','COMMA','INT','ID','COMMA','ID','ID','RPAREN','LBRACE','RETURN','ID','LPAREN','ID','COMMA','ID','RPAREN','SEMI','RBRACE'] + ['INT','ID','LPAREN','INT','ID','COMMA','INT', 'ID', 'RPAREN','LBRACE','RETURN','ID','PLUS','ID','SEMI','RBRACE'] + ['INT','ID','LPAREN','INT','ID','COMMA','INT', 'ID', 'RPAREN','LBRACE','RETURN','LPAREN','ID','PLUS','ID','RPAREN','MOD','ICONST','SEMI','RBRACE'] 
+    TEST_FPTR_TOKEN_TYPES = ['TYPEDEF','INT','LPAREN','TIMES','ID','RPAREN','LPAREN','INT','ID','COMMA','INT','ID','RPAREN','SEMI'] + ['INT','ID','LPAREN','INT','ID','COMMA','INT','ID','COMMA','ID','ID','RPAREN','SEMI'] + ['INT','ID','LPAREN','INT','ID','COMMA','INT','ID','RPAREN','SEMI'] + ['INT','ID','LPAREN','INT','ID','COMMA','INT','ID','RPAREN','SEMI'] + SIMPLE_MAIN_START_TOKEN_TYPES + ['INT','ID','SEMI','INT','ID','SEMI'] + ['ID','EQUALS','ID','LPAREN','ICONST','COMMA','ICONST','COMMA','ID','RPAREN','SEMI'] + ['ID','EQUALS','ID','LPAREN','ICONST','COMMA','ICONST','COMMA','ID','RPAREN','SEMI'] + SIMPLE_MAIN_END_TOKEN_TYPES + ['INT','ID','LPAREN','INT','ID','COMMA','INT','ID','COMMA','ID','ID','RPAREN','LBRACE','RETURN','ID','LPAREN','ID','COMMA','ID','RPAREN','SEMI','RBRACE'] + ['INT','ID','LPAREN','INT','ID','COMMA','INT', 'ID', 'RPAREN','LBRACE','RETURN','ID','PLUS','ID','SEMI','RBRACE'] + ['INT','ID','LPAREN','INT','ID','COMMA','INT', 'ID', 'RPAREN','LBRACE','RETURN','LPAREN','ID','PLUS','ID','RPAREN','MOD','ICONST','SEMI','RBRACE']
 
-    
+
     TEST_SYMBOLS_TOKEN_TYPES = ['PLUS','MINUS','TIMES','DIVIDE','MOD','OR','AND','NOT','XOR','LSHIFT','RSHIFT','LOR','LAND','LNOT','LT','LE','GT','GE','EQ','NE','EQUALS','TIMESEQUAL','DIVEQUAL','MODEQUAL','PLUSEQUAL','MINUSEQUAL','LSHIFTEQUAL','RSHIFTEQUAL','ANDEQUAL','XOREQUAL','OREQUAL','PLUSPLUS','MINUSMINUS','ARROW','CONDOP','LPAREN','RPAREN','LBRACKET','RBRACKET','LBRACE','RBRACE','COMMA','PERIOD','SEMI','COLON','ELLIPSIS']
     TEST_RESERVED_TOKEN_TYPES = ['AUTO','BREAK','CASE','CHAR','CONST','CONTINUE','DEFAULT','DO','DOUBLE','ELSE','ENUM','EXTERN','FLOAT','FOR','GOTO','IF','INT','LONG','REGISTER','RETURN','SHORT','SIGNED','SIZEOF','STATIC','STRUCT','SWITCH','TYPEDEF','UNION','UNSIGNED','VOID','VOLATILE','WHILE']
-
-
 
     def setUp(self):
         self.compiler_state = CompilerState()
@@ -357,9 +355,6 @@ class TestLexer(unittest.TestCase):
 
         for given, expected in itertools.zip_longest(self.lexer.lexer, expected_token_types):
             self.assertEqual(given.type, expected)
-
-
-
 
 if __name__ == '__main__':
     unittest.main()

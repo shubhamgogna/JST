@@ -182,7 +182,6 @@ class Parser(object):
         t[0] = TypeDeclaration()
         t[0].add_qualifier(t[1])
 
-
     #
     # storage-class-specifier
     #
@@ -743,8 +742,6 @@ class Parser(object):
     def p_abstract_declarator_1(self, t):
         """abstract_declarator : pointer"""
         self.logger.production('abstract_declarator : pointer')
-
-
 
     def p_abstract_declarator_2(self, t):
         """abstract_declarator : pointer direct_abstract_declarator"""
@@ -1348,7 +1345,6 @@ class Parser(object):
         """
         self.logger.production('cast_expression : LPAREN type_name RPAREN cast_expression')
 
-
     #
     # unary_expression:
     #
@@ -1521,12 +1517,10 @@ class Parser(object):
         """
         self.logger.production('argument_expression_list :  assignment_expression')
 
-
     def p_argument_expression_list_list_comma_expression(self, t):
         """argument_expression_list : argument_expression_list COMMA assignment_expression
         """
         self.logger.production('argument_expression_list : argument_expression_list COMMA assignment_expression')
-
 
     #
     # constant:
@@ -1660,7 +1654,7 @@ class Parser(object):
         if type_1 == type_2:
             return type_1
         elif (type_1 is 'int' and (type_2 is 'int' or type_2 is 'char')) or (
-                type_2 is 'int' and (type_1 is 'int' or type_1 is 'char')):
+                        type_2 is 'int' and (type_1 is 'int' or type_1 is 'char')):
             return 'int'
         elif type_1 is 'float' or type_2 is 'float':
             return 'float'

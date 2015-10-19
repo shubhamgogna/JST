@@ -20,7 +20,6 @@ from scanning.calclexer import CalcLexer
 
 
 def main():
-
     p = Parser(Lexer())
     result = p.parse("int main() {return 0;}")
     print(result)
@@ -29,13 +28,14 @@ def main():
     parser = CalcParser(lexer)
 
     while True:
-       try:
-           s = input('calc > ')
-       except EOFError:
-           break
-       if not s: continue
-       result = parser.parse(s)
-       print(result)
+        try:
+            s = input('calc > ')
+        except EOFError:
+            break
+        if not s: continue
+        result = parser.parse(s)
+        print(result)
+
 
 if __name__ == '__main__':
     main()

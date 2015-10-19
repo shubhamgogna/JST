@@ -15,8 +15,8 @@
 
 import ply.yacc as yacc
 
-class CalcParser:
 
+class CalcParser:
     def __init__(self, lexer):
         self.lexer = lexer
         self.tokens = self.lexer.tokens

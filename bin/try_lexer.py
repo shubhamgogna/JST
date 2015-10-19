@@ -15,6 +15,7 @@
 
 import scanning.calclexer as scanner
 
+
 def main():
     # Test it out
     data = '''
@@ -31,8 +32,9 @@ def main():
     while True:
         tok = lexer.token()
         if not tok:
-            break      # No more input
+            break  # No more input
         print(tok)
+
 
 if __name__ == '__main__':
     main()
