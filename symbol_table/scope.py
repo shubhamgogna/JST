@@ -33,6 +33,12 @@ class Scope(object):
    def size(self):
       return len(self.map)
 
+   def clone(self):
+      result = Scope()
+      for symbol in self.map:
+         result.insert(symbol.clone())
+      return result
+
    def __repr__(self):
       symbols = []
       for key, value in self.map.items():

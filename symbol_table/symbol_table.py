@@ -68,6 +68,13 @@ class SymbolTable(object):
     def size(self):
         return len(self.table)
 
+    def clone(self):
+        result = SymbolTable()
+        result.table = []
+        for scope in self.table:
+            result.append(scope)
+        return result
+
     def __repr__(self):
         scopes = []
         for index, scope in enumerate(self.table):
