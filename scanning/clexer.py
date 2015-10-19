@@ -16,7 +16,7 @@
 import ply.lex as lex
 import sys
 from symbol_table.symbol import Symbol
-
+from loggers.logger import Logger
 
 class Lexer(object):
     # NOTE:  These aren't the S and L debug things that Harris had
@@ -29,11 +29,6 @@ class Lexer(object):
     # to keep track of current source code line
     CURRENT_LINE_START = 0
 
-    # to keep track of file name for the token and symbol table files
-    TOKEN_FILE = "scanner_dump_tokens.txt"
-    SYMBOL_TABLE_FILE = "scanner_dump_symbol_table.txt"
-
-    # need to add in a possible token file name is option -o is given
     def __init__(self, compiler_state=None, **kwargs):
         self.lexer = lex.lex(module=self, **kwargs)
 
@@ -42,17 +37,14 @@ class Lexer(object):
         # have to add in way to change debug level based on input?
         self.debug_level =  Lexer.DEBUG_SOURCE_AND_TOKENS
 
-        # if no -o option, default to stdout for now, will need to change this later.
-        if Lexer.TOKEN_FILE == None:
-            self.dout = sys.stdout
-        else:
-            self.dout = open(Lexer.TOKEN_FILE, 'w')
-
-        # open file for symbol table dubugging dumps
-        self.symbolout = open(Lexer.SYMBOL_TABLE_FILE, 'w')
+        self.token_logger = Logger()
+        self.st_logger = Logger()
 
         self.last_token = None
 
+    def teardown(self):
+        self.token_logger.finalize()
+        self.st_logger.finalize()
 
     def input(self, data):
         self.lexer.input(data)
@@ -66,17 +58,10 @@ class Lexer(object):
         return self.last_token
 
     def debug_out_tokens(self,tok_type, tok_value):
-        # Confirm with Terence the way of doing this?
-        if self.debug_level == Lexer.DEBUG_TOKENS or self.debug_level == Lexer.DEBUG_SOURCE_AND_TOKENS:
-            self.dout.write(str(tok_type) + ' ' + str(tok_value) + '\n')
+         if self.debug_level == Lexer.DEBUG_TOKENS or self.debug_level == Lexer.DEBUG_SOURCE_AND_TOKENS:
+                self.token_logger.token(str(tok_type) + ' ' + str(tok_value) + '\n')
 
-    def debug_out_source(self,message):
-        # Confirm with Terence the way of doing this?
-
-        if self.debug_level == Lexer.DEBUG_SOURCE_CODE or self.debug_level == Lexer.DEBUG_SOURCE_AND_TOKENS:
-            self.dout.write('\nSource Code: ' + '\n' + message + '\n-----\n\n')
-
-    def print_source_debug(self):
+    def debug_out_source(self):
         source_code = self.lexer.lexdata
         current_ln = ''
         i = self.CURRENT_LINE_START
@@ -85,11 +70,14 @@ class Lexer(object):
         # output of source code ignores block comments
         if t + source_code[i+1] != '/*' and t != '\n':
             while t != '\n':
-               current_ln = current_ln + t
-               i = i+1
-               t = source_code[i]
-            self.debug_out_source(current_ln)
+                current_ln = current_ln + t
+                i = i+1
+                t = source_code[i]
+            if self.debug_level == Lexer.DEBUG_SOURCE_CODE or self.debug_level == Lexer.DEBUG_SOURCE_AND_TOKENS:
+                self.token_logger.token('\nSource Code: ' + '\n' + current_ln + '\n-----\n\n')
 
+
+    # print source code to stderr for illegal tokens
     def print_source_line(self):
         source_code = self.lexer.lexdata
         current_ln = ''
@@ -166,7 +154,7 @@ class Lexer(object):
         #Note: Newline is not a token and thus will not be printed for DEBUG_TOKENS
 
         # Handle writing source code line
-        self.print_source_debug()
+        self.debug_out_source()
 
         # reset current line start
         self.CURRENT_LINE_START = t.lexer.lexpos
@@ -229,16 +217,16 @@ class Lexer(object):
 
     def t_LBRACE(self,t):
         r'\{'
-        self.symbolout.write("Opening brace encountered, symbol table dumped: \n")
-        #self.symbolout.write(self.symbol_table)
-        self.symbolout.write('\n')
+        self.st_logger.info("Opening brace encountered, symbol table dumped: \n")
+        self.st_logger.info(str(self.compiler_state.symbol_table))
+        self.st_logger.info('\n')
         return t
 
     def t_RBRACE(self,t):
         r'\}'
-        self.symbolout.write("Closing brace encountered, symbol table dumped: \n")
-        #self.symbolout.write(self.symbol_table)
-        self.symbolout.write('\n')
+        self.st_logger.info("Closing brace encountered, symbol table dumped: \n")
+        self.st_logger.info(str(self.compiler_state.symbol_table))
+        self.st_logger.info('\n')
         return t
 
     t_COMMA            = r','
@@ -255,9 +243,9 @@ class Lexer(object):
     def t_DUMP_SYMBOL_TABLE(self, t):
         r'!!S'
         #Note: since !!S is not token, it will not be printed for DEBUG_TOKENS.
-        self.symbolout.write("!!S encountered, symbol table dumped: \n")
-        #self.symbolout.write(self.symbol_table)
-        self.symbolout.write('\n')
+        self.st_logger.info("!!S encountered, symbol table dumped: \n")
+        self.st_logger.info(str(self.compiler_state.symbol_table))
+        self.st_logger.info('\n')
 
     def t_PRINT_DEBUG_MESSAGE(self, t):
         r'!!P(.*)!'
@@ -333,10 +321,12 @@ class Lexer(object):
     # Character constant 'c' or L'c'
     t_CCONST = r'(L)?\'([^\\\n]|(\\.))*?\''
 
+    # SHOULD NOW BE HANDLED IN ID STUFF
     # NOTE: Enumeration Constant
     #       For now this should be used as ID instead - and a error will be pointed out in parser
     #t_ECONST = r''
 
+    # SHOULD NOW BE HANDLED IN ID STUFF
     # NOTE: Typedef name ( TypeID )
     #       For now this should be used as ID instead - and a error will be pointed out in parser
     #t_TYPEID = r''
