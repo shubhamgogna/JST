@@ -209,7 +209,7 @@ class Lexer(object):
     t_RSHIFTEQUAL      = r'>>='
     t_ANDEQUAL         = r'&='
     t_OREQUAL          = r'\|='
-    t_XOREQUAL         = r'^='
+    t_XOREQUAL         = r'\^='
 
     # Increment/decrement
     t_PLUSPLUS         = r'\+\+'
@@ -307,6 +307,16 @@ class Lexer(object):
         #
         # return t
 
+    # Floating literal
+    def t_FCONST(self, t):
+        r'((\d+)(\.\d+)(e(\+|-)?(\d+))? | (\d+)e(\+|-)?(\d+))([lL]|[fF])?'
+
+        if Lexer.string_to_float_fails(t.value):
+            raise Exception("Specified constant float value ({}) is unacceptable.".format(t.value))
+
+        t.value = float(t.value)
+        return t
+
     # Integer literal
     def t_ICONST(self, t):
         r'\d+([uU]|[lL]|[uU][lL]|[lL][uU])?'
@@ -315,15 +325,6 @@ class Lexer(object):
             raise Exception("Specified constant integer value ({}) is unacceptable".format(t.value))
 
         t.value = int(t.value)
-        return t
-
-    def t_FCONST(self, t):
-        r'((\d+)(\.\d+)(e(\+|-)?(\d+))? | (\d+)e(\+|-)?(\d+))([lL]|[fF])?'
-
-        if Lexer.string_to_float_fails(t.value):
-            raise Exception("Specified constant float value ({}) is unacceptable.".format(t.value))
-
-        t.value = float(t.value)
         return t
 
     # String literal

@@ -21,7 +21,30 @@ from scanning.clexer import Lexer
 
 class TestLexer(unittest.TestCase):
 
-    SIMPLE_MAIN_TOKEN_TYPES = ['INT', 'ID', 'LPAREN', 'RPAREN', 'LBRACE', 'RETURN', 'ICONST', 'SEMI', 'RBRACE']
+    SIMPLE_MAIN_START_TOKEN_TYPES = ['INT', 'ID', 'LPAREN', 'RPAREN', 'LBRACE']
+    SIMPLE_MAIN_END_TOKEN_TYPES = ['RETURN', 'ICONST', 'SEMI', 'RBRACE']
+    SIMPLE_MAIN_TOKEN_TYPES = SIMPLE_MAIN_START_TOKEN_TYPES + SIMPLE_MAIN_END_TOKEN_TYPES
+
+
+    DECLARE_INT_TOKEN_TYPES = ['INT', 'ID', 'EQUALS', 'ICONST', 'SEMI']
+    DECLARE_CHAR_TOKEN_TYPES = ['CHAR', 'ID', 'EQUALS', 'CCONST', 'SEMI']
+    DELCARE_FLOAT_TOKEN_TYPES = ['FLOAT', 'ID', 'EQUALS', 'FCONST', 'SEMI' ]
+
+    TEST_VAR_TOKEN_TYPES = SIMPLE_MAIN_START_TOKEN_TYPES + DECLARE_INT_TOKEN_TYPES + SIMPLE_MAIN_END_TOKEN_TYPES
+    TEST_ILLEGAL_TOKEN_TYPES = SIMPLE_MAIN_START_TOKEN_TYPES + DECLARE_INT_TOKEN_TYPES + ['CHAR', 'EQUALS', 'CCONST', 'SEMI'] + SIMPLE_MAIN_END_TOKEN_TYPES
+    TEST_GLOBAL_TOKEN_TYPES = ['CONST', 'INT', 'ID', 'EQUALS', 'ICONST', 'SEMI'] + SIMPLE_MAIN_TOKEN_TYPES
+    TEST_ARRAY_TOKEN_TYPES = SIMPLE_MAIN_START_TOKEN_TYPES + ['INT', 'ID', 'LBRACKET', 'ICONST',  'RBRACKET', 'SEMI'] + SIMPLE_MAIN_END_TOKEN_TYPES
+    TEST_CONST_TOKEN_TYPES = SIMPLE_MAIN_START_TOKEN_TYPES + DECLARE_INT_TOKEN_TYPES + DELCARE_FLOAT_TOKEN_TYPES + DECLARE_CHAR_TOKEN_TYPES + ['ID','LPAREN','SCONST','RPAREN','SEMI'] + SIMPLE_MAIN_END_TOKEN_TYPES
+    TEST_FUNCTION_TOKEN_TYPES = ['INT', 'ID', 'LPAREN', 'CHAR', 'ID', 'RPAREN', 'SEMI'] + SIMPLE_MAIN_START_TOKEN_TYPES + ['ID', 'LPAREN', 'CCONST', 'RPAREN', 'SEMI'] + SIMPLE_MAIN_END_TOKEN_TYPES + ['INT', 'ID', 'LPAREN', 'CHAR', 'ID', 'RPAREN', 'LBRACE', 'RETURN', 'ID', 'PLUS', 'ID', 'SEMI', 'RBRACE']
+    TEST_BANGBANGS_TOKEN_TYPES = ['INT', 'ID', 'LPAREN', 'CHAR', 'ID', 'RPAREN', 'SEMI'] + SIMPLE_MAIN_START_TOKEN_TYPES + ['ID', 'LPAREN', 'CCONST', 'RPAREN', 'SEMI'] + SIMPLE_MAIN_END_TOKEN_TYPES + ['INT', 'ID', 'LPAREN', 'CHAR', 'ID', 'RPAREN', 'LBRACE', 'RETURN', 'ID', 'PLUS', 'ID', 'SEMI', 'RBRACE']
+    TEST_STRUCT_TOKEN_TYPES = ['STRUCT', 'ID', 'LBRACE', 'CHAR', 'ID', 'SEMI', 'CHAR', 'ID', 'SEMI', 'CHAR', 'ID', 'SEMI', 'RBRACE', 'SEMI'] + SIMPLE_MAIN_TOKEN_TYPES
+    TEST_FPTR_TOKEN_TYPES = ['TYPEDEF','INT','LPAREN','FAILURE!!!']
+    #note: Don't have any RE for Ptrs!!!! - only tokenize them as MULT ID ....
+
+    TEST_SYMBOLS_TOKEN_TYPES = ['PLUS','MINUS','TIMES','DIVIDE','MOD','OR','AND','NOT','XOR','LSHIFT','RSHIFT','LOR','LAND','LNOT','LT','LE','GT','GE','EQ','NE','EQUALS','TIMESEQUAL','DIVEQUAL','MODEQUAL','PLUSEQUAL','MINUSEQUAL','LSHIFTEQUAL','RSHIFTEQUAL','ANDEQUAL','XOREQUAL','OREQUAL','PLUSPLUS','MINUSMINUS','ARROW','CONDOP','LPAREN','RPAREN','LBRACKET','RBRACKET','LBRACE','RBRACE','COMMA','PERIOD','SEMI','COLON','ELLIPSIS']
+    TEST_RESERVED_TOKEN_TYPES = ['AUTO','BREAK','CASE','CHAR','CONST','CONTINUE','DEFAULT','DO','DOUBLE','ELSE','ENUM','EXTERN','FLOAT','FOR','GOTO','IF','INT','LONG','REGISTER','RETURN','SHORT','SIGNED','SIZEOF','STATIC','STRUCT','SWITCH','TYPEDEF','UNION','UNSIGNED','VOID','VOLATILE','WHILE']
+
+
 
     def setUp(self):
         self.compiler_state = CompilerState()
@@ -79,27 +102,23 @@ class TestLexer(unittest.TestCase):
                 return 0;
             }
             """
-        self.lexer.input(data)
-        while True:
-            tok = self.lexer.token()
-            if not tok:
-                break
-        self.assertTrue(True, 'No exceptions = Lexer successfully parsed.')
+        self.compare_token_output(data, expected_token_types=TestLexer.TEST_VAR_TOKEN_TYPES)
+
 
     def test_illegal_character(self):
         with self.assertRaises(Exception):
             data = """
             int main() {
                 int i = 0;
-                char 사랑 = 4;
+                char 사 = 'E';
                 return 0;
             }
             """
-            self.lexer.input(data)
+            lexer.input(data)
             while True:
-                tok = self.lexer.token()
-                if not tok:
-                    break
+              tok = lexer.token()
+              if not tok:
+                break
 
     def test_declare_global_constant(self):
         data = """
@@ -109,12 +128,8 @@ class TestLexer(unittest.TestCase):
           return 0;
         }
         """
-        self.lexer.input(data)
-        while True:
-            tok = self.lexer.token()
-            if not tok:
-                break
-        self.assertTrue(True, 'No exceptions = Lexer successfully parsed.')
+        self.compare_token_output(data, expected_token_types=TestLexer.TEST_GLOBAL_TOKEN_TYPES)
+
 
     def test_declare_array(self):
         data = """
@@ -123,12 +138,8 @@ class TestLexer(unittest.TestCase):
           return 0;
         }
         """
-        self.lexer.input(data)
-        while True:
-            tok = self.lexer.token()
-            if not tok:
-                break
-        self.assertTrue(True, 'No exceptions = Lexer successfully parsed.')
+        self.compare_token_output(data, expected_token_types=TestLexer.TEST_ARRAY_TOKEN_TYPES)
+
 
     def test_block_comments(self):
         data = """
@@ -141,29 +152,20 @@ class TestLexer(unittest.TestCase):
           return 0;
         }
         """
-        self.lexer.input(data)
-        while True:
-            tok = self.lexer.token()
-            if not tok:
-                break
-        self.assertTrue(True, 'No exceptions = Lexer successfully parsed.')
+        self.compare_token_output(data, expected_token_types=TestLexer.TEST_VAR_TOKEN_TYPES)
 
     def test_const_tokens(self):
         data = """
             int main() {
-                int i = 0;
-                int j = 5.6;
-                printf("STRINGCONSTTT");
+                int i = 7;
+                float j = 1.123;
                 char f = 'k';
+                printf("STRINGCONSTTT");
                 return 0;
             }
             """
-        self.lexer.input(data)
-        while True:
-            tok = self.lexer.token()
-            if not tok:
-                break
-        self.assertTrue(True, 'No exceptions = Lexer successfully parsed.')
+        self.compare_token_output(data, expected_token_types=TestLexer.TEST_CONST_TOKEN_TYPES)
+
 
     def test_declare_and_call_function(self):
         data = """
@@ -178,12 +180,8 @@ class TestLexer(unittest.TestCase):
                 return c + c;
             }
         """
-        self.lexer.input(data)
-        while True:
-            tok = self.lexer.token()
-            if not tok:
-                break
-        self.assertTrue(True, 'No exceptions = Lexer successfully parsed.')
+        self.compare_token_output(data, expected_token_types=TestLexer.TEST_FUNCTION_TOKEN_TYPES)
+
 
     def test_bang_bang_S(self):
         data = """
@@ -191,19 +189,17 @@ class TestLexer(unittest.TestCase):
 
             int main() {
               do_stuff('f');
+
               return 0;
             }
 
             int do_stuff(char c) {
+                !!S
                 return c + c;
-            }
+             }
         """
-        self.lexer.input(data)
-        while True:
-            tok = self.lexer.token()
-            if not tok:
-                break
-        self.assertTrue(True, 'No exceptions = Lexer successfully parsed.')
+        self.compare_token_output(data, expected_token_types=TestLexer.TEST_BANGBANGS_TOKEN_TYPES)
+
 
     def test_declare_struct(self):
         data = """
@@ -217,28 +213,21 @@ class TestLexer(unittest.TestCase):
               return 0;
             }
         """
-        expected_token_types = ['STRUCT', 'ID', 'LBRACE', 'CHAR', 'ID', 'SEMI', 'CHAR', 'ID', 'SEMI', 'CHAR', 'ID',
-                                'SEMI', 'RBRACE', 'SEMI', 'INT', 'ID', 'LPAREN', 'RPAREN', 'LBRACE', 'RETURN', 'ICONST',
-                                'SEMI', 'RBRACE']
+        self.compare_token_output(data, expected_token_types=TestLexer.TEST_STRUCT_TOKEN_TYPES)
 
-        self.compare_token_output(data, expected_token_types)
 
     def test_token_symbols(self):
         data = """
-        +,-,*,/,%,|,&,~,^,<<,>>, ||, &&, !, <, <=, >, >=, ==, !=
-        =, *=, /=, %=, +=, -=, <<=, >>=, &=, ^=, |=
-        ++,--
+        + - * / % | & ~ ^ << >>  ||  &&  !  <  <=  > >=  ==  !=
+        =  *=  /=  %=  +=  -=  <<=  >>=  &=  ^=  |=
+        ++ --
         ->
         ?
         () [] {} , . ; :
         ...
         """
-        self.lexer.input(data)
-        while True:
-            tok = self.lexer.token()
-            if not tok:
-                break
-        self.assertTrue(True, 'No exceptions = Lexer successfully parsed.')
+        self.compare_token_output(data, expected_token_types=TestLexer.TEST_SYMBOLS_TOKEN_TYPES)
+
 
     def test_reserved_words(self):
         data = """
@@ -275,12 +264,7 @@ class TestLexer(unittest.TestCase):
         volatile
         while
         """
-        self.lexer.input(data)
-        while True:
-            tok = self.lexer.token()
-            if not tok:
-                break
-        self.assertTrue(True, 'No exceptions = Lexer successfully parsed.')
+        self.compare_token_output(data, expected_token_types=TestLexer.TEST_RESERVED_TOKEN_TYPES)
 
     def test_declare_function_pointer_typedef(self):
         data = """
@@ -313,12 +297,8 @@ class TestLexer(unittest.TestCase):
             return (a + b) % 4;
         }
         """
-        self.lexer.input(data)
-        while True:
-            tok = self.lexer.token()
-            if not tok:
-                break
-        self.assertTrue(True, 'No exceptions = Lexer successfully parsed.')
+        self.compare_token_output(data, expected_token_types=TestLexer.TEST_FPTR_TOKEN_TYPES)
+
 
     def test_int_verify_no_overflow(self):
         self.assertFalse(Lexer.string_to_int_fails("4"), "4 should be acceptable")
@@ -328,7 +308,7 @@ class TestLexer(unittest.TestCase):
                         "That should should overflow")
 
     def test_float_acceptable(self):
-        self.assertTrue(Lexer.string_to_float_fails('1.123'), "1.23 is an acceptable float")
+        self.assertTrue(Lexer.string_to_float_fails('1.123'), "1.123 is an acceptable float")
 
     def test_float_unacceptable(self):
         self.assertFalse(Lexer.string_to_float_fails('1.8E+308'), "'1.8E+308' is too big")
