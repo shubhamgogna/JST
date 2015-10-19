@@ -243,7 +243,9 @@ class Lexer(object):
     def t_DUMP_SYMBOL_TABLE(self, t):
         r'!!S'
 
+        print("!!S encountered:")
         print(self.compiler_state.symbol_table)
+        print('\n')
 
         #Note: since !!S is not token, it will not be printed for DEBUG_TOKENS.
         self.st_logger.info("!!S encountered, symbol table dumped: \n")
@@ -256,6 +258,30 @@ class Lexer(object):
         message = t.value
         message = message.replace('!!P(', '').replace(')!', '')
         print(message)
+
+
+    # Debug symbol that will produce a token that can force productions to be completed
+    def t_FORCE_COMPLETIONS(self,t):
+        r'!!F'
+
+
+    # debug symbol that produce clone of symbol table in its currents state
+    def t_CLONE_SYMBOL_TABLE(self,t):
+        r'!!C'
+
+        print('!!C encountered. Table is clonning.')
+        print("Original Table")
+        print(self.compiler_state.symbol_table)
+        print('\n')
+
+        cloned_table = self.compiler_state.symbol_table.clone()
+        print("Cloned Table")
+        print(cloned_table)
+        print('\n')
+
+        # return cloned_table
+       
+
 
     # NOTE: \w is equivalent to [A-Za-z0-9]
     def t_ID(self, t):

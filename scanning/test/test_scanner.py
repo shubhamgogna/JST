@@ -9,7 +9,7 @@
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-#
+#p
 # You should have received a copy of the GNU General Public License
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -303,6 +303,42 @@ class TestLexer(unittest.TestCase):
         self.compare_token_output(data, expected_token_types=TestLexer.TEST_FPTR_TOKEN_TYPES)
 
 
+
+    def test_clone(self):
+        data = """
+            int do_stuff(char c);
+
+            int main() {
+
+              int x = 1;
+              int y = 2;
+              
+              do_stuff('f');
+
+              return 0;
+            }
+
+            int do_stuff(char c) {
+                !!C
+                return c + c;
+             }
+        """
+        self.lexer.lexer.input(data)
+        while True:
+            tok = self.lexer.lexer.token()
+            if not tok:
+#                print(self.lexer.lexer.compiler_state.symbol_table)
+
+                break
+
+        # data =  self.lexer.lexdata
+        # for i in data:
+            # if data == '!!S':
+            #     print(self.compiler_state.symbol_table)
+            # if data == '!!C':
+            #     print("BLADDDDDD")
+
+
     def test_int_verify_no_overflow(self):
         self.assertFalse(Lexer.string_to_int_fails("4"), "4 should be acceptable")
 
@@ -321,6 +357,8 @@ class TestLexer(unittest.TestCase):
 
         for given, expected in itertools.zip_longest(self.lexer.lexer, expected_token_types):
             self.assertEqual(given.type, expected)
+
+
 
 
 if __name__ == '__main__':

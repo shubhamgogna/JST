@@ -36,7 +36,8 @@ class Scope(object):
    def clone(self):
       result = Scope()
       for symbol in self.map:
-         result.insert(symbol.clone())
+         if type(self.map[symbol]) is Symbol:
+             result.insert(self.map[symbol].clone())                
       return result
 
    def __repr__(self):

@@ -75,7 +75,7 @@ class Symbol(object):
 
     def clone(self):
         # TODO Update function when Symbol class structure is finalized
-        return Symbol(identifier=self.identifier)
+         return Symbol(identifier=self.identifier)
 
 
 class TypeDeclaration(object):
