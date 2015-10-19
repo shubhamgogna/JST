@@ -242,6 +242,9 @@ class Lexer(object):
 
     def t_DUMP_SYMBOL_TABLE(self, t):
         r'!!S'
+
+        print(self.compiler_state.symbol_table)
+
         #Note: since !!S is not token, it will not be printed for DEBUG_TOKENS.
         self.st_logger.info("!!S encountered, symbol table dumped: \n")
         self.st_logger.info(str(self.compiler_state.symbol_table))

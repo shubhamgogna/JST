@@ -22,6 +22,8 @@ from scanning.clexer import Lexer
 
 class TestParser(unittest.TestCase):
     def setUp(self):
+        self.debug = True
+
         self.compiler_state = CompilerState()
         self.lexer = Lexer(compiler_state=self.compiler_state)
         self.parser = Parser(compiler_state=self.compiler_state, lexer=self.lexer)
@@ -59,6 +61,20 @@ class TestParser(unittest.TestCase):
         self.parser.parse(data)
         self.assertTrue(True, 'No exceptions = Parser successfully parsed.')
 
+    def test_declare_multiple_primitive_variable(self):
+        # self.enable_parser_debugging()
+        data = """
+            int main() {
+                int i, j, k;
+
+                i = 0;
+                !!S
+                return 0;
+            }
+            """
+        self.parser.parse(data)
+        self.assertTrue(True, 'No exceptions = Parser successfully parsed.')
+
     def test_modify_primitive_variable(self):
         self.parser.logger.add_switch(Logger.PRODUCTION)
         self.parser.logger.add_switch(Logger.INFO)
@@ -74,9 +90,12 @@ class TestParser(unittest.TestCase):
         self.assertTrue(True, 'No exceptions = Parser successfully parsed.')
 
     def test_declare_pointer_variable(self):
+        self.enable_parser_debugging()
         data = """
             int main() {
                 int* i;
+                i = 0;
+                !!S
                 return 0;
             }
             """
@@ -107,6 +126,18 @@ class TestParser(unittest.TestCase):
 
     def test_declare_typedef(self):
         self.enable_parser_debugging()
+        data = """
+        typedef int GlorifiedInt;
+
+        int main() {
+          return 0;
+        }
+        """
+        self.parser.parse(data)
+        self.assertTrue(True, 'No exceptions = Parser successfully parsed.')
+
+    def test_declare_typedef_and_use_typedef_in_variable_declaration(self):
+        self.enable_parser_debugging()
 
         data = """
         typedef int GlorifiedInt;
@@ -130,6 +161,7 @@ class TestParser(unittest.TestCase):
         self.assertTrue(True, 'No exceptions = Parser successfully parsed.')
 
     def test_for_loop(self):
+        self.enable_parser_debugging()
         data = """
         int main() {
           int i;
@@ -153,6 +185,7 @@ class TestParser(unittest.TestCase):
         self.assertTrue(True, 'No exceptions = Parser successfully parsed.')
 
     def test_declare_array(self):
+        self.enable_parser_debugging()
         data = """
         int main() {
           int my_array[10];
@@ -163,9 +196,12 @@ class TestParser(unittest.TestCase):
         self.assertTrue(True, 'No exceptions = Parser successfully parsed.')
 
     def test_declare_array_with_constant_expression_in_subscript(self):
+
         data = """
         int main() {
           int my_array[5 + 5];
+          int i;
+          !!S
           return 0;
         }
         """
@@ -315,5 +351,6 @@ class TestParser(unittest.TestCase):
             self.parser.parse(data)
 
     def enable_parser_debugging(self):
-        self.parser.logger.add_switch(Logger.PRODUCTION)
-        self.parser.logger.add_switch(Logger.INFO)
+        if self.debug:
+            self.parser.logger.add_switch(Logger.PRODUCTION)
+            self.parser.logger.add_switch(Logger.INFO)
