@@ -13,10 +13,21 @@
 # You should have received a copy of the GNU General Public License
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
+# TODO, class below is the beginning of a refactor
+# Symbol will become a base class for Variable, Function, TypeEnum, TypeStruct, TypeTypedef
+class Symbol(object):
+    def __init__(self, identifier=''):
+        self.identifier = identifier
+
+    def clone(self):
+        result = Symbol(identifier=self.identifier)
+        return result
+
+
 class Symbol(object):
     EMPTY_ARRAY_DIM = -1
 
-    def __init__(self, identifier='', type=None):
+    def __init__(self, identifier='', type=None, is_type=False):
         self.type = None  # TypeDeclaration
         self.identifier = identifier
         self.pointer_modifiers = []
@@ -75,7 +86,7 @@ class Symbol(object):
 
     def clone(self):
         # TODO Update function when Symbol class structure is finalized
-         return Symbol(identifier=self.identifier)
+        return Symbol(identifier=self.identifier)
 
 
 class TypeDeclaration(object):

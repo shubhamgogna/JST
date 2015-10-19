@@ -13,29 +13,16 @@
 # You should have received a copy of the GNU General Public License
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
-from parsing.calcparser import CalcParser
-from parsing.cparser import Parser
-from scanning.clexer import Lexer
-from scanning.calclexer import CalcLexer
+from symbol_table.symbol import Symbol
 
+# Structs are complicated. This is just a basic placeholder for now.
+class TypeStruct(Symbol):
+    def __init__(self, identifier='', members=None):
+        super().__init__(identifier=identifier)
+        self.members = [] if (members is None) else members
 
-def main():
-    p = Parser(Lexer())
-    result = p.parse("int main() {return 0;}")
-    print(result)
-
-    lexer = CalcLexer()
-    parser = CalcParser(lexer)
-
-    while True:
-        try:
-            s = input('calc > ')
-        except EOFError:
-            break
-        if not s: continue
-        result = parser.parse(s)
-        print(result)
-
-
-if __name__ == '__main__':
-    main()
+    def __repr__(self):
+        lst = []
+        for member in self.members:
+            lst.append(repr(member))
+        return 'Struct > ' + self.identifier + '\n' + '\n'.join(lst)

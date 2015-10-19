@@ -17,6 +17,7 @@
 
 import os
 import sys
+
 sys.path.insert(1, os.path.join(sys.path[0], '../'))
 
 import argparse
@@ -25,8 +26,8 @@ from loggers.logger import Logger
 from parsing.cparser import Parser
 from scanning.clexer import Lexer
 
-
 dummy_data = """int main(int argc, char** argv) {int i; return 0;}"""
+
 
 def main():
     arg_parser = argparse.ArgumentParser()
@@ -43,7 +44,6 @@ def main():
 
     print(args)
 
-
     data = dummy_data
 
     compiler_state = CompilerState()
@@ -53,6 +53,7 @@ def main():
     parser.parse(data)
 
     parser.teardown()
+
 
 if __name__ == '__main__':
     main()
