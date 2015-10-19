@@ -73,6 +73,10 @@ class Symbol(object):
         self.is_function = True
         pass
 
+    def clone(self):
+        # TODO Update function when Symbol class structure is finalized
+        return Symbol(identifier=self.identifier)
+
 
 class TypeDeclaration(object):
     FLOAT_TYPES = {'float', 'double'}
