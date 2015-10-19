@@ -289,9 +289,8 @@ class Lexer(object):
         self.st_logger.info(str(cloned))
         self.st_logger.info('\n')
 
-        print(self.compiler_state.cloned_tables)
-       
-
+        # add cloned to list of cloned
+        self.compiler_state.cloned_tables.append(cloned)
 
     # NOTE: \w is equivalent to [A-Za-z0-9]
     def t_ID(self, t):

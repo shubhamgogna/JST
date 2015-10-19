@@ -182,7 +182,7 @@ class TestLexer(unittest.TestCase):
         """
         self.compare_token_output(data, expected_token_types=TestLexer.TEST_FUNCTION_TOKEN_TYPES)
 
-    def test_bang_bang_S(self):
+    def test_bang_bang_flags(self):
         data = """
             int do_stuff(char c);
 
@@ -194,6 +194,8 @@ class TestLexer(unittest.TestCase):
 
             int do_stuff(char c) {
                 !!S
+                !!C
+                !!C
                 return c + c;
              }
         """
