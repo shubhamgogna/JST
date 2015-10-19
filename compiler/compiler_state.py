@@ -21,3 +21,6 @@ class CompilerState:
         self.insert_mode = True
         self.most_recent_type_declaration = TypeDeclaration()
         self.symbol_table = SymbolTable()
+        self.cloned_tables = []
+        # lex uses 1 based indexing for line numbers, we are using 0 based for source_code
+        self.source_code = []

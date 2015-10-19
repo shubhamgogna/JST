@@ -23,38 +23,49 @@ class Logger(object):
     IMPLEMENT_ME = 'IMPLEMENT_ME'
     TOKEN = 'TOKEN'
     PRODUCTION = 'PRODUCTION'
+    SOURCE = 'SOURCE'
 
-    def __init__(self, file = sys.stdout, switches = set()):
-        self.switches = switches.union({Logger.IMPLEMENT_ME})
+    def __init__(self, file=sys.stdout, switches=None):
+        if switches is None:
+            switches = {}
+        self.switches = switches
         self.file = file
 
-    def add_switch(self, switch):
-        self.switches.add(switch)
+    def add_switch(self, switch, level=0):
+        self.switches[switch] = level
+
+    # def add_switch(self, switch_level_tuple):
+    #     self.switches[switch_level_tuple[0]] = switch_level_tuple[1]
 
     def remove_switch(self, switch):
         self.switches.discard(switch)
 
-    def log(self, level, message):
-        if level in self.switches:
-            self.file.write(level + ': ' + message + '\n')
+    def log(self, switch, message, level=0):
+        if switch in self.switches.keys():
+            if level <= self.switches.get(switch, 0):
+                self.file.write(switch + ': ' + message + '\n')
 
-    def info(self, message):
-        self.log(Logger.INFO, message)
+    def info(self, message, level=0):
+        self.log(Logger.INFO, message, level)
 
-    def debug(self, message):
-        self.log(Logger.DEBUG, message)
+    def debug(self, message, level=0):
+        self.log(Logger.DEBUG, message, level)
 
-    def critical(self, message):
-        self.log(Logger.CRITICAL, message)
+    def critical(self, message, level=0):
+        self.log(Logger.CRITICAL, message, level)
 
-    def implement_me(self, method_name):
-        self.log(Logger.IMPLEMENT_ME, method_name)
+    def implement_me(self, method_name, level=0):
+        self.log(Logger.IMPLEMENT_ME, method_name, level)
 
-    def production(self, message):
-        self.log(Logger.PRODUCTION, message)
+    def production(self, message, level=0):
+        self.log(Logger.PRODUCTION, message, level)
 
-    def token(self, message):
-        self.log(Logger.TOKEN, message)
+    def token(self, message, level=0):
+        self.log(Logger.TOKEN, message, level)
+
+    def source(self, message, level=0):
+        self.log(Logger.SOURCE, message, level)
+
 
     def move_to_file(self, file):
         self.finalize()

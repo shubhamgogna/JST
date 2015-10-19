@@ -55,7 +55,6 @@ class TestLexer(unittest.TestCase):
 
     def tearDown(self):
         self.lexer = None
-        self.compiler_state = None
 
     def test_plain_main(self):
         data = """int main() {return 0;}"""
@@ -185,7 +184,6 @@ class TestLexer(unittest.TestCase):
         """
         self.compare_token_output(data, expected_token_types=TestLexer.TEST_FUNCTION_TOKEN_TYPES)
 
-
     def test_bang_bang_S(self):
         data = """
             int do_stuff(char c);
@@ -312,7 +310,7 @@ class TestLexer(unittest.TestCase):
 
               int x = 1;
               int y = 2;
-              
+
               do_stuff('f');
 
               return 0;
@@ -347,10 +345,10 @@ class TestLexer(unittest.TestCase):
                         "That should should overflow")
 
     def test_float_acceptable(self):
-        self.assertTrue(Lexer.string_to_float_fails('1.123'), "1.123 is an acceptable float")
+        self.assertFalse(Lexer.string_to_float_fails('1.123'), "1.123 is an acceptable float")
 
     def test_float_unacceptable(self):
-        self.assertFalse(Lexer.string_to_float_fails('1.8E+308'), "'1.8E+308' is too big")
+        self.assertTrue(Lexer.string_to_float_fails('1.8E+308'), "'1.8E+308' is too big")
 
     def compare_token_output(self, data, expected_token_types):
         self.lexer.input(data)

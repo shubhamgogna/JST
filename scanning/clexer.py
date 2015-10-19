@@ -19,26 +19,36 @@ from symbol_table.symbol import Symbol
 from loggers.logger import Logger
 
 class Lexer(object):
-    # NOTE:  These aren't the S and L debug things that Harris had
-    #             Not sure how to set debugging for symbol table...
-    NO_DEBUG = 0
-    DEBUG_TOKENS = 1
-    DEBUG_SOURCE_CODE = 2
-    DEBUG_SOURCE_AND_TOKENS = 3
 
     # to keep track of current source code line
     CURRENT_LINE_START = 0
 
-    def __init__(self, compiler_state=None, **kwargs):
+    def __init__(self, compiler_state=None, print_tokens=True, print_source=True, print_table=True, st_filename = 'scanner_dump_symbol_table.txt', tok_filename = 'scanner_dump_tokens.txt', **kwargs):
         self.lexer = lex.lex(module=self, **kwargs)
 
         self.compiler_state = compiler_state
 
-        # have to add in way to change debug level based on input?
-        self.debug_level =  Lexer.DEBUG_SOURCE_AND_TOKENS
+        # set up loggers based on debug flags
+        if st_filename not in {sys.stdout, sys.stderr}:
+             st_file = open(st_filename, 'w')
+        else:
+             st_file = st_filename
+        self.st_logger = Logger(st_file)
 
-        self.token_logger = Logger()
-        self.st_logger = Logger()
+        if tok_filename not in {sys.stdout, sys.stderr}:
+            tok_file = open(tok_filename,'w')
+        else:
+            tok_file = tok_filename
+        self.token_logger = Logger(tok_file)
+
+        if print_table is True:
+            self.st_logger.add_switch(Logger.INFO)
+
+        if print_tokens is True:
+            self.token_logger.add_switch(Logger.TOKEN)
+
+        if print_source is True:
+            self.token_logger.add_switch(Logger.SOURCE)
 
         self.last_token = None
 
@@ -53,13 +63,15 @@ class Lexer(object):
         self.last_token = self.lexer.token()
         if self.last_token != None:
             self.debug_out_tokens(self.last_token.type, self.last_token.value)
-            #self.CURRENT_LINE_START = self.CURRENT_LINE_START + len(token.value)
-            #print(self.CURRENT_LINE_START)
+
+        # TODO: make line/position stuff nicer with something like this
+        # self.last_token.lineno -= 1
+        # self.last_token.lexpos = Lexer.getColumnFromLexPos(self.last_token.lexpos)
+
         return self.last_token
 
     def debug_out_tokens(self,tok_type, tok_value):
-         if self.debug_level == Lexer.DEBUG_TOKENS or self.debug_level == Lexer.DEBUG_SOURCE_AND_TOKENS:
-                self.token_logger.token(str(tok_type) + ' ' + str(tok_value) + '\n')
+        self.token_logger.token(str(tok_type) + ' ' + str(tok_value) + '\n')
 
     def debug_out_source(self):
         source_code = self.lexer.lexdata
@@ -67,15 +79,15 @@ class Lexer(object):
         i = self.CURRENT_LINE_START
         t = source_code[i]
 
-        # output of source code ignores block comments
         if t + source_code[i+1] != '/*' and t != '\n':
             while t != '\n':
                 current_ln = current_ln + t
                 i = i+1
                 t = source_code[i]
-            if self.debug_level == Lexer.DEBUG_SOURCE_CODE or self.debug_level == Lexer.DEBUG_SOURCE_AND_TOKENS:
-                self.token_logger.token('\nSource Code: ' + '\n' + current_ln + '\n-----\n\n')
-
+            # print source to token file
+            self.token_logger.source('\nSource Code: ' + '\n' + current_ln + '\n-----\n\n')
+            # add source to compiler state
+            self.compiler_state.source_code.append(current_ln)
 
     # print source code to stderr for illegal tokens
     def print_source_line(self):
@@ -243,10 +255,6 @@ class Lexer(object):
     def t_DUMP_SYMBOL_TABLE(self, t):
         r'!!S'
 
-        print("!!S encountered:")
-        print(self.compiler_state.symbol_table)
-        print('\n')
-
         #Note: since !!S is not token, it will not be printed for DEBUG_TOKENS.
         self.st_logger.info("!!S encountered, symbol table dumped: \n")
         self.st_logger.info(str(self.compiler_state.symbol_table))
@@ -269,17 +277,19 @@ class Lexer(object):
     def t_CLONE_SYMBOL_TABLE(self,t):
         r'!!C'
 
-        print('!!C encountered. Table is clonning.')
-        print("Original Table")
-        print(self.compiler_state.symbol_table)
-        print('\n')
+        # print message saying table will be cloned and print original table
+        self.st_logger.info('!!C encountered. Table is clonning.')
+        self.st_logger.info("Original Table")
+        self.st_logger.info(str(self.compiler_state.symbol_table))
+        self.st_logger.info('\n')
 
-        cloned_table = self.compiler_state.symbol_table.clone()
-        print("Cloned Table")
-        print(cloned_table)
-        print('\n')
+        # clone table and print cloned table
+        cloned = self.compiler_state.symbol_table.clone()
+        self.st_logger.info("Cloned Table")
+        self.st_logger.info(str(cloned))
+        self.st_logger.info('\n')
 
-        # return cloned_table
+        print(self.compiler_state.cloned_tables)
        
 
 
@@ -405,4 +415,4 @@ class Lexer(object):
     @staticmethod
     def string_to_float_fails(value):
         float_representation = float(value)
-        return not (float_representation == float("inf") or float_representation == -float("inf"))
+        return (float_representation == float("inf") or float_representation == -float("inf"))
