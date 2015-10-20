@@ -16,6 +16,7 @@
 import ply.lex as lex
 import sys
 from symbol_table.symbol import Symbol
+from symbol_table.scope import Scope
 from loggers.logger import Logger
 
 class Lexer(object):
@@ -23,7 +24,7 @@ class Lexer(object):
     # to keep track of current source code line
     CURRENT_LINE_START = 0
 
-    def __init__(self, compiler_state=None, print_tokens=False, print_source=False, print_table=False, tok_filename = 'scanner_dump_tokens.txt', st_filename = 'scanner_dump_symbol_table.txt', **kwargs):
+    def __init__(self, compiler_state=None, print_tokens=False, print_source=False, print_table=True, tok_filename = 'scanner_dump_tokens.txt', st_filename = 'scanner_dump_symbol_table.txt', **kwargs):
         self.lexer = lex.lex(module=self, **kwargs)
 
         self.compiler_state = compiler_state
@@ -251,14 +252,12 @@ class Lexer(object):
     reserved_map = {r.lower(): r for r in reserved}
 
 
-
     def t_DUMP_SYMBOL_TABLE(self, t):
         r'!!S'
 
         #Note: since !!S is not token, it will not be printed for DEBUG_TOKENS.
-        self.st_logger.info("!!S encountered, symbol table dumped: \n")
-        self.st_logger.info(str(self.compiler_state.symbol_table))
-        self.st_logger.info('\n')
+        self.st_logger.info("!!S encountered, symbol table dump: " +
+                            str(self.compiler_state.symbol_table))
 
     def t_PRINT_DEBUG_MESSAGE(self, t):
         r'!!P(.*)!'
@@ -296,21 +295,55 @@ class Lexer(object):
     def t_ID(self, t):
         r'[A-Za-z_][\w_]*'
 
-        t.type = self.get_identifier_type(identifier=t.value)
+        reserved_word = self.reserved_map.get(t.value, None)
+        if reserved_word is not None:
+            t.type = reserved_word
+            return t
 
-        if t.type is "ID":
-            symbol = self.compiler_state.symbol_table.find(name=t.value)
-            if symbol is None:
-                symbol = Symbol(identifier=t.value)
-                self.compiler_state.symbol_table.insert(symbol)
+        find_symbol = self.compiler_state.symbol_table.find(t.value)
+        # t.type = self.get_identifier_type(identifier=t.value)
+
+        # TODO Check for redeclaration, shadowing
+        if find_symbol is None:
+            symbol = Symbol(t.value)
+            insert_result = self.compiler_state.symbol_table.insert(symbol)
+
+            # Default to an ID which can be updated later in the parse
             t.value = symbol
-        elif t.type is "TYPEID":
-            t.value = self.compiler_state.symbol_table.find_type(t.value)
-        elif t.type is "ECONST":
-            t.type = 'ECONST'
-            t.value = self.compiler_state.symbol_table.find_enum_constant_value(t.value)
+            t.type = 'ID'
+        elif find_symbol.type is Symbol.VARIABLE:
+            t.value = find_symbol
+            t.type = 'ID'
+        elif find_symbol.type is Symbol.FUNCTION:
+            # TODO Handle functions
+            t.type = 'FUNCTION'
+        elif find_symbol.type is Symbol.TYPEDEF:
+            # TODO Handle typedefs
+            t.type = 'TYPEDEF_NAME'
+        elif find_symbol.type is Symbol.ENUM:
+            raise NotImplemented('Handle ENUM')
+        elif find_symbol.type is Symbol.STRUCT:
+            raise NotImplemented('Handle STRUCT')
+        elif find_symbol.type is Symbol.UNION:
+            raise NotImplemented('Handle UNION')
+        else:
+            raise ValueError('Unknown Symbol.type for existing Symbol.')
 
         return t
+
+        # if t.type is "ID":
+        #     symbol = self.compiler_state.symbol_table.find(name=t.value)
+        #     if symbol is None:
+        #         symbol = Symbol(identifier=t.value)
+        #         self.compiler_state.symbol_table.insert(symbol)
+        #     t.value = symbol
+        # elif t.type is "TYPEID":
+        #     t.value = self.compiler_state.symbol_table.find_type(t.value)
+        # elif t.type is "ECONST":
+        #     t.type = 'ECONST'
+        #     t.value = self.compiler_state.symbol_table.find_enum_constant_value(t.value)
+        #
+        # return t
 
         # Terence:
         # Taking out the 'lookup mode' stuff here, no one else seems to use it
@@ -391,17 +424,23 @@ class Lexer(object):
 
     def get_identifier_type(self, identifier):
         keyword_value = self.reserved_map.get(identifier, None)
-        typedef_name = self.compiler_state.symbol_table.find_type(identifier)
-        enum_value = self.compiler_state.symbol_table.find_enum_constant_value(identifier)
-
         if keyword_value is not None:
             return keyword_value
-        elif typedef_name is not None:
-            return 'TYPEID'
-        elif enum_value is not None:
-            return 'ECONST'
+
+        if self.compiler_state.symbol_table.find(identifier) is not None:
+            return 'ID'
         else:
             return 'ID'
+
+        # typedef_name = self.compiler_state.symbol_table.find_type(identifier)
+        # if typedef_name is not None:
+        #     return 'TYPEID'
+        #
+        # enum_value = self.compiler_state.symbol_table.find_enum_constant_value(identifier)
+        # if enum_value is not None:
+        #     return 'ECONST'
+        # else:
+        #     return 'ID'
 
     @staticmethod
     def string_to_int_fails(value):

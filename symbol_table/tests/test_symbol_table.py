@@ -36,7 +36,7 @@ class TestSymbolTable(unittest.TestCase):
 
     def test_find_same_scope(self):
         self.assertTrue(self.sym.insert(Symbol('A')) == Scope.INSERT_SUCCESS)
-        found = self.sym.find('A', Symbol)
+        found = self.sym.find('A')
         self.assertTrue(found is not None)
         self.assertTrue(found.identifier is 'A')
         self.assertTrue(type(found) is Symbol)
@@ -45,7 +45,7 @@ class TestSymbolTable(unittest.TestCase):
         self.sym.insert(Symbol('A'))
         self.sym.push()
         self.sym.insert(Symbol('B'))
-        found = self.sym.find('A', Symbol)
+        found = self.sym.find('A')
         self.assertTrue(found is not None)
         self.assertTrue(found.identifier is 'A')
         self.assertTrue(type(found) is Symbol)
@@ -68,8 +68,8 @@ class TestSymbolTable(unittest.TestCase):
 
         clone = self.sym.clone()
         self.assertTrue(self.sym.size() == clone.size())
-        self.assertTrue(self.sym.find('A', Symbol) is not clone.find('A', Symbol))
-        self.assertTrue(self.sym.find('B', Symbol) is not clone.find('B', Symbol))
+        self.assertTrue(self.sym.find('A') is not clone.find('A'))
+        self.assertTrue(self.sym.find('B') is not clone.find('B'))
         self.sym.pop()
         self.assertTrue(self.sym.size() == clone.size() - 1)
-        self.assertTrue(self.sym.find('B', Symbol) is None and clone.find('B', Symbol) is not None)
+        self.assertTrue(self.sym.find('B') is None and clone.find('B') is not None)

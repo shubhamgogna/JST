@@ -16,7 +16,6 @@
 import unittest
 from symbol_table.scope import Scope
 from symbol_table.symbol import Symbol
-from symbol_table.variable import Variable
 
 
 class TestScope(unittest.TestCase):
@@ -31,22 +30,12 @@ class TestScope(unittest.TestCase):
         self.assertTrue(self.scope.insert(Symbol('A')) == Scope.INSERT_REDECL)
         self.assertTrue(self.scope.insert(Symbol('B')) == Scope.INSERT_SUCCESS)
 
-        self.assertTrue(self.scope.insert(Variable('A')) == Scope.INSERT_SUCCESS)
-        self.assertTrue(self.scope.insert(Variable('A')) == Scope.INSERT_REDECL)
-        self.assertTrue(self.scope.insert(Variable('B')) == Scope.INSERT_SUCCESS)
-
-    def test_find_with_type(self):
+    def test_find(self):
         self.scope.insert(Symbol('A'))
-        found = self.scope.find_with_type('A', Symbol)
+        found = self.scope.find('A')
         self.assertTrue(found is not None)
         self.assertTrue(found.identifier is 'A')
         self.assertTrue(type(found) is Symbol)
-
-        self.scope.insert(Variable('A'))
-        found = self.scope.find_with_type('A', Variable)
-        self.assertTrue(found is not None)
-        self.assertTrue(found.identifier is 'A')
-        self.assertTrue(type(found) is Variable)
 
     def test_size(self):
         self.assertTrue(self.scope.size() == 0)
@@ -55,8 +44,8 @@ class TestScope(unittest.TestCase):
 
     def test_clone(self):
         self.scope.insert(Symbol('A'))
-        self.scope.insert(Variable('B'))
+        self.scope.insert(Symbol('B'))
 
         clone = self.scope.clone()
-        self.assertTrue(self.scope.find_with_type('A', Symbol) is not clone.find_with_type('A', Symbol))
-        self.assertTrue(self.scope.find_with_type('B', Variable) is not clone.find_with_type('B', Variable))
+        self.assertTrue(self.scope.find('A') is not clone.find('A'))
+        self.assertTrue(self.scope.find('B') is not clone.find('B'))

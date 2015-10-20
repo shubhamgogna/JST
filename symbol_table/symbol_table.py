@@ -38,9 +38,11 @@ class SymbolTable(object):
 
         is_shadowing = False
         for scope in self.table:
-            result = scope.find_with_type(symbol.identifier, type(symbol))
+            result = scope.find(symbol.identifier)
             if result is not None:
                 is_shadowing = True
+                if scope is self.table[-1]:
+                    return Scope.INSERT_REDECL
 
         result = self.table[-1].insert(symbol)
 
@@ -53,9 +55,9 @@ class SymbolTable(object):
         else:
             raise ValueError('Unknown result from Scope.insert()')
 
-    def find(self, name, search_type):
+    def find(self, name):
         for scope in reversed(self.table):
-            result = scope.find_with_type(name, search_type)
+            result = scope.find(name)
             if result is not None:
                 return result
         return None
@@ -74,4 +76,4 @@ class SymbolTable(object):
         scopes = []
         for index, scope in enumerate(self.table):
             scopes.append(repr(index) + '\n' + repr(scope))
-        return "\n".join(scopes)
+        return '\n' + "\n".join(scopes)

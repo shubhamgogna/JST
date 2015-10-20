@@ -22,11 +22,15 @@ sys.path.insert(1, os.path.join(sys.path[0], '../'))
 
 import argparse
 from compiler.compiler_state import CompilerState
-from loggers.logger import Logger
 from parsing.cparser import Parser
 from scanning.clexer import Lexer
 
-dummy_data = """int main(int argc, char** argv) {int i; return 0;}"""
+# """int main(int argc, char** argv) {int i; return 0;}"""
+data = """
+    int main() {}
+    void foo(int x) {}
+    int !!S z;
+    """
 
 
 def main():
@@ -40,20 +44,14 @@ def main():
                             help="The debug level for the parser.")
     arg_parser.add_argument("-w", "--warnlevel", type=int, choices=[0, 1], default=0,
                             help="The debug level for the parser.")
-    args = arg_parser.parse_args()
 
+    args = arg_parser.parse_args()
     print(args)
 
-    data = dummy_data
-
     compiler_state = CompilerState()
-
     parser = Parser(compiler_state=compiler_state, lexer=Lexer(compiler_state=compiler_state))
-    parser.logger.add_switch(Logger.PRODUCTION)
     parser.parse(data)
-
     parser.teardown()
-
 
 if __name__ == '__main__':
     main()

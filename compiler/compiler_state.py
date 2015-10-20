@@ -13,14 +13,13 @@
 # You should have received a copy of the GNU General Public License
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
-from symbol_table.symbol import TypeDeclaration
 from symbol_table.symbol_table import SymbolTable
 
 
 class CompilerState:
     def __init__(self):
         self.insert_mode = True
-        self.most_recent_type_declaration = TypeDeclaration()
+        # self.most_recent_type_declaration = TypeDeclaration()  FIXME Replaced
         self.symbol_table = SymbolTable()
         self.cloned_tables = []
         # lex uses 1 based indexing for line numbers, we are using 0 based for source_code

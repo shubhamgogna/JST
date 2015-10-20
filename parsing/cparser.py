@@ -18,7 +18,8 @@ import sys
 
 from loggers.logger import Logger
 from scanning.clexer import Lexer
-from symbol_table.symbol import TypeDeclaration, PointerDeclaration
+from symbol_table.symbol import Symbol, PointerDeclaration
+from symbol_table.declaration_specifiers import DeclarationSpecifiers
 
 
 class Parser(object):
@@ -111,6 +112,8 @@ class Parser(object):
         """function_definition : declaration_specifiers declarator compound_statement"""
         self.prod_logger.production('function_definition -> declaration_specifiers declarator compound_statement')
 
+        t[2]['direct_declarator'].set_as_function(t[1], t[2]['parameter_type_list'], t[3])
+
     #
     # declaration:
     #
@@ -122,7 +125,7 @@ class Parser(object):
         declaration_specifiers = t[1]
 
         for init_declarator in init_declarator_list:
-            init_declarator['declarator'].type = declaration_specifiers
+            init_declarator['declarator'].set_as_variable(declaration_specifiers)
 
     def p_declaration_2(self, t):
         """declaration : declaration_specifiers SEMI"""
@@ -168,7 +171,7 @@ class Parser(object):
         """
         self.prod_logger.production('declaration_specifiers -> type_qualifier declaration_specifiers')
 
-        t[2].add_qualifier(t[1])
+        t[2].add_type_qualifier(t[1])
         t[0] = t[2]
 
     def p_declaration_specifiers_4(self, t):
@@ -177,7 +180,7 @@ class Parser(object):
         """
         self.prod_logger.production('declaration_specifiers -> storage_class_specifier')
 
-        t[0] = TypeDeclaration()
+        t[0] = DeclarationSpecifiers()
         t[0].add_storage_class(t[1])
 
     def p_declaration_specifiers_5(self, t):
@@ -186,7 +189,7 @@ class Parser(object):
         """
         self.prod_logger.production('declaration_specifiers -> type_specifier')
 
-        t[0] = TypeDeclaration()
+        t[0] = DeclarationSpecifiers()
         t[0].add_type_specifier(t[1])
 
     def p_declaration_specifiers_6(self, t):
@@ -195,8 +198,8 @@ class Parser(object):
         """
         self.prod_logger.production('declaration_specifiers -> type_qualifier')
 
-        t[0] = TypeDeclaration()
-        t[0].add_qualifier(t[1])
+        t[0] = DeclarationSpecifiers()
+        t[0].add_type_qualifier(t[1])
 
     #
     # storage-class-specifier
@@ -418,6 +421,7 @@ class Parser(object):
         """
         self.prod_logger.production('init_declarator_list -> init_declarator_list COMMA init_declarator')
 
+        # Concat the new init_declarator to the existing list
         t[0] = t[1] + [t[3]]
 
     #
@@ -595,12 +599,15 @@ class Parser(object):
             raise Exception(
                 'Only integral types may be used to specify array dimensions ({} given)'.format(t[3]['type']))
 
-        t[1].add_array_dimension(t[3]['value'])
+        t[1].add_array_dimension(t[3]['value'])  # TODO validate?
         t[0] = t[1]
 
     def p_direct_declarator_4(self, t):
         """direct_declarator : direct_declarator LPAREN parameter_type_list RPAREN"""
         self.prod_logger.production('direct_declarator : direct_declarator LPAREN parameter_type_list RPAREN')
+
+        # TODO LPAREN is kind of the start of a scope
+        t[0] = {'direct_declarator': t[1], 'parameter_type_list': t[3]}
 
     def p_direct_declarator_5(self, t):
         """direct_declarator : direct_declarator LPAREN identifier_list RPAREN"""
@@ -611,6 +618,8 @@ class Parser(object):
     def p_direct_declarator_6(self, t):
         """direct_declarator : direct_declarator LPAREN RPAREN"""
         self.prod_logger.production('direct_declarator : direct_declarator LPAREN RPAREN')
+
+        t[0] = {'direct_declarator': t[1], 'parameter_type_list': []}
 
     #
     # pointer:
@@ -670,6 +679,8 @@ class Parser(object):
         """parameter_type_list : parameter_list"""
         self.prod_logger.production('parameter_type_list : parameter_list')
 
+        t[0] = t[1]
+
     def p_parameter_type_list_2(self, t):
         """parameter_type_list : parameter_list COMMA ELLIPSIS"""
         self.prod_logger.production('parameter_type_list : parameter_list COMMA ELLIPSIS')
@@ -681,9 +692,13 @@ class Parser(object):
         """parameter_list : parameter_declaration"""
         self.prod_logger.production('parameter_list : parameter_declaration')
 
+        t[0] = t[1]
+
     def p_parameter_list_2(self, t):
         """parameter_list : parameter_list COMMA parameter_declaration"""
         self.prod_logger.production('parameter_list : parameter_list COMMA parameter_declaration')
+
+        t[0] = t[1] + [t[3]]
 
     #
     # parameter-declaration:
@@ -1591,7 +1606,7 @@ class Parser(object):
         self.prod_logger.info('Entering new scope')
 
         self.compiler_state.symbol_table.push()
-        self.compiler_state.most_recent_type_declaration = TypeDeclaration()
+        self.compiler_state.most_recent_type_declaration = DeclarationSpecifiers()
 
     def p_insert_mode(self, t):
         """
@@ -1625,7 +1640,7 @@ class Parser(object):
         """
         self.prod_logger.info('Reseting the current type declaration.')
 
-        self.compiler_state.most_recent_type_declaration = TypeDeclaration()
+        self.compiler_state.most_recent_type_declaration = DeclarationSpecifiers()
 
     @staticmethod
     def perform_constant_expression_arithmetic(operand_1, operator, operand_2):
