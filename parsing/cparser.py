@@ -22,7 +22,7 @@ from symbol_table.symbol import TypeDeclaration, PointerDeclaration
 
 
 class Parser(object):
-    def __init__(self, compiler_state, lexer=None, print_productions = True, print_table = True, prod_filename = 'parsing_dump_productions.txt', st_filename= 'parsing_dump_symbol_table.txt', **kwargs):
+    def __init__(self, compiler_state, lexer=None, print_productions = True, print_source = True, print_info = True, prod_filename = 'parsing_dump_productions.txt', **kwargs):
         self.compiler_state = compiler_state
 
         if lexer is None:
@@ -32,13 +32,7 @@ class Parser(object):
 
         self.parser = yacc.yacc(module=self, start='translation_unit')
 
-       # set up loggers based on debug flags
-        if st_filename not in {sys.stdout, sys.stderr}:
-            st_file = open(st_filename, 'w')
-        else:
-            st_file = st_filename
-        self.st_logger = Logger(st_file)
-
+        # set up loggers based on debug flags
         if prod_filename not in {sys.stdout, sys.stderr}:
             prod_file = open(prod_filename, 'w')
         else:
@@ -48,14 +42,15 @@ class Parser(object):
         if print_productions is True:
             self.prod_logger.add_switch(Logger.PRODUCTION)
 
-        if print_table is True:
-            self.st_logger.add_switch(Logger.INFO)
+        if print_source is True:
+            self.prod_logger.add_switch(Logger.SOURCE)
+
+        if print_info is True:
+            self.prod_logger.add_switch(Logger.INFO)
 
 
     def teardown(self):
-        self.st_logger.finalize()
         self.prod_logger.finalize()
-
 
     def parse(self, data):
         return self.parser.parse(input=data, lexer=self.lexer)
@@ -67,7 +62,7 @@ class Parser(object):
         print('--- ERROR ---')
         print('Last token: {}'.format(self.lexer.last_token))
 
-        self.st_logger.implement_me("p_error")
+        self.prod_logger.implement_me("p_error")
         raise NotImplemented("p_error")
 
     #
@@ -1593,15 +1588,16 @@ class Parser(object):
         """
         enter_scope : empty
         """
-        self.st_logger.info('Entering new scope')
+        self.prod_logger.info('Entering new scope')
 
+        self.compiler_state.symbol_table.push()
         self.compiler_state.most_recent_type_declaration = TypeDeclaration()
 
     def p_insert_mode(self, t):
         """
         insert_mode : empty
         """
-        self.st_logger.info('Entering insert mode.')
+        self.prod_logger.info('Entering insert mode.')
 
         self.compiler_state.insert_mode = True
 
@@ -1609,13 +1605,15 @@ class Parser(object):
         """
         leave_scope : empty
         """
-        self.st_logger.info('Leaving a scope')
+        self.prod_logger.info('Leaving a scope')
+
+        self.compiler_state.symbol_table.pop()
 
     def p_lookup_mode(self, t):
         """
         lookup_mode : empty
         """
-        self.st_logger.info('Entering lookup mode.')
+        self.prod_logger.info('Entering lookup mode.')
 
         self.insert_mode = False
 
@@ -1625,7 +1623,7 @@ class Parser(object):
         """
         reset_type_declaration : empty
         """
-        self.st_logger.info('Reseting the current type declaration.')
+        self.prod_logger.info('Reseting the current type declaration.')
 
         self.compiler_state.most_recent_type_declaration = TypeDeclaration()
 
