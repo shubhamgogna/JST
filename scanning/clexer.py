@@ -19,12 +19,15 @@ from symbol_table.symbol import Symbol
 from symbol_table.scope import Scope
 from loggers.logger import Logger
 
+
 class Lexer(object):
 
     # to keep track of current source code line
     CURRENT_LINE_START = 0
 
-    def __init__(self, compiler_state=None, print_tokens=False, print_source=False, print_table=True, tok_filename = 'scanner_dump_tokens.txt', st_filename = 'scanner_dump_symbol_table.txt', **kwargs):
+    def __init__(self, compiler_state=None, print_tokens=False, print_source=False, print_table=True,
+                 tok_filename='scanner_dump_tokens.txt', st_filename='scanner_dump_symbol_table.txt', **kwargs):
+
         self.lexer = lex.lex(module=self, **kwargs)
 
         self.compiler_state = compiler_state
@@ -43,7 +46,7 @@ class Lexer(object):
         self.token_logger = Logger(tok_file)
 
         if print_table is True:
-            self.st_logger.add_switch(Logger.INFO)
+            self.st_logger.add_switch(Logger.SYMBOL_TABLE)
 
         if print_tokens is True:
             self.token_logger.add_switch(Logger.TOKEN)
@@ -86,7 +89,7 @@ class Lexer(object):
                 i = i+1
                 t = source_code[i]
             # print source to token file
-            self.token_logger.source('\nSource Code: ' + '\n' + current_ln + '\n-----\n\n')
+            self.token_logger.source('\n' + current_ln + '\n-----\n\n')
             # add source to compiler state
             self.compiler_state.source_code.append(current_ln)
 
@@ -230,16 +233,16 @@ class Lexer(object):
 
     def t_LBRACE(self,t):
         r'\{'
-        self.st_logger.info("Opening brace encountered, symbol table dumped: \n")
-        self.st_logger.info(str(self.compiler_state.symbol_table))
-        self.st_logger.info('\n')
+        self.st_logger.symbol_table("Opening brace encountered, symbol table dumped: \n")
+        self.st_logger.symbol_table(str(self.compiler_state.symbol_table))
+        self.st_logger.symbol_table('\n')
         return t
 
     def t_RBRACE(self,t):
         r'\}'
-        self.st_logger.info("Closing brace encountered, symbol table dumped: \n")
-        self.st_logger.info(str(self.compiler_state.symbol_table))
-        self.st_logger.info('\n')
+        self.st_logger.symbol_table("Closing brace encountered, symbol table dumped: \n")
+        self.st_logger.symbol_table(str(self.compiler_state.symbol_table))
+        self.st_logger.symbol_table('\n')
         return t
 
     t_COMMA            = r','
@@ -256,7 +259,7 @@ class Lexer(object):
         r'!!S'
 
         #Note: since !!S is not token, it will not be printed for DEBUG_TOKENS.
-        self.st_logger.info("!!S encountered, symbol table dump: " +
+        self.st_logger.symbol_table("!!S encountered, symbol table dump: " +
                             str(self.compiler_state.symbol_table))
 
     def t_PRINT_DEBUG_MESSAGE(self, t):
@@ -277,16 +280,16 @@ class Lexer(object):
         r'!!C'
 
         # print message saying table will be cloned and print original table
-        self.st_logger.info('!!C encountered. Table is clonning.')
-        self.st_logger.info("Original Table")
-        self.st_logger.info(str(self.compiler_state.symbol_table))
-        self.st_logger.info('\n')
+        self.st_logger.symbol_table('!!C encountered. Table is clonning.')
+        self.st_logger.symbol_table("Original Table")
+        self.st_logger.symbol_table(str(self.compiler_state.symbol_table))
+        self.st_logger.symbol_table('\n')
 
         # clone table and print cloned table
         cloned = self.compiler_state.symbol_table.clone()
-        self.st_logger.info("Cloned Table")
-        self.st_logger.info(str(cloned))
-        self.st_logger.info('\n')
+        self.st_logger.symbol_table("Cloned Table")
+        self.st_logger.symbol_table(str(cloned))
+        self.st_logger.symbol_table('\n')
 
         # add cloned to list of cloned
         self.compiler_state.cloned_tables.append(cloned)

@@ -24,6 +24,7 @@ class Logger(object):
     TOKEN = 'TOKEN'
     PRODUCTION = 'PRODUCTION'
     SOURCE = 'SOURCE'
+    SYMBOL_TABLE = 'SYMBOL TABLE'
 
     def __init__(self, file=sys.stdout, switches=None):
         if switches is None:
@@ -63,6 +64,8 @@ class Logger(object):
     def source(self, message, level=0):
         self.log(Logger.SOURCE, message, level)
 
+    def symbol_table(self, message, level=0):
+        self.log(Logger.SYMBOL_TABLE, message, level)
 
     def move_to_file(self, file):
         self.finalize()
