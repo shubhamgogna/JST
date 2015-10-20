@@ -13,6 +13,11 @@
 # You should have received a copy of the GNU General Public License
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
+import sys
+
+sys.path.insert(1, os.path.join(sys.path[0], '../'))
+
 from symbol_table.symbol_table import SymbolTable
 from symbol_table.scope import Scope
 from symbol_table.symbol import Symbol
