@@ -354,6 +354,174 @@ class TestParser(unittest.TestCase):
         self.parser.parse(data)
         self.assertTrue(True, 'No exceptions = Parser successfully parsed.')
 
+
+    def test_bubble_sort(self):
+        data = """
+            // function prototypes
+            void print( int* list, int size);
+            void bubbleSort(int* list, int size);
+
+            // main
+            int main() {
+               // initialize vars
+               int* list = (int*)malloc(10);
+               int i;
+               srand(time(NULL));
+
+               // create list
+               for(i =0; i<10;i++)
+                  {
+                   list[i] = rand() % 10 + 1; 
+                  }
+               print(list, 10);
+
+               // bubble sort
+               bubbleSort( list, 10 );
+
+               printf( "Sorted " );
+               print(list, 10);
+
+               // return
+               return 0;
+
+            }
+
+
+            // fxn imp
+            void bubbleSort(int* list, int size){
+               // initialize vars
+               int i,j;
+               int temp;
+               int swapped;
+               
+               // loop through list
+               for( i = 0; i < size; i++)
+                  {
+
+                  // swapped is false
+                  swapped = 0;
+
+                  // loop through list
+                  for( j = 0; j < size - 1; j++)
+                     {
+                     // if smaller, swap
+                     if( list[j+1] < list[j])
+                        {
+                        temp = list[j];
+                        list[j] = list[j+1];
+                        list[j+1] = temp;
+                        swapped = 1;
+                        }
+                     }
+                  // if swapped is false, break
+                  if( swapped == 0)
+                     {         
+                     break;
+                     }   
+                  }
+
+               }
+
+            void print( int* list, int size ){
+               int i;
+               printf("List is: ");
+
+               for(i =0; i < size; i++)
+                  {
+                  printf( "%d ", list[i] );
+                  }
+               printf("\n");
+               }
+        """
+        self.parser.parse(data)
+        self.assertTrue(True, 'No exceptions = Parser successfully parsed.')
+
+
+    def test_recursive_factorial(self):
+        data = """
+            long int recur_Fact( int number);
+
+            int main() {
+
+              int number;
+              long int fact;
+
+              printf( "Enter number to get factorial of: ");
+              scanf( "%d", &number );
+
+
+              fact = recur_Fact(number);
+
+              printf( "Factorial of %d is:  %ld \n", number, fact);
+              
+              return 0;
+            }
+
+
+            long int recur_Fact( int number) {
+
+              // base case
+              if( number <= 0)
+                return 1;
+
+              // recursive case
+              else if( number > 1 ) {
+
+                return number*recur_Fact(number-1);    
+              }
+                
+
+            }
+        """
+        self.parser.parse(data)
+        self.assertTrue(True, 'No exceptions = Parser successfully parsed.')
+
+    def test_iterative_factorial(self):
+        data = """
+            long int iter_Fact( int number);
+
+            int main() {
+
+              int number;
+              long int fact;
+
+              printf( "Enter number to get factorial of: ");
+              scanf( "%d", &number );
+
+
+              fact = iter_Fact(number);
+
+
+              printf( "Factorial of %d is:  %ld \n", number, fact);
+
+              return 0;
+            }
+
+
+            long int iter_Fact( int number) {
+
+              int i;
+              long int fact = 1;
+
+              if( i < 0){
+                return 1;
+              }
+
+              for( i = number; i > 0; i --) {
+
+                fact = fact*i;
+              
+              }
+
+              return fact;
+
+            }
+        """
+        self.parser.parse(data)
+        self.assertTrue(True, 'No exceptions = Parser successfully parsed.')
+
+
+
     # TODO: don't put a lot of emphasis on bad cases until things are strong with the good cases
     def test_malformed_main_fails(self):
         with self.assertRaises(Exception):
