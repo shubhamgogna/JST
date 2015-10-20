@@ -14,7 +14,9 @@
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
 from symbol_table.symbol_table import SymbolTable
+from symbol_table.scope import Scope
 from symbol_table.symbol import Symbol
+
 
 def main():
     sym = SymbolTable()
@@ -24,6 +26,10 @@ def main():
     sym.push()
     sym.insert(Symbol('Cantaloupe'))
     print(sym)
+
+    assert sym.insert(Symbol('Apple')) is Scope.INSERT_SHADOWED
+    assert sym.insert(Symbol('Cantaloupe')) is Scope.INSERT_REDECL
+    assert sym.insert(Symbol('Blueberries')) is Scope.INSERT_SUCCESS
 
     assert sym.size() is 2
 
@@ -37,6 +43,9 @@ def main():
 
     found = sym.find('Durian')
     assert found is None
+
+    sym.pop()
+    assert sym.size() is 1
 
 if __name__ == '__main__':
     main()
