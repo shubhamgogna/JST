@@ -37,9 +37,15 @@ class TestParser(unittest.TestCase):
         self.compiler_state = None
 
     def test_plain_main(self):
-        data = """int main() {return 0;}"""
+        data = """int main() {return 0; !!C}"""
         self.parser.parse(data)
-        self.assertTrue(True, 'No exceptions = Parser successfully parsed.')
+
+        symbol_table_clone = self.compiler_state.cloned_tables[0]
+
+        found_main, in_scope = symbol_table_clone.find("main")
+
+        self.assertTrue(in_scope == 0)
+        self.assertTrue(str(found_main) == "int main()")
 
     def test_declare_primitive_variable(self):
         self.enable_parser_debugging()

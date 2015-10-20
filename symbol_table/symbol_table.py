@@ -67,12 +67,12 @@ class SymbolTable(object):
         return len(self.table)
 
     def clone(self):
-        return copy.deepcopy(self)
-        # result = SymbolTable()
-        # result.table = []
-        # for scope in self.table:
-        #     result.table.append(scope.clone())
-        # return result
+        # return copy.deepcopy(self)
+        result = SymbolTable()
+        result.table = []
+        for scope in self.table:
+            result.table.append(scope.clone())
+        return result
 
     def __repr__(self):
         scopes = []

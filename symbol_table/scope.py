@@ -43,11 +43,11 @@ class Scope(object):
         return len(self.map)
 
     def clone(self):
-        return copy.deepcopy(self)
-        # result = Scope()
-        # for identifier, value in self.map.items():
-        #     result.map[identifier] = value.clone()
-        # return result
+        # return copy.deepcopy(self)
+        result = Scope()
+        for identifier, value in self.map.items():
+            result.map[identifier] = value.clone()
+        return result
 
     def __repr__(self):
         symbols = []
