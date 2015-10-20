@@ -23,7 +23,7 @@ class Lexer(object):
     # to keep track of current source code line
     CURRENT_LINE_START = 0
 
-    def __init__(self, compiler_state=None, print_tokens=True, print_source=True, print_table=True, st_filename = 'scanner_dump_symbol_table.txt', tok_filename = 'scanner_dump_tokens.txt', **kwargs):
+    def __init__(self, compiler_state=None, print_tokens=False, print_source=False, print_table=False, tok_filename = 'scanner_dump_tokens.txt', st_filename = 'scanner_dump_symbol_table.txt', **kwargs):
         self.lexer = lex.lex(module=self, **kwargs)
 
         self.compiler_state = compiler_state

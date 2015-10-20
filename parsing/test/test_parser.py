@@ -27,10 +27,10 @@ class TestParser(unittest.TestCase):
         self.compiler_state = CompilerState()
         self.lexer = Lexer(compiler_state=self.compiler_state)
         self.parser = Parser(compiler_state=self.compiler_state, lexer=self.lexer)
-        self.parser.logger.add_switch(Logger.TOKEN)
+        # self.parser.logger.add_switch(Logger.TOKEN)
 
     def tearDown(self):
-        self.parser.logger.remove_switch(Logger.TOKEN)
+        # self.parser.logger.remove_switch(Logger.TOKEN)
         self.parser.teardown()
         self.parser = None
         self.lexer = None
@@ -76,8 +76,8 @@ class TestParser(unittest.TestCase):
         self.assertTrue(True, 'No exceptions = Parser successfully parsed.')
 
     def test_modify_primitive_variable(self):
-        self.parser.logger.add_switch(Logger.PRODUCTION)
-        self.parser.logger.add_switch(Logger.INFO)
+        # self.parser.logger.add_switch(Logger.PRODUCTION)
+        # self.parser.logger.add_switch(Logger.INFO)
 
         data = """
             int main() {
@@ -350,6 +350,7 @@ class TestParser(unittest.TestCase):
             self.parser.parse(data)
 
     def enable_parser_debugging(self):
-        if self.debug:
-            self.parser.logger.add_switch(Logger.PRODUCTION)
-            self.parser.logger.add_switch(Logger.INFO)
+        # if self.debug:
+            # self.parser.logger.add_switch(Logger.PRODUCTION)
+            # self.parser.logger.add_switch(Logger.INFO)
+        None
