@@ -1,4 +1,18 @@
-Opening brace encountered, symbol table dumped: 
+SYMBOL TABLE: Opening brace encountered, symbol table dumped: 
 
-Closing brace encountered, symbol table dumped: 
+SYMBOL TABLE: 
+0
+
+SYMBOL TABLE: 
+
+SYMBOL TABLE: Closing brace encountered, symbol table dumped: 
+
+SYMBOL TABLE: 
+0
+
+SYMBOL TABLE: 
+
+main : main None
+  my_array : my_array None
+SYMBOL TABLE: 
 

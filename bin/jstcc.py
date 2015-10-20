@@ -27,9 +27,15 @@ from scanning.clexer import Lexer
 
 # """int main(int argc, char** argv) {int i; return 0;}"""
 data = """
-    int main() {}
+    int main() {
+        int i = 0;
+
+        {
+          int f = 5;
+        }
+    }
     void foo(int x) {}
-    int !!S z;
+    int z; !!S
     """
 
 

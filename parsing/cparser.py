@@ -23,8 +23,9 @@ from symbol_table.declaration_specifiers import DeclarationSpecifiers
 
 
 class Parser(object):
+    DEFAULT_PRODUCTION_DUMP_FILE = 'parsing_dump_productions.txt'
     def __init__(self, compiler_state, lexer=None, print_productions=True, print_source=True, print_info=True,
-                 prod_filename='parsing_dump_productions.txt', **kwargs):
+                 prod_filename=sys.stdout, **kwargs):
         self.compiler_state = compiler_state
 
         if lexer is None:
@@ -1320,7 +1321,13 @@ class Parser(object):
         """
         self.prod_logger.production('additive_expression : additive_expression PLUS multiplicative_expression')
 
-        # t[0] = {"value": t[1]["value"] + t[3]["value"], "type": Parser.get_promoted_type(t[1]["type"], t[3]["type"])}
+        if not issubclass(t[1], Symbol) and not issubclass(t[3], Symbol):
+            t[0] = {"value": t[1]["value"] + t[3]["value"], "type": Parser.get_promoted_type(t[1]["type"], t[3]["type"])}
+        else:
+            # TODO: implement this via AST Nodes
+            t[0] = None
+
+
 
     def p_additive_expression_3(self, t):
         """
@@ -1328,7 +1335,11 @@ class Parser(object):
         """
         self.prod_logger.production('additive_expression : additive_expression MINUS multiplicative_expression')
 
-        # t[0] = {"value": t[1]["value"] - t[3]["value"], "type": Parser.get_promoted_type(t[1]["type"], t[3]["type"])}
+        if not issubclass(t[1], Symbol) and not issubclass(t[3], Symbol):
+            t[0] = {"value": t[1]["value"] - t[3]["value"], "type": Parser.get_promoted_type(t[1]["type"], t[3]["type"])}
+        else:
+            # TODO: implement this via AST Nodes
+            t[0] = None
 
     #
     # multiplicative_expression
@@ -1342,25 +1353,39 @@ class Parser(object):
         t[0] = t[1]
 
     def p_multiplicative_expression_2(self, t):
-        """multiplicative_expression : multiplicative_expression TIMES cast_expression
+        """
+        multiplicative_expression : multiplicative_expression TIMES cast_expression
         """
         self.prod_logger.production('multiplicative_expression : multiplicative_expression TIMES cast_expression')
 
-        # t[0] = Parser.perform_constant_expression_arithmetic(t[1], '*', t[3])
+        if issubclass(t[1], Symbol) and issubclass(t[3], Symbol):
+            t[0] = Parser.perform_constant_expression_arithmetic(t[1], '*', t[3])
+        else:
+            # TODO: implement this via AST Nodes
+            t[0] = None
 
     def p_multiplicative_expression_3(self, t):
-        """multiplicative_expression : multiplicative_expression DIVIDE cast_expression
+        """
+        multiplicative_expression : multiplicative_expression DIVIDE cast_expression
         """
         self.prod_logger.production('multiplicative_expression : multiplicative_expression DIVIDE cast_expression')
 
-        # t[0] = Parser.perform_constant_expression_arithmetic(t[1], '/', t[3])
+        if issubclass(t[1], Symbol) and issubclass(t[3], Symbol):
+            t[0] = Parser.perform_constant_expression_arithmetic(t[1], '/', t[3])
+        else:
+            # TODO: implement this via AST Nodes
+            t[0] = None
+
+
 
     def p_multiplicative_expression_4(self, t):
-        """multiplicative_expression : multiplicative_expression MOD cast_expression
+        """
+        multiplicative_expression : multiplicative_expression MOD cast_expression
         """
         self.prod_logger.production('multiplicative_expression : multiplicative_expression MOD cast_expression')
 
-        # t[0] = Parser.perform_constant_expression_arithmetic(t[1], '%', t[3])
+
+        t[0] = Parser.perform_constant_expression_arithmetic(t[1], '%', t[3])
 
     #
     # cast_expression:
@@ -1374,9 +1399,10 @@ class Parser(object):
         t[0] = t[1]
 
     def p_cast_expression_2(self, t):
-        """cast_expression : LPAREN type_name RPAREN cast_expression
         """
-        self.prod_logger.production('cast_expression : LPAREN type_name RPAREN cast_expression')
+        cast_expression : LPAREN type_name RPAREN cast_expression
+        """
+        self.prod_logger.production('cast_expression -> LPAREN type_name RPAREN cast_expression')
 
     #
     # unary_expression:
@@ -1396,57 +1422,64 @@ class Parser(object):
         self.prod_logger.production('unary_expression -> PLUSPLUS unary_expression')
 
     def p_unary_expression_3(self, t):
-        """unary_expression : MINUSMINUS unary_expression
         """
-        self.prod_logger.production('unary_expression : MINUSMINUS unary_expression')
+        unary_expression : MINUSMINUS unary_expression
+        """
+        self.prod_logger.production('unary_expression -> MINUSMINUS unary_expression')
 
     def p_unary_expression_4(self, t):
-        """unary_expression : unary_operator cast_expression
         """
-        self.prod_logger.production('unary_expression : unary_operator cast_expression')
+        unary_expression : unary_operator cast_expression
+        """
+        self.prod_logger.production('unary_expression -> unary_operator cast_expression')
 
     def p_unary_expression_5(self, t):
-        """unary_expression : SIZEOF unary_expression
         """
-        self.prod_logger.production('unary_expression : SIZEOF unary_expression')
+        unary_expression : SIZEOF unary_expression
+        """
+        self.prod_logger.production('unary_expression -> SIZEOF unary_expression')
 
     def p_unary_expression_6(self, t):
-        """unary_expression : SIZEOF LPAREN type_name RPAREN
         """
-        self.prod_logger.production('unary_expression : SIZEOF LPAREN type_name RPAREN')
+        unary_expression : SIZEOF LPAREN type_name RPAREN
+        """
+        self.prod_logger.production('unary_expression -> SIZEOF LPAREN type_name RPAREN')
 
     #
     # unary_operator
     #
     def p_unary_operator_and(self, t):
-        """unary_operator : AND
         """
-        self.prod_logger.production('unary_operator : AND')
+        unary_operator : AND
+        """
+        self.prod_logger.production('unary_operator -> AND')
 
     def p_unary_operator_times(self, t):
-        """unary_operator : TIMES
         """
-        self.prod_logger.production('unary_operator : TIMES')
+        unary_operator : TIMES
+        """
+        self.prod_logger.production('unary_operator -> TIMES')
 
     def p_unary_operator_plus(self, t):
         """unary_operator : PLUS
         """
-        self.prod_logger.production('unary_operator : PLUS')
+        self.prod_logger.production('unary_operator -> PLUS')
 
     def p_unary_operator_minus(self, t):
         """unary_operator : MINUS
         """
-        self.prod_logger.production('unary_operator : MINUS')
+        self.prod_logger.production('unary_operator -> MINUS')
 
     def p_unary_operator_not(self, t):
         """unary_operator : NOT
         """
-        self.prod_logger.production('unary_operator : NOT')
+        self.prod_logger.production('unary_operator -> NOT')
 
     def p_unary_operator_lnot(self, t):
-        """unary_operator : LNOT
         """
-        self.prod_logger.production('unary_operator : LNOT')
+        unary_operator : LNOT
+        """
+        self.prod_logger.production('unary_operator -> LNOT')
 
     #
     # postfix_expression:
@@ -1460,45 +1493,53 @@ class Parser(object):
         t[0] = t[1]
 
     def p_postfix_expression_2(self, t):
-        """postfix_expression : postfix_expression LBRACKET expression RBRACKET
         """
-        self.prod_logger.production('postfix_expression : postfix_expression LBRACKET expression RBRACKET')
+        postfix_expression : postfix_expression LBRACKET expression RBRACKET
+        """
+        self.prod_logger.production('postfix_expression -> postfix_expression LBRACKET expression RBRACKET')
 
     def p_postfix_expression_3(self, t):
-        """postfix_expression : postfix_expression LPAREN argument_expression_list RPAREN
         """
-        self.prod_logger.production('postfix_expression : postfix_expression LPAREN argument_expression_list RPAREN')
+        postfix_expression : postfix_expression LPAREN argument_expression_list RPAREN
+        """
+        self.prod_logger.production('postfix_expression -> postfix_expression LPAREN argument_expression_list RPAREN')
 
     def p_postfix_expression_4(self, t):
-        """postfix_expression : postfix_expression LPAREN RPAREN
         """
-        self.prod_logger.production('postfix_expression : postfix_expression LPAREN RPAREN')
+        postfix_expression : postfix_expression LPAREN RPAREN
+        """
+        self.prod_logger.production('postfix_expression -> postfix_expression LPAREN RPAREN')
 
     def p_postfix_expression_5(self, t):
-        """postfix_expression : postfix_expression PERIOD identifier
         """
-        self.prod_logger.production('postfix_expression : postfix_expression PERIOD identifier')
+        postfix_expression : postfix_expression PERIOD identifier
+        """
+        self.prod_logger.production('postfix_expression -> postfix_expression PERIOD identifier')
 
     def p_postfix_expression_6(self, t):
-        """postfix_expression : postfix_expression ARROW identifier
         """
-        self.prod_logger.production('postfix_expression : postfix_expression ARROW identifier')
+        postfix_expression : postfix_expression ARROW identifier
+        """
+        self.prod_logger.production('postfix_expression -> postfix_expression ARROW identifier')
 
     def p_postfix_expression_7(self, t):
-        """postfix_expression : postfix_expression PLUSPLUS
         """
-        self.prod_logger.production('postfix_expression : postfix_expression PLUSPLUS')
+        postfix_expression : postfix_expression PLUSPLUS
+        """
+        self.prod_logger.production('postfix_expression -> postfix_expression PLUSPLUS')
 
     def p_postfix_expression_8(self, t):
-        """postfix_expression : postfix_expression MINUSMINUS
         """
-        self.prod_logger.production('postfix_expression : postfix_expression MINUSMINUS')
+        postfix_expression : postfix_expression MINUSMINUS
+        """
+        self.prod_logger.production('postfix_expression -> postfix_expression MINUSMINUS')
 
     #
     # primary-expression:
     #
     def p_primary_expression_identifier(self, t):
-        """primary_expression :  identifier
+        """
+        primary_expression :  identifier
         """
         self.prod_logger.production('primary_expression : identifier')
 
@@ -1513,14 +1554,16 @@ class Parser(object):
         t[0] = t[1]
 
     def p_primary_expression_string_literal(self, t):
-        """primary_expression : string_literal
+        """
+        primary_expression : string_literal
         """
         self.prod_logger.production('primary_expression : string_literal_list')
 
         t[0] = t[1]
 
     def p_string_literal_fragment(self, t):
-        """string_literal : SCONST
+        """
+        string_literal : SCONST
         """
         self.prod_logger.production('string_literal_list : SCONST')
 
@@ -1537,7 +1580,7 @@ class Parser(object):
     def p_primary_expression_parenthesized(self, t):
         """primary_expression : LPAREN expression RPAREN
         """
-        self.prod_logger.production('primary_expression : LPAREN expression RPAREN')
+        self.prod_logger.production('primary_expression -> LPAREN expression RPAREN')
 
         # a parenthesised expression evaluates to the expression itself
         t[0] = t[2]
@@ -1546,14 +1589,16 @@ class Parser(object):
     # argument-expression-list:
     #
     def p_argument_expression_list_assignment_expression(self, t):
-        """argument_expression_list :  assignment_expression
         """
-        self.prod_logger.production('argument_expression_list :  assignment_expression')
+        argument_expression_list :  assignment_expression
+        """
+        self.prod_logger.production('argument_expression_list ->  assignment_expression')
 
     def p_argument_expression_list_list_comma_expression(self, t):
-        """argument_expression_list : argument_expression_list COMMA assignment_expression
         """
-        self.prod_logger.production('argument_expression_list : argument_expression_list COMMA assignment_expression')
+        argument_expression_list : argument_expression_list COMMA assignment_expression
+        """
+        self.prod_logger.production('argument_expression_list -> argument_expression_list COMMA assignment_expression')
 
     #
     # constant:
@@ -1561,21 +1606,21 @@ class Parser(object):
     def p_constant_int(self, t):
         """constant : ICONST
         """
-        self.prod_logger.production('constant : ICONST')
+        self.prod_logger.production('constant -> ICONST')
 
         t[0] = {"value": int(t[1]), "type": 'int'}
 
     def p_constant_float(self, t):
         """constant : FCONST
         """
-        self.prod_logger.production('constant : FCONST')
+        self.prod_logger.production('constant -> FCONST')
 
         t[0] = {"value": float(t[1]), "type": 'float'}
 
     def p_constant_char(self, t):
         """constant : CCONST
         """
-        self.prod_logger.production('constant : CCONST')
+        self.prod_logger.production('constant -> CCONST')
 
         t[0] = {"value": ord(t[1]), "type": 'char'}
 
@@ -1671,6 +1716,7 @@ class Parser(object):
             op_2 = operand_2['value']
             type_2 = operand_2['type']
 
+        result = 0
         if operand_2:
             if operator is '|':
                 result = op_1 | op_2

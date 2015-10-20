@@ -330,8 +330,8 @@ class Lexer(object):
         elif find_symbol.type is Symbol.UNION:
             raise NotImplemented('Handle UNION')
         else:
-            raise ValueError('Unknown Symbol.type for existing Symbol.')
-
+            # raise ValueError('Unknown Symbol.type for existing Symbol.')
+            t.type = 'ID'
         return t
 
         # if t.type is "ID":

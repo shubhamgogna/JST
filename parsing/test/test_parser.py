@@ -42,6 +42,8 @@ class TestParser(unittest.TestCase):
         self.assertTrue(True, 'No exceptions = Parser successfully parsed.')
 
     def test_declare_primitive_variable(self):
+        self.enable_parser_debugging()
+
         data = """
             int main() {
                 int i;
@@ -76,8 +78,7 @@ class TestParser(unittest.TestCase):
         self.assertTrue(True, 'No exceptions = Parser successfully parsed.')
 
     def test_modify_primitive_variable(self):
-        # self.parser.logger.add_switch(Logger.PRODUCTION)
-        # self.parser.logger.add_switch(Logger.INFO)
+        self.enable_parser_debugging()
 
         data = """
             int main() {
@@ -263,9 +264,20 @@ class TestParser(unittest.TestCase):
         self.assertTrue(True, 'No exceptions = Parser successfully parsed.')
 
     def test_declare_string_literal_char_star(self):
+        self.enable_parser_debugging()
         data = """
             char* literal_string = "hello there";
 
+            int main() {
+              return 0;
+            }
+        """
+        self.parser.parse(data)
+        self.assertTrue(True, 'No exceptions = Parser successfully parsed.')
+
+    def test_declare_string_as_array(self):
+        self.enable_parser_debugging()
+        data = """
             int main() {
               char array_string[] = "hey";
               return 0;
@@ -281,7 +293,6 @@ class TestParser(unittest.TestCase):
                                    "world";
 
             int main() {
-              char array_string[] = "hey";
               return 0;
             }
         """
@@ -350,7 +361,7 @@ class TestParser(unittest.TestCase):
             self.parser.parse(data)
 
     def enable_parser_debugging(self):
-        # if self.debug:
-            # self.parser.logger.add_switch(Logger.PRODUCTION)
-            # self.parser.logger.add_switch(Logger.INFO)
-        None
+        if self.debug:
+            self.parser.prod_logger.add_switch(Logger.PRODUCTION)
+            self.parser.prod_logger.add_switch(Logger.INFO)
+        pass

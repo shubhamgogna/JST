@@ -12,6 +12,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
+import copy
 
 from symbol_table.scope import Scope
 from symbol_table.symbol import Symbol
@@ -66,11 +67,12 @@ class SymbolTable(object):
         return len(self.table)
 
     def clone(self):
-        result = SymbolTable()
-        result.table = []
-        for scope in self.table:
-            result.table.append(scope.clone())
-        return result
+        return copy.deepcopy(self)
+        # result = SymbolTable()
+        # result.table = []
+        # for scope in self.table:
+        #     result.table.append(scope.clone())
+        # return result
 
     def __repr__(self):
         scopes = []
