@@ -18,25 +18,49 @@ from symbol_table.symbol import Symbol
 
 
 class Scope(object):
+    INSERT_SUCCESS = 0
+    INSERT_SHADOWED = 1
+    INSERT_REDECL = 2
+
     def __init__(self):
         self.map = RBTree()
 
     def insert(self, symbol):
-        if type(symbol) is Symbol:
-            self.map[symbol.identifier] = symbol
-        else:
+        if not isinstance(symbol, Symbol):
             raise TypeError("'symbol' is not an instance of Symbol.")
 
-    def find(self, name):
-        return self.map.get(name, None)
+        if symbol.identifier not in self.map:
+            existing = self.map[symbol.identifier] = []
+        else:
+            existing = self.map[symbol.identifier]
+
+        for item in existing:
+            # Allow at most one of each type
+            if type(item) is type(symbol):
+                return Scope.INSERT_REDECL
+
+        existing.append(symbol)
+        return Scope.INSERT_SUCCESS
+
+    def find_with_type(self, name, search_type):
+        results = self.map.get(name, None)
+        if results is None:
+            return None
+
+        for result in results:
+            if type(result) is search_type:
+                return result
+        return None
 
     def size(self):
         return len(self.map)
 
     def clone(self):
         result = Scope()
-        for iden, value in self.map.items():
-            result.insert(value)
+        for identifier, value in self.map.items():
+            result.map[identifier] = []
+            for elem in value:
+                result.map[identifier].append(elem.clone())
         return result
 
     def __repr__(self):
@@ -44,3 +68,6 @@ class Scope(object):
         for key, value in self.map.items():
             symbols.append("  " + key + " : " + repr(value))
         return "\n".join(symbols)
+
+    def find(self, name):
+        return self.map.get(name, None)

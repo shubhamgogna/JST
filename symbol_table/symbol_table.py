@@ -33,37 +33,32 @@ class SymbolTable(object):
         return self.table.pop()
 
     def insert(self, symbol):
-        if type(symbol) is Symbol:
-            shawdowed = False
-
-            for scope in self.table:
-                result = scope.find(symbol.identifier)
-                if result is not None:
-                    if scope is self.table[-1]:
-                        return "EXISTS"
-                    else:
-                        shawdowed = True
-
-            self.table[-1].insert(symbol)
-            return "SUCCESS" if not shawdowed else "SHADOWED"
-        else:
+        if type(symbol) is not Symbol:
             raise TypeError("'symbol' is not an instance of Symbol.")
 
-    def find(self, name):
+        is_shadowing = False
+        for scope in self.table:
+            result = scope.find_with_type(symbol.identifier, type(symbol))
+            if result is not None:
+                is_shadowing = True
+
+        result = self.table[-1].insert(symbol)
+
+        if result is Scope.INSERT_REDECL:
+            return Scope.INSERT_REDECL
+        elif is_shadowing:
+            return Scope.INSERT_SHADOWED
+        elif result is Scope.INSERT_SUCCESS:
+            return Scope.INSERT_SUCCESS
+        else:
+            raise ValueError('Unknown result from Scope.insert()')
+
+    def find(self, name, search_type):
         for scope in reversed(self.table):
-            result = scope.find(name)
+            result = scope.find_with_type(name, search_type)
             if result is not None:
                 return result
         return None
-
-    def find_type(self, name):
-        pass
-
-    def insert_type(self, name, actual_type=None):
-        pass
-
-    def find_enum_constant_value(self, identifier):
-        pass
 
     def size(self):
         return len(self.table)
