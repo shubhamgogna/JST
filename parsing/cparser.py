@@ -18,12 +18,12 @@ import sys
 
 from loggers.logger import Logger
 from scanning.clexer import Lexer
-from symbol_table.symbol import Symbol, PointerDeclaration
-from symbol_table.declaration_specifiers import DeclarationSpecifiers
+from symbol_table.symbol import Symbol, PointerDeclaration, TypeDeclaration, ConstantValue
 
 
 class Parser(object):
     DEFAULT_PRODUCTION_DUMP_FILE = 'parsing_dump_productions.txt'
+
     def __init__(self, compiler_state, lexer=None, print_productions=True, print_source=True, print_info=True,
                  prod_filename=sys.stdout, **kwargs):
         self.compiler_state = compiler_state
@@ -72,7 +72,7 @@ class Parser(object):
     # translation-unit:
     #
     def p_translation_unit(self, t):
-        """translation_unit : translation_unit_opt"""
+        """translation_unit : translation_unit_opt leave_scope"""
         self.prod_logger.production('translation_unit -> translation_unit_opt')
 
     def p_translation_unit_1(self, t):
@@ -182,7 +182,7 @@ class Parser(object):
         """
         self.prod_logger.production('declaration_specifiers -> storage_class_specifier')
 
-        t[0] = DeclarationSpecifiers()
+        t[0] = TypeDeclaration()
         t[0].add_storage_class(t[1])
 
     def p_declaration_specifiers_5(self, t):
@@ -191,7 +191,7 @@ class Parser(object):
         """
         self.prod_logger.production('declaration_specifiers -> type_specifier')
 
-        t[0] = DeclarationSpecifiers()
+        t[0] = TypeDeclaration()
         t[0].add_type_specifier(t[1])
 
     def p_declaration_specifiers_6(self, t):
@@ -200,7 +200,7 @@ class Parser(object):
         """
         self.prod_logger.production('declaration_specifiers -> type_qualifier')
 
-        t[0] = DeclarationSpecifiers()
+        t[0] = TypeDeclaration()
         t[0].add_type_qualifier(t[1])
 
     #
@@ -1153,7 +1153,7 @@ class Parser(object):
         """
         self.prod_logger.production('logical_or_expression : logical_or_expression LOR logical_and_expression')
 
-        if not issubclass(type(t[1]), Symbol) and not issubclass(type(t[3]), Symbol):
+        if Parser.both_are_constant_numbers(t[1], t[3]):
             t[0] = {"value": 1 if t[1] != 0 or t[2] != 0 else 0, "type": 'int'}
         else:
             # TODO: implement this via AST Nodes
@@ -1177,7 +1177,7 @@ class Parser(object):
         """
         self.prod_logger.production('logical_and_expression -> logical_and_expression LAND inclusive_or_expression')
 
-        if not issubclass(type(t[1]), Symbol) and not issubclass(type(t[3]), Symbol):
+        if Parser.both_are_constant_numbers(t[1], t[3]):
             t[0] = {"value": 0 if t[1] == 0 or t[2] == 0 else 1, "type": 'int'}
         else:
             # TODO: implement this via AST Nodes
@@ -1202,7 +1202,7 @@ class Parser(object):
         """
         self.prod_logger.production('inclusive_or_expression -> inclusive_or_expression OR exclusive_or_expression')
 
-        if not issubclass(type(t[1]), Symbol) and not issubclass(type(t[3]), Symbol):
+        if Parser.both_are_constant_numbers(t[1], t[3]):
             t[0] = Parser.perform_constant_expression_bitwise_operation(t[1], '|', t[3])
         else:
             # TODO: implement this via AST Nodes
@@ -1227,7 +1227,7 @@ class Parser(object):
         """
         self.prod_logger.production('exclusive_or_expression -> exclusive_or_expression XOR and_expression')
 
-        if not issubclass(type(t[1]), Symbol) and not issubclass(type(t[3]), Symbol):
+        if Parser.both_are_constant_numbers(t[1], t[3]):
             t[0] = Parser.perform_constant_expression_bitwise_operation(t[1], '^', t[3])
         else:
             # TODO: implement this via AST Nodes
@@ -1251,7 +1251,7 @@ class Parser(object):
         """
         self.prod_logger.production('and_expression -> and_expression AND equality_expression')
 
-        if not issubclass(type(t[1]), Symbol) and not issubclass(type(t[3]), Symbol):
+        if Parser.both_are_constant_numbers(t[1], t[3]):
             t[0] = Parser.perform_constant_expression_bitwise_operation(t[1], '&', t[3])
         else:
             # TODO: implement this via AST Nodes
@@ -1274,8 +1274,8 @@ class Parser(object):
         """
         self.prod_logger.production('equality_expression -> equality_expression EQ relational_expression')
 
-        if not issubclass(type(t[1]), Symbol) and not issubclass(type(t[3]), Symbol):
-            t[0] = {"value": t[1]['value'] == t[3]['value'], "type": 'int'}
+        if Parser.both_are_constant_numbers(t[1], t[3]):
+            t[0] = ConstantValue(t[1].value == t[3].value, 'int')
         else:
             # TODO: implement this via AST Nodes
             t[0] = None
@@ -1287,8 +1287,8 @@ class Parser(object):
         """
         self.prod_logger.production('equality_expression -> equality_expression NE relational_expression')
 
-        if not issubclass(type(t[1]), Symbol) and not issubclass(type(t[3]), Symbol):
-            t[0] = {"value": t[1]['value'] != t[3]['value'], "type": 'int'}
+        if Parser.both_are_constant_numbers(t[1], t[3]):
+            t[0] = ConstantValue(t[1].value != t[3].value, 'int')
         else:
             # TODO: implement this via AST Nodes
             t[0] = None
@@ -1307,12 +1307,14 @@ class Parser(object):
         t[0] = t[1]
 
     def p_relational_expression_2(self, t):
-        """relational_expression : relational_expression LT shift_expression
         """
-        self.prod_logger.production('relational_expression : relational_expression LT shift_expression')
+        relational_expression : relational_expression LT shift_expression
+        """
+        self.prod_logger.production('relational_expression -> relational_expression LT shift_expression')
 
-        if not issubclass(type(t[1]), Symbol) and not issubclass(type(t[3]), Symbol):
-            t[0] = {"value": t[1]['value'] < t[3]['value'], "type": 'int'}
+        if Parser.both_are_constant_numbers(t[1], t[3]):
+            print(t[1], type(t[1]), t[3], type(t[3]))
+            t[0] = ConstantValue(t[1].value < t[3].value, 'int')
         else:
             # TODO: implement this via AST Nodes
             t[0] = None
@@ -1323,8 +1325,8 @@ class Parser(object):
         """
         self.prod_logger.production('relational_expression : relational_expression GT shift_expression')
 
-        if not issubclass(type(t[1]), Symbol) and not issubclass(type(t[3]), Symbol):
-            t[0] = {"value": t[1]['value'] > t[3]['value'], "type": 'int'}
+        if Parser.both_are_constant_numbers(t[1], t[3]):
+            t[0] = ConstantValue(t[1].value > t[3].value, 'int')
         else:
             # TODO: implement this via AST Nodes
             t[0] = None
@@ -1334,10 +1336,10 @@ class Parser(object):
     def p_relational_expression_4(self, t):
         """relational_expression : relational_expression LE shift_expression
         """
-        self.prod_logger.production('relational_expression : relational_expression LE shift_expression')
+        self.prod_logger.production('relational_expression -> relational_expression LE shift_expression')
 
-        if not issubclass(type(t[1]), Symbol) and not issubclass(type(t[3]), Symbol):
-            t[0] = {"value": t[1]['value'] <= t[3]['value'], "type": 'int'}
+        if Parser.both_are_constant_numbers(t[1], t[3]):
+            t[0] = ConstantValue(t[1].value <= t[3].value, 'int')
         else:
             # TODO: implement this via AST Nodes
             t[0] = None
@@ -1348,9 +1350,9 @@ class Parser(object):
         """
         relational_expression : relational_expression GE shift_expression
         """
-        self.prod_logger.production('relational_expression : relational_expression GE shift_expression')
+        self.prod_logger.production('relational_expression -> relational_expression GE shift_expression')
 
-        if not issubclass(type(t[1]), Symbol) and not issubclass(type(t[3]), Symbol):
+        if Parser.both_are_constant_numbers(t[1], t[3]):
             t[0] = {"value": t[1]['value'] >= t[3]['value'], "type": 'int'}
         else:
             # TODO: implement this via AST Nodes
@@ -1372,16 +1374,16 @@ class Parser(object):
         """
         shift_expression : shift_expression LSHIFT additive_expression
         """
-        self.prod_logger.production('shift_expression : shift_expression LSHIFT additive_expression')
+        self.prod_logger.production('shift_expression -> shift_expression LSHIFT additive_expression')
 
         # t[0] = Parser.perform_constant_expression_bitwise_operation(t[1], '<<', t[3])
 
     def p_shift_expression_3(self, t):
         """shift_expression : shift_expression RSHIFT additive_expression
         """
-        self.prod_logger.production('shift_expression : shift_expression RSHIFT additive_expression')
+        self.prod_logger.production('shift_expression -> shift_expression RSHIFT additive_expression')
 
-        if not issubclass(type(t[1]), Symbol) and not issubclass(type(t[3]), Symbol):
+        if Parser.both_are_constant_numbers(t[1], t[3]):
             t[0] = Parser.perform_constant_expression_bitwise_operation(t[1], '>>', t[3])
         else:
             # TODO: implement this via AST Nodes
@@ -1404,10 +1406,10 @@ class Parser(object):
         """
         additive_expression : additive_expression PLUS multiplicative_expression
         """
-        self.prod_logger.production('additive_expression : additive_expression PLUS multiplicative_expression')
+        self.prod_logger.production('additive_expression -> additive_expression PLUS multiplicative_expression')
 
-        if not issubclass(type(t[1]), Symbol) and not issubclass(type(t[3]), Symbol):
-            t[0] = {"value": t[1]["value"] + t[3]["value"], "type": Parser.get_promoted_type(t[1]["type"], t[3]["type"])}
+        if Parser.both_are_constant_numbers(t[1], t[3]):
+            t[0] = ConstantValue(t[1].value + t[3].value, type=Parser.get_promoted_type(t[1].type, t[3].type))
         else:
             # TODO: implement this via AST Nodes
             t[0] = None
@@ -1418,9 +1420,9 @@ class Parser(object):
         """
         additive_expression : additive_expression MINUS multiplicative_expression
         """
-        self.prod_logger.production('additive_expression : additive_expression MINUS multiplicative_expression')
+        self.prod_logger.production('additive_expression -> additive_expression MINUS multiplicative_expression')
 
-        if not issubclass(type(t[1]), Symbol) and not issubclass(type(t[3]), Symbol):
+        if Parser.both_are_constant_numbers(t[1], t[3]):
             t[0] = {"value": t[1]["value"] - t[3]["value"], "type": Parser.get_promoted_type(t[1]["type"], t[3]["type"])}
         else:
             # TODO: implement this via AST Nodes
@@ -1441,9 +1443,9 @@ class Parser(object):
         """
         multiplicative_expression : multiplicative_expression TIMES cast_expression
         """
-        self.prod_logger.production('multiplicative_expression : multiplicative_expression TIMES cast_expression')
+        self.prod_logger.production('multiplicative_expression -> multiplicative_expression TIMES cast_expression')
 
-        if not issubclass(type(t[1]), Symbol) and not issubclass(type(t[3]), Symbol):
+        if Parser.both_are_constant_numbers(t[1], t[3]):
             t[0] = Parser.perform_constant_expression_arithmetic(t[1], '*', t[3])
         else:
             # TODO: implement this via AST Nodes
@@ -1453,9 +1455,9 @@ class Parser(object):
         """
         multiplicative_expression : multiplicative_expression DIVIDE cast_expression
         """
-        self.prod_logger.production('multiplicative_expression : multiplicative_expression DIVIDE cast_expression')
+        self.prod_logger.production('multiplicative_expression -> multiplicative_expression DIVIDE cast_expression')
 
-        if not issubclass(type(t[1]), Symbol) and not issubclass(type(t[3]), Symbol):
+        if Parser.both_are_constant_numbers(t[1], t[3]):
             t[0] = Parser.perform_constant_expression_arithmetic(t[1], '/', t[3])
         else:
             # TODO: implement this via AST Nodes
@@ -1467,7 +1469,7 @@ class Parser(object):
         """
         multiplicative_expression : multiplicative_expression MOD cast_expression
         """
-        self.prod_logger.production('multiplicative_expression : multiplicative_expression MOD cast_expression')
+        self.prod_logger.production('multiplicative_expression -> multiplicative_expression MOD cast_expression')
 
 
         t[0] = Parser.perform_constant_expression_arithmetic(t[1], '%', t[3])
@@ -1626,7 +1628,7 @@ class Parser(object):
         """
         primary_expression :  identifier
         """
-        self.prod_logger.production('primary_expression : identifier')
+        self.prod_logger.production('primary_expression -> identifier')
 
         t[0] = t[1]
 
@@ -1642,7 +1644,7 @@ class Parser(object):
         """
         primary_expression : string_literal
         """
-        self.prod_logger.production('primary_expression : string_literal_list')
+        self.prod_logger.production('primary_expression -> string_literal_list')
 
         t[0] = t[1]
 
@@ -1650,14 +1652,14 @@ class Parser(object):
         """
         string_literal : SCONST
         """
-        self.prod_logger.production('string_literal_list : SCONST')
+        self.prod_logger.production('string_literal_list -> SCONST')
 
         t[0] = t[1]
 
     def p_string_literal_plus_string_literal_fragment(self, t):
         """string_literal : string_literal SCONST
         """
-        self.prod_logger.production('string_literal_list : string_literal_list SCONST')
+        self.prod_logger.production('string_literal_list -> string_literal_list SCONST')
 
         # concatenate the string fragments into a single string literal by trimming off the quote marks
         t[0] = t[1][:-1] + t[2][1:]
@@ -1738,7 +1740,7 @@ class Parser(object):
         self.prod_logger.info('Entering new scope')
 
         self.compiler_state.symbol_table.push()
-        self.compiler_state.most_recent_type_declaration = DeclarationSpecifiers()
+        self.compiler_state.most_recent_type_declaration = TypeDeclaration()
 
     def p_insert_mode(self, t):
         """
@@ -1776,7 +1778,7 @@ class Parser(object):
         """
         self.prod_logger.info('Reseting the current type declaration.')
 
-        self.compiler_state.most_recent_type_declaration = DeclarationSpecifiers()
+        self.compiler_state.most_recent_type_declaration = TypeDeclaration()
 
     @staticmethod
     def perform_constant_expression_arithmetic(operand_1, operator, operand_2):
@@ -1829,3 +1831,7 @@ class Parser(object):
             return 'int'
         elif type_1 is 'float' or type_2 is 'float':
             return 'float'
+
+    @staticmethod
+    def both_are_constant_numbers(item_1, item_2):
+        return issubclass(type(item_1), ConstantValue) and issubclass(item_2, ConstantValue)

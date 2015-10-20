@@ -37,10 +37,12 @@ class TestParser(unittest.TestCase):
         self.compiler_state = None
 
     def test_plain_main(self):
-        data = """int main() {return 0; !!C}"""
+        data = """int main() {return 0;} !!C"""
         self.parser.parse(data)
 
         symbol_table_clone = self.compiler_state.cloned_tables[0]
+
+        print(symbol_table_clone)
 
         found_main, in_scope = symbol_table_clone.find("main")
 
@@ -62,8 +64,8 @@ class TestParser(unittest.TestCase):
     def test_declare_and_assign_primitive_variable(self):
         data = """
             int main() {
-                int i = 5;
-                return 0;
+              int i = 5;
+              return 0;
             }
             """
         self.parser.parse(data)
@@ -172,6 +174,8 @@ class TestParser(unittest.TestCase):
         data = """
         int main() {
           int i;
+
+          !!P(here)!
           for (i = 0; i < 3; i++) {}
 
           return 0;

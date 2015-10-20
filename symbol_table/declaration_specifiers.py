@@ -14,7 +14,7 @@
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
 
-class DeclarationSpecifiers(object):
+class TypeDeclaration(object):
     def __init__(self):
         # List of AUTO, REGISTER, STATIC, EXTERN, TYPEDEF
         self.storage_classes = []

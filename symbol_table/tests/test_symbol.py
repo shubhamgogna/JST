@@ -14,7 +14,7 @@
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
-from symbol_table.symbol import Symbol
+from symbol_table.symbol import Symbol, TypeDeclaration
 
 
 class TestSymbol(unittest.TestCase):
@@ -23,6 +23,16 @@ class TestSymbol(unittest.TestCase):
 
     def tearDown(self):
         pass
+
+    def test_str(self):
+        type = TypeDeclaration()
+        type.add_type_specifier('int')
+        symbol = Symbol(identifier='my_variable')
+        symbol.type = type
+
+        s = str(symbol)
+
+        self.assertEqual(s, "int my_variable")
 
     # not sure what we should test, but I think this might be an example of how to start
     def test_add_args_makes_function(self):
