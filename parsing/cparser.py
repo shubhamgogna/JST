@@ -22,7 +22,8 @@ from symbol_table.symbol import TypeDeclaration, PointerDeclaration
 
 
 class Parser(object):
-    def __init__(self, compiler_state, lexer=None, print_productions = True, print_source = True, print_info = True, prod_filename = 'parsing_dump_productions.txt', **kwargs):
+    def __init__(self, compiler_state, lexer=None, print_productions=True, print_source=True, print_info=True,
+                 prod_filename='parsing_dump_productions.txt', **kwargs):
         self.compiler_state = compiler_state
 
         if lexer is None:
@@ -589,7 +590,8 @@ class Parser(object):
         """
         direct_declarator : direct_declarator LBRACKET constant_expression_option RBRACKET
         """
-        self.prod_logger.production('direct_declarator -> direct_declarator LBRACKET constant_expression_option RBRACKET')
+        self.prod_logger.production(
+            'direct_declarator -> direct_declarator LBRACKET constant_expression_option RBRACKET')
 
         if t[3]['type'] is not 'int':
             raise Exception(
@@ -884,7 +886,6 @@ class Parser(object):
         compound_statement : LBRACE enter_scope insert_mode declaration_list lookup_mode statement_list leave_scope RBRACE
         """
         self.prod_logger.production('compound_statement : LBRACE declaration_list statement_list RBRACE')
-        # TODO: is this the right place to go into lookup mode?
 
     def p_compound_statement_2(self, t):
         """
@@ -1019,7 +1020,8 @@ class Parser(object):
     def p_assignment_expression_2(self, t):
         """assignment_expression : unary_expression assignment_operator assignment_expression
         """
-        self.prod_logger.production('assignment_expression : unary_expression assignment_operator assignment_expression')
+        self.prod_logger.production(
+            'assignment_expression : unary_expression assignment_operator assignment_expression')
 
     #
     # assignment_operator:
@@ -1120,7 +1122,7 @@ class Parser(object):
         """
         self.prod_logger.production('logical_or_expression : logical_or_expression LOR logical_and_expression')
 
-        t[0] = {"value": 1 if t[1] != 0 or t[2] != 0 else 0, "type": 'int'}
+        # t[0] = {"value": 1 if t[1] != 0 or t[2] != 0 else 0, "type": 'int'}
 
     #
     # logical_and_expression
@@ -1137,7 +1139,7 @@ class Parser(object):
         """
         self.prod_logger.production('logical_and_expression : logical_and_expression LAND inclusive_or_expression')
 
-        t[0] = {"value": 0 if t[1] == 0 or t[2] == 0 else 1, "type": 'int'}
+        # t[0] = {"value": 0 if t[1] == 0 or t[2] == 0 else 1, "type": 'int'}
 
     #
     # inclusive-or-expression:
@@ -1156,7 +1158,7 @@ class Parser(object):
         """
         self.prod_logger.production('inclusive_or_expression -> inclusive_or_expression OR exclusive_or_expression')
 
-        t[0] = Parser.perform_constant_expression_bitwise_operation(t[1], '|', t[3])
+        # t[0] = Parser.perform_constant_expression_bitwise_operation(t[1], '|', t[3])
 
     #
     # exclusive-or-expression:
@@ -1175,7 +1177,7 @@ class Parser(object):
         """
         self.prod_logger.production('exclusive_or_expression -> exclusive_or_expression XOR and_expression')
 
-        t[0] = Parser.perform_constant_expression_bitwise_operation(t[1], '^', t[3])
+        # t[0] = Parser.perform_constant_expression_bitwise_operation(t[1], '^', t[3])
 
     #
     # and_expression
@@ -1194,7 +1196,7 @@ class Parser(object):
         """
         self.prod_logger.production('and_expression -> and_expression AND equality_expression')
 
-        t[0] = Parser.perform_constant_expression_bitwise_operation(t[1], '&', t[3])
+        # t[0] = Parser.perform_constant_expression_bitwise_operation(t[1], '&', t[3])
 
     #
     # equality_expression:
@@ -1212,7 +1214,7 @@ class Parser(object):
         """
         self.prod_logger.production('equality_expression -> equality_expression EQ relational_expression')
 
-        t[0] = {"value": t[1]['value'] == t[3]['value'], "type": 'int'}
+        # t[0] = {"value": t[1]['value'] == t[3]['value'], "type": 'int'}
 
     def p_equality_expression_3(self, t):
         """
@@ -1220,7 +1222,7 @@ class Parser(object):
         """
         self.prod_logger.production('equality_expression -> equality_expression NE relational_expression')
 
-        t[0] = {"value": t[1]['value'] != t[3]['value'], "type": 'int'}
+        # t[0] = {"value": t[1]['value'] != t[3]['value'], "type": 'int'}
 
     #
     # relational-expression:
@@ -1238,28 +1240,28 @@ class Parser(object):
         """
         self.prod_logger.production('relational_expression : relational_expression LT shift_expression')
 
-        t[0] = {"value": t[1]['value'] < t[3]['value'], "type": 'int'}
+        # t[0] = {"value": t[1]['value'] < t[3]['value'], "type": 'int'}
 
     def p_relational_expression_3(self, t):
         """relational_expression : relational_expression GT shift_expression
         """
         self.prod_logger.production('relational_expression : relational_expression GT shift_expression')
 
-        t[0] = {"value": t[1]['value'] > t[3]['value'], "type": 'int'}
+        # t[0] = {"value": t[1]['value'] > t[3]['value'], "type": 'int'}
 
     def p_relational_expression_4(self, t):
         """relational_expression : relational_expression LE shift_expression
         """
         self.prod_logger.production('relational_expression : relational_expression LE shift_expression')
 
-        t[0] = {"value": t[1]['value'] <= t[3]['value'], "type": 'int'}
+        # t[0] = {"value": t[1]['value'] <= t[3]['value'], "type": 'int'}
 
     def p_relational_expression_5(self, t):
         """relational_expression : relational_expression GE shift_expression
         """
         self.prod_logger.production('relational_expression : relational_expression GE shift_expression')
 
-        t[0] = {"value": t[1]['value'] >= t[3]['value'], "type": 'int'}
+        # t[0] = {"value": t[1]['value'] >= t[3]['value'], "type": 'int'}
 
     #
     # shift-expression
@@ -1277,14 +1279,14 @@ class Parser(object):
         """
         self.prod_logger.production('shift_expression : shift_expression LSHIFT additive_expression')
 
-        t[0] = Parser.perform_constant_expression_bitwise_operation(t[1], '<<', t[3])
+        # t[0] = Parser.perform_constant_expression_bitwise_operation(t[1], '<<', t[3])
 
     def p_shift_expression_3(self, t):
         """shift_expression : shift_expression RSHIFT additive_expression
         """
         self.prod_logger.production('shift_expression : shift_expression RSHIFT additive_expression')
 
-        t[0] = Parser.perform_constant_expression_bitwise_operation(t[1], '>>', t[3])
+        # t[0] = Parser.perform_constant_expression_bitwise_operation(t[1], '>>', t[3])
 
     #
     # additive-expression
@@ -1303,7 +1305,7 @@ class Parser(object):
         """
         self.prod_logger.production('additive_expression : additive_expression PLUS multiplicative_expression')
 
-        t[0] = {"value": t[1]["value"] + t[3]["value"], "type": Parser.get_promoted_type(t[1]["type"], t[3]["type"])}
+        # t[0] = {"value": t[1]["value"] + t[3]["value"], "type": Parser.get_promoted_type(t[1]["type"], t[3]["type"])}
 
     def p_additive_expression_3(self, t):
         """
@@ -1311,7 +1313,7 @@ class Parser(object):
         """
         self.prod_logger.production('additive_expression : additive_expression MINUS multiplicative_expression')
 
-        t[0] = {"value": t[1]["value"] - t[3]["value"], "type": Parser.get_promoted_type(t[1]["type"], t[3]["type"])}
+        # t[0] = {"value": t[1]["value"] - t[3]["value"], "type": Parser.get_promoted_type(t[1]["type"], t[3]["type"])}
 
     #
     # multiplicative_expression
@@ -1329,21 +1331,21 @@ class Parser(object):
         """
         self.prod_logger.production('multiplicative_expression : multiplicative_expression TIMES cast_expression')
 
-        t[0] = Parser.perform_constant_expression_arithmetic(t[1], '*', t[3])
+        # t[0] = Parser.perform_constant_expression_arithmetic(t[1], '*', t[3])
 
     def p_multiplicative_expression_3(self, t):
         """multiplicative_expression : multiplicative_expression DIVIDE cast_expression
         """
         self.prod_logger.production('multiplicative_expression : multiplicative_expression DIVIDE cast_expression')
 
-        t[0] = Parser.perform_constant_expression_arithmetic(t[1], '/', t[3])
+        # t[0] = Parser.perform_constant_expression_arithmetic(t[1], '/', t[3])
 
     def p_multiplicative_expression_4(self, t):
         """multiplicative_expression : multiplicative_expression MOD cast_expression
         """
         self.prod_logger.production('multiplicative_expression : multiplicative_expression MOD cast_expression')
 
-        t[0] = Parser.perform_constant_expression_arithmetic(t[1], '%', t[3])
+        # t[0] = Parser.perform_constant_expression_arithmetic(t[1], '%', t[3])
 
     #
     # cast_expression:
