@@ -34,11 +34,8 @@ class Logger(object):
     def add_switch(self, switch, level=0):
         self.switches[switch] = level
 
-    # def add_switch(self, switch_level_tuple):
-    #     self.switches[switch_level_tuple[0]] = switch_level_tuple[1]
-
     def remove_switch(self, switch):
-        self.switches.discard(switch)
+        self.switches.pop(switch, 0)
 
     def log(self, switch, message, level=0):
         if switch in self.switches.keys():

@@ -1590,6 +1590,7 @@ class Parser(object):
         """
         self.prod_logger.info('Entering new scope')
 
+        self.compiler_state.symbol_table.push()
         self.compiler_state.most_recent_type_declaration = TypeDeclaration()
 
     def p_insert_mode(self, t):
@@ -1605,6 +1606,8 @@ class Parser(object):
         leave_scope : empty
         """
         self.prod_logger.info('Leaving a scope')
+
+        self.compiler_state.symbol_table.pop()
 
     def p_lookup_mode(self, t):
         """
