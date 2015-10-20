@@ -40,11 +40,11 @@ def main():
 
     found = sym.find('Apple')
     assert found is not None
-    assert found.identifier is 'Apple'
+    assert found[0].identifier is 'Apple'
 
     found = sym.find('Cantaloupe')
     assert found is not None
-    assert found.identifier is 'Cantaloupe'
+    assert found[0].identifier is 'Cantaloupe'
 
     found = sym.find('Durian')
     assert found is None
