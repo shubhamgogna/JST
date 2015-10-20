@@ -279,20 +279,22 @@ class Lexer(object):
     def t_CLONE_SYMBOL_TABLE(self,t):
         r'!!C'
 
-        # print message saying table will be cloned and print original table
-        self.st_logger.symbol_table('!!C encountered. Table is clonning.')
-        self.st_logger.symbol_table("Original Table")
-        self.st_logger.symbol_table(str(self.compiler_state.symbol_table))
-        self.st_logger.symbol_table('\n')
+        self.compiler_state.clone_symbol_table_on_scope_exit = True
 
-        # clone table and print cloned table
-        cloned = self.compiler_state.symbol_table.clone()
-        self.st_logger.symbol_table("Cloned Table")
-        self.st_logger.symbol_table(str(cloned))
-        self.st_logger.symbol_table('\n')
-
-        # add cloned to list of cloned
-        self.compiler_state.cloned_tables.append(cloned)
+        # # print message saying table will be cloned and print original table
+        # self.st_logger.symbol_table('!!C encountered. Table is clonning.')
+        # self.st_logger.symbol_table("Original Table")
+        # self.st_logger.symbol_table(str(self.compiler_state.symbol_table))
+        # self.st_logger.symbol_table('\n')
+        #
+        # # clone table and print cloned table
+        # cloned = self.compiler_state.symbol_table.clone()
+        # self.st_logger.symbol_table("Cloned Table")
+        # self.st_logger.symbol_table(str(cloned))
+        # self.st_logger.symbol_table('\n')
+        #
+        # # add cloned to list of cloned
+        # self.compiler_state.cloned_tables.append(cloned)
 
     # NOTE: \w is equivalent to [A-Za-z0-9]
     def t_ID(self, t):
@@ -303,7 +305,10 @@ class Lexer(object):
             t.type = reserved_word
             return t
 
-        find_symbol = self.compiler_state.symbol_table.find(t.value)
+        find_symbol = None
+        find_result = self.compiler_state.symbol_table.find(t.value)
+        if find_result:
+            find_symbol, in_scope = find_result  # splitting a tuple
         # t.type = self.get_identifier_type(identifier=t.value)
 
         # TODO Check for redeclaration, shadowing

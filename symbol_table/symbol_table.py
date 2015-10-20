@@ -57,10 +57,10 @@ class SymbolTable(object):
             raise ValueError('Unknown result from Scope.insert()')
 
     def find(self, name):
-        for scope in reversed(self.table):
+        for index, scope in enumerate(reversed(self.table)):
             result = scope.find(name)
             if result is not None:
-                return result
+                return result, (len(self.table) - (index + 1))
         return None
 
     def size(self):

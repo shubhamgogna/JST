@@ -216,5 +216,5 @@ class PointerDeclaration(object):
     def __init__(self):
         self.qualifiers = []
 
-    def add_qualifiers(self):
+    def add_qualifiers(self, qualifiers):
         pass

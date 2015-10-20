@@ -971,57 +971,66 @@ class Parser(object):
         iteration_statement : FOR LPAREN expression_option SEMI expression_option SEMI expression_option RPAREN statement
         """
         self.prod_logger.production(
-            'iteration_statement : FOR LPAREN expression_option SEMI expression_option SEMI expression_option RPAREN '
+            'iteration_statement -> FOR LPAREN expression_option SEMI expression_option SEMI expression_option RPAREN '
             'statement')
 
     def p_iteration_statement_3(self, t):
-        """iteration_statement : DO statement WHILE LPAREN expression RPAREN SEMI
         """
-        self.prod_logger.production('iteration_statement : DO statement WHILE LPAREN expression RPAREN SEMI')
+        iteration_statement : DO statement WHILE LPAREN expression RPAREN SEMI
+        """
+        self.prod_logger.production('iteration_statement -> DO statement WHILE LPAREN expression RPAREN SEMI')
 
     #
     # jump_statement:
     #
     def p_jump_statement_1(self, t):
-        """jump_statement : GOTO identifier SEMI
         """
-        self.prod_logger.production('jump_statement : GOTO identifier SEMI')
+        jump_statement : GOTO identifier SEMI
+        """
+        self.prod_logger.production('jump_statement -> GOTO identifier SEMI')
 
     def p_jump_statement_2(self, t):
-        """jump_statement : CONTINUE SEMI
         """
-        self.prod_logger.production('jump_statement : CONTINUE SEMI')
+        jump_statement : CONTINUE SEMI
+        """
+        self.prod_logger.production('jump_statement -> CONTINUE SEMI')
 
     def p_jump_statement_3(self, t):
-        """jump_statement : BREAK SEMI
         """
-        self.prod_logger.production('jump_statement : BREAK SEMI')
+        jump_statement : BREAK SEMI
+        """
+        self.prod_logger.production('jump_statement -> BREAK SEMI')
 
     def p_jump_statement_4(self, t):
-        """jump_statement : RETURN expression_option SEMI
+        """
+        jump_statement : RETURN expression_option SEMI
         """
         self.prod_logger.production('jump_statement : RETURN expression_option SEMI')
 
     def p_expression_option_1(self, t):
-        """expression_option : empty
+        """
+        expression_option : empty
         """
         self.prod_logger.production('empty')
 
     def p_expression_option_2(self, t):
-        """expression_option : expression
         """
-        self.prod_logger.production('expression_option : expression')
+        expression_option : expression
+        """
+        self.prod_logger.production('expression_option -> expression')
 
     #
     # expression:
     #
     def p_expression_1(self, t):
-        """expression : assignment_expression
+        """
+        expression : assignment_expression
         """
         self.prod_logger.production('expression : assignment_expression')
 
     def p_expression_2(self, t):
-        """expression : expression COMMA assignment_expression
+        """
+        expression : expression COMMA assignment_expression
         """
         self.prod_logger.production('expression : expression COMMA assignment_expression')
 
@@ -1029,12 +1038,14 @@ class Parser(object):
     # assigment_expression:
     #
     def p_assignment_expression_1(self, t):
-        """assignment_expression : conditional_expression
+        """
+        assignment_expression : conditional_expression
         """
         self.prod_logger.production('assignment_expression : conditional_expression')
 
     def p_assignment_expression_2(self, t):
-        """assignment_expression : unary_expression assignment_operator assignment_expression
+        """
+        assignment_expression : unary_expression assignment_operator assignment_expression
         """
         self.prod_logger.production(
             'assignment_expression : unary_expression assignment_operator assignment_expression')
@@ -1092,7 +1103,8 @@ class Parser(object):
         self.prod_logger.production('assignment_operator -> OREQUAL')
 
     def p_assignment_operator_xor(self, t):
-        """assignment_operator : XOREQUAL
+        """
+        assignment_operator : XOREQUAL
         """
         self.prod_logger.production('assignment_operator -> XOREQUAL')
 
@@ -1100,14 +1112,16 @@ class Parser(object):
     # conditional-expression
     #
     def p_conditional_expression_1(self, t):
-        """conditional_expression : logical_or_expression
         """
-        self.prod_logger.production('conditional_expression : logical_or_expression')
+        conditional_expression : logical_or_expression
+        """
+        self.prod_logger.production('conditional_expression -> logical_or_expression')
 
         t[0] = t[1]
 
     def p_conditional_expression_2(self, t):
-        """conditional_expression : logical_or_expression CONDOP expression COLON conditional_expression
+        """
+        conditional_expression : logical_or_expression CONDOP expression COLON conditional_expression
         """
         self.prod_logger.production(
             'conditional_expression : logical_or_expression CONDOP expression COLON conditional_expression')
@@ -1116,9 +1130,10 @@ class Parser(object):
     # constant-expression
     #
     def p_constant_expression(self, t):
-        """constant_expression : conditional_expression
         """
-        self.prod_logger.production('constant_expression : conditional_expression')
+        constant_expression : conditional_expression
+        """
+        self.prod_logger.production('constant_expression -> conditional_expression')
 
         t[0] = t[1]
 
@@ -1138,7 +1153,13 @@ class Parser(object):
         """
         self.prod_logger.production('logical_or_expression : logical_or_expression LOR logical_and_expression')
 
-        # t[0] = {"value": 1 if t[1] != 0 or t[2] != 0 else 0, "type": 'int'}
+        if not issubclass(type(t[1]), Symbol) and not issubclass(type(t[3]), Symbol):
+            t[0] = {"value": 1 if t[1] != 0 or t[2] != 0 else 0, "type": 'int'}
+        else:
+            # TODO: implement this via AST Nodes
+            t[0] = None
+
+
 
     #
     # logical_and_expression
@@ -1151,11 +1172,18 @@ class Parser(object):
         t[0] = t[1]
 
     def p_logical_and_expression_2(self, t):
-        """logical_and_expression : logical_and_expression LAND inclusive_or_expression
         """
-        self.prod_logger.production('logical_and_expression : logical_and_expression LAND inclusive_or_expression')
+        logical_and_expression : logical_and_expression LAND inclusive_or_expression
+        """
+        self.prod_logger.production('logical_and_expression -> logical_and_expression LAND inclusive_or_expression')
 
-        # t[0] = {"value": 0 if t[1] == 0 or t[2] == 0 else 1, "type": 'int'}
+        if not issubclass(type(t[1]), Symbol) and not issubclass(type(t[3]), Symbol):
+            t[0] = {"value": 0 if t[1] == 0 or t[2] == 0 else 1, "type": 'int'}
+        else:
+            # TODO: implement this via AST Nodes
+            t[0] = None
+
+
 
     #
     # inclusive-or-expression:
@@ -1174,7 +1202,13 @@ class Parser(object):
         """
         self.prod_logger.production('inclusive_or_expression -> inclusive_or_expression OR exclusive_or_expression')
 
-        # t[0] = Parser.perform_constant_expression_bitwise_operation(t[1], '|', t[3])
+        if not issubclass(type(t[1]), Symbol) and not issubclass(type(t[3]), Symbol):
+            t[0] = Parser.perform_constant_expression_bitwise_operation(t[1], '|', t[3])
+        else:
+            # TODO: implement this via AST Nodes
+            t[0] = None
+
+
 
     #
     # exclusive-or-expression:
@@ -1193,7 +1227,12 @@ class Parser(object):
         """
         self.prod_logger.production('exclusive_or_expression -> exclusive_or_expression XOR and_expression')
 
-        # t[0] = Parser.perform_constant_expression_bitwise_operation(t[1], '^', t[3])
+        if not issubclass(type(t[1]), Symbol) and not issubclass(type(t[3]), Symbol):
+            t[0] = Parser.perform_constant_expression_bitwise_operation(t[1], '^', t[3])
+        else:
+            # TODO: implement this via AST Nodes
+            t[0] = None
+
 
     #
     # and_expression
@@ -1212,7 +1251,12 @@ class Parser(object):
         """
         self.prod_logger.production('and_expression -> and_expression AND equality_expression')
 
-        # t[0] = Parser.perform_constant_expression_bitwise_operation(t[1], '&', t[3])
+        if not issubclass(type(t[1]), Symbol) and not issubclass(type(t[3]), Symbol):
+            t[0] = Parser.perform_constant_expression_bitwise_operation(t[1], '&', t[3])
+        else:
+            # TODO: implement this via AST Nodes
+            t[0] = None
+
 
     #
     # equality_expression:
@@ -1230,7 +1274,12 @@ class Parser(object):
         """
         self.prod_logger.production('equality_expression -> equality_expression EQ relational_expression')
 
-        # t[0] = {"value": t[1]['value'] == t[3]['value'], "type": 'int'}
+        if not issubclass(type(t[1]), Symbol) and not issubclass(type(t[3]), Symbol):
+            t[0] = {"value": t[1]['value'] == t[3]['value'], "type": 'int'}
+        else:
+            # TODO: implement this via AST Nodes
+            t[0] = None
+
 
     def p_equality_expression_3(self, t):
         """
@@ -1238,7 +1287,13 @@ class Parser(object):
         """
         self.prod_logger.production('equality_expression -> equality_expression NE relational_expression')
 
-        # t[0] = {"value": t[1]['value'] != t[3]['value'], "type": 'int'}
+        if not issubclass(type(t[1]), Symbol) and not issubclass(type(t[3]), Symbol):
+            t[0] = {"value": t[1]['value'] != t[3]['value'], "type": 'int'}
+        else:
+            # TODO: implement this via AST Nodes
+            t[0] = None
+
+
 
     #
     # relational-expression:
@@ -1256,28 +1311,52 @@ class Parser(object):
         """
         self.prod_logger.production('relational_expression : relational_expression LT shift_expression')
 
-        # t[0] = {"value": t[1]['value'] < t[3]['value'], "type": 'int'}
+        if not issubclass(type(t[1]), Symbol) and not issubclass(type(t[3]), Symbol):
+            t[0] = {"value": t[1]['value'] < t[3]['value'], "type": 'int'}
+        else:
+            # TODO: implement this via AST Nodes
+            t[0] = None
+
 
     def p_relational_expression_3(self, t):
         """relational_expression : relational_expression GT shift_expression
         """
         self.prod_logger.production('relational_expression : relational_expression GT shift_expression')
 
-        # t[0] = {"value": t[1]['value'] > t[3]['value'], "type": 'int'}
+        if not issubclass(type(t[1]), Symbol) and not issubclass(type(t[3]), Symbol):
+            t[0] = {"value": t[1]['value'] > t[3]['value'], "type": 'int'}
+        else:
+            # TODO: implement this via AST Nodes
+            t[0] = None
+
+
 
     def p_relational_expression_4(self, t):
         """relational_expression : relational_expression LE shift_expression
         """
         self.prod_logger.production('relational_expression : relational_expression LE shift_expression')
 
-        # t[0] = {"value": t[1]['value'] <= t[3]['value'], "type": 'int'}
+        if not issubclass(type(t[1]), Symbol) and not issubclass(type(t[3]), Symbol):
+            t[0] = {"value": t[1]['value'] <= t[3]['value'], "type": 'int'}
+        else:
+            # TODO: implement this via AST Nodes
+            t[0] = None
+
+
 
     def p_relational_expression_5(self, t):
-        """relational_expression : relational_expression GE shift_expression
+        """
+        relational_expression : relational_expression GE shift_expression
         """
         self.prod_logger.production('relational_expression : relational_expression GE shift_expression')
 
-        # t[0] = {"value": t[1]['value'] >= t[3]['value'], "type": 'int'}
+        if not issubclass(type(t[1]), Symbol) and not issubclass(type(t[3]), Symbol):
+            t[0] = {"value": t[1]['value'] >= t[3]['value'], "type": 'int'}
+        else:
+            # TODO: implement this via AST Nodes
+            t[0] = None
+
+
 
     #
     # shift-expression
@@ -1302,7 +1381,13 @@ class Parser(object):
         """
         self.prod_logger.production('shift_expression : shift_expression RSHIFT additive_expression')
 
-        # t[0] = Parser.perform_constant_expression_bitwise_operation(t[1], '>>', t[3])
+        if not issubclass(type(t[1]), Symbol) and not issubclass(type(t[3]), Symbol):
+            t[0] = Parser.perform_constant_expression_bitwise_operation(t[1], '>>', t[3])
+        else:
+            # TODO: implement this via AST Nodes
+            t[0] = None
+
+
 
     #
     # additive-expression
@@ -1321,7 +1406,7 @@ class Parser(object):
         """
         self.prod_logger.production('additive_expression : additive_expression PLUS multiplicative_expression')
 
-        if not issubclass(t[1], Symbol) and not issubclass(t[3], Symbol):
+        if not issubclass(type(t[1]), Symbol) and not issubclass(type(t[3]), Symbol):
             t[0] = {"value": t[1]["value"] + t[3]["value"], "type": Parser.get_promoted_type(t[1]["type"], t[3]["type"])}
         else:
             # TODO: implement this via AST Nodes
@@ -1335,7 +1420,7 @@ class Parser(object):
         """
         self.prod_logger.production('additive_expression : additive_expression MINUS multiplicative_expression')
 
-        if not issubclass(t[1], Symbol) and not issubclass(t[3], Symbol):
+        if not issubclass(type(t[1]), Symbol) and not issubclass(type(t[3]), Symbol):
             t[0] = {"value": t[1]["value"] - t[3]["value"], "type": Parser.get_promoted_type(t[1]["type"], t[3]["type"])}
         else:
             # TODO: implement this via AST Nodes
@@ -1358,7 +1443,7 @@ class Parser(object):
         """
         self.prod_logger.production('multiplicative_expression : multiplicative_expression TIMES cast_expression')
 
-        if issubclass(t[1], Symbol) and issubclass(t[3], Symbol):
+        if not issubclass(type(t[1]), Symbol) and not issubclass(type(t[3]), Symbol):
             t[0] = Parser.perform_constant_expression_arithmetic(t[1], '*', t[3])
         else:
             # TODO: implement this via AST Nodes
@@ -1370,7 +1455,7 @@ class Parser(object):
         """
         self.prod_logger.production('multiplicative_expression : multiplicative_expression DIVIDE cast_expression')
 
-        if issubclass(t[1], Symbol) and issubclass(t[3], Symbol):
+        if not issubclass(type(t[1]), Symbol) and not issubclass(type(t[3]), Symbol):
             t[0] = Parser.perform_constant_expression_arithmetic(t[1], '/', t[3])
         else:
             # TODO: implement this via AST Nodes
@@ -1668,6 +1753,10 @@ class Parser(object):
         leave_scope : empty
         """
         self.prod_logger.info('Leaving a scope')
+
+        if self.compiler_state.clone_symbol_table_on_scope_exit:
+            self.compiler_state.cloned_tables.append(self.compiler_state.symbol_table.clone())
+            self.compiler_state.clone_symbol_table_on_scope_exit = False
 
         self.compiler_state.symbol_table.pop()
 

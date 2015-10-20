@@ -36,7 +36,7 @@ class TestSymbolTable(unittest.TestCase):
 
     def test_find_same_scope(self):
         self.assertTrue(self.sym.insert(Symbol('A')) == Scope.INSERT_SUCCESS)
-        found = self.sym.find('A')
+        found, in_scope = self.sym.find('A')
         self.assertTrue(found is not None)
         self.assertTrue(found.identifier is 'A')
         self.assertTrue(type(found) is Symbol)
@@ -45,7 +45,7 @@ class TestSymbolTable(unittest.TestCase):
         self.sym.insert(Symbol('A'))
         self.sym.push()
         self.sym.insert(Symbol('B'))
-        found = self.sym.find('A')
+        found, in_scope = self.sym.find('A')
         self.assertTrue(found is not None)
         self.assertTrue(found.identifier is 'A')
         self.assertTrue(type(found) is Symbol)
