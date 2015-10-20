@@ -277,7 +277,6 @@ class TestParser(unittest.TestCase):
         self.check_correct_element(symbol_table_clone, 'first_element', 1, 'int first_element')
         self.check_correct_element(symbol_table_clone, 'my_array', 1, 'int some_other_element')
 
-
     def test_declare_function(self):
         data = """
             int do_stuff(char c);
