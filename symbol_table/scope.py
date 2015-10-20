@@ -69,5 +69,5 @@ class Scope(object):
             symbols.append("  " + key + " : " + repr(value))
         return "\n".join(symbols)
 
-    def find(self, name):
+    def __find(self, name):
         return self.map.get(name, None)
