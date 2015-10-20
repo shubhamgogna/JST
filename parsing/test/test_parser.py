@@ -68,6 +68,7 @@ class TestParser(unittest.TestCase):
               return 0;
             }
             """
+
         self.parser.parse(data)
         self.assertTrue(True, 'No exceptions = Parser successfully parsed.')
 
