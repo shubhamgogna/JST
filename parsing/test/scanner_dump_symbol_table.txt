@@ -1,0 +1,16 @@
+SYMBOL TABLE: Opening brace encountered, symbol table dumped: 
+
+SYMBOL TABLE: 
+0
+  main : None main
+SYMBOL TABLE: 
+
+SYMBOL TABLE: Closing brace encountered, symbol table dumped: 
+
+SYMBOL TABLE: 
+0
+  main : None main()
+1
+
+SYMBOL TABLE: 
+
