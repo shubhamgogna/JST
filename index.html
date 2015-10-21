@@ -11,100 +11,155 @@
     <title>JST</title>
   </head>
 
-  <body>
+<body>
 
-    <!-- HEADER -->
-    <div id="header_wrap" class="outer">
-        <header class="inner">
-          <a id="forkme_banner" href="https://github.com/s-gogna/JST">View on GitHub</a>
+  <!-- HEADER -->
+  <div id="header_wrap" class="outer">
+      <header class="inner">
+        <a id="forkme_banner" href="https://github.com/s-gogna/JST">View on GitHub</a>
 
-          <h1 id="project_title">JST</h1>
-          <h2 id="project_tagline">Python Compiler for ANSI C</h2>
+        <a id="project_title_link" href="../index.html"><h1 id="project_title">JST</h1></a>
+        <h2 id="project_tagline" style="font-size: 18px">By Janelle Blankenburg, Shubham Gogna, and Terence Henriod<br>UNR CS 660: Compiler Construction</h2>
 
-            <section id="downloads">
-              <a class="zip_download_link" href="https://github.com/s-gogna/JST/zipball/master">Download this project as a .zip file</a>
-              <a class="tar_download_link" href="https://github.com/s-gogna/JST/tarball/master">Download this project as a tar.gz file</a>
-            </section>
-        </header>
-    </div>
+          <section id="downloads">
+            <a class="zip_download_link" href="https://github.com/s-gogna/JST/zipball/master">Download this project as a .zip file</a>
+            <a class="tar_download_link" href="https://github.com/s-gogna/JST/tarball/master">Download this project as a tar.gz file</a>
+          </section>
+      </header>
+  </div>
 
-    <!-- MAIN CONTENT -->
-    <div id="main_content_wrap" class="outer">
-      <section id="main_content" class="inner">
-        <h3>
-<a id="what-is-jst" class="anchor" href="#what-is-jst" aria-hidden="true"><span class="octicon octicon-link"></span></a>What is JST?</h3>
+  <!-- MAIN CONTENT -->
+  <div id="main_content_wrap" class="outer">
+    <section id="main_content" class="inner">
+      <h1>
+        <a id="overview" class="anchor" href="#overview" aria-hidden="true"><span class="octicon octicon-link"></span></a>What is JST?
+      </h1>
 
-<p>JST is a compiler for C written in Python3 using the PLY library. </p>
+      <p>JST is a compiler for ANSI C written in Python using the PLY library. It is a group project for the Compiler Construction course taught by Dr. Fred Harris at the University of Nevada, Reno.</p>
 
-<h3>
-<a id="requirements" class="anchor" href="#requirements" aria-hidden="true"><span class="octicon octicon-link"></span></a>Requirements</h3>
+      <h3>
+        <a id="requirements" class="anchor" href="#requirements" aria-hidden="true"><span class="octicon octicon-link"></span></a>Requirements
+      </h3>
 
-<ul>
-<li>Python3.4+</li>
-<li>PLY <code>pip3 install ply</code>
-</li>
-<li>bintrees <code>pip3 install bintrees</code>
-</li>
-</ul>
+      <ul>
+        <li>Python3.4+</li>
+        <li>PLY <code>pip3 install ply</code></li>
+        <li>bintrees <code>pip3 install bintrees</code></li>
+      </ul>
 
-<h3>
-<a id="features" class="anchor" href="#features" aria-hidden="true"><span class="octicon octicon-link"></span></a>Features</h3>
+      <h3>
+        <a id="features" class="anchor" href="#features" aria-hidden="true"><span class="octicon octicon-link"></span></a>Features
+      </h3>
 
-<ul>
-<li>Variable declaration <code>int x;</code>
-</li>
-<li>Pointers <code>float *x;</code>
-</li>
-<li>Function declaration and implementation <code>int isExciting() { return 1; }</code>
-</li>
-</ul>
+      <ul>
+        <li>Variable declaration <code>int x;</code></li>
+        <li>Pointers <code>float *x;</code></li>
+        <li>Function declaration and implementation <code>int isExciting() { return 1; }</code></li>
+      </ul>
 
-<h3>
-<a id="to-do-list" class="anchor" href="#to-do-list" aria-hidden="true"><span class="octicon octicon-link"></span></a>To-Do List</h3>
+      <h3>
+        <a id="assumptions" class="anchor" href="#assumptions" aria-hidden="true"><span class="octicon octicon-link"></span></a>Assumptions
+      </h3>
 
-<ul>
-<li>Typedef support</li>
-<li>Calling functions</li>
-<li>Function pointers</li>
-<li>Structs and unions</li>
-</ul>
+      <ul>
+        <li>Line length</li>
+        <li>etc.</li>
+      </ul>
 
-<h3>
-<a id="preferred-method-of-evaluation" class="anchor" href="#preferred-method-of-evaluation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Preferred Method of Evaluation</h3>
+      <h3>
+        <a id="restrictions" class="anchor" href="#restrictions" aria-hidden="true"><span class="octicon octicon-link"></span></a>Restrictions
+      </h3>
 
-<p>We recommend using PyCharm to evaluate or contribute to the compiler. PyCharm's built-in functionality for testing also helps with making sure new code works.</p>
+      <ul>
+        <li>Number of errors before it quits</li>
+        <li>No structs</li>
+        <li>etc.</li>
+      </ul>
 
-<h2>
-<a id="testing" class="anchor" href="#testing" aria-hidden="true"><span class="octicon octicon-link"></span></a>Testing</h2>
+      <h3>
+        <a id="implementation" class="anchor" href="#implementation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Implementation
+      </h3>
 
-<p>To run all unit tests, switch to the top of project directory and run:</p>
+      <ul>
+        <li>Scanner</li>
+        <li>Parser</li>
+        <li>Symbol</li>
+        <li>Scope</li>
+        <li>Symbol Table</li>
+      </ul>
 
-<pre><code>python3 -m unittest
-</code></pre>
+      <h3>
+        <a id="to-do-list" class="anchor" href="#to-do-list" aria-hidden="true"><span class="octicon octicon-link"></span></a>To-Do List
+      </h3>
 
-<p>To test just the Symbol Table using it's custom test driver, run:</p>
+      <ul>
+        <li>Typedef support</li>
+        <li>Calling functions</li>
+        <li>Function pointers</li>
+        <li>Structs and unions</li>
+      </ul>
 
-<pre><code>python3 bin/symbol_table_driver.py
-</code></pre>
+      <br>
+      <h1>
+        <a id="testing" class="anchor" href="#testing" aria-hidden="true"><span class="octicon octicon-link"></span></a>Running and Testing
+      </h1>
 
-<h3>
-<a id="contributers" class="anchor" href="#contributers" aria-hidden="true"><span class="octicon octicon-link"></span></a>Contributers</h3>
+      <p>We recommend using PyCharm to run the compiler and run the unit tests. However, the compiler can be run and tested from the command line with the commands below.</p>
 
-<p><strong>J</strong>anelle Blankenburg
-<strong>S</strong>hubham Gogna
-<strong>T</strong>erence Henriod</p>
-      </section>
-    </div>
+      <pre><code>python3 bin/jstcc.py [options]</code></pre>
 
-    <!-- FOOTER  -->
-    <div id="footer_wrap" class="outer">
-      <footer class="inner">
-        <p class="copyright">JST maintained by <a href="https://github.com/s-gogna">s-gogna</a></p>
-        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
-      </footer>
-    </div>
+      <p>To run all unit tests, switch to the top of project directory and run:</p>
 
-    
+      <pre><code>python3 -m unittest</code></pre>
 
-  </body>
+      <p>To test just the Symbol Table using it's custom test driver, run:</p>
+
+      <pre><code>python3 bin/symbol_table_driver.py</code></pre>
+
+      <br>
+      <h1>
+        <a id="test-runs" class="anchor" href="#test-runs" aria-hidden="true"><span class="octicon octicon-link"></span></a>Test Runs
+      </h1>
+
+      <ul>
+        <li><a href="scripts/test-one.html">Test One</a></li>
+        <li><a href="scripts/test-two.html">Test Two</a></li>
+        <li><a href="scripts/test-three.html">Test Three</a></li>
+        <li><a href="scripts/test-four.html">Test Four</a></li>
+        <li><a href="scripts/test-five.html">Test Five</a></li>
+        <li><a href="scripts/test-six.html">Test Six</a></li>
+      </ul>
+
+      <br>
+      <h1>
+        <a id="contributers" class="anchor" href="#contributers" aria-hidden="true"><span class="octicon octicon-link"></span></a>Contributers
+      </h1>
+
+      <p>
+        <a href="https://github.com/jblankenburg" target="_blank"><strong>J</strong>anelle Blankenburg</a><br>
+        <a href="https://github.com/s-gogna" target="_blank"><strong>S</strong>hubham Gogna</a><br>
+        <a href="https://github.com/T-R0D" target="_blank"><strong>T</strong>erence Henriod</a>
+      </p>
+
+    </section>
+  </div>
+
+  <!-- FOOTER  -->
+  <div id="footer_wrap" class="outer">
+    <footer class="inner">
+      <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
+    </footer>
+  </div>
+
+</body>
 </html>
+
+<!--
+    Table of Contents (first page with links to others)
+    Script for the run of the program (ie. learn how to use script -- man script). Your script file should contain at least:
+        The results for three test cases run without debugging output.
+        The results for three test cases run with debugging output (that is, include the token file and debugging output from the scanner and symbol table. Make sure you insert the appropriate pragmas to cause symbol table dumps).
+        A demonstration that your driver handles command line arguments properly.
+        The source code of your test cases.
+    The listing files ( A page with links to the input and listing files)
+-->

@@ -4,6 +4,7 @@ by Jason Costello, @jsncostello
 *******************************************************************************/
 
 @import url(github-light.css);
+@import url(https://fonts.googleapis.com/css?family=Open+Sans);
 
 /*******************************************************************************
 MeyerWeb Reset
@@ -53,7 +54,7 @@ body {
   color:#373737;
   background: #212121;
   font-size: 16px;
-  font-family: 'Myriad Pro', Calibri, Helvetica, Arial, sans-serif;
+  font-family: 'Open Sans', 'Myriad Pro', Calibri, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
@@ -62,7 +63,7 @@ h1, h2, h3, h4, h5, h6 {
   margin: 10px 0;
   font-weight: 700;
   color:#222222;
-  font-family: 'Lucida Grande', 'Calibri', Helvetica, Arial, sans-serif;
+  font-family: 'Open Sans', 'Lucida Grande', 'Calibri', Helvetica, Arial, sans-serif;
   letter-spacing: -1px;
 }
 
@@ -103,7 +104,7 @@ footer p {
 
 a {
   text-decoration: none;
-  color: #007edf;
+  color: #000;
   text-shadow: none;
 
   transition: color 0.5s ease;
@@ -118,7 +119,11 @@ a {
   -ms-transition: text-shadow 0.5s ease;
 }
 
-a:hover, a:focus {text-decoration: underline;}
+a:hover, a:focus
+{
+  color: #000;
+  text-decoration: underline;
+}
 
 footer a {
   color: #F2F2F2;
@@ -162,7 +167,7 @@ pre, code {
   color: #222;
   background-color: #fff;
 
-  font-family: Monaco, "Bitstream Vera Sans Mono", "Lucida Console", Terminal, monospace;
+  font-family: 'Courier New', Monaco, "Bitstream Vera Sans Mono", "Lucida Console", Terminal, monospace;
   font-size: 14px;
 
   border-radius: 2px;
@@ -266,7 +271,8 @@ Full-Width Styles
 
 .inner {
   position: relative;
-  max-width: 640px;
+  /*max-width: 640px;*/
+  max-width: 800px;
   padding: 20px 10px;
   margin: 0 auto;
 }
@@ -305,6 +311,26 @@ Full-Width Styles
   font-size: 42px;
   font-weight: 700;
   text-shadow: #111 0px 0px 10px;
+}
+
+#project_title_link {
+  color: #fff;
+  text-decoration: none;
+}
+
+#project_title_link #project_title {
+  color: #fff;
+  text-decoration: none;
+}
+
+#project_title_link:hover {
+  color: gray;
+  text-decoration: none;
+}
+
+#project_title_link:hover #project_title {
+  color: gray;
+  text-decoration: none;
 }
 
 #project_tagline {
