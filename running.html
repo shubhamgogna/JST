@@ -19,14 +19,14 @@
       <header class="inner">
         <a id="forkme_banner" href="https://github.com/s-gogna/JST">View on GitHub</a>
 
-        <a id="project_title_link" href="../index.html"><h1 id="project_title">JST</h1></a>
+        <h1 id="project_title"><a href="index.html">JST</a></h1>
         <h2 id="project_tagline" style="font-size: 18px">By Janelle Blankenburg, Shubham Gogna, and Terence Henriod<br>UNR CS 660: Compiler Construction</h2>
 
         <div class="nav_bar">
           <div class="nav_item" id="first_nav_item"><a href='index.html'>Home</a></div>
           <div class="nav_item"><a href='running.html'>Running</a></div>
           <div class="nav_item"><a href='tests.html'>Tests</a></div>
-          <div class="nav_item"><a href="https://github.com/s-gogna/JST">Source</a></div>
+          <div class="nav_item"><a href="https://github.com/s-gogna/JST" target="_blank">Source</a></div>
         </div>
 
           <section id="downloads">
@@ -45,7 +45,25 @@
 
       <p>We recommend using PyCharm to run the compiler and run the unit tests. However, the compiler can be run and tested from the command line with the commands below.</p>
 
-      <pre><code>python3 bin/jstcc.py [options]</code></pre>
+<pre><code>python3 bin/jstcc.py [options]
+
+# Options include:
+# -o [file name]
+#   Change output file name
+# -s[0-4]
+#   0: No debug
+#   1: Tokens
+#   2: Source Code
+#   3: Tokens and Source Code
+#   4: Tokens, Source Code, and Symbol Table
+# -p[0-3]
+#   0: No debug
+#   1: Productions
+#   2: Productions and Source Code
+#   3: Productions, Source, Misc info
+# -w[0-1]
+#   Warnings
+</code></pre>
 
       <p>To run all unit tests, switch to the top of project directory and run:</p>
 

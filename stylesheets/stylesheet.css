@@ -313,22 +313,12 @@ Full-Width Styles
   text-shadow: #111 0px 0px 10px;
 }
 
-#project_title_link {
+#project_title a {
   color: #fff;
   text-decoration: none;
 }
 
-#project_title_link #project_title {
-  color: #fff;
-  text-decoration: none;
-}
-
-#project_title_link:hover {
-  color: gray;
-  text-decoration: none;
-}
-
-#project_title_link:hover #project_title {
+#project_title a:hover {
   color: gray;
   text-decoration: none;
 }
