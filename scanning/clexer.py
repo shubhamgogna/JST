@@ -13,6 +13,11 @@
 # You should have received a copy of the GNU General Public License
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
+###############################################################################
+# File Description: Lexer class definition for tokenizing the input program
+# file and returning tokens to the Parser.
+###############################################################################
+
 import ply.lex as lex
 import sys
 from symbol_table.symbol import Symbol

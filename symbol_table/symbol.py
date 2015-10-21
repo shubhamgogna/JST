@@ -12,6 +12,12 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
+
+###############################################################################
+# File Description: Class for representing the various forms an identifier
+# in code can have, such as a variable, function, typedef, etc.
+###############################################################################
+
 import copy
 
 

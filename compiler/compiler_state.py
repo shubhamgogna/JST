@@ -13,13 +13,19 @@
 # You should have received a copy of the GNU General Public License
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
+###############################################################################
+# File Description: Class definition for a shared object between the Scanner,
+# parser, and symbol table.
+###############################################################################
+
 from symbol_table.symbol_table import SymbolTable
+from symbol_table.symbol import TypeDeclaration
 
 
 class CompilerState:
     def __init__(self):
         self.insert_mode = True
-        # self.most_recent_type_declaration = TypeDeclaration()  FIXME Replaced
+        self.most_recent_type_declaration = TypeDeclaration()
         self.symbol_table = SymbolTable()
         # lex uses 1 based indexing for line numbers, we are using 0 based for source_code
         self.source_code = []

@@ -17,6 +17,10 @@ import copy
 from bintrees import RBTree
 from symbol_table.symbol import Symbol
 
+###############################################################################
+# File Description: Class for representing a Scope in a program. It maintains
+# a balanced tree of Symbols based on the Symbol's identifier.
+###############################################################################
 
 class Scope(object):
     INSERT_SUCCESS = 0

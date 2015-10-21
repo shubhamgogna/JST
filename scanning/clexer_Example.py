@@ -13,6 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
+###############################################################################
+# File Description: A basic (and unused) Lexer file.
+###############################################################################
+
 import ply.lex as lex
 
 

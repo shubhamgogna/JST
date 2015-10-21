@@ -15,12 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
+###############################################################################
+# File Description: Main driver for the scanner.
+###############################################################################
+
 import os
 import sys
+import argparse
 
 sys.path.insert(1, os.path.join(sys.path[0], '../'))
 
-import argparse
 from compiler.compiler_state import CompilerState
 from parsing.cparser import Parser
 from scanning.clexer import Lexer

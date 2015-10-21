@@ -1,14 +1,8 @@
 # JST
-Compiler for a subset of the C Language
-
-## Status
-```
-Testing Symbol Table
-Adding to Scanner
-Adding to Parser
-```
+Compiler for a subset of the C Language written in Python3
 
 ## Requirements
+- Python3.4+ `sudo apt-get install python3`
 - bintrees `sudo pip3 install bintrees`
 - PLY `sudo pip3 install ply`
 
@@ -19,10 +13,9 @@ Adding to Parser
 - SymbolTable `python3 TestSymbolTable.py`
 
 ## To-Do List
-- Scanner
-- Parser
-- Insert/Lookup mode for Symbol Table
-- Unit testing instead of test files
+- Typedefs
+- Function pointers
+- Structs and unions
 
 ## Contributors
 - **J**anelle Blankenburg

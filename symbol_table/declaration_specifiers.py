@@ -13,6 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
+###############################################################################
+# File Description: Class for maintaining the type of a variable or the return
+# type of a function.
+###############################################################################
 
 class TypeDeclaration(object):
     def __init__(self):
