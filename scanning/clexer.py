@@ -314,6 +314,7 @@ class Lexer(object):
         # TODO Check for redeclaration, shadowing
         if find_symbol is None:
             symbol = Symbol(t.value)
+            print(symbol)
             insert_result = self.compiler_state.symbol_table.insert(symbol)
 
             # Default to an ID which can be updated later in the parse
@@ -336,7 +337,12 @@ class Lexer(object):
             raise NotImplemented('Handle UNION')
         else:
             # raise ValueError('Unknown Symbol.type for existing Symbol.')
-            t.type = 'ID'
+            result = self.compiler_state.symbol_table.find(t.value)
+            if result is not None:
+                t.value, _ = result
+                t.type = 'ID'
+            else:
+                raise Exception("Undeclared identifier {}".format(t.value))
         return t
 
         # if t.type is "ID":
@@ -394,11 +400,17 @@ class Lexer(object):
         t.value = int(t.value)
         return t
 
-    # String literal
-    t_SCONST = r'\"([^\\\n]|(\\.))*?\"'
-
     # Character constant 'c' or L'c'
-    t_CCONST = r'(L)?\'([^\\\n]|(\\.))*?\''
+    def t_CCONST(self, t):
+        r'(L)?\'([^\\\n]|(\\.))*?\''
+
+        t.value = t.value.replace("'", "")
+        t.value = ord(t.value)
+        return t
+
+    # String literal
+    t_SCONST = r'\"(\\.|[^\\\"])*\"'  # r'\"([^\\\n]|(\\.))*?\"'
+
 
     # SHOULD NOW BE HANDLED IN ID STUFF
     # NOTE: Enumeration Constant
@@ -422,6 +434,7 @@ class Lexer(object):
 
     def t_error(self, t):
         # Note: Will need to change to actual error token later perhaps??
+        self.token_logger.token("Illegal Character in input: {}".format(t.value))
         raise Exception('Illegal character: ' + t.value[0])
 
         self.debug_out_tokens(t.type, t.value[0])

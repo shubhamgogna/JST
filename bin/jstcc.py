@@ -26,12 +26,12 @@ from parsing.cparser import Parser
 from scanning.clexer import Lexer
 
 # """int main(int argc, char** argv) {int i; return 0;}"""
-data = """
+dummy_data = """
     int main() {
         int i = 0;
 
         {
-          int f = 5;
+          int f = 5; 사
         }
     }
     void foo(int x) {}
@@ -41,7 +41,7 @@ data = """
 
 def main():
     arg_parser = argparse.ArgumentParser()
-    # arg_parser.add_argument("input", type=str, help="The C program code file to compile.")
+    arg_parser.add_argument("input", type=str, help="The C program code file to compile.")
     arg_parser.add_argument("-o", "--outfile", type=str, default='',
                             help="The name of the file output file. Defaults to $(TODO).")
     arg_parser.add_argument("-s", "--scandebug", type=int, choices=[0, 1, 2, 3, 4], default=0,
@@ -88,11 +88,15 @@ def main():
         print_source_p = True
         print_info = True
 
+    source_file = open(args_dict['input'], "r")
+
+    data = source_file.read()
+
     compiler_state = CompilerState()
     
     # Note: Due to debug flags, this looks a bit ridiculous. Can fix this later.
     parser = Parser(compiler_state, Lexer(compiler_state, print_tokens, print_source_s, print_table),
-                    print_productions, print_source_p, print_info)
+                    print_productions, print_source_p, print_info, 'parsing_dump_productions.txt')
     parser.parse(data)
     parser.teardown()
 

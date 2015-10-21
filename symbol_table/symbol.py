@@ -61,9 +61,10 @@ class Symbol(object):
     def add_enum_members(self, members):
         pass
 
-    def add_arguments(self, arguments):
+    def add_parameters(self, parameters):
         self.is_function = True
-        pass
+        if parameters:
+            self.parameters.extend(parameters)
 
     def add_compound_statements(self, compound_statements):
         pass
@@ -93,7 +94,7 @@ class Symbol(object):
     def set_as_function(self, type_declaration, parameter_list, compound_statements):
         self.type = Symbol.FUNCTION
         self.type = type_declaration
-        self.add_arguments(parameter_list)
+        self.add_parameters(parameter_list)
         self.add_compound_statements(compound_statements)
 
     def __str__(self):
@@ -103,7 +104,9 @@ class Symbol(object):
         type_str = '{}{}'.format(self.type, pointer_str)
 
         if self.is_function:
-            arg_list_string = ', '.join(self.parameters)
+            args_as_strings = [str(symbol) for symbol in self.parameters]
+
+            arg_list_string = ', '.join(args_as_strings)
             return '{} {}({})'.format(type_str, self.identifier, arg_list_string)
         else:
             array_str = ''

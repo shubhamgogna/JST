@@ -56,7 +56,14 @@ class Parser(object):
         self.prod_logger.finalize()
 
     def parse(self, data):
-        return self.parser.parse(input=data, lexer=self.lexer)
+        parse_result = self.parser.parse(input=data, lexer=self.lexer)
+
+        if self.compiler_state.clone_symbol_table_on_scope_exit:
+            self.prod_logger.info('cloning the symbol table')
+            self.compiler_state.cloned_tables.append(self.compiler_state.symbol_table.clone())
+            self.compiler_state.clone_symbol_table_on_scope_exit = False
+
+        return parse_result
 
     #
     # p_error
@@ -72,7 +79,7 @@ class Parser(object):
     # translation-unit:
     #
     def p_translation_unit(self, t):
-        """translation_unit : translation_unit_opt leave_scope"""
+        """translation_unit : translation_unit_opt"""
         self.prod_logger.production('translation_unit -> translation_unit_opt')
 
     def p_translation_unit_1(self, t):
@@ -81,7 +88,7 @@ class Parser(object):
 
     def p_translation_unit_2(self, t):
         """translation_unit_opt : translation_unit external_declaration"""
-        self.prod_logger.production('translation_unit_2 -> translation_unit external_declaraion')
+        self.prod_logger.production('translation_unit_2 -> translation_unit external_declaration')
 
     #
     # external-declaration:
@@ -114,8 +121,13 @@ class Parser(object):
         """function_definition : declaration_specifiers declarator compound_statement"""
         self.prod_logger.production('function_definition -> declaration_specifiers declarator compound_statement')
 
-        t[2]['direct_declarator'].set_as_function(t[1], t[2]['parameter_type_list'], t[3])
+        declarator = t[2]
+        declarator.type = t[1]
+        declarator.add_compound_statements(t[3])
 
+        # t[2]['direct_declarator'].set_as_function(t[1], t[2]['parameter_type_list'], t[3])
+        # t[2].type = t[1]
+        # t[]
     #
     # declaration:
     #
@@ -137,14 +149,14 @@ class Parser(object):
     # declaration-list:
     #
     def p_declaration_list_1(self, t):
-        """declaration_list : reset_type_declaration declaration"""
-        self.prod_logger.production('declaration_list -> reset_type_declaration declaration')
+        """declaration_list : declaration"""
+        self.prod_logger.production('declaration_list -> declaration')
 
     def p_declaration_list_2(self, t):
         """
-        declaration_list : declaration_list reset_type_declaration declaration
+        declaration_list : declaration_list declaration
         """
-        self.prod_logger.production('declaration_list -> declaration_list reset_type_declaration declaration')
+        self.prod_logger.production('declaration_list -> declaration_list declaration')
 
     #
     # declaration-specifiers
@@ -173,7 +185,7 @@ class Parser(object):
         """
         self.prod_logger.production('declaration_specifiers -> type_qualifier declaration_specifiers')
 
-        t[2].add_type_qualifier(t[1])
+        t[2].add_qualifier(t[1])
         t[0] = t[2]
 
     def p_declaration_specifiers_4(self, t):
@@ -201,7 +213,7 @@ class Parser(object):
         self.prod_logger.production('declaration_specifiers -> type_qualifier')
 
         t[0] = TypeDeclaration()
-        t[0].add_type_qualifier(t[1])
+        t[0].add_qualifier(t[1])
 
     #
     # storage-class-specifier
@@ -366,13 +378,17 @@ class Parser(object):
         t[0] = t[2]
 
     def p_struct_or_union_specifier_2(self, t):
-        """struct_or_union_specifier : struct_or_union LBRACE struct_declaration_list RBRACE"""
+        """
+        struct_or_union_specifier : struct_or_union LBRACE struct_declaration_list RBRACE
+        """
         self.prod_logger.production('struct_or_union_specifier : struct_or_union LBRACE struct_declaration_list RBRACE')
 
         raise NotImplemented('p_struct_or_union_specifier_2; how to do anonymous struct?')
 
     def p_struct_or_union_specifier_3(self, t):
-        """struct_or_union_specifier : struct_or_union identifier"""
+        """
+        struct_or_union_specifier : struct_or_union identifier
+        """
         self.prod_logger.production('struct_or_union_specifier : struct_or_union identifier')
 
     #
@@ -404,7 +420,7 @@ class Parser(object):
         # I changed 'struct_declarator_list' to 'struct_declaration_list'
         self.prod_logger.production('struct_declaration_list : struct_declaration_list struct_declaration')
 
-        # t[0] = t[1] + t[2]
+        t[0] = t[1] + t[2]
 
     #
     # init-declarator-list:
@@ -459,48 +475,48 @@ class Parser(object):
 
     def p_specifier_qualifier_list_2(self, t):
         """specifier_qualifier_list : type_specifier"""
-        self.prod_logger.production('specifier_qualifier_list : type_specifier')
+        self.prod_logger.production('specifier_qualifier_list -> type_specifier')
 
     def p_specifier_qualifier_list_3(self, t):
         """specifier_qualifier_list : type_qualifier specifier_qualifier_list"""
-        self.prod_logger.production('specifier_qualifier_list : type_qualifier specifier_qualifier_list')
+        self.prod_logger.production('specifier_qualifier_list -> type_qualifier specifier_qualifier_list')
 
     def p_specifier_qualifier_list_4(self, t):
         """specifier_qualifier_list : type_qualifier"""
-        self.prod_logger.production('specifier_qualifier_list : type_qualifier')
+        self.prod_logger.production('specifier_qualifier_list -> type_qualifier')
 
     #
     # struct-declarator-list:
     #
     def p_struct_declarator_list_1(self, t):
         """struct_declarator_list : struct_declarator"""
-        self.prod_logger.production('struct_declarator_list : struct_declarator')
+        self.prod_logger.production('struct_declarator_list -> struct_declarator')
 
     def p_struct_declarator_list_2(self, t):
         """struct_declarator_list : struct_declarator_list COMMA struct_declarator"""
-        self.prod_logger.production('struct_declarator_list : struct_declarator_list COMMA struct_declarator')
+        self.prod_logger.production('struct_declarator_list -> struct_declarator_list COMMA struct_declarator')
 
     #
     # struct-declarator:
     #
     def p_struct_declarator_1(self, t):
         """struct_declarator : declarator"""
-        self.prod_logger.production('struct_declarator : declarator')
+        self.prod_logger.production('struct_declarator -> declarator')
 
     def p_struct_declarator_2(self, t):
         """struct_declarator : declarator COLON constant_expression"""
-        self.prod_logger.production('struct_declarator : declarator COLON constant_expression')
+        self.prod_logger.production('struct_declarator -> declarator COLON constant_expression')
 
     def p_struct_declarator_3(self, t):
         """struct_declarator : COLON constant_expression"""
-        self.prod_logger.production('struct_declarator : COLON constant_expression')
+        self.prod_logger.production('struct_declarator -> COLON constant_expression')
 
     #
     # enum-specifier:
     #
     def p_enum_specifier_1(self, t):
         """enum_specifier : ENUM identifier LBRACE enumerator_list RBRACE"""
-        self.prod_logger.production('enum_specifier : ENUM identifier LBRACE enumerator_list RBRACE')
+        self.prod_logger.production('enum_specifier -> ENUM identifier LBRACE enumerator_list RBRACE')
 
         t[2].is_enum = True
         t[2].add_enum_members(t[4])
@@ -508,13 +524,13 @@ class Parser(object):
 
     def p_enum_specifier_2(self, t):
         """enum_specifier : ENUM LBRACE enumerator_list RBRACE"""
-        self.prod_logger.production('enum_specifier : ENUM LBRACE enumerator_list RBRACE')
+        self.prod_logger.production('enum_specifier -> ENUM LBRACE enumerator_list RBRACE')
 
         raise NotImplemented('p_enum_specifier_2; how to do anonymous enum?')
 
     def p_enum_specifier_3(self, t):
         """enum_specifier : ENUM identifier"""
-        self.prod_logger.production('enum_specifier : ENUM identifier')
+        self.prod_logger.production('enum_specifier -> ENUM identifier')
 
         t[2].is_enum = True
         t[0] = t[2]
@@ -524,13 +540,13 @@ class Parser(object):
     #
     def p_enumerator_list_1(self, t):
         """enumerator_list : enumerator"""
-        self.prod_logger.production('enumerator_list : enumerator')
+        self.prod_logger.production('enumerator_list -> enumerator')
 
         t[0] = t[1]
 
     def p_enumerator_list_2(self, t):
         """enumerator_list : enumerator_list COMMA enumerator"""
-        self.prod_logger.production('enumerator_list : enumerator_list COMMA enumerator')
+        self.prod_logger.production('enumerator_list -> enumerator_list COMMA enumerator')
 
         t[0] = t[1].append_enum_member(t[3])
 
@@ -539,13 +555,13 @@ class Parser(object):
     #
     def p_enumerator_1(self, t):
         """enumerator : identifier"""
-        self.prod_logger.production('enumerator : identifier')
+        self.prod_logger.production('enumerator -> identifier')
 
         t[0] = t[1].set_constant_value(-1)  # TODO: create an enum value ticket counter
 
     def p_enumerator_2(self, t):
         """enumerator : identifier EQUALS constant_expression"""
-        self.prod_logger.production('enumerator : identifier EQUALS constant_expression')
+        self.prod_logger.production('enumerator -> identifier EQUALS constant_expression')
 
         t[0] = t[1].set_constant_value(int(t[3][1]))  # t[3] should be a tuple like (value, type)
         # not checking for negativity, we can allow negative values for enums
@@ -561,9 +577,6 @@ class Parser(object):
         self.prod_logger.production('declarator -> pointer direct_declarator')
 
         t[2].add_pointer_level(t[1])
-
-        print(t[2])
-
         t[0] = t[2]
 
     def p_declarator_2(self, t):
@@ -598,31 +611,45 @@ class Parser(object):
         self.prod_logger.production(
             'direct_declarator -> direct_declarator LBRACKET constant_expression_option RBRACKET')
 
-        if t[3]['type'] is not 'int':
+        if issubclass(type(t[3]), ConstantValue) and t[3].type == 'int':
+            t[1].add_array_dimension(t[3].value)  # TODO validate?
+        elif t[3] is None:
+            t[1].add_array_dimension(Symbol.EMPTY_ARRAY_DIM)
+        else:
             raise Exception(
-                'Only integral types may be used to specify array dimensions ({} given)'.format(t[3]['type']))
+                'Only integral types may be used to specify array dimensions ({} given)'.format(t[3].type))
 
-        t[1].add_array_dimension(t[3]['value'])  # TODO validate?
         t[0] = t[1]
 
     def p_direct_declarator_4(self, t):
         """direct_declarator : direct_declarator LPAREN parameter_type_list RPAREN"""
         self.prod_logger.production('direct_declarator : direct_declarator LPAREN parameter_type_list RPAREN')
 
-        # TODO LPAREN is kind of the start of a scope
-        t[0] = {'direct_declarator': t[1], 'parameter_type_list': t[3]}
+        direct_declarator = t[1]
+
+        print(direct_declarator, type(direct_declarator), 'line 620')
+
+        parameter_type_list = t[3]
+        direct_declarator.add_parameters(parameter_type_list)
+        t[0] = direct_declarator
+
+        # # TODO LPAREN is kind of the start of a scope
+        # t[0] = {'direct_declarator': t[1], 'parameter_type_list': t[3]}
 
     def p_direct_declarator_5(self, t):
         """direct_declarator : direct_declarator LPAREN identifier_list RPAREN"""
         self.prod_logger.production('direct_declarator : direct_declarator LPAREN identifier_list RPAREN')
 
-        t[0] = t[1].add_arguments(t[3])
+        t[0] = t[1].add_parameters(t[3])
 
     def p_direct_declarator_6(self, t):
         """direct_declarator : direct_declarator LPAREN RPAREN"""
         self.prod_logger.production('direct_declarator : direct_declarator LPAREN RPAREN')
 
-        t[0] = {'direct_declarator': t[1], 'parameter_type_list': []}
+        direct_declarator = t[1]
+        direct_declarator.is_function = True
+        t[0] = direct_declarator
+        # t[0] = {'direct_declarator': t[1], 'parameter_type_list': []}
 
     #
     # pointer:
@@ -695,7 +722,7 @@ class Parser(object):
         """parameter_list : parameter_declaration"""
         self.prod_logger.production('parameter_list : parameter_declaration')
 
-        t[0] = t[1]
+        t[0] = [t[1]]
 
     def p_parameter_list_2(self, t):
         """parameter_list : parameter_list COMMA parameter_declaration"""
@@ -709,6 +736,9 @@ class Parser(object):
     def p_parameter_declaration_1(self, t):
         """parameter_declaration : declaration_specifiers declarator"""
         self.prod_logger.production('parameter_declaration : declaration_specifiers declarator')
+
+        t[2].type = t[1]
+        t[0] = t[2]
 
     def p_parameter_declaration_2(self, t):
         """parameter_declaration : declaration_specifiers abstract_declarator_option"""
@@ -817,7 +847,7 @@ class Parser(object):
         """constant_expression_option : empty"""
         self.prod_logger.production('constant_expression_option : empty')
 
-        t[0] = {"value": -1, "type": None}  # TODO: or whatever the symbol for an empty pair of brackets will be
+        t[0] = None
 
     def p_constant_expression_option_2(self, t):
         """constant_expression_option : constant_expression"""
@@ -1313,7 +1343,6 @@ class Parser(object):
         self.prod_logger.production('relational_expression -> relational_expression LT shift_expression')
 
         if Parser.both_are_constant_numbers(t[1], t[3]):
-            print(t[1], type(t[1]), t[3], type(t[3]))
             t[0] = ConstantValue(t[1].value < t[3].value, 'int')
         else:
             # TODO: implement this via AST Nodes
@@ -1691,25 +1720,26 @@ class Parser(object):
     # constant:
     #
     def p_constant_int(self, t):
-        """constant : ICONST
+        """
+        constant : ICONST
         """
         self.prod_logger.production('constant -> ICONST')
 
-        t[0] = {"value": int(t[1]), "type": 'int'}
+        t[0] = ConstantValue( int(t[1]), 'int')
 
     def p_constant_float(self, t):
         """constant : FCONST
         """
         self.prod_logger.production('constant -> FCONST')
 
-        t[0] = {"value": float(t[1]), "type": 'float'}
+        t[0] = ConstantValue(float(t[1]), 'float')
 
     def p_constant_char(self, t):
         """constant : CCONST
         """
         self.prod_logger.production('constant -> CCONST')
 
-        t[0] = {"value": ord(t[1]), "type": 'char'}
+        t[0] = ConstantValue(t[1], 'char')
 
     #
     # identifier:
@@ -1754,9 +1784,10 @@ class Parser(object):
         """
         leave_scope : empty
         """
-        self.prod_logger.info('Leaving a scope')
+        self.prod_logger.info('Leaving a scope: {}'.format(len(self.compiler_state.symbol_table.table)))
 
         if self.compiler_state.clone_symbol_table_on_scope_exit:
+            self.prod_logger.info('cloning the symbol table')
             self.compiler_state.cloned_tables.append(self.compiler_state.symbol_table.clone())
             self.compiler_state.clone_symbol_table_on_scope_exit = False
 
@@ -1772,13 +1803,6 @@ class Parser(object):
 
         # TODO: do we need a dummy production for 'reset_current_symbol'?
 
-    def p_reset_type_declaration(self, t):
-        """
-        reset_type_declaration : empty
-        """
-        self.prod_logger.info('Reseting the current type declaration.')
-
-        self.compiler_state.most_recent_type_declaration = TypeDeclaration()
 
     @staticmethod
     def perform_constant_expression_arithmetic(operand_1, operator, operand_2):
@@ -1834,4 +1858,4 @@ class Parser(object):
 
     @staticmethod
     def both_are_constant_numbers(item_1, item_2):
-        return issubclass(type(item_1), ConstantValue) and issubclass(item_2, ConstantValue)
+        return issubclass(type(item_1), ConstantValue) and issubclass(type(item_2), ConstantValue)
