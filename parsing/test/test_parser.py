@@ -37,9 +37,13 @@ class TestParser(unittest.TestCase):
         self.compiler_state = None
 
     def test_plain_main(self):
-        data = """int main() {return 0; !!C}"""
+        self.enable_parser_debugging()
+
+        data = """int main() {return 0;} !!C"""
         self.parser.parse(data)
         symbol_table_clone = self.compiler_state.cloned_tables[0]
+
+        print(symbol_table_clone)
 
         self.check_correct_element(symbol_table_clone, 'main', 0, 'int main()')
 
@@ -190,9 +194,9 @@ class TestParser(unittest.TestCase):
         data = """
         int main() {
           while (1) {}
-          !!C
           return 0;
         }
+        !!C
         """
         self.parser.parse(data)
         symbol_table_clone = self.compiler_state.cloned_tables[0]
@@ -257,6 +261,7 @@ class TestParser(unittest.TestCase):
         self.check_correct_element(symbol_table_clone, 'my_array', 1, 'int my_array[10]')
 
     def test_access_array(self):
+        self.enable_parser_debugging()
         data = """
         int main() {
           int i = 0;
@@ -272,10 +277,12 @@ class TestParser(unittest.TestCase):
         self.parser.parse(data)
         symbol_table_clone = self.compiler_state.cloned_tables[0]
 
+        print(symbol_table_clone)
+
         self.check_correct_element(symbol_table_clone, 'i', 1, 'int i')
         self.check_correct_element(symbol_table_clone, 'my_array', 1, 'int my_array[10]')
         self.check_correct_element(symbol_table_clone, 'first_element', 1, 'int first_element')
-        self.check_correct_element(symbol_table_clone, 'my_array', 1, 'int some_other_element')
+        self.check_correct_element(symbol_table_clone, 'some_other_element', 1, 'int some_other_element')
 
     def test_declare_function(self):
         data = """
@@ -308,6 +315,7 @@ class TestParser(unittest.TestCase):
         self.check_correct_element(symbol_table_clone, 'do_stuff', 0, 'int do_stuff(char c)')
 
     def test_call_function(self):
+        self.enable_parser_debugging()
         data = """
             int do_stuff(char c);
             !!C
@@ -343,7 +351,7 @@ class TestParser(unittest.TestCase):
         self.parser.parse(data)
         symbol_table_clone = self.compiler_state.cloned_tables[0]
 
-        self.check_correct_element(symbol_table_clone, 'literal_string', 1, 'char* literal_string')
+        self.check_correct_element(symbol_table_clone, 'literal_string', 0, 'char* literal_string')
 
     def test_declare_string_as_array(self):
         self.enable_parser_debugging()
@@ -642,7 +650,7 @@ class TestParser(unittest.TestCase):
 
 
     def check_correct_element(self, symbol_table_clone, check_value, check_scope, check_string):
-        found_main, in_scope = symbol_table_clone.find(check_value)
-        self.assertTrue(in_scope == check_scope)
-        self.assertTrue(str(found_main) == check_string)
+        found_symbol, in_scope = symbol_table_clone.find(check_value)
+        self.assertEqual(in_scope, check_scope)
+        self.assertEquals(str(found_symbol), check_string)
 

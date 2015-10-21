@@ -110,7 +110,7 @@ class Symbol(object):
             for dim in self.array_dims:
                 array_str += '[{}]'.format(dim if dim is not Symbol.EMPTY_ARRAY_DIM else '')
 
-            return ' {}{}'.format(type_str, self.identifier, array_str)
+            return '{} {}{}'.format(type_str, self.identifier, array_str)
 
     def __repr__(self):
         return str(self)
