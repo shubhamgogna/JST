@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="JST : Python Compiler for ANSI C">
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/navigation.css">
+
+    <title>JST</title>
+  </head>
+
+<body>
+
+  <!-- HEADER -->
+  <div id="header_wrap" class="outer">
+      <header class="inner">
+        <a id="forkme_banner" href="https://github.com/s-gogna/JST">View on GitHub</a>
+
+        <a id="project_title_link" href="../index.html"><h1 id="project_title">JST</h1></a>
+        <h2 id="project_tagline" style="font-size: 18px">By Janelle Blankenburg, Shubham Gogna, and Terence Henriod<br>UNR CS 660: Compiler Construction</h2>
+
+        <div class="nav_bar">
+          <div class="nav_item" id="first_nav_item"><a href='index.html'>Home</a></div>
+          <div class="nav_item"><a href='running.html'>Running</a></div>
+          <div class="nav_item"><a href='tests.html'>Tests</a></div>
+          <div class="nav_item"><a href="https://github.com/s-gogna/JST">Source</a></div>
+        </div>
+
+          <section id="downloads">
+            <a class="zip_download_link" href="https://github.com/s-gogna/JST/zipball/master">Download this project as a .zip file</a>
+            <a class="tar_download_link" href="https://github.com/s-gogna/JST/tarball/master">Download this project as a tar.gz file</a>
+          </section>
+      </header>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div id="main_content_wrap" class="outer">
+    <section id="main_content" class="inner">
+      <h1>
+        <a id="running" class="anchor" href="#running" aria-hidden="true"><span class="octicon octicon-link"></span></a>Running and Testing
+      </h1>
+
+      <p>We recommend using PyCharm to run the compiler and run the unit tests. However, the compiler can be run and tested from the command line with the commands below.</p>
+
+      <pre><code>python3 bin/jstcc.py [options]</code></pre>
+
+      <p>To run all unit tests, switch to the top of project directory and run:</p>
+
+      <pre><code>python3 -m unittest</code></pre>
+
+      <p>To test just the Symbol Table using it's custom test driver, run:</p>
+
+      <pre><code>python3 bin/symbol_table_driver.py</code></pre>
+
+      <br><br><br><br>
+
+    </section>
+  </div>
+
+  <!-- FOOTER  -->
+  <div id="footer_wrap" class="outer">
+    <footer class="inner">
+      <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
+    </footer>
+  </div>
+
+</body>
+</html>

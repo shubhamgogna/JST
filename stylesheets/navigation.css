@@ -1,0 +1,25 @@
+.nav_bar {
+	display: block;
+	width: 100%;
+	border-top: 1px solid white;
+}
+
+.nav_item {
+	padding: 10px 20px 0px 20px;
+	display: inline-block;
+}
+
+#first_nav_item {
+	position: relative;
+	padding-left: 0px;
+}
+
+.nav_item a {
+	color: #fff;
+	text-decoration: none;
+}
+
+.nav_item a:hover {
+	color: gray;
+	text-decoration: none;
+}

@@ -7,6 +7,7 @@
     <meta name="description" content="JST : Python Compiler for ANSI C">
 
     <link rel="stylesheet" type="text/css" media="screen" href="../stylesheets/stylesheet.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="../stylesheets/navigation.css">
 
     <title>JST</title>
   </head>
@@ -20,6 +21,13 @@
 
         <a id="project_title_link" href="../index.html"><h1 id="project_title">JST</h1></a>
         <h2 id="project_tagline" style="font-size: 18px">By Janelle Blankenburg, Shubham Gogna, and Terence Henriod<br>UNR CS 660: Compiler Construction</h2>
+
+        <div class="nav_bar">
+          <div class="nav_item" id="first_nav_item"><a href='../index.html'>Home</a></div>
+          <div class="nav_item"><a href='../running.html'>Running</a></div>
+          <div class="nav_item"><a href='../tests.html'>Tests</a></div>
+          <div class="nav_item"><a href="https://github.com/s-gogna/JST">Source</a></div>
+        </div>
 
           <section id="downloads">
             <a class="zip_download_link" href="https://github.com/s-gogna/JST/zipball/master">Download this project as a .zip file</a>
@@ -39,9 +47,31 @@
         <a id="input" class="anchor" href="#input" aria-hidden="true"><span class="octicon octicon-link"></span></a>Input
       </h3>
 
-<pre><code>int main()
-{
-  int x;
+<pre><code>long int recur_Fact(int number);
+
+int main() {
+  int number;
+  long int fact;
+
+  printf( "Enter number to get factorial of: ");
+  scanf( "%d", &nbsp;number );
+
+  fact = recur_Fact(number);
+
+  printf("Factorial of %d is:  %ld\n", number, fact);
+
+  return 0;
+}
+
+long int recur_Fact( int number) {
+  // base case
+  if( number &lt;= 0)
+    return 1;
+
+  // recursive case
+  else if( number > 1 ) {
+    return number*recur_Fact(number-1);
+  }
 }</code></pre>
 
       <br>
