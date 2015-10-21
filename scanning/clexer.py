@@ -319,7 +319,7 @@ class Lexer(object):
         # TODO Check for redeclaration, shadowing
         if find_symbol is None:
             symbol = Symbol(t.value)
-            print(symbol)
+            # print(symbol)
             insert_result = self.compiler_state.symbol_table.insert(symbol)
 
             # Default to an ID which can be updated later in the parse

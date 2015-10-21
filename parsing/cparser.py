@@ -632,7 +632,7 @@ class Parser(object):
 
         direct_declarator = t[1]
 
-        print(direct_declarator, type(direct_declarator), 'line 620')
+        # print(direct_declarator, type(direct_declarator), 'line 620')
 
         parameter_type_list = t[3]
         direct_declarator.add_parameters(parameter_type_list)
