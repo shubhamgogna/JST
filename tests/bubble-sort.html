@@ -24,8 +24,8 @@
 
         <div class="nav_bar">
           <div class="nav_item" id="first_nav_item"><a href='../index.html'>Home</a></div>
-          <div class="nav_item"><a href='../running.html'>Running</a></div>
-          <div class="nav_item"><a href='../tests.html'>Tests</a></div>>
+          <div class="nav_item"><a href="../running.html">Running</a></div>
+          <div class="nav_item"><a href="../tests.html">Tests</a></div>
           <div class="nav_item"><a href="https://github.com/s-gogna/JST">Source</a></div>
         </div>
 
@@ -40,7 +40,7 @@
   <div id="main_content_wrap" class="outer">
     <section id="main_content" class="inner">
       <h1>
-        <a id="test-runs" class="anchor" href="#test-runs" aria-hidden="true"><span class="octicon octicon-link"></span></a>Test Three
+        <a id="test-runs" class="anchor" href="#test-runs" aria-hidden="true"><span class="octicon octicon-link"></span></a>Bubble Sort
       </h1>
 
       <h3>
@@ -129,38 +129,2594 @@ void print( int* list, int size ){
       <h3>
         <a id="stdout" class="anchor" href="#stdout" aria-hidden="true"><span class="octicon octicon-link"></span></a>STDOUT
       </h3>
+      <p>Without the extra flags, the tokens, productions, or symbol table will not be output to files. The STDOUT is the same regardless of the flags.</p>
 
-      <pre><code>$ python3 bin/jstcc.py [options]</code></pre>
+<pre><code>$ python3 bin/jstcc.py ../bubble_sort.c -s4 -p3 -w1
+Warning: FastBinaryTree not available, using Python version BinaryTree.
+Warning: FastAVLTree not available, using Python version AVLTree.
+Warning: FastRBTree not available, using Python version RBTree.
+WARNING: Token 'ECONST' defined, but not used
+WARNING: There is 1 unused token
+Generating LALR tables
+WARNING: 1 shift/reduce conflict
+None print
+None list
+None size
+None print &lt;class 'symbol_table.symbol.Symbol'&gt; line 620
+None bubbleSort
+None bubbleSort &lt;class 'symbol_table.symbol.Symbol'&gt; line 620
+None main
+None malloc
+None i
+None srand
+None time
+None NULL
+None rand
+None printf
+void bubbleSort(int**** list, int size) &lt;class 'symbol_table.symbol.Symbol'&gt; line 620
+None i
+None j
+None temp
+None swapped
+void print(int***** list, int size) &lt;class 'symbol_table.symbol.Symbol'&gt; line 620
+None i
+None printf
+</code></pre>
 
       <br>
       <h3>
         <a id="token-output" class="anchor" href="#input" aria-hidden="true"><span class="octicon octicon-link"></span></a>Token Output
       </h3>
 
-<pre><code>int main()
-{
-  int x;
-}</code></pre>
+<pre><code>TOKEN: VOID void
+
+TOKEN: ID None print
+
+TOKEN: LPAREN (
+
+TOKEN: INT int
+
+TOKEN: TIMES *
+
+TOKEN: ID None list
+
+TOKEN: COMMA ,
+
+TOKEN: INT int
+
+TOKEN: ID None size
+
+TOKEN: RPAREN )
+
+TOKEN: SEMI ;
+
+SOURCE:
+// function prototypes
+-----
+
+
+TOKEN: VOID void
+
+TOKEN: ID None bubbleSort
+
+TOKEN: LPAREN (
+
+TOKEN: INT int
+
+TOKEN: TIMES *
+
+TOKEN: ID int* list
+
+TOKEN: COMMA ,
+
+TOKEN: INT int
+
+TOKEN: ID int size
+
+TOKEN: RPAREN )
+
+TOKEN: SEMI ;
+
+SOURCE:
+void bubbleSort(int* list, int size);
+-----
+
+
+TOKEN: INT int
+
+TOKEN: ID None main
+
+TOKEN: LPAREN (
+
+TOKEN: RPAREN )
+
+TOKEN: LBRACE {
+
+SOURCE:
+// main
+-----
+
+
+TOKEN: INT int
+
+TOKEN: TIMES *
+
+TOKEN: ID int** list
+
+TOKEN: EQUALS =
+
+TOKEN: LPAREN (
+
+TOKEN: INT int
+
+TOKEN: TIMES *
+
+TOKEN: RPAREN )
+
+TOKEN: ID None malloc
+
+TOKEN: LPAREN (
+
+TOKEN: ICONST 10
+
+TOKEN: RPAREN )
+
+TOKEN: SEMI ;
+
+SOURCE:
+   // initialize vars
+-----
+
+
+TOKEN: INT int
+
+TOKEN: ID None i
+
+TOKEN: SEMI ;
+
+SOURCE:
+   int i;
+-----
+
+
+TOKEN: ID None srand
+
+TOKEN: LPAREN (
+
+TOKEN: ID None time
+
+TOKEN: LPAREN (
+
+TOKEN: ID None NULL
+
+TOKEN: RPAREN )
+
+TOKEN: RPAREN )
+
+TOKEN: SEMI ;
+
+SOURCE:
+   srand(time(NULL));
+-----
+
+
+TOKEN: FOR for
+
+TOKEN: LPAREN (
+
+TOKEN: ID int i
+
+TOKEN: EQUALS =
+
+TOKEN: ICONST 0
+
+TOKEN: SEMI ;
+
+TOKEN: ID int i
+
+TOKEN: LT &lt;
+
+TOKEN: ICONST 10
+
+TOKEN: SEMI ;
+
+TOKEN: ID int i
+
+TOKEN: PLUSPLUS ++
+
+TOKEN: RPAREN )
+
+SOURCE:
+   // create list
+-----
+
+
+TOKEN: LBRACE {
+
+SOURCE:
+      {
+-----
+
+
+TOKEN: ID int*** list
+
+TOKEN: LBRACKET [
+
+TOKEN: ID int i
+
+TOKEN: RBRACKET ]
+
+TOKEN: EQUALS =
+
+TOKEN: ID None rand
+
+TOKEN: LPAREN (
+
+TOKEN: RPAREN )
+
+TOKEN: MOD %
+
+TOKEN: ICONST 10
+
+TOKEN: PLUS +
+
+TOKEN: ICONST 1
+
+TOKEN: SEMI ;
+
+SOURCE:
+       list[i] = rand() % 10 + 1;
+-----
+
+
+TOKEN: RBRACE }
+
+SOURCE:
+      }
+-----
+
+
+TOKEN: ID void print(int*** list, int size)
+
+TOKEN: LPAREN (
+
+TOKEN: ID int*** list
+
+TOKEN: COMMA ,
+
+TOKEN: ICONST 10
+
+TOKEN: RPAREN )
+
+TOKEN: SEMI ;
+
+SOURCE:
+   print(list, 10);
+-----
+
+
+TOKEN: ID void bubbleSort(int*** list, int size)
+
+TOKEN: LPAREN (
+
+TOKEN: ID int*** list
+
+TOKEN: COMMA ,
+
+TOKEN: ICONST 10
+
+TOKEN: RPAREN )
+
+TOKEN: SEMI ;
+
+SOURCE:
+   // bubble sort
+-----
+
+
+TOKEN: ID None printf
+
+TOKEN: LPAREN (
+
+TOKEN: SCONST "Sorted "
+
+TOKEN: RPAREN )
+
+TOKEN: SEMI ;
+
+SOURCE:
+   printf( "Sorted " );
+-----
+
+
+TOKEN: ID void print(int*** list, int size)
+
+TOKEN: LPAREN (
+
+TOKEN: ID int*** list
+
+TOKEN: COMMA ,
+
+TOKEN: ICONST 10
+
+TOKEN: RPAREN )
+
+TOKEN: SEMI ;
+
+SOURCE:
+   print(list, 10);
+-----
+
+
+SOURCE:
+   !!C
+-----
+
+
+TOKEN: RETURN return
+
+TOKEN: ICONST 0
+
+TOKEN: SEMI ;
+
+SOURCE:
+   // return
+-----
+
+
+TOKEN: RBRACE }
+
+SOURCE:
+}
+-----
+
+
+TOKEN: VOID void
+
+TOKEN: ID void bubbleSort(int*** list, int size)
+
+TOKEN: LPAREN (
+
+TOKEN: INT int
+
+TOKEN: TIMES *
+
+TOKEN: ID int*** list
+
+TOKEN: COMMA ,
+
+TOKEN: INT int
+
+TOKEN: ID int size
+
+TOKEN: RPAREN )
+
+TOKEN: LBRACE {
+
+SOURCE:
+// fxn imp
+-----
+
+
+TOKEN: INT int
+
+TOKEN: ID None i
+
+TOKEN: COMMA ,
+
+TOKEN: ID None j
+
+TOKEN: SEMI ;
+
+SOURCE:
+   // initialize vars
+-----
+
+
+TOKEN: INT int
+
+TOKEN: ID None temp
+
+TOKEN: SEMI ;
+
+SOURCE:
+   int temp;
+-----
+
+
+TOKEN: INT int
+
+TOKEN: ID None swapped
+
+TOKEN: SEMI ;
+
+SOURCE:
+   int swapped;
+-----
+
+
+SOURCE:
+
+-----
+
+
+TOKEN: FOR for
+
+TOKEN: LPAREN (
+
+TOKEN: ID int i
+
+TOKEN: EQUALS =
+
+TOKEN: ICONST 0
+
+TOKEN: SEMI ;
+
+TOKEN: ID int i
+
+TOKEN: LT &lt;
+
+TOKEN: ID int size
+
+TOKEN: SEMI ;
+
+TOKEN: ID int i
+
+TOKEN: PLUSPLUS ++
+
+TOKEN: RPAREN )
+
+SOURCE:
+   // loop through list
+-----
+
+
+TOKEN: LBRACE {
+
+SOURCE:
+      {
+-----
+
+
+TOKEN: ID int swapped
+
+TOKEN: EQUALS =
+
+TOKEN: ICONST 0
+
+TOKEN: SEMI ;
+
+SOURCE:
+      // swapped is false
+-----
+
+
+TOKEN: FOR for
+
+TOKEN: LPAREN (
+
+TOKEN: ID int j
+
+TOKEN: EQUALS =
+
+TOKEN: ICONST 0
+
+TOKEN: SEMI ;
+
+TOKEN: ID int j
+
+TOKEN: LT &lt;
+
+TOKEN: ID int size
+
+TOKEN: MINUS -
+
+TOKEN: ICONST 1
+
+TOKEN: SEMI ;
+
+TOKEN: ID int j
+
+TOKEN: PLUSPLUS ++
+
+TOKEN: RPAREN )
+
+SOURCE:
+      // loop through list
+-----
+
+
+TOKEN: LBRACE {
+
+SOURCE:
+         {
+-----
+
+
+TOKEN: IF if
+
+TOKEN: LPAREN (
+
+TOKEN: ID int**** list
+
+TOKEN: LBRACKET [
+
+TOKEN: ID int j
+
+TOKEN: PLUS +
+
+TOKEN: ICONST 1
+
+TOKEN: RBRACKET ]
+
+TOKEN: LT &lt;
+
+TOKEN: ID int**** list
+
+TOKEN: LBRACKET [
+
+TOKEN: ID int j
+
+TOKEN: RBRACKET ]
+
+TOKEN: RPAREN )
+
+SOURCE:
+         // if smaller, swap
+-----
+
+
+TOKEN: LBRACE {
+
+SOURCE:
+            {
+-----
+
+
+TOKEN: ID int temp
+
+TOKEN: EQUALS =
+
+TOKEN: ID int**** list
+
+TOKEN: LBRACKET [
+
+TOKEN: ID int j
+
+TOKEN: RBRACKET ]
+
+TOKEN: SEMI ;
+
+SOURCE:
+            temp = list[j];
+-----
+
+
+TOKEN: ID int**** list
+
+TOKEN: LBRACKET [
+
+TOKEN: ID int j
+
+TOKEN: RBRACKET ]
+
+TOKEN: EQUALS =
+
+TOKEN: ID int**** list
+
+TOKEN: LBRACKET [
+
+TOKEN: ID int j
+
+TOKEN: PLUS +
+
+TOKEN: ICONST 1
+
+TOKEN: RBRACKET ]
+
+TOKEN: SEMI ;
+
+SOURCE:
+            list[j] = list[j+1];
+-----
+
+
+TOKEN: ID int**** list
+
+TOKEN: LBRACKET [
+
+TOKEN: ID int j
+
+TOKEN: PLUS +
+
+TOKEN: ICONST 1
+
+TOKEN: RBRACKET ]
+
+TOKEN: EQUALS =
+
+TOKEN: ID int temp
+
+TOKEN: SEMI ;
+
+SOURCE:
+            list[j+1] = temp;
+-----
+
+
+TOKEN: ID int swapped
+
+TOKEN: EQUALS =
+
+TOKEN: ICONST 1
+
+TOKEN: SEMI ;
+
+SOURCE:
+            swapped = 1;
+-----
+
+
+TOKEN: RBRACE }
+
+SOURCE:
+            }
+-----
+
+
+TOKEN: RBRACE }
+
+SOURCE:
+         }
+-----
+
+
+TOKEN: IF if
+
+TOKEN: LPAREN (
+
+TOKEN: ID int swapped
+
+TOKEN: EQ ==
+
+TOKEN: ICONST 0
+
+TOKEN: RPAREN )
+
+SOURCE:
+      // if swapped is false, break
+-----
+
+
+TOKEN: LBRACE {
+
+SOURCE:
+         {
+-----
+
+
+TOKEN: BREAK break
+
+TOKEN: SEMI ;
+
+SOURCE:
+         break;
+-----
+
+
+TOKEN: RBRACE }
+
+SOURCE:
+         }
+-----
+
+
+TOKEN: RBRACE }
+
+SOURCE:
+      }
+-----
+
+
+TOKEN: RBRACE }
+
+SOURCE:
+   }
+-----
+
+
+TOKEN: VOID void
+
+TOKEN: ID void print(int**** list, int size)
+
+TOKEN: LPAREN (
+
+TOKEN: INT int
+
+TOKEN: TIMES *
+
+TOKEN: ID int**** list
+
+TOKEN: COMMA ,
+
+TOKEN: INT int
+
+TOKEN: ID int size
+
+TOKEN: RPAREN )
+
+TOKEN: LBRACE {
+
+SOURCE:
+void print( int* list, int size ){
+-----
+
+
+TOKEN: INT int
+
+TOKEN: ID None i
+
+TOKEN: SEMI ;
+
+SOURCE:
+   int i;
+-----
+
+
+TOKEN: ID None printf
+
+TOKEN: LPAREN (
+
+TOKEN: SCONST "List is: "
+
+TOKEN: RPAREN )
+
+TOKEN: SEMI ;
+
+SOURCE:
+   printf("List is: ");
+-----
+
+
+TOKEN: FOR for
+
+TOKEN: LPAREN (
+
+TOKEN: ID int i
+
+TOKEN: EQUALS =
+
+TOKEN: ICONST 0
+
+TOKEN: SEMI ;
+
+TOKEN: ID int i
+
+TOKEN: LT &lt;
+
+TOKEN: ID int size
+
+TOKEN: SEMI ;
+
+TOKEN: ID int i
+
+TOKEN: PLUSPLUS ++
+
+TOKEN: RPAREN )
+
+SOURCE:
+   for(i =0; i &lt; size; i++)
+-----
+
+
+TOKEN: LBRACE {
+
+SOURCE:
+      {
+-----
+
+
+TOKEN: ID None printf
+
+TOKEN: LPAREN (
+
+TOKEN: SCONST "%d "
+
+TOKEN: COMMA ,
+
+TOKEN: ID int***** list
+
+TOKEN: LBRACKET [
+
+TOKEN: ID int i
+
+TOKEN: RBRACKET ]
+
+TOKEN: RPAREN )
+
+TOKEN: SEMI ;
+
+SOURCE:
+      printf( "%d ", list[i] );
+-----
+
+
+TOKEN: RBRACE }
+
+SOURCE:
+      }
+-----
+
+
+TOKEN: ID None printf
+
+TOKEN: LPAREN (
+
+TOKEN: SCONST "\n"
+
+TOKEN: RPAREN )
+
+TOKEN: SEMI ;
+
+SOURCE:
+   printf("\n");
+-----
+
+
+TOKEN: RBRACE }
+
+SOURCE:
+}
+-----</code></pre>
 
       <br>
       <h3>
         <a id="token-output" class="anchor" href="#input" aria-hidden="true"><span class="octicon octicon-link"></span></a>Production Output
       </h3>
 
-<pre><code>int main()
-{
-  int x;
-}</code></pre>
+<pre><code>PRODUCTION: type_specifier -> VOID
+PRODUCTION: declaration_specifiers -> type_specifier
+PRODUCTION: identifier -> ID
+PRODUCTION: direct_declarator -> identifier
+PRODUCTION: type_specifier -> INT
+PRODUCTION: declaration_specifiers -> type_specifier
+PRODUCTION: pointer -> TIMES
+PRODUCTION: identifier -> ID
+PRODUCTION: direct_declarator -> identifier
+PRODUCTION: declarator -> pointer direct_declarator
+PRODUCTION: parameter_declaration : declaration_specifiers declarator
+PRODUCTION: parameter_list : parameter_declaration
+PRODUCTION: type_specifier -> INT
+PRODUCTION: declaration_specifiers -> type_specifier
+PRODUCTION: identifier -> ID
+PRODUCTION: direct_declarator -> identifier
+PRODUCTION: declarator -> direct_declarator
+PRODUCTION: parameter_declaration : declaration_specifiers declarator
+PRODUCTION: parameter_list : parameter_list COMMA parameter_declaration
+PRODUCTION: parameter_type_list : parameter_list
+PRODUCTION: direct_declarator : direct_declarator LPAREN parameter_type_list RPAREN
+PRODUCTION: declarator -> direct_declarator
+PRODUCTION: init_declarator -> declarator
+PRODUCTION: init_declarator_list -> init_declarator
+PRODUCTION: declaration -> declaration_specifiers init_declarator_list SEMI
+PRODUCTION: external_declaration -> declaration
+PRODUCTION: translation_unit_1 -> external_declaration
+PRODUCTION: translation_unit -> translation_unit_opt
+PRODUCTION: type_specifier -> VOID
+PRODUCTION: declaration_specifiers -> type_specifier
+PRODUCTION: identifier -> ID
+PRODUCTION: direct_declarator -> identifier
+PRODUCTION: type_specifier -> INT
+PRODUCTION: declaration_specifiers -> type_specifier
+PRODUCTION: pointer -> TIMES
+PRODUCTION: identifier -> ID
+PRODUCTION: direct_declarator -> identifier
+PRODUCTION: declarator -> pointer direct_declarator
+PRODUCTION: parameter_declaration : declaration_specifiers declarator
+PRODUCTION: parameter_list : parameter_declaration
+PRODUCTION: type_specifier -> INT
+PRODUCTION: declaration_specifiers -> type_specifier
+PRODUCTION: identifier -> ID
+PRODUCTION: direct_declarator -> identifier
+PRODUCTION: declarator -> direct_declarator
+PRODUCTION: parameter_declaration : declaration_specifiers declarator
+PRODUCTION: parameter_list : parameter_list COMMA parameter_declaration
+PRODUCTION: parameter_type_list : parameter_list
+PRODUCTION: direct_declarator : direct_declarator LPAREN parameter_type_list RPAREN
+PRODUCTION: declarator -> direct_declarator
+PRODUCTION: init_declarator -> declarator
+PRODUCTION: init_declarator_list -> init_declarator
+PRODUCTION: declaration -> declaration_specifiers init_declarator_list SEMI
+PRODUCTION: external_declaration -> declaration
+PRODUCTION: translation_unit_2 -> translation_unit external_declaration
+PRODUCTION: translation_unit -> translation_unit_opt
+PRODUCTION: type_specifier -> INT
+PRODUCTION: declaration_specifiers -> type_specifier
+PRODUCTION: identifier -> ID
+PRODUCTION: direct_declarator -> identifier
+PRODUCTION: direct_declarator : direct_declarator LPAREN RPAREN
+PRODUCTION: declarator -> direct_declarator
+INFO: Entering new scope
+INFO: Entering insert mode.
+PRODUCTION: type_specifier -> INT
+PRODUCTION: declaration_specifiers -> type_specifier
+PRODUCTION: pointer -> TIMES
+PRODUCTION: identifier -> ID
+PRODUCTION: direct_declarator -> identifier
+PRODUCTION: declarator -> pointer direct_declarator
+PRODUCTION: type_specifier -> INT
+PRODUCTION: specifier_qualifier_list -> type_specifier
+PRODUCTION: pointer -> TIMES
+PRODUCTION: abstract_declarator : pointer
+PRODUCTION: abstract_declarator_option : abstract_declarator
+PRODUCTION: type_name : specifier_qualifier_list abstract_declarator_option
+PRODUCTION: identifier -> ID
+PRODUCTION: primary_expression -> identifier
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: constant -> ICONST
+PRODUCTION: primary_expression -> constant
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: argument_expression_list ->  assignment_expression
+PRODUCTION: postfix_expression -> postfix_expression LPAREN argument_expression_list RPAREN
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: cast_expression -> LPAREN type_name RPAREN cast_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: initializer : assignment_expression
+PRODUCTION: init_declarator : declarator EQUALS initializer
+PRODUCTION: init_declarator_list -> init_declarator
+PRODUCTION: declaration -> declaration_specifiers init_declarator_list SEMI
+PRODUCTION: declaration_list -> declaration
+PRODUCTION: type_specifier -> INT
+PRODUCTION: declaration_specifiers -> type_specifier
+PRODUCTION: identifier -> ID
+PRODUCTION: direct_declarator -> identifier
+PRODUCTION: declarator -> direct_declarator
+PRODUCTION: init_declarator -> declarator
+PRODUCTION: init_declarator_list -> init_declarator
+PRODUCTION: declaration -> declaration_specifiers init_declarator_list SEMI
+PRODUCTION: declaration_list -> declaration_list declaration
+INFO: Entering lookup mode.
+PRODUCTION: identifier -> ID
+PRODUCTION: primary_expression -> identifier
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: identifier -> ID
+PRODUCTION: primary_expression -> identifier
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: identifier -> ID
+PRODUCTION: primary_expression -> identifier
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: argument_expression_list ->  assignment_expression
+PRODUCTION: postfix_expression -> postfix_expression LPAREN argument_expression_list RPAREN
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: argument_expression_list ->  assignment_expression
+PRODUCTION: postfix_expression -> postfix_expression LPAREN argument_expression_list RPAREN
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: expression : assignment_expression
+PRODUCTION: expression_option -> expression
+PRODUCTION: expression_statement : expression_option SEMI
+PRODUCTION: statement -> expression_statment
+PRODUCTION: statement_list : statement
+PRODUCTION: identifier -> ID
+PRODUCTION: primary_expression -> identifier
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: assignment_operator -> EQUALS
+PRODUCTION: constant -> ICONST
+PRODUCTION: primary_expression -> constant
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: assignment_expression : unary_expression assignment_operator assignment_expression
+PRODUCTION: expression : assignment_expression
+PRODUCTION: expression_option -> expression
+PRODUCTION: identifier -> ID
+PRODUCTION: primary_expression -> identifier
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: constant -> ICONST
+PRODUCTION: primary_expression -> constant
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> relational_expression LT shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: expression : assignment_expression
+PRODUCTION: expression_option -> expression
+PRODUCTION: identifier -> ID
+PRODUCTION: primary_expression -> identifier
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: postfix_expression -> postfix_expression PLUSPLUS
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: expression : assignment_expression
+PRODUCTION: expression_option -> expression
+INFO: Entering new scope
+INFO: Entering lookup mode.
+PRODUCTION: identifier -> ID
+PRODUCTION: primary_expression -> identifier
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: identifier -> ID
+PRODUCTION: primary_expression -> identifier
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: expression : assignment_expression
+PRODUCTION: postfix_expression -> postfix_expression LBRACKET expression RBRACKET
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: assignment_operator -> EQUALS
+PRODUCTION: identifier -> ID
+PRODUCTION: primary_expression -> identifier
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: postfix_expression -> postfix_expression LPAREN RPAREN
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: constant -> ICONST
+PRODUCTION: primary_expression -> constant
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> multiplicative_expression MOD cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: constant -> ICONST
+PRODUCTION: primary_expression -> constant
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> additive_expression PLUS multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: assignment_expression : unary_expression assignment_operator assignment_expression
+PRODUCTION: expression : assignment_expression
+PRODUCTION: expression_option -> expression
+PRODUCTION: expression_statement : expression_option SEMI
+PRODUCTION: statement -> expression_statment
+PRODUCTION: statement_list : statement
+INFO: Leaving a scope: 3
+PRODUCTION: compound_statement : LBRACE statement_list RBRACE
+PRODUCTION: statement -> compound_statement
+PRODUCTION: iteration_statement -> FOR LPAREN expression_option SEMI expression_option SEMI expression_option RPAREN statement
+PRODUCTION: statement ->iteration_statement
+PRODUCTION: statement_list : statement_list statement
+PRODUCTION: identifier -> ID
+PRODUCTION: primary_expression -> identifier
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: identifier -> ID
+PRODUCTION: primary_expression -> identifier
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: argument_expression_list ->  assignment_expression
+PRODUCTION: constant -> ICONST
+PRODUCTION: primary_expression -> constant
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: argument_expression_list -> argument_expression_list COMMA assignment_expression
+PRODUCTION: postfix_expression -> postfix_expression LPAREN argument_expression_list RPAREN
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: expression : assignment_expression
+PRODUCTION: expression_option -> expression
+PRODUCTION: expression_statement : expression_option SEMI
+PRODUCTION: statement -> expression_statment
+PRODUCTION: statement_list : statement_list statement
+PRODUCTION: identifier -> ID
+PRODUCTION: primary_expression -> identifier
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: identifier -> ID
+PRODUCTION: primary_expression -> identifier
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: argument_expression_list ->  assignment_expression
+PRODUCTION: constant -> ICONST
+PRODUCTION: primary_expression -> constant
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: argument_expression_list -> argument_expression_list COMMA assignment_expression
+PRODUCTION: postfix_expression -> postfix_expression LPAREN argument_expression_list RPAREN
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: expression : assignment_expression
+PRODUCTION: expression_option -> expression
+PRODUCTION: expression_statement : expression_option SEMI
+PRODUCTION: statement -> expression_statment
+PRODUCTION: statement_list : statement_list statement
+PRODUCTION: identifier -> ID
+PRODUCTION: primary_expression -> identifier
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: string_literal_list -> SCONST
+PRODUCTION: primary_expression -> string_literal_list
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: argument_expression_list ->  assignment_expression
+PRODUCTION: postfix_expression -> postfix_expression LPAREN argument_expression_list RPAREN
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: expression : assignment_expression
+PRODUCTION: expression_option -> expression
+PRODUCTION: expression_statement : expression_option SEMI
+PRODUCTION: statement -> expression_statment
+PRODUCTION: statement_list : statement_list statement
+PRODUCTION: identifier -> ID
+PRODUCTION: primary_expression -> identifier
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: identifier -> ID
+PRODUCTION: primary_expression -> identifier
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: argument_expression_list ->  assignment_expression
+PRODUCTION: constant -> ICONST
+PRODUCTION: primary_expression -> constant
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: argument_expression_list -> argument_expression_list COMMA assignment_expression
+PRODUCTION: postfix_expression -> postfix_expression LPAREN argument_expression_list RPAREN
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: expression : assignment_expression
+PRODUCTION: expression_option -> expression
+PRODUCTION: expression_statement : expression_option SEMI
+PRODUCTION: statement -> expression_statment
+PRODUCTION: statement_list : statement_list statement
+PRODUCTION: constant -> ICONST
+PRODUCTION: primary_expression -> constant
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: expression : assignment_expression
+PRODUCTION: expression_option -> expression
+PRODUCTION: jump_statement : RETURN expression_option SEMI
+PRODUCTION: statement -> jump_statement
+PRODUCTION: statement_list : statement_list statement
+INFO: Leaving a scope: 2
+INFO: cloning the symbol table
+PRODUCTION: compound_statement : LBRACE declaration_list statement_list RBRACE
+PRODUCTION: function_definition -> declaration_specifiers declarator compound_statement
+PRODUCTION: external_declaration -> function_definition
+PRODUCTION: translation_unit_2 -> translation_unit external_declaration
+PRODUCTION: translation_unit -> translation_unit_opt
+PRODUCTION: type_specifier -> VOID
+PRODUCTION: declaration_specifiers -> type_specifier
+PRODUCTION: identifier -> ID
+PRODUCTION: direct_declarator -> identifier
+PRODUCTION: type_specifier -> INT
+PRODUCTION: declaration_specifiers -> type_specifier
+PRODUCTION: pointer -> TIMES
+PRODUCTION: identifier -> ID
+PRODUCTION: direct_declarator -> identifier
+PRODUCTION: declarator -> pointer direct_declarator
+PRODUCTION: parameter_declaration : declaration_specifiers declarator
+PRODUCTION: parameter_list : parameter_declaration
+PRODUCTION: type_specifier -> INT
+PRODUCTION: declaration_specifiers -> type_specifier
+PRODUCTION: identifier -> ID
+PRODUCTION: direct_declarator -> identifier
+PRODUCTION: declarator -> direct_declarator
+PRODUCTION: parameter_declaration : declaration_specifiers declarator
+PRODUCTION: parameter_list : parameter_list COMMA parameter_declaration
+PRODUCTION: parameter_type_list : parameter_list
+PRODUCTION: direct_declarator : direct_declarator LPAREN parameter_type_list RPAREN
+PRODUCTION: declarator -> direct_declarator
+INFO: Entering new scope
+INFO: Entering insert mode.
+PRODUCTION: type_specifier -> INT
+PRODUCTION: declaration_specifiers -> type_specifier
+PRODUCTION: identifier -> ID
+PRODUCTION: direct_declarator -> identifier
+PRODUCTION: declarator -> direct_declarator
+PRODUCTION: init_declarator -> declarator
+PRODUCTION: init_declarator_list -> init_declarator
+PRODUCTION: identifier -> ID
+PRODUCTION: direct_declarator -> identifier
+PRODUCTION: declarator -> direct_declarator
+PRODUCTION: init_declarator -> declarator
+PRODUCTION: init_declarator_list -> init_declarator_list COMMA init_declarator
+PRODUCTION: declaration -> declaration_specifiers init_declarator_list SEMI
+PRODUCTION: declaration_list -> declaration
+PRODUCTION: type_specifier -> INT
+PRODUCTION: declaration_specifiers -> type_specifier
+PRODUCTION: identifier -> ID
+PRODUCTION: direct_declarator -> identifier
+PRODUCTION: declarator -> direct_declarator
+PRODUCTION: init_declarator -> declarator
+PRODUCTION: init_declarator_list -> init_declarator
+PRODUCTION: declaration -> declaration_specifiers init_declarator_list SEMI
+PRODUCTION: declaration_list -> declaration_list declaration
+PRODUCTION: type_specifier -> INT
+PRODUCTION: declaration_specifiers -> type_specifier
+PRODUCTION: identifier -> ID
+PRODUCTION: direct_declarator -> identifier
+PRODUCTION: declarator -> direct_declarator
+PRODUCTION: init_declarator -> declarator
+PRODUCTION: init_declarator_list -> init_declarator
+PRODUCTION: declaration -> declaration_specifiers init_declarator_list SEMI
+PRODUCTION: declaration_list -> declaration_list declaration
+INFO: Entering lookup mode.
+PRODUCTION: identifier -> ID
+PRODUCTION: primary_expression -> identifier
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: assignment_operator -> EQUALS
+PRODUCTION: constant -> ICONST
+PRODUCTION: primary_expression -> constant
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: assignment_expression : unary_expression assignment_operator assignment_expression
+PRODUCTION: expression : assignment_expression
+PRODUCTION: expression_option -> expression
+PRODUCTION: identifier -> ID
+PRODUCTION: primary_expression -> identifier
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: identifier -> ID
+PRODUCTION: primary_expression -> identifier
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> relational_expression LT shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: expression : assignment_expression
+PRODUCTION: expression_option -> expression
+PRODUCTION: identifier -> ID
+PRODUCTION: primary_expression -> identifier
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: postfix_expression -> postfix_expression PLUSPLUS
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: expression : assignment_expression
+PRODUCTION: expression_option -> expression
+INFO: Entering new scope
+INFO: Entering lookup mode.
+PRODUCTION: identifier -> ID
+PRODUCTION: primary_expression -> identifier
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: assignment_operator -> EQUALS
+PRODUCTION: constant -> ICONST
+PRODUCTION: primary_expression -> constant
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: assignment_expression : unary_expression assignment_operator assignment_expression
+PRODUCTION: expression : assignment_expression
+PRODUCTION: expression_option -> expression
+PRODUCTION: expression_statement : expression_option SEMI
+PRODUCTION: statement -> expression_statment
+PRODUCTION: statement_list : statement
+PRODUCTION: identifier -> ID
+PRODUCTION: primary_expression -> identifier
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: assignment_operator -> EQUALS
+PRODUCTION: constant -> ICONST
+PRODUCTION: primary_expression -> constant
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: assignment_expression : unary_expression assignment_operator assignment_expression
+PRODUCTION: expression : assignment_expression
+PRODUCTION: expression_option -> expression
+PRODUCTION: identifier -> ID
+PRODUCTION: primary_expression -> identifier
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: identifier -> ID
+PRODUCTION: primary_expression -> identifier
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: constant -> ICONST
+PRODUCTION: primary_expression -> constant
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> additive_expression MINUS multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> relational_expression LT shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: expression : assignment_expression
+PRODUCTION: expression_option -> expression
+PRODUCTION: identifier -> ID
+PRODUCTION: primary_expression -> identifier
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: postfix_expression -> postfix_expression PLUSPLUS
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: expression : assignment_expression
+PRODUCTION: expression_option -> expression
+INFO: Entering new scope
+INFO: Entering lookup mode.
+PRODUCTION: identifier -> ID
+PRODUCTION: primary_expression -> identifier
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: identifier -> ID
+PRODUCTION: primary_expression -> identifier
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: constant -> ICONST
+PRODUCTION: primary_expression -> constant
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> additive_expression PLUS multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: expression : assignment_expression
+PRODUCTION: postfix_expression -> postfix_expression LBRACKET expression RBRACKET
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: identifier -> ID
+PRODUCTION: primary_expression -> identifier
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: identifier -> ID
+PRODUCTION: primary_expression -> identifier
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: expression : assignment_expression
+PRODUCTION: postfix_expression -> postfix_expression LBRACKET expression RBRACKET
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> relational_expression LT shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: expression : assignment_expression
+INFO: Entering new scope
+INFO: Entering lookup mode.
+PRODUCTION: identifier -> ID
+PRODUCTION: primary_expression -> identifier
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: assignment_operator -> EQUALS
+PRODUCTION: identifier -> ID
+PRODUCTION: primary_expression -> identifier
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: identifier -> ID
+PRODUCTION: primary_expression -> identifier
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: expression : assignment_expression
+PRODUCTION: postfix_expression -> postfix_expression LBRACKET expression RBRACKET
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: assignment_expression : unary_expression assignment_operator assignment_expression
+PRODUCTION: expression : assignment_expression
+PRODUCTION: expression_option -> expression
+PRODUCTION: expression_statement : expression_option SEMI
+PRODUCTION: statement -> expression_statment
+PRODUCTION: statement_list : statement
+PRODUCTION: identifier -> ID
+PRODUCTION: primary_expression -> identifier
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: identifier -> ID
+PRODUCTION: primary_expression -> identifier
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: expression : assignment_expression
+PRODUCTION: postfix_expression -> postfix_expression LBRACKET expression RBRACKET
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: assignment_operator -> EQUALS
+PRODUCTION: identifier -> ID
+PRODUCTION: primary_expression -> identifier
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: identifier -> ID
+PRODUCTION: primary_expression -> identifier
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: constant -> ICONST
+PRODUCTION: primary_expression -> constant
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> additive_expression PLUS multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: expression : assignment_expression
+PRODUCTION: postfix_expression -> postfix_expression LBRACKET expression RBRACKET
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: assignment_expression : unary_expression assignment_operator assignment_expression
+PRODUCTION: expression : assignment_expression
+PRODUCTION: expression_option -> expression
+PRODUCTION: expression_statement : expression_option SEMI
+PRODUCTION: statement -> expression_statment
+PRODUCTION: statement_list : statement_list statement
+PRODUCTION: identifier -> ID
+PRODUCTION: primary_expression -> identifier
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: identifier -> ID
+PRODUCTION: primary_expression -> identifier
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: constant -> ICONST
+PRODUCTION: primary_expression -> constant
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> additive_expression PLUS multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: expression : assignment_expression
+PRODUCTION: postfix_expression -> postfix_expression LBRACKET expression RBRACKET
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: assignment_operator -> EQUALS
+PRODUCTION: identifier -> ID
+PRODUCTION: primary_expression -> identifier
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: assignment_expression : unary_expression assignment_operator assignment_expression
+PRODUCTION: expression : assignment_expression
+PRODUCTION: expression_option -> expression
+PRODUCTION: expression_statement : expression_option SEMI
+PRODUCTION: statement -> expression_statment
+PRODUCTION: statement_list : statement_list statement
+PRODUCTION: identifier -> ID
+PRODUCTION: primary_expression -> identifier
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: assignment_operator -> EQUALS
+PRODUCTION: constant -> ICONST
+PRODUCTION: primary_expression -> constant
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: assignment_expression : unary_expression assignment_operator assignment_expression
+PRODUCTION: expression : assignment_expression
+PRODUCTION: expression_option -> expression
+PRODUCTION: expression_statement : expression_option SEMI
+PRODUCTION: statement -> expression_statment
+PRODUCTION: statement_list : statement_list statement
+INFO: Leaving a scope: 5
+PRODUCTION: compound_statement : LBRACE statement_list RBRACE
+PRODUCTION: statement -> compound_statement
+PRODUCTION: selection_statement : IF LPAREN expression RPAREN statement
+PRODUCTION: statement ->selection_statement
+PRODUCTION: statement_list : statement
+INFO: Leaving a scope: 4
+PRODUCTION: compound_statement : LBRACE statement_list RBRACE
+PRODUCTION: statement -> compound_statement
+PRODUCTION: iteration_statement -> FOR LPAREN expression_option SEMI expression_option SEMI expression_option RPAREN statement
+PRODUCTION: statement ->iteration_statement
+PRODUCTION: statement_list : statement_list statement
+PRODUCTION: identifier -> ID
+PRODUCTION: primary_expression -> identifier
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: constant -> ICONST
+PRODUCTION: primary_expression -> constant
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: equality_expression -> equality_expression EQ relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: expression : assignment_expression
+INFO: Entering new scope
+INFO: Entering lookup mode.
+PRODUCTION: jump_statement -> BREAK SEMI
+PRODUCTION: statement -> jump_statement
+PRODUCTION: statement_list : statement
+INFO: Leaving a scope: 4
+PRODUCTION: compound_statement : LBRACE statement_list RBRACE
+PRODUCTION: statement -> compound_statement
+PRODUCTION: selection_statement : IF LPAREN expression RPAREN statement
+PRODUCTION: statement ->selection_statement
+PRODUCTION: statement_list : statement_list statement
+INFO: Leaving a scope: 3
+PRODUCTION: compound_statement : LBRACE statement_list RBRACE
+PRODUCTION: statement -> compound_statement
+PRODUCTION: iteration_statement -> FOR LPAREN expression_option SEMI expression_option SEMI expression_option RPAREN statement
+PRODUCTION: statement ->iteration_statement
+PRODUCTION: statement_list : statement
+INFO: Leaving a scope: 2
+PRODUCTION: compound_statement : LBRACE declaration_list statement_list RBRACE
+PRODUCTION: function_definition -> declaration_specifiers declarator compound_statement
+PRODUCTION: external_declaration -> function_definition
+PRODUCTION: translation_unit_2 -> translation_unit external_declaration
+PRODUCTION: translation_unit -> translation_unit_opt
+PRODUCTION: type_specifier -> VOID
+PRODUCTION: declaration_specifiers -> type_specifier
+PRODUCTION: identifier -> ID
+PRODUCTION: direct_declarator -> identifier
+PRODUCTION: type_specifier -> INT
+PRODUCTION: declaration_specifiers -> type_specifier
+PRODUCTION: pointer -> TIMES
+PRODUCTION: identifier -> ID
+PRODUCTION: direct_declarator -> identifier
+PRODUCTION: declarator -> pointer direct_declarator
+PRODUCTION: parameter_declaration : declaration_specifiers declarator
+PRODUCTION: parameter_list : parameter_declaration
+PRODUCTION: type_specifier -> INT
+PRODUCTION: declaration_specifiers -> type_specifier
+PRODUCTION: identifier -> ID
+PRODUCTION: direct_declarator -> identifier
+PRODUCTION: declarator -> direct_declarator
+PRODUCTION: parameter_declaration : declaration_specifiers declarator
+PRODUCTION: parameter_list : parameter_list COMMA parameter_declaration
+PRODUCTION: parameter_type_list : parameter_list
+PRODUCTION: direct_declarator : direct_declarator LPAREN parameter_type_list RPAREN
+PRODUCTION: declarator -> direct_declarator
+INFO: Entering new scope
+INFO: Entering insert mode.
+PRODUCTION: type_specifier -> INT
+PRODUCTION: declaration_specifiers -> type_specifier
+PRODUCTION: identifier -> ID
+PRODUCTION: direct_declarator -> identifier
+PRODUCTION: declarator -> direct_declarator
+PRODUCTION: init_declarator -> declarator
+PRODUCTION: init_declarator_list -> init_declarator
+PRODUCTION: declaration -> declaration_specifiers init_declarator_list SEMI
+PRODUCTION: declaration_list -> declaration
+INFO: Entering lookup mode.
+PRODUCTION: identifier -> ID
+PRODUCTION: primary_expression -> identifier
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: string_literal_list -> SCONST
+PRODUCTION: primary_expression -> string_literal_list
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: argument_expression_list ->  assignment_expression
+PRODUCTION: postfix_expression -> postfix_expression LPAREN argument_expression_list RPAREN
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: expression : assignment_expression
+PRODUCTION: expression_option -> expression
+PRODUCTION: expression_statement : expression_option SEMI
+PRODUCTION: statement -> expression_statment
+PRODUCTION: statement_list : statement
+PRODUCTION: identifier -> ID
+PRODUCTION: primary_expression -> identifier
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: assignment_operator -> EQUALS
+PRODUCTION: constant -> ICONST
+PRODUCTION: primary_expression -> constant
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: assignment_expression : unary_expression assignment_operator assignment_expression
+PRODUCTION: expression : assignment_expression
+PRODUCTION: expression_option -> expression
+PRODUCTION: identifier -> ID
+PRODUCTION: primary_expression -> identifier
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: identifier -> ID
+PRODUCTION: primary_expression -> identifier
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> relational_expression LT shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: expression : assignment_expression
+PRODUCTION: expression_option -> expression
+PRODUCTION: identifier -> ID
+PRODUCTION: primary_expression -> identifier
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: postfix_expression -> postfix_expression PLUSPLUS
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: expression : assignment_expression
+PRODUCTION: expression_option -> expression
+INFO: Entering new scope
+INFO: Entering lookup mode.
+PRODUCTION: identifier -> ID
+PRODUCTION: primary_expression -> identifier
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: string_literal_list -> SCONST
+PRODUCTION: primary_expression -> string_literal_list
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: argument_expression_list ->  assignment_expression
+PRODUCTION: identifier -> ID
+PRODUCTION: primary_expression -> identifier
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: identifier -> ID
+PRODUCTION: primary_expression -> identifier
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: expression : assignment_expression
+PRODUCTION: postfix_expression -> postfix_expression LBRACKET expression RBRACKET
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: argument_expression_list -> argument_expression_list COMMA assignment_expression
+PRODUCTION: postfix_expression -> postfix_expression LPAREN argument_expression_list RPAREN
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: expression : assignment_expression
+PRODUCTION: expression_option -> expression
+PRODUCTION: expression_statement : expression_option SEMI
+PRODUCTION: statement -> expression_statment
+PRODUCTION: statement_list : statement
+INFO: Leaving a scope: 3
+PRODUCTION: compound_statement : LBRACE statement_list RBRACE
+PRODUCTION: statement -> compound_statement
+PRODUCTION: iteration_statement -> FOR LPAREN expression_option SEMI expression_option SEMI expression_option RPAREN statement
+PRODUCTION: statement ->iteration_statement
+PRODUCTION: statement_list : statement_list statement
+PRODUCTION: identifier -> ID
+PRODUCTION: primary_expression -> identifier
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: string_literal_list -> SCONST
+PRODUCTION: primary_expression -> string_literal_list
+PRODUCTION: postfix_expression -> primary_expression
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: argument_expression_list ->  assignment_expression
+PRODUCTION: postfix_expression -> postfix_expression LPAREN argument_expression_list RPAREN
+PRODUCTION: unary_expression -> postfix_expression
+PRODUCTION: cast_expression -> unary_expression
+PRODUCTION: multiplicative_expression -> cast_expression
+PRODUCTION: additive_expression -> multiplicative_expression
+PRODUCTION: shift_expression -> additive_expression
+PRODUCTION: relational_expression -> shift_expression
+PRODUCTION: equality_expression -> relational_expression
+PRODUCTION: and_expression -> equality_expression
+PRODUCTION: exclusive_or_expression -> and_expression
+PRODUCTION: inclusive_or_expression -> exclusive_or_expression
+PRODUCTION: logical_and_expression -> inclusive_or_expression
+PRODUCTION: logical_or_expression -> logical_and_expression
+PRODUCTION: conditional_expression -> logical_or_expression
+PRODUCTION: assignment_expression : conditional_expression
+PRODUCTION: expression : assignment_expression
+PRODUCTION: expression_option -> expression
+PRODUCTION: expression_statement : expression_option SEMI
+PRODUCTION: statement -> expression_statment
+PRODUCTION: statement_list : statement_list statement
+INFO: Leaving a scope: 2
+PRODUCTION: compound_statement : LBRACE declaration_list statement_list RBRACE
+PRODUCTION: function_definition -> declaration_specifiers declarator compound_statement
+PRODUCTION: external_declaration -> function_definition
+PRODUCTION: translation_unit_2 -> translation_unit external_declaration
+PRODUCTION: translation_unit -> translation_unit_opt</code></pre>
 
       <br>
       <h3>
         <a id="token-output" class="anchor" href="#input" aria-hidden="true"><span class="octicon octicon-link"></span></a>Symbol Table Output
       </h3>
 
-<pre><code>int main()
-{
-  int x;
-}</code></pre>
+<pre><code>SYMBOL TABLE: Opening brace encountered, symbol table dumped:
+
+SYMBOL TABLE:
+0
+  bubbleSort : void bubbleSort(int** list, int size)
+  list : int** list
+  main : None main
+  print : void print(int** list, int size)
+  size : int size
+SYMBOL TABLE:
+
+SYMBOL TABLE: Opening brace encountered, symbol table dumped:
+
+SYMBOL TABLE:
+0
+  bubbleSort : void bubbleSort(int*** list, int size)
+  list : int*** list
+  main : None main()
+  print : void print(int*** list, int size)
+  size : int size
+1
+  NULL : None NULL
+  i : int i
+  malloc : None malloc
+  srand : None srand
+  time : None time
+SYMBOL TABLE:
+
+SYMBOL TABLE: Closing brace encountered, symbol table dumped:
+
+SYMBOL TABLE:
+0
+  bubbleSort : void bubbleSort(int*** list, int size)
+  list : int*** list
+  main : None main()
+  print : void print(int*** list, int size)
+  size : int size
+1
+  NULL : None NULL
+  i : int i
+  malloc : None malloc
+  srand : None srand
+  time : None time
+2
+  rand : None rand
+SYMBOL TABLE:
+
+SYMBOL TABLE: Closing brace encountered, symbol table dumped:
+
+SYMBOL TABLE:
+0
+  bubbleSort : void bubbleSort(int*** list, int size)
+  list : int*** list
+  main : None main()
+  print : void print(int*** list, int size)
+  size : int size
+1
+  NULL : None NULL
+  i : int i
+  malloc : None malloc
+  printf : None printf
+  srand : None srand
+  time : None time
+SYMBOL TABLE:
+
+SYMBOL TABLE: Opening brace encountered, symbol table dumped:
+
+SYMBOL TABLE:
+0
+  bubbleSort : void bubbleSort(int**** list, int size)
+  list : int**** list
+  main : int main()
+  print : void print(int**** list, int size)
+  size : int size
+SYMBOL TABLE:
+
+SYMBOL TABLE: Opening brace encountered, symbol table dumped:
+
+SYMBOL TABLE:
+0
+  bubbleSort : void bubbleSort(int**** list, int size, int**** list, int size)
+  list : int**** list
+  main : int main()
+  print : void print(int**** list, int size)
+  size : int size
+1
+  i : int i
+  j : int j
+  swapped : int swapped
+  temp : int temp
+SYMBOL TABLE:
+
+SYMBOL TABLE: Opening brace encountered, symbol table dumped:
+
+SYMBOL TABLE:
+0
+  bubbleSort : void bubbleSort(int**** list, int size, int**** list, int size)
+  list : int**** list
+  main : int main()
+  print : void print(int**** list, int size)
+  size : int size
+1
+  i : int i
+  j : int j
+  swapped : int swapped
+  temp : int temp
+2
+
+SYMBOL TABLE:
+
+SYMBOL TABLE: Opening brace encountered, symbol table dumped:
+
+SYMBOL TABLE:
+0
+  bubbleSort : void bubbleSort(int**** list, int size, int**** list, int size)
+  list : int**** list
+  main : int main()
+  print : void print(int**** list, int size)
+  size : int size
+1
+  i : int i
+  j : int j
+  swapped : int swapped
+  temp : int temp
+2
+
+3
+
+SYMBOL TABLE:
+
+SYMBOL TABLE: Closing brace encountered, symbol table dumped:
+
+SYMBOL TABLE:
+0
+  bubbleSort : void bubbleSort(int**** list, int size, int**** list, int size)
+  list : int**** list
+  main : int main()
+  print : void print(int**** list, int size)
+  size : int size
+1
+  i : int i
+  j : int j
+  swapped : int swapped
+  temp : int temp
+2
+
+3
+
+4
+
+SYMBOL TABLE:
+
+SYMBOL TABLE: Closing brace encountered, symbol table dumped:
+
+SYMBOL TABLE:
+0
+  bubbleSort : void bubbleSort(int**** list, int size, int**** list, int size)
+  list : int**** list
+  main : int main()
+  print : void print(int**** list, int size)
+  size : int size
+1
+  i : int i
+  j : int j
+  swapped : int swapped
+  temp : int temp
+2
+
+3
+
+SYMBOL TABLE:
+
+SYMBOL TABLE: Opening brace encountered, symbol table dumped:
+
+SYMBOL TABLE:
+0
+  bubbleSort : void bubbleSort(int**** list, int size, int**** list, int size)
+  list : int**** list
+  main : int main()
+  print : void print(int**** list, int size)
+  size : int size
+1
+  i : int i
+  j : int j
+  swapped : int swapped
+  temp : int temp
+2
+
+SYMBOL TABLE:
+
+SYMBOL TABLE: Closing brace encountered, symbol table dumped:
+
+SYMBOL TABLE:
+0
+  bubbleSort : void bubbleSort(int**** list, int size, int**** list, int size)
+  list : int**** list
+  main : int main()
+  print : void print(int**** list, int size)
+  size : int size
+1
+  i : int i
+  j : int j
+  swapped : int swapped
+  temp : int temp
+2
+
+3
+
+SYMBOL TABLE:
+
+SYMBOL TABLE: Closing brace encountered, symbol table dumped:
+
+SYMBOL TABLE:
+0
+  bubbleSort : void bubbleSort(int**** list, int size, int**** list, int size)
+  list : int**** list
+  main : int main()
+  print : void print(int**** list, int size)
+  size : int size
+1
+  i : int i
+  j : int j
+  swapped : int swapped
+  temp : int temp
+2
+
+SYMBOL TABLE:
+
+SYMBOL TABLE: Closing brace encountered, symbol table dumped:
+
+SYMBOL TABLE:
+0
+  bubbleSort : void bubbleSort(int**** list, int size, int**** list, int size)
+  list : int**** list
+  main : int main()
+  print : void print(int**** list, int size)
+  size : int size
+1
+  i : int i
+  j : int j
+  swapped : int swapped
+  temp : int temp
+SYMBOL TABLE:
+
+SYMBOL TABLE: Opening brace encountered, symbol table dumped:
+
+SYMBOL TABLE:
+0
+  bubbleSort : void bubbleSort(int***** list, int size, int***** list, int size)
+  list : int***** list
+  main : int main()
+  print : void print(int***** list, int size)
+  size : int size
+SYMBOL TABLE:
+
+SYMBOL TABLE: Opening brace encountered, symbol table dumped:
+
+SYMBOL TABLE:
+0
+  bubbleSort : void bubbleSort(int***** list, int size, int***** list, int size)
+  list : int***** list
+  main : int main()
+  print : void print(int***** list, int size, int***** list, int size)
+  size : int size
+1
+  i : int i
+  printf : None printf
+SYMBOL TABLE:
+
+SYMBOL TABLE: Closing brace encountered, symbol table dumped:
+
+SYMBOL TABLE:
+0
+  bubbleSort : void bubbleSort(int***** list, int size, int***** list, int size)
+  list : int***** list
+  main : int main()
+  print : void print(int***** list, int size, int***** list, int size)
+  size : int size
+1
+  i : int i
+  printf : None printf
+2
+
+SYMBOL TABLE:
+
+SYMBOL TABLE: Closing brace encountered, symbol table dumped:
+
+SYMBOL TABLE:
+0
+  bubbleSort : void bubbleSort(int***** list, int size, int***** list, int size)
+  list : int***** list
+  main : int main()
+  print : void print(int***** list, int size, int***** list, int size)
+  size : int size
+1
+  i : int i
+  printf : None printf
+SYMBOL TABLE: </code></pre>
 
     </section>
   </div>
@@ -174,13 +2730,3 @@ void print( int* list, int size ){
 
 </body>
 </html>
-
-<!--
-    Table of Contents (first page with links to others)
-    Script for the run of the program (ie. learn how to use script -- man script). Your script file should contain at least:
-        The results for three test cases run without debugging output.
-        The results for three test cases run with debugging output (that is, include the token file and debugging output from the scanner and symbol table. Make sure you insert the appropriate pragmas to cause symbol table dumps).
-        A demonstration that your driver handles command line arguments properly.
-        The source code of your test cases.
-    The listing files ( A page with links to the input and listing files)
--->
