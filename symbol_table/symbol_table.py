@@ -13,22 +13,17 @@
 # You should have received a copy of the GNU General Public License
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
-###############################################################################
-# File Description: Class for maintaining the various Scopes that will come and
-# go as the program gets parsed. It's also very important for resolving
-# previously seen identifiers.
-###############################################################################
-
-import copy
-
 from symbol_table.scope import Scope
 from symbol_table.symbol import Symbol
 
 
 class SymbolTable(object):
+    # Initializes the symbol table
     def __init__(self):
-        self.table = [Scope()]
+        self.table = []
 
+    # Pushes a scope onto the table.
+    # 'scope' Scope to push. Leave as default to push empty Scope.
     def push(self, scope=None):
         if scope is None:
             scope = Scope()
@@ -37,52 +32,65 @@ class SymbolTable(object):
         else:
             raise TypeError("'scope' is not an instance of Scope.")
 
+    # Pops the top-most Scope from the table and returns it.
     def pop(self):
         return self.table.pop()
 
+    # Inserts a symbol into the top-most Scope.
+    # Returns a tuple of the result and a list of shadowed Symbols or
+    # re-declared Symbol.
     def insert(self, symbol):
         if type(symbol) is not Symbol:
             raise TypeError("'symbol' is not an instance of Symbol.")
 
-        is_shadowing = False
+        shadowed_symbols = []
         for scope in self.table:
             result = scope.find(symbol.identifier)
             if result is not None:
-                is_shadowing = True
-                if scope is self.table[-1]:
-                    return Scope.INSERT_REDECL
+                if scope is not self.table[-1]:
+                    shadowed_symbols.append(result)
+                else:
+                    return Scope.INSERT_REDECL, [result]
 
-        result = self.table[-1].insert(symbol)
+        self.table[-1].insert(symbol)
 
-        if result is Scope.INSERT_REDECL:
-            return Scope.INSERT_REDECL
-        elif is_shadowing:
-            return Scope.INSERT_SHADOWED
-        elif result is Scope.INSERT_SUCCESS:
-            return Scope.INSERT_SUCCESS
+        if len(shadowed_symbols) is 0:
+            return Scope.INSERT_SUCCESS, []
         else:
-            raise ValueError('Unknown result from Scope.insert()')
+            return Scope.INSERT_SHADOWED, shadowed_symbols
 
+    # Finds a symbol in the table by searching the top-most Scope to the
+    # bottom-most Scope.
+    # 'name' String identifier for the Symbol to find.
+    # Returns a tuple of the Symbol and the Scope index it was found in.
     def find(self, name):
         for index, scope in enumerate(reversed(self.table)):
             result = scope.find(name)
             if result is not None:
                 return result, (len(self.table) - (index + 1))
-        return None
+        return None, None
 
+    # Finds a symbol in the table by searching only the top-most Scope.
+    # 'name' String identifier for the Symbol to find.
+    # Returns 'None' or the Symbol.
+    def find_in_top(self, name):
+        return self.table[-1].find(name)
+
+    # Returns the number of Scopes in the table.
     def size(self):
         return len(self.table)
 
+    # Clones the current SymbolTable and returns the deep copy.
     def clone(self):
-        # return copy.deepcopy(self)
         result = SymbolTable()
         result.table = []
         for scope in self.table:
             result.table.append(scope.clone())
         return result
 
+    # Converts the current SymbolTable to its String representation.
     def __repr__(self):
         scopes = []
         for index, scope in enumerate(self.table):
-            scopes.append(repr(index) + '\n' + repr(scope))
-        return '\n' + "\n".join(scopes)
+            scopes.append('Scope #' + repr(index) + '\n' + repr(scope))
+        return '\n'.join(scopes)

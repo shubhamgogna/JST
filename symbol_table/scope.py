@@ -12,24 +12,24 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
-import copy
 
 from bintrees import RBTree
 from symbol_table.symbol import Symbol
 
-###############################################################################
-# File Description: Class for representing a Scope in a program. It maintains
-# a balanced tree of Symbols based on the Symbol's identifier.
-###############################################################################
 
 class Scope(object):
+    # Static constants uses for indicating the result of the inserting
+    # a symbol into the Scope.
     INSERT_SUCCESS = 0
     INSERT_SHADOWED = 1
     INSERT_REDECL = 2
 
+    # Initializes the Scope with a balanced Red-Black tree.
     def __init__(self):
         self.map = RBTree()
 
+    # Inserts a symbol into the Scope.
+    # Returns INSERT_SUCCESS or INSERT_REDECL.
     def insert(self, symbol):
         if type(symbol) is not Symbol:
             raise TypeError("'symbol' is not an instance of Symbol.")
@@ -40,21 +40,26 @@ class Scope(object):
         else:
             return Scope.INSERT_REDECL
 
+    # Finds a symbol in the Scope.
+    # 'name' String identifier for the Symbol to find.
+    # Returns the Symbol if found or None if not found.
     def find(self, name):
         return self.map.get(name, None)
 
+    # Returns the number of Symbols in the Scope.
     def size(self):
         return len(self.map)
 
+    # Clones the current Scope with a deep copy of all the Symbols.
     def clone(self):
-        # return copy.deepcopy(self)
         result = Scope()
         for identifier, value in self.map.items():
             result.map[identifier] = value.clone()
         return result
 
+    # Converts the current Scope to its String representation.
     def __repr__(self):
         symbols = []
         for key, value in self.map.items():
-            symbols.append("  " + key + " : " + repr(value))
-        return "\n".join(symbols)
+            symbols.append('  ' + key + ' : ' + repr(value))
+        return '\n'.join(symbols)
