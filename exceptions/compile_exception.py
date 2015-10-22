@@ -19,8 +19,13 @@ class CompileException(Exception):
         self.message = message
         self.line_num = line_num
         self.token_col = token_col
-        self.source_line = source_line
+        self.source_line = source_line.replace('\t', ' ')
 
     def __str__(self):
-        return "{}\n  Line {}, Column {}\n  Source: {}".\
-            format(self.message, self.line_num, self.token_col, self.source_line)
+        pointer_to_error = ""
+        for i in range(self.token_col - 1):
+            pointer_to_error += '-'
+        pointer_to_error += '^'
+
+        return "{} on Line {}, Column {}\n{}\n{}".\
+            format(self.message, self.line_num, self.token_col, self.source_line, pointer_to_error)
