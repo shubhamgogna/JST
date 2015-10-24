@@ -22,13 +22,12 @@ from symbol_table.scope import Scope
 class TestSymbolTable(unittest.TestCase):
     def setUp(self):
         self.sym = SymbolTable()
-        self.sym.push()
 
     def tearDown(self):
         self.sym = None
 
     def test_push_pop_and_size(self):
-        self.assertTrue(self.sym.size() == 1)
+        self.assertEqual(1, self.sym.size())
         self.sym.push()
         self.sym.push()
         self.assertTrue(self.sym.size() == 3)

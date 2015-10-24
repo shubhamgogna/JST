@@ -20,7 +20,7 @@ from symbol_table.symbol import Symbol
 class SymbolTable(object):
     # Initializes the symbol table
     def __init__(self):
-        self.table = []
+        self.table = [Scope()]
 
     # Pushes a scope onto the table.
     # 'scope' Scope to push. Leave as default to push empty Scope.
@@ -42,6 +42,8 @@ class SymbolTable(object):
     def insert(self, symbol):
         if type(symbol) is not Symbol:
             raise TypeError("'symbol' is not an instance of Symbol.")
+        elif not self.table:
+            raise Exception('Table has no scopes available to insert into. Offending symbol: {}'.format(symbol))
 
         shadowed_symbols = []
         for scope in self.table:
@@ -67,7 +69,8 @@ class SymbolTable(object):
         for index, scope in enumerate(reversed(self.table)):
             result = scope.find(name)
             if result is not None:
-                return result, (len(self.table) - (index + 1))
+                scope_level = (len(self.table) - (index + 1))
+                return result, scope_level
         return None, None
 
     # Finds a symbol in the table by searching only the top-most Scope.

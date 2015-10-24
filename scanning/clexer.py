@@ -61,6 +61,19 @@ class Lexer(object):
 
         self.last_token = None
 
+        self.__lineno = 1  # dummy
+        self.__lexpos = 1  # dummy
+
+    @property
+    def lineno(self):
+        return 5  # This is a dummy return. This is attribute is needed so the parser can track what lines the
+                  # producitons are coming from, but the value does not seem to matter.
+
+    @property
+    def lexpos(self):
+        return 5  # This is a dummy return. This is attribute is needed so the parser can track what lines the
+                  # producitons are coming from, but the value does not seem to matter.
+
     def teardown(self):
         self.token_logger.finalize()
         self.st_logger.finalize()
@@ -72,10 +85,6 @@ class Lexer(object):
         self.last_token = self.lexer.token()
         if self.last_token != None:
             self.debug_out_tokens(self.last_token.type, self.last_token.value)
-
-        # TODO: make line/position stuff nicer with something like this
-        # self.last_token.lineno -= 1
-        # self.last_token.lexpos = Lexer.getColumnFromLexPos(self.last_token.lexpos)
 
         return self.last_token
 
@@ -320,6 +329,7 @@ class Lexer(object):
         if find_symbol is None:
             symbol = Symbol(t.value)
             # print(symbol)
+
             insert_result = self.compiler_state.symbol_table.insert(symbol)
 
             # Default to an ID which can be updated later in the parse
@@ -349,41 +359,6 @@ class Lexer(object):
             else:
                 raise Exception("Undeclared identifier {}".format(t.value))
         return t
-
-        # if t.type is "ID":
-        #     symbol = self.compiler_state.symbol_table.find(name=t.value)
-        #     if symbol is None:
-        #         symbol = Symbol(identifier=t.value)
-        #         self.compiler_state.symbol_table.insert(symbol)
-        #     t.value = symbol
-        # elif t.type is "TYPEID":
-        #     t.value = self.compiler_state.symbol_table.find_type(t.value)
-        # elif t.type is "ECONST":
-        #     t.type = 'ECONST'
-        #     t.value = self.compiler_state.symbol_table.find_enum_constant_value(t.value)
-        #
-        # return t
-
-        # Terence:
-        # Taking out the 'lookup mode' stuff here, no one else seems to use it
-        #
-        # if self.compiler_state is not None:  # like in the case of unit testing the lexer
-        #     if self.compiler_state.insert_mode:
-        #         symbol = Symbol(t.value)
-        #         result = self.compiler_state.symbol_table.insert(symbol)
-        #         if result is "SHADOWED":
-        #             raise NotImplemented("Do shit about shadowing")
-        #         elif result is "EXISTS":
-        #             raise Exception("Redeclaration of {} not allowed.".format(t.value))
-        #
-        #         t.value = symbol
-        #     else:
-        #         symbol = self.compiler_state.symbol_table.find(t.value)
-        #         if symbol is None:
-        #             raise Exception("{} was not declared in this scope.".format(t.value))
-        #         t.value = symbol
-        #
-        # return t
 
     # Floating literal
     def t_FCONST(self, t):

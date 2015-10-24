@@ -1,16 +1,16 @@
 SYMBOL TABLE: Opening brace encountered, symbol table dumped: 
 
-SYMBOL TABLE: 
-0
+SYMBOL TABLE: Scope #0
+  GLOBAL_CONSTANT : const int GLOBAL_CONSTANT
   main : None main
 SYMBOL TABLE: 
 
 SYMBOL TABLE: Closing brace encountered, symbol table dumped: 
 
-SYMBOL TABLE: 
-0
+SYMBOL TABLE: Scope #0
+  GLOBAL_CONSTANT : const int GLOBAL_CONSTANT
   main : None main()
-1
-
+Scope #1
+  i : int i
 SYMBOL TABLE: 
 

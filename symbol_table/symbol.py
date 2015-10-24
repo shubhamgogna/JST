@@ -31,7 +31,7 @@ class Symbol(object):
 
     EMPTY_ARRAY_DIM = -1
 
-    def __init__(self, identifier='', type=None, is_type=False):
+    def __init__(self, identifier, lineno=0, colomn_no=0, type=None, is_type=False):
         self.symbol_class = None
         self.type = None  # TypeDeclaration
         self.identifier = identifier

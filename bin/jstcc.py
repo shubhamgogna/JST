@@ -30,6 +30,7 @@ from parsing.cparser import Parser
 from scanning.clexer import Lexer
 
 # """int main(int argc, char** argv) {int i; return 0;}"""
+# PUT A  C PROGRAM HERE! CLICK THE GREEN ARROW IN THE UPPER RIGHT WHEN YOU ARE READY TO RUN!
 dummy_data = """
     int main() {
         int i = 0;

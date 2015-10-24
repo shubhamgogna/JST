@@ -65,7 +65,8 @@ class Logger(object):
     def token(self, message, level=0):
         self.log(Logger.TOKEN, message, level)
 
-    def source(self, message, level=0):
+    def source(self, message, line=-1, level=0):
+        message = message if line < 0 else 'line {}: {}'.format(line, message)
         self.log(Logger.SOURCE, message, level)
 
     def symbol_table(self, message, level=0):

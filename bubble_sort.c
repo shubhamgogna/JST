@@ -7,6 +7,7 @@ int main() {
    // initialize vars
    int* list = (int*)malloc(10);
    int i;
+
    srand(time(NULL));
 
    // create list

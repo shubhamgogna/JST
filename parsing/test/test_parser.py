@@ -37,7 +37,7 @@ class TestParser(unittest.TestCase):
         self.compiler_state = None
 
     def test_plain_main(self):
-        self.enable_parser_debugging()
+        # self.enable_parser_debugging()
 
         data = """int main() {return 0;} !!C"""
         self.parser.parse(data)
@@ -140,6 +140,7 @@ class TestParser(unittest.TestCase):
         self.check_correct_element(symbol_table_clone, 'i', 1, 'int*** i')
 
     def test_declare_global_constant(self):
+        self.enable_parser_debugging()
         data = """
         const int GLOBAL_CONSTANT = 5;
 
@@ -632,10 +633,11 @@ class TestParser(unittest.TestCase):
         if self.debug:
             self.parser.prod_logger.add_switch(Logger.PRODUCTION)
             self.parser.prod_logger.add_switch(Logger.INFO)
+            self.parser.prod_logger.add_switch(Logger.SOURCE)
 
 
     def check_correct_element(self, symbol_table_clone, check_value, check_scope, check_string):
         found_symbol, in_scope = symbol_table_clone.find(check_value)
-        self.assertEqual(in_scope, check_scope)
-        self.assertEquals(check_string, str(found_symbol))
+        self.assertEqual(check_scope, in_scope, "The symbol was not found in the expected scope")
+        self.assertEqual(check_string, str(found_symbol), "The symbols don't match")
 

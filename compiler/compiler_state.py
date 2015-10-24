@@ -21,14 +21,24 @@
 from symbol_table.symbol_table import SymbolTable
 from symbol_table.symbol import TypeDeclaration
 
-
+## A simple class to share state among objects.
+#
+# This class is used by the Lexer and Parser, and contains information and items relevant to both classes that does not
+# belong exclusively in either one.
+#
 class CompilerState:
     def __init__(self):
+        self.symbol_table = SymbolTable()
+
+        self.function_scope_entered = False
+
         self.insert_mode = True
         self.most_recent_type_declaration = TypeDeclaration()
-        self.symbol_table = SymbolTable()
+
+
         # lex uses 1 based indexing for line numbers, we are using 0 based for source_code
         self.source_code = []
+        self.last_lineno = -1
 
         # for debugging purposes
         self.clone_symbol_table_on_scope_exit = False
