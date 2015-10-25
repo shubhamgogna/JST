@@ -1136,6 +1136,10 @@ class Parser(object):
         """
         self.output_production(t, production_message='jump_statement -> RETURN expression_option SEMI')
 
+
+    #
+    # Expression Option
+    #
     def p_expression_option_1(self, t):
         """
         expression_option : empty
@@ -1212,7 +1216,6 @@ class Parser(object):
     #
     # conditional-expression
     #
-
     def p_conditional_expression_to_binary_expression(self, t):
         """
         conditional_expression : binary_expression
