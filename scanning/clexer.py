@@ -417,11 +417,11 @@ class Lexer(object):
         self.token_logger.token("Illegal Character in input: {}".format(t.value))
         raise Exception('Illegal character: ' + t.value[0])
 
-        self.debug_out_tokens(t.type, t.value[0])
-        sys.stderr.write('ERROR: line ' + str(t.lexer.lineno) + ', column: ' + str(t.lexer.lexpos - t.lexer.current) + '\n' )
-        sys.stderr.write("Illegal character %s \n" % repr(t.value[0]))
-        self.print_source_line()
-        t.lexer.skip(1)
+        # self.debug_out_tokens(t.type, t.value[0])
+        # sys.stderr.write('ERROR: line ' + str(t.lexer.lineno) + ', column: ' + str(t.lexer.lexpos - t.lexer.current) + '\n' )
+        # sys.stderr.write("Illegal character %s \n" % repr(t.value[0]))
+        # self.print_source_line()
+        # t.lexer.skip(1)
 
     def get_identifier_type(self, identifier):
         keyword_value = self.reserved_map.get(identifier, None)

@@ -1144,7 +1144,7 @@ class Parser(object):
         """
         expression_option : empty
         """
-        self.output_production(t, production_message='empty')
+        self.output_production(t, production_message='expression_option -> empty')
 
     def p_expression_option_2(self, t):
         """

@@ -106,7 +106,7 @@ class TestLexer(unittest.TestCase):
 
 
     def test_illegal_character(self):
-        with self.assertRaises(Exception):
+        with self.assertRaisesRegex(Exception, 'Illegal character: 사'):
             data = """
             int main() {
                 int i = 0;
@@ -114,9 +114,9 @@ class TestLexer(unittest.TestCase):
                 return 0;
             }
             """
-            lexer.input(data)
+            self.lexer.input(data)
             while True:
-              tok = lexer.token()
+              tok = self.lexer.token()
               if not tok:
                 break
 
