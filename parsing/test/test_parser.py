@@ -629,6 +629,25 @@ class TestParser(unittest.TestCase):
             data = 'badmain(] {return 0;}'
             self.parser.parse(data)
 
+
+
+    # def test_super_function_testing(self):
+    #     self.enable_parser_debugging()
+    #
+    #     data = 'int (*do_stuff)(int);\n' \
+    #            '\n' \
+    #            'int main() {\n' \
+    #            '  return 0;\n' \
+    #            '}\n' \
+    #            '\n' \
+    #            'int do_stuff(int i) {\n' \
+    #            '  return 0;\n' \
+    #            '}\n'
+    #
+    #     self.parser.parse(data)
+
+
+
     def enable_parser_debugging(self):
         if self.debug:
             self.parser.prod_logger.add_switch(Logger.PRODUCTION)

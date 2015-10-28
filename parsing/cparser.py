@@ -1586,17 +1586,9 @@ class Parser(object):
     #
     # Called by the production processing methods.
     #
-    def output_production(self, t, production_message='No Production'):
-
-        # num_production_items = len(t)
-        # start_line = t.lineno(1)
-        # end_line = start_line
-        # for i in range(1, num_production_items + 1):
-        #     _, end_line = t.linespan(i)
-        #
-        # line = t.lineno
-        #
-        # source_line_indicator = 'source line'
+    def output_production(self, t, production_message='No->Production'):
+        message_parts = production_message.split(" -> ")
+        production_message = '{rhs:>30} -> {lhs}'.format(rhs=message_parts[0], lhs=message_parts[1])
 
         line = t.lineno(1)
         self.prod_logger.source(self.compiler_state.source_code[line - 1], line=line)
