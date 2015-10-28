@@ -35,7 +35,6 @@ class CompilerState:
         self.insert_mode = True
         self.most_recent_type_declaration = TypeDeclaration()
 
-
         # lex uses 1 based indexing for line numbers, we are using 0 based for source_code
         self.source_code = source_code.split('\n')
         self.last_lineno = -1

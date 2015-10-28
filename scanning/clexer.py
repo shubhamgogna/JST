@@ -18,18 +18,12 @@
 # file and returning tokens to the Parser.
 ###############################################################################
 
-import ply.lex as lex
 import sys
-from symbol_table.symbol import Symbol
-from symbol_table.scope import Scope
+import ply.lex as lex
 from loggers.logger import Logger
 
 
 class Lexer(object):
-
-    # to keep track of current source code line
-    CURRENT_LINE_START = 0
-
     def __init__(self, compiler_state=None, print_tokens=False, print_source=False, print_table=True,
                  tok_filename='scanner_dump_tokens.txt', st_filename='scanner_dump_symbol_table.txt', **kwargs):
 
@@ -61,68 +55,29 @@ class Lexer(object):
 
         self.last_token = None
 
-        self.__lineno = 1  # dummy
-        self.__lexpos = 1  # dummy
-
-    @property
-    def lineno(self):
-        return 5  # This is a dummy return. This is attribute is needed so the parser can track what lines the
-                  # producitons are coming from, but the value does not seem to matter.
-
-    @property
-    def lexpos(self):
-        return 5  # This is a dummy return. This is attribute is needed so the parser can track what lines the
-                  # producitons are coming from, but the value does not seem to matter.
-
     def teardown(self):
         self.token_logger.finalize()
         self.st_logger.finalize()
 
     def input(self, data):
         self.lexer.input(data)
+        self.token_logger.source(self.compiler_state.source_code[0])
+
+    # Compute column.
+    # 'token' is a token instance
+    # http://www.dabeaz.com/ply/ply.html#ply_nn9
+    def find_column(self, token):
+        last_newline = self.lexer.lexdata.rfind('\n', 0, token.lexpos)
+        return max(0, (token.lexpos - last_newline) - 1)
 
     def token(self):
         self.last_token = self.lexer.token()
-        if self.last_token != None:
-            self.debug_out_tokens(self.last_token.type, self.last_token.value)
+        self.last_token.lineno = self.lexer.lineno
+        self.last_token.column = self.find_column(self.last_token)
 
+        if self.last_token is not None:
+            self.token_logger.token(str(self.last_token.type) + ' ' + str(self.last_token.value))
         return self.last_token
-
-    def debug_out_tokens(self,tok_type, tok_value):
-        self.token_logger.token(str(tok_type) + ' ' + str(tok_value) + '\n')
-
-    def debug_out_source(self):
-        source_code = self.lexer.lexdata
-        current_ln = ''
-        i = self.CURRENT_LINE_START
-        t = source_code[i]
-
-        if t + source_code[i+1] != '/*' and t != '\n':
-            while t != '\n':
-                current_ln = current_ln + t
-                i = i+1
-                t = source_code[i]
-            # print source to token file
-            self.token_logger.source('\n' + current_ln + '\n-----\n\n')
-            # add source to compiler state
-            self.compiler_state.source_code.append(current_ln)
-
-    # print source code to stderr for illegal tokens
-    def print_source_line(self):
-        source_code = self.lexer.lexdata
-        current_ln = ''
-        i = self.CURRENT_LINE_START
-        t = source_code[i]
-        while t != '\n':
-           current_ln = current_ln + t
-           i = i+1
-           t = source_code[i]
-        sys.stderr.write(current_ln + '\n')
-
-        spacing = ''
-        for i in range(0, (self.lexer.lexpos - self.lexer.current - 1)):
-            spacing = spacing + ' '
-        sys.stderr.write( spacing + '^\n')
 
     # Reserved words
     reserved = (
@@ -169,29 +124,22 @@ class Lexer(object):
         # 'RANGE',  # TODO: I propose we throw this out. -Terence
 
         # Need to include error token for warning issues?
-        #'ERROR'  # TODO: if we decide we want the parser to handle all errors/error reporting this will be good
+        #'ERROR' # TODO: if we decide we want the parser to handle all errors/error reporting this will be good
                  # TODO: otherwise let's toss it (I'm in favor of passing all errors to the parser for unified
                  # TODO: error management, but it will take some figuring out. -Terence)
         )
 
     # Completely ignored characters
+    # TODO Check if this is actually ignoring? Isn't the regex for this r'[ \t\x0c]'
     t_ignore           = ' \t\x0c'
 
-    # Newlines
-    def t_NEWLINE(self, t):
+    # Define a rule so we can track line numbers
+    # 'token' is a token instance
+    # http://www.dabeaz.com/ply/ply.html#ply_nn9
+    def t_newline(self, token):
         r'\n+'
-
-        #Note: Newline is not a token and thus will not be printed for DEBUG_TOKENS
-
-        # Handle writing source code line
-        self.debug_out_source()
-
-        # reset current line start
-        self.CURRENT_LINE_START = t.lexer.lexpos
-
-        # deal with line and col numbers
-        t.lexer.lineno += t.value.count("\n")
-        t.lexer.current = t.lexer.lexpos -1
+        self.token_logger.source(self.compiler_state.source_code[self.lexer.lineno])
+        self.lexer.lineno += len(token.value)
 
     # Operators
     t_PLUS             = r'\+'
@@ -216,7 +164,6 @@ class Lexer(object):
     t_NE               = r'!='
 
     # Assignment operators
-
     t_EQUALS           = r'='
     t_TIMESEQUAL       = r'\*='
     t_DIVEQUAL         = r'/='
@@ -268,7 +215,6 @@ class Lexer(object):
     # Identifiers and reserved words (so they are ignored in RE check)
     reserved_map = {r.lower(): r for r in reserved}
 
-
     def t_DUMP_SYMBOL_TABLE(self, t):
         r'!!S'
 
@@ -283,11 +229,9 @@ class Lexer(object):
         message = message.replace('!!P(', '').replace(')!', '')
         print(message)
 
-
     # Debug symbol that will produce a token that can force productions to be completed
     def t_FORCE_COMPLETIONS(self,t):
         r'!!F'
-
 
     # debug symbol that produce clone of symbol table in its currents state
     def t_CLONE_SYMBOL_TABLE(self,t):
