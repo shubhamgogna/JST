@@ -4,25 +4,22 @@
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # JST is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
-import argparse
+# along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
+import argparse
 import sys
 import os
-
-
-sys.path.insert(1, os.path.join(sys.path[0], '../'))
-
 import json
 import string
 
+sys.path.insert(1, os.path.join(sys.path[0], '../'))
 
 PATH_TO_THIS_SCRIPT = sys.path[0]
 DEFAULT_AST_NODE_FILENAME = os.path.join(PATH_TO_THIS_SCRIPT, '../ast/ast_nodes.py')
@@ -51,12 +48,12 @@ In order to prevent losing that work, this program will not attempt to generate 
 Please copy/move the file and try again.
 """
 
-AST_NODE_FILE_PROLOGUE = """
-##
+AST_NODE_FILE_PROLOGUE = """##
 # These classes are AUTO-GENERATED!
 # Most of the boilerplate should be written for you, so you should carefully handwrite methods
 # that are unique or need special logic for overloading.
 ##
+
 
 class BaseAstNode(object):
     def __init__(self, **kwargs):
@@ -65,16 +62,13 @@ class BaseAstNode(object):
     def __str__(self):
         pass
 
-
 """
 
 CLASS_TEMPLATE = """
 ${comment}
 class ${name}(BaseAstNode):
 ${init_method}
-
 ${children_method}
-
     def to_3ac(self, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
@@ -91,7 +85,7 @@ ${children_method}
 
 def main():
     arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument("node_configurations", type=str, help="")
+    arg_parser.add_argument("node_configurations_file", type=str, help="")
     arg_parser.add_argument("-o", "--outfile", type=str, default=DEFAULT_AST_NODE_FILENAME,
                             help="The output file name. File must not exist yet (created by this script).")
     arg_parser.add_argument("-e", "--explain", help='Get a detailed explanation on using this program',
@@ -109,7 +103,7 @@ def main():
         return
 
     node_definitions = []
-    with open(args_dict['node_configurations']) as config_file:
+    with open(args_dict['node_configurations_file']) as config_file:
         node_definitions = json.load(config_file)
 
     with open(args_dict['outfile'], 'w') as class_file:
@@ -120,25 +114,25 @@ def main():
             class_file.write(class_definition)
 
 
-def generate_class_definition(definition:dict):
+def generate_class_definition(definition: dict):
     class_name = definition.get('name', None)
 
-    if class_name:
-        template = string.Template(CLASS_TEMPLATE)
-
-        comment = definition.get('comment', None)
-        comment = '##\n# ' + comment if comment else ''
-
-        init_method = generate_init_method(definition)
-        children_method = generate_children_method(definition)
-
-        return template.substitute(name=class_name, init_method=init_method, children_method=children_method,
-                                   comment=comment)
-    else:
+    if not class_name:
         raise Exception('This definition has not name for the class - unable to generate code!')
 
+    template = string.Template(CLASS_TEMPLATE)
 
-def generate_init_method(definition:dict):
+    comment = definition.get('comment', None)
+    comment = '##\n# ' + comment + '\n##' if comment else ''
+
+    init_method = generate_init_method(definition)
+    children_method = generate_children_method(definition)
+
+    return template.substitute(comment=comment, name=class_name,
+                               init_method=init_method, children_method=children_method)
+
+
+def generate_init_method(definition: dict):
     params = []
     params.extend(definition.get('attributes', []))
     params.extend(definition.get('single_children', []))
@@ -161,7 +155,7 @@ def generate_init_method(definition:dict):
     return src
 
 
-def generate_children_method(definition:dict):
+def generate_children_method(definition: dict):
     src = '    @property\n' \
           '    def children(self):\n' \
           '        children = []\n'
