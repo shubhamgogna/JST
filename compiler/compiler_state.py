@@ -13,32 +13,81 @@
 # You should have received a copy of the GNU General Public License
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
-###############################################################################
-# File Description: Class definition for a shared object between the Scanner,
-# parser, and symbol table.
-###############################################################################
-
+import sys
 from symbol_table.symbol_table import SymbolTable
 from symbol_table.symbol import TypeDeclaration
+from loggers.logger import Logger
 
-## A simple class to share state among objects.
+
+# A simple class to share state among objects.
 #
-# This class is used by the Lexer and Parser, and contains information and items relevant to both classes that does not
-# belong exclusively in either one.
-#
+# Used by the Lexer and Parser. Contains information and items relevant to both
+# classes that does not belong exclusively in either one.
 class CompilerState:
-    def __init__(self, source_code):
+    def __init__(self, source_code, print_source=True,
+                 print_table=True, table_logfile='log_symbol_table.txt',
+                 print_tokens=True, scanner_logfile='log_scanner_tokens.txt',
+                 print_productions=True, print_info=False, parser_logfile='log_parser_productions.txt'):
+
+        # Initialize table
         self.symbol_table = SymbolTable()
 
+        # Lex uses 1 based indexing for line numbers.
+        # We are using 0 based for source_code.
+        self.source_code = source_code.split('\n')
+        self.last_lineno = -1
+
+        # Initialize symbol table logger
+        if table_logfile in {sys.stdout, sys.stderr}:
+            self.symbol_table_logger = Logger(table_logfile)
+        else:
+            self.symbol_table_logger = Logger(open(table_logfile, 'w'))
+
+        if print_table is True:
+            self.symbol_table_logger.add_switch(Logger.SYMBOL_TABLE)
+
+        # Initialize token/lexer logger
+        if scanner_logfile in {sys.stdout, sys.stderr}:
+            self.token_logger = Logger(scanner_logfile)
+        else:
+            self.token_logger = Logger(open(scanner_logfile, 'w'))
+
+        if print_source is True:
+            self.token_logger.add_switch(Logger.SOURCE)
+
+        if print_tokens is True:
+            self.token_logger.add_switch(Logger.TOKEN)
+
+        # Initialize parser logger
+        if parser_logfile in {sys.stdout, sys.stderr}:
+            self.parser_logger = Logger(parser_logfile)
+        else:
+            self.parser_logger = Logger(open(parser_logfile, 'w'))
+
+        if print_source is True:
+            self.parser_logger.add_switch(Logger.SOURCE)
+
+        if print_productions is True:
+            self.parser_logger.add_switch(Logger.PRODUCTION)
+
+        if print_info is True:
+            self.parser_logger.add_switch(Logger.INFO)
+
+        # Other stuff
         self.function_scope_entered = False
 
         self.insert_mode = True
         self.most_recent_type_declaration = TypeDeclaration()
 
-        # lex uses 1 based indexing for line numbers, we are using 0 based for source_code
-        self.source_code = source_code.split('\n')
-        self.last_lineno = -1
-
         # for debugging purposes
         self.clone_symbol_table_on_scope_exit = False
         self.cloned_tables = []
+
+    def get_symbol_table_logger(self):
+        return self.symbol_table_logger
+
+    def get_token_logger(self):
+        return self.token_logger
+
+    def get_parser_logger(self):
+        return self.parser_logger

@@ -101,8 +101,7 @@ def main():
     compiler_state = CompilerState(data)
     
     # Note: Due to debug flags, this looks a bit ridiculous. Can fix this later.
-    parser = Parser(compiler_state, Lexer(compiler_state, print_tokens, print_source_s, print_table),
-                    print_productions, print_source_p, print_info, 'parsing_dump_productions.txt')
+    parser = Parser(compiler_state, Lexer(compiler_state))
 
     try:
         parser.parse(data)

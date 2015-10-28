@@ -20,47 +20,28 @@
 
 import sys
 import ply.lex as lex
-from loggers.logger import Logger
+from exceptions.compile_error import CompileError
 
 
 class Lexer(object):
-    def __init__(self, compiler_state=None, print_tokens=False, print_source=False, print_table=True,
-                 tok_filename='scanner_dump_tokens.txt', st_filename='scanner_dump_symbol_table.txt', **kwargs):
+    def __init__(self, compiler_state=None, **kwargs):
 
         self.lexer = lex.lex(module=self, **kwargs)
 
         self.compiler_state = compiler_state
-
-        # set up loggers based on debug flags
-        if st_filename not in {sys.stdout, sys.stderr}:
-             st_file = open(st_filename, 'w')
-        else:
-             st_file = st_filename
-        self.st_logger = Logger(st_file)
-
-        if tok_filename not in {sys.stdout, sys.stderr}:
-            tok_file = open(tok_filename,'w')
-        else:
-            tok_file = tok_filename
-        self.token_logger = Logger(tok_file)
-
-        if print_table is True:
-            self.st_logger.add_switch(Logger.SYMBOL_TABLE)
-
-        if print_tokens is True:
-            self.token_logger.add_switch(Logger.TOKEN)
-
-        if print_source is True:
-            self.token_logger.add_switch(Logger.SOURCE)
+        self.table_logger = self.compiler_state.get_symbol_table_logger()
+        self.token_logger = self.compiler_state.get_token_logger()
 
         self.last_token = None
 
     def teardown(self):
         self.token_logger.finalize()
-        self.st_logger.finalize()
+        self.table_logger.finalize()
 
     def input(self, data):
         self.lexer.input(data)
+
+        # Print out the first line (otherwise it will be missed)
         self.token_logger.source(self.compiler_state.source_code[0])
 
     # Compute column.
@@ -78,6 +59,14 @@ class Lexer(object):
         if self.last_token is not None:
             self.token_logger.token(str(self.last_token.type) + ' ' + str(self.last_token.value))
         return self.last_token
+
+    # Define a rule so we can track line numbers
+    # 'token' is a token instance
+    # http://www.dabeaz.com/ply/ply.html#ply_nn9
+    def t_newline(self, token):
+        r'\n+'
+        self.token_logger.source(self.compiler_state.source_code[self.lexer.lineno])
+        self.lexer.lineno += len(token.value)
 
     # Reserved words
     reserved = (
@@ -130,16 +119,8 @@ class Lexer(object):
         )
 
     # Completely ignored characters
-    # TODO Check if this is actually ignoring? Isn't the regex for this r'[ \t\x0c]'
+    # TODO Check if this is actually ignoring? Isn't the regex for this r'[ \t\x0c]'?
     t_ignore           = ' \t\x0c'
-
-    # Define a rule so we can track line numbers
-    # 'token' is a token instance
-    # http://www.dabeaz.com/ply/ply.html#ply_nn9
-    def t_newline(self, token):
-        r'\n+'
-        self.token_logger.source(self.compiler_state.source_code[self.lexer.lineno])
-        self.lexer.lineno += len(token.value)
 
     # Operators
     t_PLUS             = r'\+'
@@ -192,18 +173,18 @@ class Lexer(object):
     t_LBRACKET         = r'\['
     t_RBRACKET         = r'\]'
 
-    def t_LBRACE(self,t):
+    def t_LBRACE(self, t):
         r'\{'
-        self.st_logger.symbol_table("Opening brace encountered, symbol table dumped: \n")
-        self.st_logger.symbol_table(str(self.compiler_state.symbol_table))
-        self.st_logger.symbol_table('\n')
+        self.table_logger.symbol_table("Opening Brace. Symbol Table:\n")
+        self.table_logger.symbol_table(str(self.compiler_state.symbol_table))
+        self.table_logger.symbol_table('\n')
         return t
 
-    def t_RBRACE(self,t):
+    def t_RBRACE(self, t):
         r'\}'
-        self.st_logger.symbol_table("Closing brace encountered, symbol table dumped: \n")
-        self.st_logger.symbol_table(str(self.compiler_state.symbol_table))
-        self.st_logger.symbol_table('\n')
+        self.table_logger.symbol_table("Closing Brace. Symbol Table:\n")
+        self.table_logger.symbol_table(str(self.compiler_state.symbol_table))
+        self.table_logger.symbol_table('\n')
         return t
 
     t_COMMA            = r','
@@ -219,7 +200,7 @@ class Lexer(object):
         r'!!S'
 
         #Note: since !!S is not token, it will not be printed for DEBUG_TOKENS.
-        self.st_logger.symbol_table("!!S encountered, symbol table dump: " +
+        self.table_logger.symbol_table("!!S encountered. Symbol Table dump: " +
                             str(self.compiler_state.symbol_table))
 
     def t_PRINT_DEBUG_MESSAGE(self, t):
@@ -230,11 +211,11 @@ class Lexer(object):
         print(message)
 
     # Debug symbol that will produce a token that can force productions to be completed
-    def t_FORCE_COMPLETIONS(self,t):
+    def t_FORCE_COMPLETIONS(self, t):
         r'!!F'
 
     # debug symbol that produce clone of symbol table in its currents state
-    def t_CLONE_SYMBOL_TABLE(self,t):
+    def t_CLONE_SYMBOL_TABLE(self, t):
         r'!!C'
 
         self.compiler_state.clone_symbol_table_on_scope_exit = True
@@ -265,7 +246,6 @@ class Lexer(object):
             t.type = 'TYPEID'
         else:
             t.type = 'ID'
-
         return t
 
     # Floating literal
@@ -321,35 +301,8 @@ class Lexer(object):
         t.lineno += 1
 
     def t_error(self, t):
-        # Note: Will need to change to actual error token later perhaps??
         self.token_logger.token("Illegal Character in input: {}".format(t.value))
-        raise Exception('Illegal character: ' + t.value[0])
-
-        # self.debug_out_tokens(t.type, t.value[0])
-        # sys.stderr.write('ERROR: line ' + str(t.lexer.lineno) + ', column: ' + str(t.lexer.lexpos - t.lexer.current) + '\n' )
-        # sys.stderr.write("Illegal character %s \n" % repr(t.value[0]))
-        # self.print_source_line()
-        # t.lexer.skip(1)
-
-    def get_identifier_type(self, identifier):
-        keyword_value = self.reserved_map.get(identifier, None)
-        if keyword_value is not None:
-            return keyword_value
-
-        if self.compiler_state.symbol_table.find(identifier) is not None:
-            return 'ID'
-        else:
-            return 'ID'
-
-        # typedef_name = self.compiler_state.symbol_table.find_type(identifier)
-        # if typedef_name is not None:
-        #     return 'TYPEID'
-        #
-        # enum_value = self.compiler_state.symbol_table.find_enum_constant_value(identifier)
-        # if enum_value is not None:
-        #     return 'ECONST'
-        # else:
-        #     return 'ID'
+        raise CompileError('Illegal token: ' + t.value, t.lineno, t.column, self.compiler_state.source_code[t.lineno])
 
     @staticmethod
     def string_to_int_fails(value):
