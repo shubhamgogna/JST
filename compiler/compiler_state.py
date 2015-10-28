@@ -27,7 +27,7 @@ from symbol_table.symbol import TypeDeclaration
 # belong exclusively in either one.
 #
 class CompilerState:
-    def __init__(self):
+    def __init__(self, source_code):
         self.symbol_table = SymbolTable()
 
         self.function_scope_entered = False
@@ -37,7 +37,7 @@ class CompilerState:
 
 
         # lex uses 1 based indexing for line numbers, we are using 0 based for source_code
-        self.source_code = []
+        self.source_code = source_code.split('\n')
         self.last_lineno = -1
 
         # for debugging purposes

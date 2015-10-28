@@ -98,7 +98,7 @@ def main():
 
     data = source_file.read()
 
-    compiler_state = CompilerState()
+    compiler_state = CompilerState(data)
     
     # Note: Due to debug flags, this looks a bit ridiculous. Can fix this later.
     parser = Parser(compiler_state, Lexer(compiler_state, print_tokens, print_source_s, print_table),

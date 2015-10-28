@@ -107,12 +107,7 @@ class Parser(object):
     # Called by a program that supplies a program to parse.
     #
     def parse(self, data):
-
-        self.compiler_state.source_code = data.split('\n')
-
-        parse_result = self.parser.parse(input=data, lexer=self.lexer, tracking=True)
-
-        return parse_result
+        return self.parser.parse(input=data, lexer=self.lexer, tracking=True)
 
     ## Operator precedences used by ply.yacc to correctly order productions that may be otherwise ambiguous.
     #
