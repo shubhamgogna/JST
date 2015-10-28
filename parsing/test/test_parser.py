@@ -631,20 +631,20 @@ class TestParser(unittest.TestCase):
 
 
 
-    # def test_super_function_testing(self):
-    #     self.enable_parser_debugging()
-    #
-    #     data = 'int (*do_stuff)(int);\n' \
-    #            '\n' \
-    #            'int main() {\n' \
-    #            '  return 0;\n' \
-    #            '}\n' \
-    #            '\n' \
-    #            'int do_stuff(int i) {\n' \
-    #            '  return 0;\n' \
-    #            '}\n'
-    #
-    #     self.parser.parse(data)
+    def test_super_function_testing(self):
+        self.enable_parser_debugging()
+
+        data = 'int do_stuff(int);\n' \
+               '\n' \
+               'int main() {\n' \
+               '  return 0;\n' \
+               '}\n' \
+               '\n' \
+               'void do_stuff(int i) {\n' \
+               '  do_stuff(i);\n' \
+               '}\n'
+
+        self.parser.parse(data)
 
 
 

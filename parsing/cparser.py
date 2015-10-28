@@ -199,25 +199,25 @@ class Parser(object):
     # function-definition
     #
     def p_function_definition_1(self, t):
-        """function_definition : declaration_specifiers declarator enter_function_scope declaration_list compound_statement"""
+        """function_definition : declaration_specifiers declarator declaration_list enter_function_scope compound_statement"""
         self.output_production(t, production_message=
             'function_definition -> declaration_specifiers declarator declaration_list compound_statement')
 
     def p_function_definition_2(self, t):
-        """function_definition : declarator enter_function_scope declaration_list compound_statement"""
+        """function_definition : declarator declaration_list enter_function_scope compound_statement"""
         self.output_production(t, production_message='function_definition -> declarator declaration_list compound_statement')
 
     def p_function_definition_3(self, t):
-        """function_definition : declarator compound_statement"""
+        """function_definition : declarator enter_function_scope compound_statement"""
         self.output_production(t, production_message='function_definition -> declarator declaration_list compound_statement')
 
     def p_function_definition_4(self, t):
-        """function_definition : declaration_specifiers declarator compound_statement"""
+        """function_definition : declaration_specifiers declarator enter_function_scope compound_statement"""
         self.output_production(t, production_message='function_definition -> declaration_specifiers declarator compound_statement')
 
         declarator = t[2]
         declarator.type = t[1]
-        declarator.add_compound_statements(t[3])
+        declarator.add_compound_statements(t[4])
 
         # t[2]['direct_declarator'].set_as_function(t[1], t[2]['parameter_type_list'], t[3])
         # t[2].type = t[1]
@@ -1220,6 +1220,7 @@ class Parser(object):
         """
         conditional_expression : binary_expression
         """
+        self.output_production(t, production_message='conditional_expression -> binary_expression')
 
         t[0] = t[1]
 
@@ -1227,7 +1228,8 @@ class Parser(object):
         """
         conditional_expression : binary_expression CONDOP expression COLON conditional_expression
         """
-
+        self.output_production(t, production_message=
+            'conditional_expression -> binary_expression CONDOP expression COLON conditional_expression')
 
     def p_binary_expression_to_implementation(self, t):
         """
@@ -1250,6 +1252,8 @@ class Parser(object):
                           | binary_expression LAND binary_expression
                           | binary_expression LOR binary_expression
         """
+        self.output_production(t, production_message=
+            'assignment_expression -> binary_expression {} binary_expression'.format(t[2]))
 
         if Parser.is_a_constant(t[1], t[3]):
             t[0] = Parser.perform_constant_expression_operation(t[1], t[2], t[3])
@@ -1261,6 +1265,8 @@ class Parser(object):
         """
         binary_expression : cast_expression
         """
+        self.output_production(t, production_message='binary_expression -> cast_expression')
+
 
         t[0] = t[1]
 
@@ -1534,6 +1540,9 @@ class Parser(object):
 
         self.compiler_state.symbol_table.push()
         self.compiler_state.function_scope_entered = True
+
+        # TODO: grab the parameters from the function's declaration and push them into the new scope
+
 
     def p_enter_scope(self, t):
         """

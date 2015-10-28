@@ -1,0 +1,34 @@
+SYMBOL TABLE: Opening brace encountered, symbol table dumped: 
+
+SYMBOL TABLE: Scope #0
+  do_stuff : int do_stuff(None)
+  main : None main
+SYMBOL TABLE: 
+
+SYMBOL TABLE: Closing brace encountered, symbol table dumped: 
+
+SYMBOL TABLE: Scope #0
+  do_stuff : int do_stuff(None)
+  main : None main()
+Scope #1
+
+SYMBOL TABLE: 
+
+SYMBOL TABLE: Opening brace encountered, symbol table dumped: 
+
+SYMBOL TABLE: Scope #0
+  do_stuff : int do_stuff(None)
+  i : int i
+  main : int main()
+SYMBOL TABLE: 
+
+SYMBOL TABLE: Closing brace encountered, symbol table dumped: 
+
+SYMBOL TABLE: Scope #0
+  do_stuff : int do_stuff(None, int i)
+  i : int i
+  main : int main()
+Scope #1
+
+SYMBOL TABLE: 
+

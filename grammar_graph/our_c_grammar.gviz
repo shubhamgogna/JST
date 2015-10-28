@@ -22,7 +22,7 @@ digraph {
 	enumerator_list              -> {enumerator_list, enumerator};
 	enumerator                   -> {identifier, constant_expression};
 	declarator                   -> {pointer, direct_declarator};
-	direct_declarator            -> {identifier, declarator, direct_declarator, LBRACKET, constant_expression_option, parameter_type_list, identifier_list};
+	direct_declarator            -> {identifier, declarator, direct_declarator, constant_expression_option, parameter_type_list, identifier_list};
 	pointer                      -> {TIMES, type_qualifier_list, pointer};
 	type_qualifier_list          -> {type_qualifier_list, type_qualifier};
 	parameter_type_list          -> {parameter_list, ELIPSIS};

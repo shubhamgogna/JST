@@ -79,6 +79,10 @@ class SymbolTable(object):
     def find_in_top(self, name):
         return self.table[-1].find(name)
 
+    ## TODO: if we implement this
+    def find_type(self, identifier):
+        pass
+
     # Returns the number of Scopes in the table.
     def size(self):
         return len(self.table)

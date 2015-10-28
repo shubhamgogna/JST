@@ -317,47 +317,11 @@ class Lexer(object):
         reserved_word = self.reserved_map.get(t.value, None)
         if reserved_word is not None:
             t.type = reserved_word
-            return t
-
-        find_symbol = None
-        find_result = self.compiler_state.symbol_table.find(t.value)
-        if find_result:
-            find_symbol, in_scope = find_result  # splitting a tuple
-        # t.type = self.get_identifier_type(identifier=t.value)
-
-        # TODO Check for redeclaration, shadowing
-        if find_symbol is None:
-            symbol = Symbol(t.value)
-            # print(symbol)
-
-            insert_result = self.compiler_state.symbol_table.insert(symbol)
-
-            # Default to an ID which can be updated later in the parse
-            t.value = symbol
-            t.type = 'ID'
-        elif find_symbol.type is Symbol.VARIABLE:
-            t.value = find_symbol
-            t.type = 'ID'
-        elif find_symbol.type is Symbol.FUNCTION:
-            # TODO Handle functions
-            t.type = 'FUNCTION'
-        elif find_symbol.type is Symbol.TYPEDEF:
-            # TODO Handle typedefs
-            t.type = 'TYPEDEF_NAME'
-        elif find_symbol.type is Symbol.ENUM:
-            raise NotImplemented('Handle ENUM')
-        elif find_symbol.type is Symbol.STRUCT:
-            raise NotImplemented('Handle STRUCT')
-        elif find_symbol.type is Symbol.UNION:
-            raise NotImplemented('Handle UNION')
+        elif self.compiler_state.symbol_table.find_type(t.value):
+            t.type = 'TYPEID'
         else:
-            # raise ValueError('Unknown Symbol.type for existing Symbol.')
-            result = self.compiler_state.symbol_table.find(t.value)
-            if result is not None:
-                t.value, _ = result
-                t.type = 'ID'
-            else:
-                raise Exception("Undeclared identifier {}".format(t.value))
+            t.type = 'ID'
+
         return t
 
     # Floating literal
