@@ -16,11 +16,11 @@
 
 class LabelCounter(object):
     next_value = 0
-    format = '%05d'
+    str_format = '%05d'
 
     @staticmethod
     def get():
-        result = LabelCounter.format % LabelCounter.next_value
+        result = LabelCounter.str_format % LabelCounter.next_value
         LabelCounter.next_value += 1
         return result
 
