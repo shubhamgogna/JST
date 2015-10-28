@@ -28,6 +28,7 @@ sys.path.insert(1, os.path.join(sys.path[0], '../'))
 from compiler.compiler_state import CompilerState
 from parsing.cparser import Parser
 from scanning.clexer import Lexer
+from exceptions.compile_error import CompileError
 
 # """int main(int argc, char** argv) {int i; return 0;}"""
 # PUT A  C PROGRAM HERE! CLICK THE GREEN ARROW IN THE UPPER RIGHT WHEN YOU ARE READY TO RUN!
@@ -102,7 +103,12 @@ def main():
     # Note: Due to debug flags, this looks a bit ridiculous. Can fix this later.
     parser = Parser(compiler_state, Lexer(compiler_state, print_tokens, print_source_s, print_table),
                     print_productions, print_source_p, print_info, 'parsing_dump_productions.txt')
-    parser.parse(data)
+
+    try:
+        parser.parse(data)
+    except CompileError as error:
+        print(error)
+
     parser.teardown()
 
 if __name__ == '__main__':
