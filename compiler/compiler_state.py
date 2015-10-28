@@ -24,10 +24,10 @@ from loggers.logger import Logger
 # Used by the Lexer and Parser. Contains information and items relevant to both
 # classes that does not belong exclusively in either one.
 class CompilerState:
-    def __init__(self, source_code, print_source=True,
+    def __init__(self, source_code,
                  print_table=True, table_logfile='log_symbol_table.txt',
-                 print_tokens=True, scanner_logfile='log_scanner_tokens.txt',
-                 print_productions=True, print_info=False, parser_logfile='log_parser_productions.txt'):
+                 print_tokens=True, print_source_scanner=True, scanner_logfile='log_scanner_tokens.txt',
+                 print_productions=True, print_source_parser=True, print_info=False, parser_logfile='log_parser_productions.txt'):
 
         # Initialize table
         self.symbol_table = SymbolTable()
@@ -35,7 +35,6 @@ class CompilerState:
         # Lex uses 1 based indexing for line numbers.
         # We are using 0 based for source_code.
         self.source_code = source_code.split('\n')
-        self.last_lineno = -1
 
         # Initialize symbol table logger
         if table_logfile in {sys.stdout, sys.stderr}:
@@ -52,7 +51,7 @@ class CompilerState:
         else:
             self.token_logger = Logger(open(scanner_logfile, 'w'))
 
-        if print_source is True:
+        if print_source_scanner is True:
             self.token_logger.add_switch(Logger.SOURCE)
 
         if print_tokens is True:
@@ -64,7 +63,7 @@ class CompilerState:
         else:
             self.parser_logger = Logger(open(parser_logfile, 'w'))
 
-        if print_source is True:
+        if print_source_parser is True:
             self.parser_logger.add_switch(Logger.SOURCE)
 
         if print_productions is True:
