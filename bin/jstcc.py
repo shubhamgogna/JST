@@ -15,10 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
-###############################################################################
-# File Description: Main driver for the scanner.
-###############################################################################
-
 import os
 import sys
 import argparse
@@ -31,7 +27,7 @@ from scanning.clexer import Lexer
 from exceptions.compile_error import CompileError
 
 # """int main(int argc, char** argv) {int i; return 0;}"""
-# PUT A  C PROGRAM HERE! CLICK THE GREEN ARROW IN THE UPPER RIGHT WHEN YOU ARE READY TO RUN!
+# PUT A C PROGRAM HERE! CLICK THE GREEN ARROW IN THE UPPER RIGHT WHEN YOU ARE READY TO RUN!
 dummy_data = """
     int main() {
         int i = 0;
@@ -50,11 +46,13 @@ def main():
     arg_parser.add_argument("input", type=str, help="The C program code file to compile.")
     arg_parser.add_argument("-o", "--outfile", type=str, default='',
                             help="The name of the file output file. Defaults to $(TODO).")
-    arg_parser.add_argument("-s", "--scandebug", type=int, choices=[0, 1, 2, 3, 4], default=0,
-                            help="The debug level for the scanner. \n 0: No debug \n 1: Tokens \n 2: Source Code \n " \
-                                 "3: Tokens and Source Code \n 4: Tokens, Source Code, and Symbol Table")
+    arg_parser.add_argument("-sym", "--symdebug", type=int, choices=[0, 1], default=0,
+                            help="The debug level for the symbol table. \n 0: No debug \n 1: Table content")
+    arg_parser.add_argument("-s", "--scandebug", type=int, choices=[0, 1, 2, 3], default=0,
+                            help="The debug level for the scanner. \n 0: No debug \n 1: Tokens \n 2: Source Code \n "
+                                 "3: Tokens and Source Code")
     arg_parser.add_argument("-p", "--parsedebug", type=int, choices=[0, 1, 2, 3], default=0,
-                            help="The debug level for the parser. \n 0: No debug \n 1: Productions \n" \
+                            help="The debug level for the parser. \n 0: No debug \n 1: Productions \n "
                                  " 2: Productions and Source Code \n 3: Productions, Source, Misc info")
     arg_parser.add_argument("-w", "--warnlevel", type=int, choices=[0, 1], default=0,
                             help="The debug level for the parser.")
@@ -62,54 +60,53 @@ def main():
     args = arg_parser.parse_args()
     args_dict = vars(args)
 
-    # set scanner flags
-    print_tokens = False
-    print_source_s = False
+    # Set default Symbol Table flags
     print_table = False
+
+    if args_dict['symdebug'] is 1:
+        print_table = True
+
+    # Set default Scanner flags
+    print_tokens = False
+    print_source_scanner = False
 
     if args_dict['scandebug'] is 1:
         print_tokens = True
-    if args_dict['scandebug'] is 2:
-        print_source_s = True
+    elif args_dict['scandebug'] is 2:
+        print_source_scanner = True
     elif args_dict['scandebug'] is 3:
         print_tokens = True
-        print_source_s = True
-    elif args_dict['scandebug'] is 4:
-        print_tokens = True
-        print_source_s = True
-        print_table = True
+        print_source_scanner = True
 
-    # set parser flags
+    # Set default Parser flags
     print_productions = False
-    print_source_p = False
+    print_source_parser = False
     print_info = False
 
     if args_dict['parsedebug'] is 1:
         print_productions = True
     elif args_dict['parsedebug'] is 2:
         print_productions = True
-        print_source_p = True
+        print_source_parser = True
     elif args_dict['parsedebug'] is 3:
         print_productions = True
-        print_source_p = True
+        print_source_parser = True
         print_info = True
 
     source_file = open(args_dict['input'], "r")
-
     data = source_file.read()
-
-    compiler_state = CompilerState(data)
-    
-    # Note: Due to debug flags, this looks a bit ridiculous. Can fix this later.
-    parser = Parser(compiler_state, Lexer(compiler_state, print_tokens, print_source_s, print_table),
-                    print_productions, print_source_p, print_info, 'parsing_dump_productions.txt')
+    compiler_state = CompilerState(data,
+        print_table=print_table,
+        print_tokens=print_tokens, print_source_scanner=print_source_scanner,
+        print_productions=print_productions, print_source_parser=print_source_parser, print_info=print_info)
 
     try:
+        parser = Parser(compiler_state, Lexer(compiler_state))
         parser.parse(data)
     except CompileError as error:
         print(error)
-
-    parser.teardown()
+    finally:
+        parser.teardown()
 
 if __name__ == '__main__':
     main()
