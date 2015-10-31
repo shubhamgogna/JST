@@ -26,30 +26,32 @@ class BaseAstNode:
     # @param line_range A tuple of start line and end line for where this node applies
     # @param uuid A unique identifier number from a TicketCounter
     #
-    def __init__(self, children=[], line_range=None, uuid=None, **kwargs):
+    def __init__(self, children=None, line_range=None, uuid=None, **kwargs):
 
         # initialize children
-        self.children = children
+        if children is None:
+            self.children = []
+        else:
+            self.children = children
 
         # initialize the line_range
         self.line_range = line_range
 
         # initialize the uuid
+        # Note: Since we have multiple ticket counters, we need to pass them in as a param.
         self.uuid = uuid
-        # TODO: Since we have multiple ticket counters, we probably need to pass them in as a param.
 
     # Define str function to concisely summarize a node with its uuid, name/type, and relevant info
     def __str__(self):
-        #TODO: Not sure what all info we want to print here.  Later on will probably need to print more info?
         return '{}_{}'.format(self.uuid, type(self).__name__)
 
 
-    #Define stub function for converting to 3ac
+    #Define function for converting to 3ac
     def to_3ac(self, include_source=False):
-        #TODO
+        #TODO: something like: self.3ac = '\n'.join([child.to_3ac() for child in self.children])
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
-
+    # TODO: Probably we will be able to remove the visit functionality since it should be encapsulated by 3ac
     # Define visit function for the iteration protocol
     def visit(self, node):
         #TODO: Copied from pyCparser's visit node.... may need to fix
@@ -66,10 +68,10 @@ class BaseAstNode:
 
     # Define method for getting a graphViz ready string
     def to_graph_viz_str(self):
-        #TODO: May need to fix this
         descendant_names = ', '.join([child.name() for child in self.children])
         output = '{} -> {{}};\\n'.format(self, descendant_names)
         for child in self.children:
-            ouptut += child.to_graph_viz_str()
+            output += child.to_graph_viz_str() + ','
         return output
+
 
