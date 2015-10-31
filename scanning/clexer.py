@@ -23,7 +23,23 @@ import ply.lex as lex
 from exceptions.compile_error import CompileError
 
 
+## Parser Class
+#
+# This class is responsible for reading in the source code and tokenizing it.  These tokens are then passed into the
+# parser in order to perform the remaining compiler actions.  This class also performs several types of error checking.
+#
 class Lexer(object):
+    ## The constructor for a new Lexer object.
+    #
+    # @param self The object pointer.
+    # @param compiler_state The desired begin state of the compiler, i.e. set for debug and file output.
+    #
+    # Outputs:
+    #   A list of tokens from the lexer.
+    #
+    # Purpose:
+    #   The constructor initializes the object to be ready to do its job with the desired outputs labeled.
+    #
     def __init__(self, compiler_state=None, **kwargs):
 
         self.lexer = lex.lex(module=self, **kwargs)
@@ -34,23 +50,52 @@ class Lexer(object):
 
         self.last_token = None
 
+    ## The destructor for the lexer object.
+    #
+    # @param self The object pointer.
+    #
+    # Outputs:
+    #   None.
+    #
     def teardown(self):
         self.token_logger.finalize()
         self.table_logger.finalize()
 
+
+    ## Set the input to the desired source code.
+    #
+    # @param self The object pointer.
+    # @param data The source code passed in to the lexer.
+    #
+    # Outputs:
+    #   Logs first source line.
+    #
     def input(self, data):
         self.lexer.input(data)
 
         # Print out the first line (otherwise it will be missed)
         self.token_logger.source(self.compiler_state.source_code[0])
 
-    # Compute column.
-    # 'token' is a token instance
+    ## Compute column.
     # http://www.dabeaz.com/ply/ply.html#ply_nn9
+    #
+    # @param token A token instance
+    # @param self The object pointer.
+    #
+    # Outputs:
+    #   The column of the given token
+    #
     def find_column(self, token):
         last_newline = self.lexer.lexdata.rfind('\n', 0, token.lexpos)
         return max(0, (token.lexpos - last_newline) - 1)
 
+    ## Define what actions to take when a token is found
+    #
+    # @param self The object pointer.
+    #
+    # Outputs:
+    #   Returns the token that was found
+    #
     def token(self):
         self.last_token = self.lexer.token()
         self.last_token.lineno = self.lexer.lineno
@@ -60,15 +105,21 @@ class Lexer(object):
             self.token_logger.token(str(self.last_token.type) + ' ' + str(self.last_token.value))
         return self.last_token
 
-    # Define a rule so we can track line numbers
-    # 'token' is a token instance
+    ## Define a rule so we can track line numbers
     # http://www.dabeaz.com/ply/ply.html#ply_nn9
+    #
+    # @param token A token instance
+    # @param self The object pointer.
+    #
+    # Outputs:
+    #   Logs line to source file
+    #
     def t_newline(self, token):
         r'\n+'
         self.token_logger.source(self.compiler_state.source_code[self.lexer.lineno])
         self.lexer.lineno += len(token.value)
 
-    # Reserved words
+    # Define reserved words
     reserved = (
         'AUTO', 'BREAK', 'CASE', 'CHAR', 'CONST', 'CONTINUE', 'DEFAULT', 'DO', 'DOUBLE',
         'ELSE', 'ENUM', 'EXTERN', 'FLOAT', 'FOR', 'GOTO', 'IF', 'INT', 'LONG', 'REGISTER',
@@ -76,6 +127,7 @@ class Lexer(object):
         'UNION', 'UNSIGNED', 'VOID', 'VOLATILE', 'WHILE',
         )
 
+    # define full list of tokens
     tokens = reserved + (
         # Literals (identifier, integer constant, float constant, string constant, char const)
         # NOTE: also need to include Enumeration Const!
@@ -173,6 +225,9 @@ class Lexer(object):
     t_LBRACKET         = r'\['
     t_RBRACKET         = r'\]'
 
+    ## Define actions for (
+    # @param self The object pointer.
+    # @param t A token instance
     def t_LBRACE(self, t):
         r'\{'
         self.table_logger.symbol_table("Opening Brace. Symbol Table:\n")
@@ -180,6 +235,9 @@ class Lexer(object):
         self.table_logger.symbol_table('\n')
         return t
 
+    ## Define actions for )
+    # @param self The object pointer.
+    # @param t A token instance
     def t_RBRACE(self, t):
         r'\}'
         self.table_logger.symbol_table("Closing Brace. Symbol Table:\n")
@@ -196,6 +254,9 @@ class Lexer(object):
     # Identifiers and reserved words (so they are ignored in RE check)
     reserved_map = {r.lower(): r for r in reserved}
 
+    ## Define actions for symbol table dump
+    # @param self The object pointer.
+    # @param t A token instance
     def t_DUMP_SYMBOL_TABLE(self, t):
         r'!!S'
 
@@ -203,6 +264,9 @@ class Lexer(object):
         self.table_logger.symbol_table("!!S encountered. Symbol Table dump: " +
                             str(self.compiler_state.symbol_table))
 
+    ## Define actions for printing a message for debugging use
+    # @param self The object pointer.
+    # @param t A token instance
     def t_PRINT_DEBUG_MESSAGE(self, t):
         r'!!P(.*)!'
         # This allows us to use "!!P(this is a debug message)!" in code we test and have the message printed
@@ -210,11 +274,15 @@ class Lexer(object):
         message = message.replace('!!P(', '').replace(')!', '')
         print(message)
 
-    # Debug symbol that will produce a token that can force productions to be completed
+    ## Debug symbol that will produce a token that can force productions to be completed
+    # @param self The object pointer.
+    # @param t A token instance
     def t_FORCE_COMPLETIONS(self, t):
         r'!!F'
 
-    # debug symbol that produce clone of symbol table in its currents state
+    ## debug symbol that produce clone of symbol table in its currents state
+    # @param self The object pointer.
+    # @param t A token instance
     def t_CLONE_SYMBOL_TABLE(self, t):
         r'!!C'
 
@@ -235,6 +303,9 @@ class Lexer(object):
         # # add cloned to list of cloned
         # self.compiler_state.cloned_tables.append(cloned)
 
+    ## Define actions to be used for ID's
+    # @param self The object pointer.
+    # @param t A token instance
     # NOTE: \w is equivalent to [A-Za-z0-9]
     def t_ID(self, t):
         r'[A-Za-z_][\w_]*'
@@ -248,7 +319,9 @@ class Lexer(object):
             t.type = 'ID'
         return t
 
-    # Floating literal
+    ## Floating literal
+    # @param self The object pointer.
+    # @param t A token instance
     def t_FCONST(self, t):
         r'((\d+)(\.\d+)(e(\+|-)?(\d+))? | (\d+)e(\+|-)?(\d+))([lL]|[fF])?'
 
@@ -258,7 +331,10 @@ class Lexer(object):
         t.value = float(t.value)
         return t
 
-    # Integer literal
+    ## Integer literal
+    # @param self The object pointer.
+    # @param t A token instance
+
     def t_ICONST(self, t):
         r'\d+([uU]|[lL]|[uU][lL]|[lL][uU])?'
 
@@ -268,7 +344,9 @@ class Lexer(object):
         t.value = int(t.value)
         return t
 
-    # Character constant 'c' or L'c'
+    ## Character constant 'c' or L'c'
+    # @param self The object pointer.
+    # @param t A token instance
     def t_CCONST(self, t):
         r'(L)?\'([^\\\n]|(\\.))*?\''
 
@@ -276,7 +354,9 @@ class Lexer(object):
         t.value = ord(t.value)
         return t
 
-    # String literal
+    ## String literal
+    # @param self The object pointer.
+    # @param t A token instance
     t_SCONST = r'\"(\\.|[^\\\"])*\"'  # r'\"([^\\\n]|(\\.))*?\"'
 
 
@@ -290,20 +370,29 @@ class Lexer(object):
     #       For now this should be used as ID instead - and a error will be pointed out in parser
     #t_TYPEID = r''
 
-    # Comments
+    ## Comments
+    #  @param self The object pointer.
+    # @param t A token instance
     def t_comment(self, t):
         r' (/\*(.|\n)*?\*/)|(//.*\n)'
         t.lineno += t.value.count('\n')
 
-    # Preprocessor directive (ignored)
+    ## Preprocessor directive (ignored)
+    # @param self The object pointer.
+    # @param t A token instance
     def t_preprocessor(self, t):
         r'\#(.)*?\n'
         t.lineno += 1
 
+    ## Define actions for errors
+    # @param self The object pointer.
+    # @param t A token instance
     def t_error(self, t):
         self.token_logger.token("Illegal Character in input: {}".format(t.value))
         raise CompileError('Illegal token: ' + t.value, t.lineno, t.column, self.compiler_state.source_code[t.lineno])
 
+    # define method to test for integer overflow
+    # @param value The value to be tested
     @staticmethod
     def string_to_int_fails(value):
         int_representation = int(value)
@@ -312,6 +401,8 @@ class Lexer(object):
         else:
             return int_representation < -sys.maxsize - 1
 
+    # define method to test for floating point overflow
+    # @param value The value to be tested
     @staticmethod
     def string_to_float_fails(value):
         float_representation = float(value)
