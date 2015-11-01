@@ -388,8 +388,8 @@ class Lexer(object):
     # @param self The object pointer.
     # @param t A token instance
     def t_error(self, t):
-        self.token_logger.token("Illegal Character in input: {}".format(t.value))
-        raise CompileError('Illegal token: ' + t.value, t.lineno, t.column, self.compiler_state.source_code[t.lineno])
+        self.token_logger.token("Illegal Character in input: {}".format(t.value[0]))
+        raise CompileError('Illegal token: ' + t.value[0], t.lineno, self.find_column(t), self.compiler_state.source_code[t.lineno-1])
 
     # define method to test for integer overflow
     # @param value The value to be tested
