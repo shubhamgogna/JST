@@ -33,6 +33,7 @@ A configuration file should appear as (for a format example, not necessarily cor
     "attributes": ["is_pre_test_loop"],
     "single_children": ["initialization_expression", "stop_condition_expression", "increment_expression"],
     "list_children": ["body_statments"],
+    "3ac_parameters": ["a_dummy_parameter"]
     "python_3ac_gen_code": ""
   }
 ]
