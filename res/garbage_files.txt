@@ -1,0 +1,11 @@
+
+try_lexer.py
+try_parser.py
+calcparser.py
+calclexer.py
+clexer_Example.py
+declaration_specifiers.py
+**/scanner_dump_symbol_table.txt
+**/scanner_dump_tokens.txt
+**/parsing_dump_productions.txt
+**/log_*.txt
