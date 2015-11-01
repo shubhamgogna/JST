@@ -17,10 +17,10 @@
 # File Description: The massive Parser file containing the productions and
 # operations for parsing the ANSI C grammar.
 ###############################################################################
-from exceptions.compile_exception import CompileException
+from exceptions.compile_error import CompileError
 
 import ply.yacc as yacc
-from symbol_table.symbol import Symbol, PointerDeclaration, TypeDeclaration, ConstantValue
+from symbol_table.symbol import Symbol, PointerDeclaration, TypeDeclaration, ConstantValue, FunctionSymbol
 
 
 ## Parser Class
@@ -83,6 +83,8 @@ class Parser(object):
     # Called by a program that supplies a program to parse.
     #
     def parse(self, data):
+        self.compiler_state.source_code = data.split('\n')
+
         return self.parser.parse(input=data, lexer=self.lexer, tracking=True)
 
     ## Operator precedences used by ply.yacc to correctly order productions that may be otherwise ambiguous.
@@ -721,7 +723,7 @@ class Parser(object):
         if function_symbol:  # a prototype has been given
             if function_symbol.finalized:
                 error_message = 'Redeclaration of function {} is not allowed.'.format(t[1])
-                raise CompileException(message=error_message, line_num=lineno, token_col=0,
+                raise CompileError(message=error_message, line_num=lineno, token_col=0,
                                            source_line=self.compiler_state.source_code[lineno])
 
             if function_symbol.parameter_types_match(t[3]):  # the prototype was given, and now the definition
@@ -729,7 +731,7 @@ class Parser(object):
                 function_symbol.finalized = True
             else:
                 error_message = 'Function definition does not match signature.'
-                raise CompileException(message=error_message, line_num=lineno, token_col=0,
+                raise CompileError(message=error_message, line_num=lineno, token_col=0,
                                        source_line=self.compiler_state.source_code[lineno])
         else:  #
             function_symbol = FunctionSymbol(identifier=t[1], lineno=lineno)
@@ -762,7 +764,7 @@ class Parser(object):
         if function_symbol:  # a prototype has been given
             if function_symbol.finalized:
                 error_message = 'Redeclaration of function {} is not allowed.'.format(t[1])
-                raise CompileException(message=error_message, line_num=lineno, token_col=0,
+                raise CompileError(message=error_message, line_num=lineno, token_col=0,
                                            source_line=self.compiler_state.source_code[lineno])
 
             if function_symbol.parameter_types_match(t[3]):  # the prototype was given, and now the definition
@@ -770,7 +772,7 @@ class Parser(object):
                 function_symbol.finalized = True
             else:
                 error_message = 'Function definition does not match signature.'
-                raise CompileException(message=error_message, line_num=lineno, token_col=0,
+                raise CompileError(message=error_message, line_num=lineno, token_col=0,
                                        source_line=self.compiler_state.source_code[lineno])
         else:
             function_symbol = FunctionSymbol(identifier=t[1], lineno=lineno)
@@ -1524,7 +1526,7 @@ class Parser(object):
                 error_message = 'Argument types do not match parameter types for function call'
                 lineno = t.lineno(1)
                 source_line = self.compiler_state.source_code[lineno - 1]
-                raise CompileException(error_message, lineno, 0, source_line)
+                raise CompileError(error_message, lineno, 0, source_line)
         else:
             raise Exception('Debug: We should be getting an identifier here')
 
@@ -1543,12 +1545,12 @@ class Parser(object):
             else:
                 error_message = 'Arguments do not match parameter types in call to {}'\
                     .format(function_symbol.identifier)
-                raise CompileException(error_message, t.lineno(1), 0,
+                raise CompileError(error_message, t.lineno(1), 0,
                                        source_line=self.compiler_state.source_code[t.lineno(1)])
         else:
             error_message = "Call to undeclared function '{}'"\
                     .format(t[1])
-            raise CompileException(error_message, t.lineno(1), 0,
+            raise CompileError(error_message, t.lineno(1), 0,
                                    source_line=self.compiler_state.source_code[t.lineno(1)])
 
 

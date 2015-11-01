@@ -14,7 +14,7 @@
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
-from symbol_table.symbol import Symbol, TypeDeclaration
+from symbol_table.symbol import Symbol, TypeDeclaration, FunctionSymbol
 
 
 class TestSymbol(unittest.TestCase):
@@ -38,7 +38,7 @@ class TestSymbol(unittest.TestCase):
         # TODO: with the introduction of the FunctionSymbol, we might be throwing out this test, so it's ok if it fails
         type = TypeDeclaration()
         type.add_type_specifier('int')
-        symbol = Symbol(identifier='my_function')
+        symbol = FunctionSymbol(identifier='my_function', lineno=0)
         symbol.type = type
 
         parameter_1 = Symbol(identifier='parameter_1')
@@ -53,7 +53,7 @@ class TestSymbol(unittest.TestCase):
 
 
         parameters = [parameter_1, parameter_2]
-        symbol.add_parameters(parameters)
+        symbol.add_named_parameters(parameters)
 
         s = str(symbol)
 

@@ -19,6 +19,7 @@
 ###############################################################################
 
 import sys
+from compiler.compiler_state import CompilerState
 import ply.lex as lex
 from exceptions.compile_error import CompileError
 
@@ -44,7 +45,7 @@ class Lexer(object):
 
         self.lexer = lex.lex(module=self, **kwargs)
 
-        self.compiler_state = compiler_state
+        self.compiler_state = compiler_state if compiler_state is not None else CompilerState()
         self.table_logger = self.compiler_state.get_symbol_table_logger()
         self.token_logger = self.compiler_state.get_token_logger()
 
@@ -55,13 +56,13 @@ class Lexer(object):
 
     @property
     def lineno(self):
-        return 5  # This is a dummy return. This is attribute is needed so the parser can track what lines the
-                  # producitons are coming from, but the value does not seem to matter.
+        return -1             # This is a dummy return. This is attribute is needed so the parser can track what lines
+                              # the producitons are coming from, but the value does not seem to matter.
 
     @property
     def lexpos(self):
-        return 5  # This is a dummy return. This is attribute is needed so the parser can track what lines the
-                  # producitons are coming from, but the value does not seem to matter.
+        return -1             # This is a dummy return. This is attribute is needed so the parser can track what lines
+                              # the producitons are coming from, but the value does not seem to matter.
 
     def teardown(self):
         self.token_logger.finalize()
@@ -78,6 +79,9 @@ class Lexer(object):
     #
     def input(self, data):
         self.lexer.input(data)
+
+        if self.compiler_state.source_code is None:
+            self.compiler_state.source_code = data.split('\n')
 
         # Print out the first line (otherwise it will be missed)
         self.token_logger.source(self.compiler_state.source_code[0])
@@ -104,8 +108,9 @@ class Lexer(object):
     #
     def token(self):
         self.last_token = self.lexer.token()
-        self.last_token.lineno = self.lexer.lineno
-        self.last_token.column = self.find_column(self.last_token)
+        if self.last_token:
+            self.last_token.lineno = self.lexer.lineno
+            self.last_token.column = self.find_column(self.last_token)
 
         if self.last_token is not None:
             self.token_logger.token(str(self.last_token.type) + ' ' + str(self.last_token.value))
@@ -122,7 +127,7 @@ class Lexer(object):
     #
     def t_newline(self, token):
         r'\n+'
-        self.token_logger.source(self.compiler_state.source_code[self.lexer.lineno])
+        self.token_logger.source(self.compiler_state.source_code[self.lexer.lineno] if self.compiler_state.source_code else '')
         self.lexer.lineno += len(token.value)
 
     # Define reserved words

@@ -24,7 +24,7 @@ from loggers.logger import Logger
 # Used by the Lexer and Parser. Contains information and items relevant to both
 # classes that does not belong exclusively in either one.
 class CompilerState:
-    def __init__(self, source_code,
+    def __init__(self, source_code=None,
                  print_table=True, table_logfile='log_symbol_table.txt',
                  print_tokens=True, print_source_scanner=True, scanner_logfile='log_scanner_tokens.txt',
                  print_productions=True, print_source_parser=True, print_info=False, parser_logfile='log_parser_productions.txt'):
@@ -34,7 +34,10 @@ class CompilerState:
 
         # Lex uses 1 based indexing for line numbers.
         # We are using 0 based for source_code.
-        self.source_code = source_code.split('\n')
+        if source_code is not None:
+            self.source_code = source_code.split('\n')
+        else:
+            self.source_code = None
 
         # Initialize symbol table logger
         if table_logfile in {sys.stdout, sys.stderr}:

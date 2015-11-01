@@ -15,7 +15,7 @@
 
 import unittest
 from compiler.compiler_state import CompilerState
-from exceptions.compile_exception import CompileException
+from exceptions.compile_error import CompileError
 from loggers.logger import Logger
 from parsing.cparser import Parser
 from scanning.clexer import Lexer
@@ -158,7 +158,7 @@ class TestParser(unittest.TestCase):
         self.check_correct_element(symbol_table_clone, 'i', 1, 'int i')
 
     def test_assign_to_immutable_variable_fails(self):
-        with self.assertRaises(CompileException):
+        with self.assertRaises(CompileError):
             data = """
             const int GLOBAL_CONSTANT = 5;
 
