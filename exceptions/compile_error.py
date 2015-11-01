@@ -14,7 +14,7 @@
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
 
-class CompileException(Exception):
+class CompileError(Exception):
     def __init__(self, message, line_num, token_col, source_line):
         self.message = message
         self.line_num = line_num

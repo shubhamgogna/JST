@@ -3,3 +3,5 @@ __pycache__/
 .idea/*
 **/.idea/
 **/.idea/*
+parsing/parser.out
+parsing/parsetab.py

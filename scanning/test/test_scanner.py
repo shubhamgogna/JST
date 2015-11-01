@@ -106,7 +106,7 @@ class TestLexer(unittest.TestCase):
 
 
     def test_illegal_character(self):
-        with self.assertRaisesRegex(Exception, 'Illegal character: 사'):
+        with self.assertRaisesRegex(Exception, "Illegal token: 사 on Line 4, Column 21"):
             data = """
             int main() {
                 int i = 0;

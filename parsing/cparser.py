@@ -20,12 +20,8 @@
 from exceptions.compile_exception import CompileException
 
 import ply.yacc as yacc
-import sys
+from symbol_table.symbol import Symbol, PointerDeclaration, TypeDeclaration, ConstantValue
 
-from loggers.logger import Logger
-from scanning.clexer import Lexer
-from symbol_table.scope import Scope
-from symbol_table.symbol import Symbol, PointerDeclaration, TypeDeclaration, ConstantValue, FunctionSymbol
 
 ## Parser Class
 #
@@ -33,10 +29,6 @@ from symbol_table.symbol import Symbol, PointerDeclaration, TypeDeclaration, Con
 # constructing the Abstract Syntax Tree that corresponds to the program. Compile time checking is done by this class.
 #
 class Parser(object):
-
-    ## The defualt file name for parser output when a file is used.
-    DEFAULT_PRODUCTION_DUMP_FILE = 'parsing_dump_productions.txt'
-
     ## The constructor for a new Parser object.
     #
     # @param self The object pointer.
@@ -57,33 +49,15 @@ class Parser(object):
     # Purpose:
     #   The constructor initializes the object to be ready to do its job with the desired outputs labeled.
     #
-    def __init__(self, compiler_state, lexer=None, print_productions=False, print_source=True, print_info=True,
-                 prod_filename=sys.stdout, **kwargs):
-        self.compiler_state = compiler_state
-
+    def __init__(self, compiler_state, lexer, **kwargs):
         if lexer is None:
-            lexer = Lexer(compiler_state)
+            raise ValueError('No Lexer passed to Parser')
+
+        self.compiler_state = compiler_state
         self.lexer = lexer
         self.tokens = lexer.tokens
-
         self.parser = yacc.yacc(module=self, start='program')
-
-        # set up loggers based on debug flags
-        if prod_filename not in {sys.stdout, sys.stderr}:
-            prod_file = open(prod_filename, 'w')
-        else:
-            prod_file = prod_filename
-        self.prod_logger = Logger(prod_file)
-
-        if print_productions is True:
-            self.prod_logger.add_switch(Logger.PRODUCTION)
-
-        if print_source is True:
-            self.prod_logger.add_switch(Logger.SOURCE)
-
-        if print_info is True:
-            self.prod_logger.add_switch(Logger.INFO)
-
+        self.prod_logger = self.compiler_state.get_parser_logger()
 
     ## A method to do any cleanup that can't be handled by typical garbage collection.
     #
@@ -109,12 +83,7 @@ class Parser(object):
     # Called by a program that supplies a program to parse.
     #
     def parse(self, data):
-
-        self.compiler_state.source_code = data.split('\n')
-
-        parse_result = self.parser.parse(input=data, lexer=self.lexer, tracking=True)
-
-        return parse_result
+        return self.parser.parse(input=data, lexer=self.lexer, tracking=True)
 
     ## Operator precedences used by ply.yacc to correctly order productions that may be otherwise ambiguous.
     #
@@ -1739,6 +1708,7 @@ class Parser(object):
 
         self.compiler_state.function_scope_entered = True
 
+        # TODO: grab the parameters from the function's declaration and push them into the new scope
 
     def p_enter_scope(self, t):
         """
