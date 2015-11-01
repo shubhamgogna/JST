@@ -69,8 +69,7 @@ ${comment}
 class ${name}(BaseAstNode):
 ${init_method}
 ${children_method}
-    def to_3ac(self, include_source=False):
-        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+${to_3ac_stub}
 
     # This method will likely be implemented in the BaseAstNode
     # def to_graph_viz_str(self):
@@ -122,14 +121,15 @@ def generate_class_definition(definition: dict):
 
     template = string.Template(CLASS_TEMPLATE)
 
-    comment = definition.get('comment', None)
+    comment = definition.get('comment', '')
     comment = '##\n# ' + comment + '\n##' if comment else ''
 
     init_method = generate_init_method(definition)
     children_method = generate_children_method(definition)
+    to_3ac_method_stub = generate_to_3ac_method_stub(definition)
 
-    return template.substitute(comment=comment, name=class_name,
-                               init_method=init_method, children_method=children_method)
+    return template.substitute(comment=comment, name=class_name, init_method=init_method,
+                               children_method=children_method, to_3ac_stub=to_3ac_method_stub)
 
 
 def generate_init_method(definition: dict):
@@ -170,6 +170,15 @@ def generate_children_method(definition: dict):
 
     return src
 
+def generate_to_3ac_method_stub(definition: dict):
+
+    parameters = definition.get("3ac_parameters", [])
+    parameter_list = ', '.join(parameters) + ', ' if parameters else ''
+
+    src =  '    def to_3ac(self, {}include_source=False):\n'.format(parameter_list)
+    src += "        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'" \
+           ".format(type(self).__name__))\n"
+    return src
 
 if __name__ == '__main__':
     main()

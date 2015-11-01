@@ -17,13 +17,15 @@
 # File Description: The massive Parser file containing the productions and
 # operations for parsing the ANSI C grammar.
 ###############################################################################
+from exceptions.compile_exception import CompileException
 
 import ply.yacc as yacc
 import sys
 
 from loggers.logger import Logger
 from scanning.clexer import Lexer
-from symbol_table.symbol import Symbol, PointerDeclaration, TypeDeclaration, ConstantValue
+from symbol_table.scope import Scope
+from symbol_table.symbol import Symbol, PointerDeclaration, TypeDeclaration, ConstantValue, FunctionSymbol
 
 ## Parser Class
 #
@@ -199,12 +201,18 @@ class Parser(object):
     # function-definition
     #
     def p_function_definition_1(self, t):
-        """function_definition : declaration_specifiers declarator declaration_list enter_function_scope compound_statement"""
+        """function_definition : declaration_specifiers declarator enter_function_scope declaration_list compound_statement"""
         self.output_production(t, production_message=
             'function_definition -> declaration_specifiers declarator declaration_list compound_statement')
 
+        function_symbol = t[2].get('symbol', None)
+        if function_symbol:
+            function_symbol.type = t[1]
+        else:
+            raise Exception('Debug check: Expected a function_symbol...')
+
     def p_function_definition_2(self, t):
-        """function_definition : declarator declaration_list enter_function_scope compound_statement"""
+        """function_definition : declarator enter_function_scope declaration_list compound_statement"""
         self.output_production(t, production_message='function_definition -> declarator declaration_list compound_statement')
 
     def p_function_definition_3(self, t):
@@ -215,25 +223,32 @@ class Parser(object):
         """function_definition : declaration_specifiers declarator enter_function_scope compound_statement"""
         self.output_production(t, production_message='function_definition -> declaration_specifiers declarator compound_statement')
 
-        declarator = t[2]
-        declarator.type = t[1]
-        declarator.add_compound_statements(t[4])
+        function_symbol = t[2].get('symbol', None)
+        if function_symbol:
+            function_symbol.type = t[1]
+        else:
+            raise Exception('Debug check: Expected a function_symbol...')
 
-        # t[2]['direct_declarator'].set_as_function(t[1], t[2]['parameter_type_list'], t[3])
-        # t[2].type = t[1]
-        # t[]
+        ast_node_args = {"lines": (t.lineno(1), t.linespan(4)[1])}
+        # t[0] = ast.FunctionDefinition(declaration_specifiers=t[1], declarator=t[2], compound_statement=t[3],
+        #                               **ast_node_args)
+
     #
     # declaration:
     #
     def p_declaration_1(self, t):
-        """declaration : declaration_specifiers init_declarator_list SEMI"""
+        """
+        declaration : declaration_specifiers init_declarator_list SEMI
+        """
         self.output_production(t, production_message='declaration -> declaration_specifiers init_declarator_list SEMI')
 
         init_declarator_list = t[2]
         declaration_specifiers = t[1]
 
         for init_declarator in init_declarator_list:
-            init_declarator['declarator'].set_as_variable(declaration_specifiers)
+            init_declarator['declarator']['symbol'].type = declaration_specifiers
+            # init_declarator['declarator'].set_as_variable(declaration_specifiers)
+            pass
 
     def p_declaration_2(self, t):
         """declaration : declaration_specifiers SEMI"""
@@ -510,8 +525,9 @@ class Parser(object):
         t[0] = [t[1]]
 
     def p_struct_declaration_list_2(self, t):
-        """struct_declaration_list : struct_declaration_list struct_declaration"""
-        # I changed 'struct_declarator_list' to 'struct_declaration_list'
+        """
+        struct_declaration_list : struct_declaration_list struct_declaration
+        """
         self.output_production(t, production_message='struct_declaration_list : struct_declaration_list struct_declaration')
 
         t[0] = t[1] + t[2]
@@ -670,8 +686,11 @@ class Parser(object):
         """
         self.output_production(t, production_message='declarator -> pointer direct_declarator')
 
-        t[2].add_pointer_level(t[1])
-        t[0] = t[2]
+        # the direct_declarator might come up as a string/identifier in the case of function parameters
+        declarator = Symbol(identifier=t[2]) if isinstance(t[2], str) else t[2]
+        declarator.add_pointer_level(t[1])
+
+        t[0] = declarator
 
     def p_declarator_2(self, t):
         """
@@ -690,13 +709,15 @@ class Parser(object):
         """
         self.output_production(t, production_message='direct_declarator -> identifier')
 
-        t[0] = t[1]  # whatever the declaration, it should have been built up by now
+        t[0] = t[1]
 
     def p_direct_declarator_2(self, t):
-        """direct_declarator : LPAREN declarator RPAREN"""
+        """
+        direct_declarator : LPAREN declarator RPAREN
+        """
         self.output_production(t, production_message='direct_declarator -> LPAREN declarator RPAREN')
 
-        t[0] = t[1]  # declarator should have been initialized by the time it gets here
+        t[0] = t[2]
 
     def p_direct_declarator_3(self, t):
         """
@@ -704,8 +725,6 @@ class Parser(object):
         """
         self.output_production(t, production_message=
             'direct_declarator -> direct_declarator LBRACKET constant_expression_option RBRACKET')
-
-        print(t[1], t[3])
 
         if issubclass(type(t[3]), ConstantValue) and t[3].type == 'int' or type(t[3]) is int:
             dimension = t[3].value if type(t[3]) is ConstantValue else t[3]
@@ -719,34 +738,78 @@ class Parser(object):
         t[0] = t[1]
 
     def p_direct_declarator_4(self, t):
-        """direct_declarator : direct_declarator LPAREN parameter_type_list RPAREN"""
-        self.output_production(t, production_message='direct_declarator -> direct_declarator LPAREN parameter_type_list RPAREN')
+        """
+        direct_declarator : direct_declarator LPAREN parameter_type_list RPAREN
+        """
+        self.output_production(t, production_message=
+            'direct_declarator -> direct_declarator LPAREN parameter_type_list RPAREN')
 
-        direct_declarator = t[1]
+        lineno = t.lineno(1)
 
-        # print(direct_declarator, type(direct_declarator), 'line 620')
+        print(t[3])
 
-        parameter_type_list = t[3]
-        direct_declarator.add_parameters(parameter_type_list)
-        t[0] = direct_declarator
+        function_symbol, _ = self.compiler_state.symbol_table.find(t[1])
+        if function_symbol:  # a prototype has been given
+            if function_symbol.finalized:
+                error_message = 'Redeclaration of function {} is not allowed.'.format(t[1])
+                raise CompileException(message=error_message, line_num=lineno, token_col=0,
+                                           source_line=self.compiler_state.source_code[lineno])
 
-        # # TODO LPAREN is kind of the start of a scope
-        # t[0] = {'direct_declarator': t[1], 'parameter_type_list': t[3]}
+            if function_symbol.parameter_types_match(t[3]):  # the prototype was given, and now the definition
+                function_symbol.add_named_parameters(t[3])
+                function_symbol.finalized = True
+            else:
+                error_message = 'Function definition does not match signature.'
+                raise CompileException(message=error_message, line_num=lineno, token_col=0,
+                                       source_line=self.compiler_state.source_code[lineno])
+        else:  #
+            function_symbol = FunctionSymbol(identifier=t[1], lineno=lineno)
+            function_symbol.set_signature(parameters=t[3])
+            function_symbol.add_named_parameters(t[3])
+            result, _ = self.compiler_state.symbol_table.insert(function_symbol)
+
+        t[0] = {"ast_node": None, "symbol": function_symbol}
+
+
 
     def p_direct_declarator_5(self, t):
-        """direct_declarator : direct_declarator LPAREN identifier_list RPAREN"""
-        self.output_production(t, production_message='direct_declarator -> direct_declarator LPAREN identifier_list RPAREN')
-
-        t[0] = t[1].add_parameters(t[3])
+        """
+        direct_declarator : direct_declarator LPAREN identifier_list RPAREN
+        """
+        self.output_production(t, production_message=
+            'direct_declarator -> direct_declarator LPAREN identifier_list RPAREN')
 
     def p_direct_declarator_6(self, t):
-        """direct_declarator : direct_declarator LPAREN RPAREN"""
+        """
+        direct_declarator : direct_declarator LPAREN RPAREN
+        """
         self.output_production(t, production_message='direct_declarator -> direct_declarator LPAREN RPAREN')
 
-        direct_declarator = t[1]
-        direct_declarator.is_function = True
-        t[0] = direct_declarator
-        # t[0] = {'direct_declarator': t[1], 'parameter_type_list': []}
+
+        # TODO: merge this code into a function with the code for the production for functions with parameters
+        lineno = t.lineno(1)
+
+        function_symbol, _ = self.compiler_state.symbol_table.find(t[1])
+        if function_symbol:  # a prototype has been given
+            if function_symbol.finalized:
+                error_message = 'Redeclaration of function {} is not allowed.'.format(t[1])
+                raise CompileException(message=error_message, line_num=lineno, token_col=0,
+                                           source_line=self.compiler_state.source_code[lineno])
+
+            if function_symbol.parameter_types_match(t[3]):  # the prototype was given, and now the definition
+                function_symbol.add_named_parameters(t[3])
+                function_symbol.finalized = True
+            else:
+                error_message = 'Function definition does not match signature.'
+                raise CompileException(message=error_message, line_num=lineno, token_col=0,
+                                       source_line=self.compiler_state.source_code[lineno])
+        else:
+            function_symbol = FunctionSymbol(identifier=t[1], lineno=lineno)
+            function_symbol.set_signature(parameters=[])
+            function_symbol.add_named_parameters([])
+            result, _ = self.compiler_state.symbol_table.insert(function_symbol)
+
+        t[0] = {"ast_node": None, "symbol": function_symbol}
 
     #
     # pointer:
@@ -812,6 +875,8 @@ class Parser(object):
         """parameter_type_list : parameter_list COMMA ELLIPSIS"""
         self.output_production(t, production_message='parameter_type_list -> parameter_list COMMA ELLIPSIS')
 
+        t[0] = t[1] + ['...']
+
     #
     # parameter-list:
     #
@@ -819,7 +884,8 @@ class Parser(object):
         """parameter_list : parameter_declaration"""
         self.output_production(t, production_message='parameter_list -> parameter_declaration')
 
-        t[0] = [t[1]]
+        # listify the parameter declaration so that it can easily join with the parameter list
+        t[0] = [t[1]] if t[1] else []
 
     def p_parameter_list_2(self, t):
         """parameter_list : parameter_list COMMA parameter_declaration"""
@@ -834,12 +900,39 @@ class Parser(object):
         """parameter_declaration : declaration_specifiers declarator"""
         self.output_production(t, production_message='parameter_declaration -> declaration_specifiers declarator')
 
-        t[2].type = t[1]
-        t[0] = t[2]
+        parameter_declaration = None
+
+        if isinstance(t[2], Symbol):
+            parameter_declaration = t[2]
+        elif isinstance(t[2], str):
+            parameter_declaration = Symbol(identifier=t[2])
+        else:
+            raise Exception("Debug: expected Symbol or str")
+
+        parameter_declaration.type = t[1]
+
+        t[0] = parameter_declaration
 
     def p_parameter_declaration_2(self, t):
         """parameter_declaration : declaration_specifiers abstract_declarator_option"""
         self.output_production(t, production_message='parameter_declaration -> declaration_specifiers abstract_declarator_option')
+
+        # Note: abstract_declarator is things like pointers and array dims
+
+        parameter_declaration = Symbol(identifier='')  # Symbol can hold all of the necessary info, might not go into the
+                                                       # table
+
+        parameter_declaration.type = t[1]
+        abstract_declarator = t[2]
+        if abstract_declarator:
+            if abstract_declarator.get('pointer_modifiers', None):
+                parameter_declaration.add_pointer_level(abstract_declarator['pointer_modifiers'])
+            if abstract_declarator.get('array_dims', None):
+                # clean up when we have time
+                for dim in abstract_declarator['array_dims']:
+                    parameter_declaration.add_array_dimension(dim)
+
+        t[0] = parameter_declaration
 
     #
     # identifier-list:
@@ -895,9 +988,13 @@ class Parser(object):
         """abstract_declarator_option : empty"""
         self.output_production(t, production_message='abstract_declarator_option -> empty')
 
+        t[0] = None
+
     def p_abstract_declarator_option_2(self, t):
         """abstract_declarator_option : abstract_declarator"""
         self.output_production(t, production_message='abstract_declarator_option -> abstract_declarator')
+
+        t[0] = t[1]
 
     #
     # abstract-declarator:
@@ -906,13 +1003,22 @@ class Parser(object):
         """abstract_declarator : pointer"""
         self.output_production(t, production_message='abstract_declarator -> pointer')
 
+        t[0] = {'pointer_modifiers': t[1]}
+
     def p_abstract_declarator_2(self, t):
         """abstract_declarator : pointer direct_abstract_declarator"""
         self.output_production(t, production_message='abstract_declarator -> pointer direct_abstract_declarator')
 
+        t[2].update({'pointer_modifiers': t[1]})
+
+        t[0] = t[2]
+
+
     def p_abstract_declarator_3(self, t):
         """abstract_declarator : direct_abstract_declarator"""
         self.output_production(t, production_message='abstract_declarator -> direct_abstract_declarator')
+
+        t[0] = t[1]
 
     #
     # direct-abstract-declarator:
@@ -921,65 +1027,100 @@ class Parser(object):
         """direct_abstract_declarator : LPAREN abstract_declarator RPAREN"""
         self.output_production(t, production_message='direct_abstract_declarator -> LPAREN abstract_declarator RPAREN')
 
+        t[0] = t[1]
+
     def p_direct_abstract_declarator_2(self, t):
         """direct_abstract_declarator : direct_abstract_declarator LBRACKET constant_expression_option RBRACKET"""
         self.output_production(t, production_message=
             'direct_abstract_declarator -> direct_abstract_declarator LBRACKET constant_expression_option RBRACKET')
 
+        if t[1].get('array_dims', None):
+            t[1]['array_dims'] = []
+
+        t[1]['array_dims'] += [t[3].value if t[3] else Symbol.EMPTY_ARRAY_DIM]
+
+        t[0] = t[1]
+
     def p_direct_abstract_declarator_3(self, t):
         """direct_abstract_declarator : LBRACKET constant_expression_option RBRACKET"""
         self.output_production(t, production_message='direct_abstract_declarator -> LBRACKET constant_expression_option RBRACKET')
+
+        t[0] = {'array_dims': [t[1].value if t[2] else Symbol.EMPTY_ARRAY_DIM]}
 
     def p_direct_abstract_declarator_4(self, t):
         """direct_abstract_declarator : direct_abstract_declarator LPAREN parameter_type_list_option RPAREN"""
         self.output_production(t, production_message=
             'direct_abstract_declarator -> direct_abstract_declarator LPAREN parameter_type_list_option RPAREN')
 
+        # for ~~function_pointers
+
     def p_direct_abstract_declarator_5(self, t):
         """direct_abstract_declarator : LPAREN parameter_type_list_option RPAREN"""
         self.output_production(t, production_message='direct_abstract_declarator -> LPAREN parameter_type_list_option RPAREN')
 
+        # for ~~function pointers
+
     #
     # Optional fields in abstract declarators
     #
-    def p_constant_expression_option_1(self, t):
+    def p_constant_expression_option_to_empty(self, t):
         """constant_expression_option : empty"""
         self.output_production(t, production_message='constant_expression_option -> empty')
 
         t[0] = None
 
-    def p_constant_expression_option_2(self, t):
+    def p_constant_expression_option_to_constant_expression(self, t):
         """constant_expression_option : constant_expression"""
         self.output_production(t, production_message='constant_expression_option -> constant_expression')
 
         t[0] = t[1]
 
-    def p_parameter_type_list_option_1(self, t):
-        """parameter_type_list_option : empty"""
+    def p_parameter_type_list_option_to_empty(self, t):
+        """
+        parameter_type_list_option : empty
+        """
         self.output_production(t, production_message='parameter_type_list_option -> empty')
 
-    def p_parameter_type_list_option_2(self, t):
-        """parameter_type_list_option : parameter_type_list"""
+    def p_parameter_type_list_option_to_parameter_type_list(self, t):
+        """
+        parameter_type_list_option : parameter_type_list
+        """
         self.output_production(t, production_message='parameter_type_list_option -> parameter_type_list')
 
     #
     # statement:
     #
     def p_statement_labeled(self, t):
-        """statement : labeled_statement"""
+        """
+        statement : labeled_statement
+        """
         self.output_production(t, production_message='statement -> labeled_statement')
 
+        t[0] = t[1]
+
     def p_statement_expression(self, t):
-        """statement : expression_statement"""
+        """
+        statement : expression_statement
+        """
         self.output_production(t, production_message='statement -> expression_statment')
 
-    def p_statement_compound(self, t):
-        """statement : compound_statement"""
+        t[0] = t[1]
+
+    def p_statement_to_compound_statement(self, t):
+        """
+        statement : compound_statement
+        """
         self.output_production(t, production_message='statement -> compound_statement')
 
+        t[0] = t[1]
+
     def p_statement_selection(self, t):
-        """statement : selection_statement"""
+        """
+        statement : selection_statement
+        """
         self.output_production(t, production_message='statement -> selection_statement')
+
+        t[0] = t[1]
 
     def p_statement_iteration(self, t):
         """
@@ -987,11 +1128,15 @@ class Parser(object):
         """
         self.output_production(t, production_message='statement -> iteration_statement')
 
+        t[0] = t[1]
+
     def p_statement_jump(self, t):
         """
         statement : jump_statement
         """
         self.output_production(t, production_message='statement -> jump_statement')
+
+        t[0] = t[1]
 
     #
     # labeled-statement:
@@ -1152,6 +1297,8 @@ class Parser(object):
         """
         self.output_production(t, production_message='expression_option -> expression')
 
+        t[0] = t[1]
+
     #
     # expression:
     #
@@ -1160,6 +1307,8 @@ class Parser(object):
         expression : assignment_expression
         """
         self.output_production(t, production_message='expression -> assignment_expression')
+
+        t[0] = t[1]
 
     def p_expression_2(self, t):
         """
@@ -1175,6 +1324,8 @@ class Parser(object):
         assignment_expression : conditional_expression
         """
         self.output_production(t, production_message='assignment_expression -> conditional_expression')
+
+        t[0] = t[1]
 
     def p_assignment_expression_2(self, t):
         """
@@ -1266,7 +1417,6 @@ class Parser(object):
         binary_expression : cast_expression
         """
         self.output_production(t, production_message='binary_expression -> cast_expression')
-
 
         t[0] = t[1]
 
@@ -1367,7 +1517,7 @@ class Parser(object):
     #
     # postfix_expression:
     #
-    def p_postfix_expression_1(self, t):
+    def p_postfix_expression_to_primary_expression(self, t):
         """
         postfix_expression : primary_expression
         """
@@ -1375,43 +1525,81 @@ class Parser(object):
 
         t[0] = t[1]
 
-    def p_postfix_expression_2(self, t):
+    def p_postfix_expression_to_array_dereference(self, t):
         """
         postfix_expression : postfix_expression LBRACKET expression RBRACKET
         """
         self.output_production(t, production_message='postfix_expression -> postfix_expression LBRACKET expression RBRACKET')
 
-    def p_postfix_expression_3(self, t):
+    def p_postfix_expression_to_parameterized_function_call(self, t):
         """
         postfix_expression : postfix_expression LPAREN argument_expression_list RPAREN
         """
         self.output_production(t, production_message='postfix_expression -> postfix_expression LPAREN argument_expression_list RPAREN')
 
-    def p_postfix_expression_4(self, t):
+        # print(t[3][0])
+        # print()
+        # print(t[3][0].type)
+
+        if isinstance(t[1], str):
+            function_symbol, _ = self.compiler_state.symbol_table.find(t[1])
+            if function_symbol.arguments_match_parameter_types(t[3]):
+
+
+                # create AST node
+
+                pass
+            else:
+                error_message = 'Argument types do not match parameter types for function call'
+                lineno = t.lineno(1)
+                source_line = self.compiler_state.source_code[lineno - 1]
+                raise CompileException(error_message, lineno, 0, source_line)
+        else:
+            raise Exception('Debug: We should be getting an identifier here')
+
+    def p_postfix_expression_to_function_call(self, t):
         """
         postfix_expression : postfix_expression LPAREN RPAREN
         """
         self.output_production(t, production_message='postfix_expression -> postfix_expression LPAREN RPAREN')
 
-    def p_postfix_expression_5(self, t):
+        find_result = self.compiler_state.symbol_table.find(t[1])
+        if find_result:
+            function_symbol, _ = find_result
+            if function_symbol.arguments_match_parameter_types([]):
+                # t[0] = ast.FunctionCall(          )
+                pass
+            else:
+                error_message = 'Arguments do not match parameter types in call to {}'\
+                    .format(function_symbol.identifier)
+                raise CompileException(error_message, t.lineno(1), 0,
+                                       source_line=self.compiler_state.source_code[t.lineno(1)])
+        else:
+            error_message = "Call to undeclared function '{}'"\
+                    .format(t[1])
+            raise CompileException(error_message, t.lineno(1), 0,
+                                   source_line=self.compiler_state.source_code[t.lineno(1)])
+
+
+    def p_postfix_expression_to_struct_member_access(self, t):
         """
         postfix_expression : postfix_expression PERIOD identifier
         """
         self.output_production(t, production_message='postfix_expression -> postfix_expression PERIOD identifier')
 
-    def p_postfix_expression_6(self, t):
+    def p_postfix_expression_to_struct_member_dereference(self, t):
         """
         postfix_expression : postfix_expression ARROW identifier
         """
         self.output_production(t, production_message='postfix_expression -> postfix_expression ARROW identifier')
 
-    def p_postfix_expression_7(self, t):
+    def p_postfix_expression_to_post_increment(self, t):
         """
         postfix_expression : postfix_expression PLUSPLUS
         """
         self.output_production(t, production_message='postfix_expression -> postfix_expression PLUSPLUS')
 
-    def p_postfix_expression_8(self, t):
+    def p_postfix_expression_to_post_decrement(self, t):
         """
         postfix_expression : postfix_expression MINUSMINUS
         """
@@ -1477,11 +1665,16 @@ class Parser(object):
         """
         self.output_production(t, production_message='argument_expression_list ->  assignment_expression')
 
+        t[0] = [t[1]]
+
     def p_argument_expression_list_list_comma_expression(self, t):
         """
         argument_expression_list : argument_expression_list COMMA assignment_expression
         """
-        self.output_production(t, production_message='argument_expression_list -> argument_expression_list COMMA assignment_expression')
+        self.output_production(t, production_message=
+            'argument_expression_list -> argument_expression_list COMMA assignment_expression')
+
+        t[0] = t[1] + t[3]
 
     #
     # constant:
@@ -1506,7 +1699,7 @@ class Parser(object):
         """
         constant : CCONST
         """
-        self.output_production(t, production_message='constant -> CCONST {}'.format(t[1]))
+        self.output_production(t, production_message='constant -> CCONST ({})'.format(t[1]))
 
         t[0] = ConstantValue(t[1], 'char')
 
@@ -1516,7 +1709,7 @@ class Parser(object):
     def p_identifier(self, t):
         """identifier : ID
         """
-        self.output_production(t, production_message='identifier -> ID {}'.format(t[1].identifier))
+        self.output_production(t, production_message='identifier -> ID ({})'.format(t[1]))
 
         # the scanner passes a symbol reference to the parser
         t[0] = t[1]
@@ -1525,7 +1718,8 @@ class Parser(object):
     # empty:
     #
     def p_empty(self, t):
-        """empty :
+        """
+        empty :
         """
         pass
 
@@ -1538,10 +1732,12 @@ class Parser(object):
         """
         self.prod_logger.info('Entering scope {}'.format(len(self.compiler_state.symbol_table.table)))
 
+        function_symbol = t[-1]['symbol']
         self.compiler_state.symbol_table.push()
-        self.compiler_state.function_scope_entered = True
+        for named_parameter in function_symbol.named_parameters:
+            self.compiler_state.symbol_table.insert(named_parameter)  # TODO: may need to turn these into symbols
 
-        # TODO: grab the parameters from the function's declaration and push them into the new scope
+        self.compiler_state.function_scope_entered = True
 
 
     def p_enter_scope(self, t):
@@ -1600,7 +1796,8 @@ class Parser(object):
         production_message = '{rhs:>30} -> {lhs}'.format(rhs=message_parts[0], lhs=message_parts[1])
 
         line = t.lineno(1)
-        self.prod_logger.source(self.compiler_state.source_code[line - 1], line=line)
+        if line - 1 < len(self.compiler_state.source_code):
+            self.prod_logger.source(self.compiler_state.source_code[line - 1], line=line)
         self.prod_logger.production(production_message)
 
     ## Determines if an object is useable in evaluating a compile-time constant expressions.

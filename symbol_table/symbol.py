@@ -19,6 +19,7 @@
 ###############################################################################
 
 import copy
+import itertools
 
 
 class Symbol(object):
@@ -31,7 +32,8 @@ class Symbol(object):
 
     EMPTY_ARRAY_DIM = -1
 
-    def __init__(self, identifier, lineno=0, colomn_no=0, type=None, is_type=False):
+    def __init__(self, identifier, lineno=-1, colomn_no=0, type=None, ):
+        self.finalized = False
         self.symbol_class = None
         self.type = None  # TypeDeclaration
         self.identifier = identifier
@@ -58,14 +60,6 @@ class Symbol(object):
 
         self.array_dims.append(dimension)
 
-    def add_struct_members(self, members):
-        pass
-
-    def add_union_members(self, members):
-        pass
-
-    def add_enum_members(self, members):
-        pass
 
     def add_parameters(self, parameters):
         self.is_function = True
@@ -103,23 +97,34 @@ class Symbol(object):
         self.add_parameters(parameter_list)
         self.add_compound_statements(compound_statements)
 
+    ## Basically the same as __str__ but doesn't include the identifier
+    def to_abstract_str(self):
+        pointer_str = len(self.pointer_modifiers) * '*' if len(self.pointer_modifiers) > 0 else ''
+        type_str = '{}{}'.format(self.type if self.type else 'void', pointer_str)
+
+        array_str = ''
+        for dim in self.array_dims:
+            array_str += '[{}]'.format(dim if dim is not Symbol.EMPTY_ARRAY_DIM else '')
+
+        return '{}{}'.format(type_str, array_str)
+
     def __str__(self):
         # TODO: lots...
 
-        pointer_str = len(self.pointer_modifiers) * '*' if len(self.pointer_modifiers) > 0 else ''
-        type_str = '{}{}'.format(self.type, pointer_str)
+        self_str = ''
 
-        if self.is_function:
-            args_as_strings = [str(symbol) for symbol in self.parameters]
-
-            arg_list_string = ', '.join(args_as_strings)
-            return '{} {}({})'.format(type_str, self.identifier, arg_list_string)
+        if self.identifier == '':  # a case like when the symbol is part of a function signature
+            self_str = self.to_abstract_str()
         else:
+            pointer_str = len(self.pointer_modifiers) * '*' if len(self.pointer_modifiers) > 0 else ''
+            type_str = '{}{}'.format(self.type if self.type else 'void', pointer_str)
             array_str = ''
             for dim in self.array_dims:
                 array_str += '[{}]'.format(dim if dim is not Symbol.EMPTY_ARRAY_DIM else '')
 
-            return '{} {}{}'.format(type_str, self.identifier, array_str)
+            self_str = '{} {}{}'.format(type_str, self.identifier, array_str)
+
+        return self_str
 
     def __repr__(self):
         return str(self)
@@ -175,7 +180,10 @@ class PointerDeclaration(object):
 
 
 class ConstantValue(object):
-    def __init__(self, value=0, type='int'):
+    INTEGER = 'int'
+    FLOAT = 'float'
+
+    def __init__(self, value=0, type=INTEGER):
         self.value = value
         self.type = type
 
@@ -183,6 +191,69 @@ class ConstantValue(object):
 
 
 
+class FunctionSymbol(Symbol):
+    def __init__(self, identifier, lineno):
+        super(FunctionSymbol, self).__init__(identifier, lineno)
+
+        self.return_type = None
+        self.signature = []
+        self.named_parameters = []
+
+    def set_signature(self, parameters):
+        if self.finalized:
+            raise Exception('Error: redefinition of function {}. (TODO replace with CompileException)'
+                            .format(self.identifier))
+
+        self.signature.extend(parameters)
+
+    def parameter_types_match(self, parameter_type_list):
+        for signature_symbol, parameter_symbol in itertools.zip_longest(self.signature, parameter_type_list):
+            if signature_symbol.to_abstract_str() != parameter_symbol.to_abstract_str():
+                return False
+        return True
+
+    def add_named_parameters(self, paramter_type_list):
+        if self.finalized:
+            raise Exception('Error: redefinition of function {}. (TODO replace with CompileException)'
+                            .format(self.identifier))
+
+        self.named_parameters.extend(paramter_type_list)
+
+    def arguments_match_parameter_types(self, argument_list):
+        for signature_symbol, argument in itertools.zip_longest(self.signature, argument_list):
+            arg_type_str = ''
+            if isinstance(argument, Symbol):
+                arg_type_str = argument.to_abstract_str()
+            elif isinstance(argument, ConstantValue):
+                arg_type_str = argument.type
+            else:
+                raise Exception('Debug: did I forget a class-type?')
+
+            if signature_symbol.to_abstract_str() != arg_type_str:
+                # TODO: make sure that we can match types that are different but still compatible (Ex: char and int)
+                return False
+
+        return True
+
+
+    def __str__(self):
+        pointer_str = len(self.pointer_modifiers) * '*' if len(self.pointer_modifiers) > 0 else ''
+        type_str = '{}{}'.format(self.type, pointer_str)
+
+        args_as_strings = []
+
+        if self.named_parameters:
+            args_as_strings = [str(symbol) for symbol in self.named_parameters]
+        elif self.signature:
+            args_as_strings = [symbol.to_abstract_str() for symbol in self.signature]
+
+        arg_list_string = ', '.join(args_as_strings) if args_as_strings else ''
+
+        return '{} {}({})'.format(type_str, self.identifier, arg_list_string)
+
+    def __repr__(self):
+
+        return str(self)
 
 
 

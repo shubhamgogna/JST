@@ -1,14 +1,13 @@
 SYMBOL TABLE: Opening brace encountered, symbol table dumped: 
 
 SYMBOL TABLE: Scope #0
-  do_stuff : int do_stuff(None)
-  main : None main
+  do_stuff : void do_stuff(int* array)
 SYMBOL TABLE: 
 
 SYMBOL TABLE: Closing brace encountered, symbol table dumped: 
 
 SYMBOL TABLE: Scope #0
-  do_stuff : int do_stuff(None)
+  do_stuff : void do_stuff(int* array)
   main : None main()
 Scope #1
 
@@ -17,18 +16,16 @@ SYMBOL TABLE:
 SYMBOL TABLE: Opening brace encountered, symbol table dumped: 
 
 SYMBOL TABLE: Scope #0
-  do_stuff : int do_stuff(None)
-  i : int i
+  do_stuff : void do_stuff(int* array)
   main : int main()
 SYMBOL TABLE: 
 
 SYMBOL TABLE: Closing brace encountered, symbol table dumped: 
 
 SYMBOL TABLE: Scope #0
-  do_stuff : int do_stuff(None, int i)
-  i : int i
+  do_stuff : void do_stuff(int* array, int* array)
   main : int main()
 Scope #1
-
+  array : int* array
 SYMBOL TABLE: 
 

@@ -40,7 +40,7 @@ class SymbolTable(object):
     # Returns a tuple of the result and a list of shadowed Symbols or
     # re-declared Symbol.
     def insert(self, symbol):
-        if type(symbol) is not Symbol:
+        if not isinstance(symbol, Symbol):
             raise TypeError("'symbol' is not an instance of Symbol.")
         elif not self.table:
             raise Exception('Table has no scopes available to insert into. Offending symbol: {}'.format(symbol))

@@ -31,7 +31,7 @@ class Scope(object):
     # Inserts a symbol into the Scope.
     # Returns INSERT_SUCCESS or INSERT_REDECL.
     def insert(self, symbol):
-        if type(symbol) is not Symbol:
+        if not isinstance(symbol, Symbol):
             raise TypeError("'symbol' is not an instance of Symbol.")
 
         if symbol.identifier not in self.map:

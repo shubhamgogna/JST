@@ -170,8 +170,8 @@ class Lexer(object):
 
         # Need to include error token for warning issues?
         #'ERROR'  # TODO: if we decide we want the parser to handle all errors/error reporting this will be good
-                 # TODO: otherwise let's toss it (I'm in favor of passing all errors to the parser for unified
-                 # TODO: error management, but it will take some figuring out. -Terence)
+                  # TODO: otherwise let's toss it (I'm in favor of passing all errors to the parser for unified
+                  # TODO: error management, but it will take some figuring out. -Terence)
         )
 
     # Completely ignored characters

@@ -35,6 +35,7 @@ class TestSymbol(unittest.TestCase):
         self.assertEqual(s, "int my_variable")
 
     def test_function_str(self):
+        # TODO: with the introduction of the FunctionSymbol, we might be throwing out this test, so it's ok if it fails
         type = TypeDeclaration()
         type.add_type_specifier('int')
         symbol = Symbol(identifier='my_function')
@@ -57,7 +58,6 @@ class TestSymbol(unittest.TestCase):
         s = str(symbol)
 
         self.assertEqual("int my_function(int parameter_1, char parameter_2)", s)
-
 
     # not sure what we should test, but I think this might be an example of how to start
     def test_add_args_makes_function(self):

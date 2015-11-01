@@ -15,6 +15,7 @@
 
 import unittest
 from compiler.compiler_state import CompilerState
+from exceptions.compile_exception import CompileException
 from loggers.logger import Logger
 from parsing.cparser import Parser
 from scanning.clexer import Lexer
@@ -156,40 +157,74 @@ class TestParser(unittest.TestCase):
         self.check_correct_element(symbol_table_clone, 'GLOBAL_CONSTANT', 0, 'const int GLOBAL_CONSTANT')
         self.check_correct_element(symbol_table_clone, 'i', 1, 'int i')
 
-    # def test_declare_typedef(self):
-    #     self.enable_parser_debugging()
-    #     data = """
-    #     typedef int GlorifiedInt;
-    #     !!C
-    #
-    #     int main() {
-    #       return 0;
-    #     }
-    #     """
-    #     self.parser.parse(data)
-    #     symbol_table_clone = self.compiler_state.cloned_tables[0]
-    #
-    #     # TODO: How are we handling typedefs?
-    #     self.check_correct_element(symbol_table_clone, 'GlorifiedInt', 0, 'typedef int GlorifiedInt')
+    def test_assign_to_immutable_variable_fails(self):
+        with self.assertRaises(CompileException):
+            data = """
+            const int GLOBAL_CONSTANT = 5;
 
-    # def test_declare_typedef_and_use_typedef_in_variable_declaration(self):
-    #     self.enable_parser_debugging()
-    #
-    #     data = """
-    #     typedef int GlorifiedInt;
-    #
-    #     int main() {
-    #       GlorifiedInt i = 3;
-    #       return 0;
-    #       !!C
-    #     }
-    #     """
-    #     self.parser.parse(data)
-    #     symbol_table_clone = self.compiler_state.cloned_tables[0]
-    #
-    #     # TODO: How are we handling typedefs?
-    #     self.check_correct_element(symbol_table_clone, 'GlorifiedInt', 0, 'typedef int GlorifiedInt')
-    #     self.check_correct_element(symbol_table_clone, 'i', 1, 'GlorifiedInt')
+            int main() {
+              GLOBAL_CONSTANT = 0;
+              return 0;
+            }
+            """
+            self.parser.parse(data)
+
+    def test_plain_if(self):
+        data = 'int main(int argc, char** argv) {\n' \
+               '  if (1 != 1) {\n'\
+               '    !!C\n'\
+               '    int wtf_result = -1;\n'\
+               '    return wtf_result;\n' \
+               '  }\n' \
+               '\n' \
+               '  return 0;\n' \
+               '}\n' \
+               ''
+        self.parser.parse(data)
+        symbol_table_clone = self.compiler_state.cloned_tables[0]
+        self.check_correct_element(symbol_table_clone, 'wtf_result', 2, 'int wtf_result')
+
+    def test_ternary_operator(self):
+        data = 'int main(int argc, char** argv) {\n' \
+               '  return 0 == 0 ? 1 : 0;\n' \
+               '}\n' \
+               ''
+        self.parser.parse(data)
+        self.assertTrue(True, "No exceptions means a successful parse.")
+
+    def test_plain_if_else(self):
+        data = 'int main(int argc, char** argv) {\n' \
+               '  if (1 != 1) {\n'\
+               '    !!C\n'\
+               '    int wtf_result = -1;\n'\
+               '    return wtf_result;\n' \
+               '  } else {\n' \
+               '    !!C\n'\
+               '    int i_guess_its_fine = 0;\n' \
+               '    return i_guess_its_fine;\n' \
+               '  }\n' \
+               '\n' \
+               '  return 0;\n' \
+               '}\n' \
+               ''
+        self.parser.parse(data)
+        symbol_table_clone = self.compiler_state.cloned_tables[0]
+        self.check_correct_element(symbol_table_clone, 'wtf_result', 2, 'int wtf_result')
+        self.check_correct_element(symbol_table_clone, 'i_guess_its_fine', 2, 'int i_guess_its_fine')
+
+    def test_lone_else_fails(self):
+
+        with self.assertRaises(Exception):
+            data = 'int main(int argc, char** argv) {\n' \
+                   '  else {\n' \
+                   '    int wtf = 0;\n' \
+                   '    return wtf;\n' \
+                   '  }\n' \
+                   '\n' \
+                   '  return 0;\n' \
+                   '}\n' \
+                   ''
+            self.parser.parse(data)
 
     def test_while_loop(self):
         data = """
@@ -319,16 +354,16 @@ class TestParser(unittest.TestCase):
     def test_call_function(self):
         self.enable_parser_debugging()
         data = """
-            int do_stuff(char c);
+            int do_stuff(int c);
             !!C
 
             int main() {
-              do_stuff('f');
+              do_stuff(4);
 
               return 0;
             }
 
-            int do_stuff(char c) {
+            int do_stuff(int c) {
                 return c + c;
                 !!C
             }
@@ -339,8 +374,8 @@ class TestParser(unittest.TestCase):
 
         print(symbol_table_clone_outer)
 
-        self.check_correct_element(symbol_table_clone_inner, 'do_stuff', 0, 'int do_stuff(char c)')
-        self.check_correct_element(symbol_table_clone_outer, 'c', 1, 'char c')
+        self.check_correct_element(symbol_table_clone_inner, 'do_stuff', 0, 'int do_stuff(int c)')
+        self.check_correct_element(symbol_table_clone_outer, 'c', 1, 'int c')
 
     def test_declare_string_literal_char_star(self):
         self.enable_parser_debugging()
@@ -385,76 +420,6 @@ class TestParser(unittest.TestCase):
         symbol_table_clone = self.compiler_state.cloned_tables[0]
 
         self.check_correct_element(symbol_table_clone, 'literal_string', 0, 'char* literal_string')
-
-    # def test_declare_struct(self):
-    #     data = """
-    #         !!C
-    #         struct Pixel {
-    #             char r;
-    #             char g;
-    #             char b;
-    #             !!C
-    #         };
-    #
-    #         int main() {
-    #           struct Pixel pixel;
-    #           pixel.r = 255;
-    #           pixel.g = 255;
-    #           pixel.b = 255;
-    #           !!C
-    #           return 0;
-    #         }
-    #     """
-    #
-    #     self.parser.parse(data)
-    #     symbol_table_clone = self.compiler_state.cloned_tables[0]
-    #
-    #     # TODO: How are we handling structs?
-    #     self.check_correct_element(symbol_table_clone, 'Pixel', 0, 'struct Pixel')
-    #     self.check_correct_element(symbol_table_clone, 'r', 1, 'char r')
-    #     self.check_correct_element(symbol_table_clone, 'g', 1, 'char g')
-    #     self.check_correct_element(symbol_table_clone, 'b', 1, 'char b')
-    #     self.check_correct_element(symbol_table_clone, 'pixel', 1, 'struct Pixel pixel')
-    #
-    #
-    # def test_declare_function_pointer_typedef(self):
-    #     data = """
-    #     typedef int (*add_callback)(int a, int b);
-    #
-    #     int add_two(int a, int b, add_callback callback);
-    #
-    #     int normal_add(int a, int b);
-    #     int weird_add(int a, int b);
-    #
-    #     int main() {
-    #       int x;
-    #       int y;
-    #
-    #       x = add_two(1, 2, normal_add);
-    #       y = add_two(1, 2, weird_add);
-    #
-    #       !!C
-    #       return 0;
-    #     }
-    #
-    #     int add_two(int a, int b, add_callback callback) {
-    #         return callback(a, b);
-    #     }
-    #
-    #     int normal_add(int a, int b) {
-    #         return a + b;
-    #     }
-    #
-    #     int weird_add(int a, int b) {
-    #         return (a + b) % 4;
-    #     }
-    #     """
-    #     self.parser.parse(data)
-    #     symbol_table_clone = self.compiler_state.cloned_tables[0]
-    #
-    #     # TODO: Function Pointers??
-    #     self.check_correct_element(symbol_table_clone, 'x', 1, 'int x')
-
 
     def test_bubble_sort(self):
         data = """
@@ -630,22 +595,132 @@ class TestParser(unittest.TestCase):
             self.parser.parse(data)
 
 
+    # def test_declare_typedef(self):
+    #     self.enable_parser_debugging()
+    #     data = """
+    #     typedef int GlorifiedInt;
+    #     !!C
+    #
+    #     int main() {
+    #       return 0;
+    #     }
+    #     """
+    #     self.parser.parse(data)
+    #     symbol_table_clone = self.compiler_state.cloned_tables[0]
+    #
+    #     # TODO: How are we handling typedefs?
+    #     self.check_correct_element(symbol_table_clone, 'GlorifiedInt', 0, 'typedef int GlorifiedInt')
+
+    # def test_declare_typedef_and_use_typedef_in_variable_declaration(self):
+    #     self.enable_parser_debugging()
+    #
+    #     data = """
+    #     typedef int GlorifiedInt;
+    #
+    #     int main() {
+    #       GlorifiedInt i = 3;
+    #       return 0;
+    #       !!C
+    #     }
+    #     """
+    #     self.parser.parse(data)
+    #     symbol_table_clone = self.compiler_state.cloned_tables[0]
+    #
+    #     # TODO: How are we handling typedefs?
+    #     self.check_correct_element(symbol_table_clone, 'GlorifiedInt', 0, 'typedef int GlorifiedInt')
+    #     self.check_correct_element(symbol_table_clone, 'i', 1, 'GlorifiedInt')
+
+    # def test_declare_struct(self):
+    #     data = """
+    #         !!C
+    #         struct Pixel {
+    #             char r;
+    #             char g;
+    #             char b;
+    #             !!C
+    #         };
+    #
+    #         int main() {
+    #           struct Pixel pixel;
+    #           pixel.r = 255;
+    #           pixel.g = 255;
+    #           pixel.b = 255;
+    #           !!C
+    #           return 0;
+    #         }
+    #     """
+    #
+    #     self.parser.parse(data)
+    #     symbol_table_clone = self.compiler_state.cloned_tables[0]
+    #
+    #     # TODO: How are we handling structs?
+    #     self.check_correct_element(symbol_table_clone, 'Pixel', 0, 'struct Pixel')
+    #     self.check_correct_element(symbol_table_clone, 'r', 1, 'char r')
+    #     self.check_correct_element(symbol_table_clone, 'g', 1, 'char g')
+    #     self.check_correct_element(symbol_table_clone, 'b', 1, 'char b')
+    #     self.check_correct_element(symbol_table_clone, 'pixel', 1, 'struct Pixel pixel')
+    #
+    #
+    # def test_declare_function_pointer_typedef(self):
+    #     data = """
+    #     typedef int (*add_callback)(int a, int b);
+    #
+    #     int add_two(int a, int b, add_callback callback);
+    #
+    #     int normal_add(int a, int b);
+    #     int weird_add(int a, int b);
+    #
+    #     int main() {
+    #       int x;
+    #       int y;
+    #
+    #       x = add_two(1, 2, normal_add);
+    #       y = add_two(1, 2, weird_add);
+    #
+    #       !!C
+    #       return 0;
+    #     }
+    #
+    #     int add_two(int a, int b, add_callback callback) {
+    #         return callback(a, b);
+    #     }
+    #
+    #     int normal_add(int a, int b) {
+    #         return a + b;
+    #     }
+    #
+    #     int weird_add(int a, int b) {
+    #         return (a + b) % 4;
+    #     }
+    #     """
+    #     self.parser.parse(data)
+    #     symbol_table_clone = self.compiler_state.cloned_tables[0]
+    #
+    #     # TODO: Function Pointers??
+    #     self.check_correct_element(symbol_table_clone, 'x', 1, 'int x')
+
 
     def test_super_function_testing(self):
         self.enable_parser_debugging()
 
-        data = 'int do_stuff(int);\n' \
+        data = '!!C void do_stuff(int* array);' \
                '\n' \
                'int main() {\n' \
                '  return 0;\n' \
                '}\n' \
                '\n' \
-               'void do_stuff(int i) {\n' \
+               'void do_stuff(int* array) {\n' \
                '  do_stuff(i);\n' \
                '}\n'
 
         self.parser.parse(data)
 
+        symbol_table = self.compiler_state.cloned_tables[0]
+        print(symbol_table)
+        x, y = symbol_table.find('do_stuff')
+        # print(x)
+        # print(x.signature[0].pointer_modifiers)
+        self.check_correct_element(symbol_table,'do_stuff', 0, 'void do_stuff(int* array)')
 
 
     def enable_parser_debugging(self):
