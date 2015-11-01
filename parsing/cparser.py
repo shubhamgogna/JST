@@ -1024,7 +1024,9 @@ class Parser(object):
         # for ~~function_pointers
 
     def p_direct_abstract_declarator_5(self, t):
-        """direct_abstract_declarator : LPAREN parameter_type_list_option RPAREN"""
+        """
+        direct_abstract_declarator : LPAREN parameter_type_list_option RPAREN
+        """
         self.output_production(t, production_message='direct_abstract_declarator -> LPAREN parameter_type_list_option RPAREN')
 
         # for ~~function pointers
