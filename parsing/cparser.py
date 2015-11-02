@@ -20,7 +20,8 @@
 from exceptions.compile_error import CompileError
 
 import ply.yacc as yacc
-from symbol_table.symbol import Symbol, PointerDeclaration, TypeDeclaration, ConstantValue, FunctionSymbol
+from symbol_table.symbol import Symbol, PointerDeclaration, TypeDeclaration, ConstantValue, FunctionSymbol, \
+    VariableSymbol
 
 
 ## Parser Class
@@ -216,10 +217,14 @@ class Parser(object):
         init_declarator_list = t[2]
         declaration_specifiers = t[1]
 
+        print(type(init_declarator_list))
+        print(init_declarator_list)
         for init_declarator in init_declarator_list:
-            init_declarator['declarator']['symbol'].type = declaration_specifiers
-            # init_declarator['declarator'].set_as_variable(declaration_specifiers)
-            pass
+            symbol, _ = self.compiler_state.symbol_table.find(init_declarator['declarator'])
+            if not symbol:
+                symbol = Symbol(identifier=init_declarator['declarator'])
+                self.compiler_state.symbol_table.insert(symbol)
+            symbol.type = declaration_specifiers #TODO: uncomment me
 
     def p_declaration_2(self, t):
         """declaration : declaration_specifiers SEMI"""
@@ -532,11 +537,16 @@ class Parser(object):
         """
         self.output_production(t, production_message='init_declarator -> declarator')
 
+        print(1, type(t[1]))
+
+
         t[0] = {"declarator": t[1], "initializer": None}
 
     def p_init_declarator_2(self, t):
         """init_declarator : declarator EQUALS initializer"""
         self.output_production(t, production_message='init_declarator -> declarator EQUALS initializer')
+
+        print(2, type(t[1]))
 
         t[0] = {"declarator": t[1], "initializer": t[3]}
 
@@ -679,6 +689,17 @@ class Parser(object):
         direct_declarator : identifier
         """
         self.output_production(t, production_message='direct_declarator -> identifier')
+
+
+        # print(type(t[1]))
+        # print(t[1])
+        # variable_symbol, _ =  self.compiler_state.symbol_table.find(t[1])
+        # if variable_symbol:  # variable already declared
+        #     raise CompileError('Error: redeclaration of {}'.format(t[1]), t.lineno(1), 0, self.compiler_state.source_code[t.lineno(1)])
+        # else:
+        #     variable_symbol = VariableSymbol(identifier=t[1], lineno=t.lineno(1))
+        #     insert_status, shadow_list = self.compiler_state.symbol_table.insert(variable_symbol)
+        # #     # TODO: do the checking better for the success and the shadowing, etc.
 
         t[0] = t[1]
 

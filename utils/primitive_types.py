@@ -14,7 +14,7 @@
 # along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
 
 class Type(object):
-
+    INT = 'int'
 
     def __init__(self):
         pass
