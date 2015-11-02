@@ -73,6 +73,18 @@ class SymbolTable(object):
                 return result, scope_level
         return None, None
 
+    # Replaces a symbol in the table by searching the top-most Scope to
+    # the bottom-most Scope. The symbols are compared by reference (not
+    # by identifier).
+    # 'original' Original symbol in the table.
+    # 'replacement' Symbol to replace original.
+    # Returns true if replaced and false if not.
+    def replace(self, original, replacement):
+        for scope in reversed(self.table):
+            if scope.replace(original, replacement):
+                return True
+        return False
+
     # Finds a symbol in the table by searching only the top-most Scope.
     # 'name' String identifier for the Symbol to find.
     # Returns 'None' or the Symbol.

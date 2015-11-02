@@ -26,7 +26,7 @@ class Symbol(object):
 
     EMPTY_ARRAY_DIM = -1
 
-    def __init__(self, identifier, lineno=-1, colomn_no=0, type=None, ):
+    def __init__(self, identifier, lineno=-1, column_no=0, type=None):
         self.finalized = False
         self.symbol_class = None
         self.type = None  # TypeDeclaration

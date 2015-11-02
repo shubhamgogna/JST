@@ -46,6 +46,19 @@ class Scope(object):
     def find(self, name):
         return self.map.get(name, None)
 
+    # Replaces one symbol with the other.
+    # 'original' Original Symbol in the map.
+    # 'replacement' Symbol to replace original.
+    # Returns true if replaced and false if not.
+    def replace(self, original, replacement):
+        if original.identifier is not replacement.identifier:
+            raise ValueError('Original and replacement do not have the same identifier.')
+        for identifier, value in self.map.items():
+            if original == value:
+                self.map[original.identifier] = replacement
+                return True
+        return False
+
     # Returns the number of Symbols in the Scope.
     def size(self):
         return len(self.map)

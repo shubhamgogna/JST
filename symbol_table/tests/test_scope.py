@@ -37,6 +37,15 @@ class TestScope(unittest.TestCase):
         self.assertTrue(found.identifier is 'A')
         self.assertTrue(type(found) is Symbol)
 
+    def test_replace(self):
+        orig_symbol = Symbol('A')
+        replacement_symbol = Symbol('A')
+        self.scope.insert(orig_symbol)
+        self.scope.insert(Symbol('B'))
+        self.assertTrue(orig_symbol != replacement_symbol)
+        result = self.scope.replace(orig_symbol, replacement_symbol)
+        self.assertTrue(result)
+
     def test_size(self):
         self.assertTrue(self.scope.size() == 0)
         self.scope.insert(Symbol('A'))
