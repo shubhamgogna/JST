@@ -17,6 +17,7 @@
 # File Description: The massive Parser file containing the productions and
 # operations for parsing the ANSI C grammar.
 ###############################################################################
+
 from exceptions.compile_error import CompileError
 
 import ply.yacc as yacc
@@ -1400,8 +1401,10 @@ class Parser(object):
         self.output_production(t, production_message=
             'assignment_expression -> binary_expression {} binary_expression'.format(t[2]))
 
-        if Parser.is_a_constant(t[1], t[3]):
-            t[0] = Parser.perform_constant_expression_operation(t[1], t[2], t[3])
+        if Parser.is_a_constant(t[1]) and Parser.is_a_constant(t[3]):
+            t[0] = Parser.perform_binary_operation(t[1], t[2], t[3])
+            # TODO Maybe log the evaluated expression?
+            # print(t[0] if type(t[0]) is not ConstantValue else t[0].value)
         else:
             # TODO: implement this via AST Nodes
             t[0] = None
@@ -1795,47 +1798,89 @@ class Parser(object):
             self.prod_logger.source(self.compiler_state.source_code[line - 1], line=line)
         self.prod_logger.production(production_message)
 
-    ## Determines if an object is useable in evaluating a compile-time constant expressions.
+    # Determines if an object is usable in evaluating a compile-time constant expressions.
+    # Called by production handling methods and possibly AST nodes.
     #
     # @param item The item to be checked.
     #
-    # Output:
-    #   Returns True if the item is useable for hte constant expression; False otherwise.
-    #
-    # Called by production handling methods and possibly AST nodes.
-    #
+    # Output: Returns True if the item is usable for the constant expression; False otherwise.
     @staticmethod
-    def is_a_constant(item_1, item_2):
-        # TODO: refactor to handle only one item, with constants and variables declared as constant
-        return issubclass(type(item_1), ConstantValue) and issubclass(type(item_2), ConstantValue)
+    def is_a_constant(item):
+        valid_types = (ConstantValue, int, float)
+        return isinstance(item, valid_types)
 
-    ## Performs compile-time operations to evalate constant expressions.
-    #
-    # @param operand_1 The first operand of the operation.
-    # @param operator The operator for the operation.
-    # @param operand_2 The second (optional, in the case of a unary operation) operand of the operation.
-    #
-    # Output:
-    #   Returns on object representing the (constant) result of the operation.
-    #
+    # Performs compile-time operations to evaluate binary (two-operand) constant expressions.
     # Called by production handling methods.
     #
+    # @param left The first operand of the operation.
+    # @param operator The operator for the operation.
+    # @param right The second operand of the operation.
+    #
+    # Output: Returns an object representing the (constant) result of the operation.
     @staticmethod
-    def perform_constant_expression_operation(operand_1: ConstantValue, operator: str, operand_2: ConstantValue) -> ConstantValue:
-        # TODO: refactor to completion ot include all operands (bitwise ones too)
-        if operator is '+':
-            print(operand_1, operand_2)
-            v_1 = operand_1.value if type(operand_1) is ConstantValue else operand_1
-            v_2 = operand_2.value if type(operand_2) is ConstantValue else operand_2
-            return v_1 + v_2
-        elif operator is '-':
-            pass
-        elif operator is '*':
-            pass
-        elif operator is '/':
-            pass
-        elif operator is '%':
-            pass
+    def perform_binary_operation(left: ConstantValue, operator: str, right: ConstantValue):
+        left_value = left.value if type(left) is ConstantValue else left
+        right_value = right.value if type(right) is ConstantValue else right
+        if operator == '+':
+            return left_value + right_value
+        elif operator == '-':
+            return left_value - right_value
+        elif operator == '*':
+            return left_value * right_value
+        elif operator == '/':
+            return left_value / right_value
+        elif operator == '%':
+            return left_value % right_value
+        elif operator == '<<':
+            return left_value << right_value
+        elif operator == '>>':
+            return left_value >> right_value
+        elif operator == '<':
+            return left_value < right_value
+        elif operator == '<=':
+            return left_value <= right_value
+        elif operator == '>':
+            return left_value > right_value
+        elif operator == '>=':
+            return left_value >= right_value
+        elif operator == '==':
+            return left_value == right_value
+        elif operator == '!=':
+            return left_value != right_value
+        elif operator == '&':
+            return left_value & right_value
+        elif operator == '|':
+            return left_value | right_value
+        elif operator == '^':
+            return left_value ^ right_value
+        elif operator == '&&':
+            return 1 if left_value != 0 and right_value != 0 else 0
+        elif operator == '||':
+            return 1 if left_value != 0 or right_value != 0 else 0
         else:
-            # raise Exception('please provide a proper operand')
-            pass
+            raise Exception('Improper operator provided: ' + operator)
+
+    # Performs compile-time operations to evaluate unary (one-operand) constant expressions.
+    # Called by production handling methods.
+    #
+    # @param operator The operator for the operation.
+    # @param operand The operand of the operation.
+    #
+    # Output: Returns an object representing the (constant) result of the operation.
+    @staticmethod
+    def perform_unary_operation(operator: str, operand: ConstantValue):
+        value = operand.value if type(operand) is ConstantValue else operand
+        if operator == '+':
+            raise Exception('No idea when this is used.')
+        elif operator == '-':
+            return -value
+        elif operator == '~':
+            return ~value
+        elif operator == '!':
+            return 1 if value == 0 else 0
+        elif operator == '&':
+            raise Exception('Used for addressof? How is this handled?')
+        elif operator == '*':
+            raise Exception('Used for dereferencing? How is this handled?')
+        else:
+            raise Exception('Improper operator provided: ' + operator)
