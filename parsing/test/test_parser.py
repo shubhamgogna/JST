@@ -437,7 +437,7 @@ class TestParser(unittest.TestCase):
                // create list
                for(i =0; i<10;i++)
                   {
-                   list[i] = rand() % 10 + 1; 
+                   list[i] = rand() % 10 + 1;
                   }
                print(list, 10);
 
@@ -461,7 +461,7 @@ class TestParser(unittest.TestCase):
                int i,j;
                int temp;
                int swapped;
-               
+
                // loop through list
                for( i = 0; i < size; i++)
                   {
@@ -483,9 +483,9 @@ class TestParser(unittest.TestCase):
                      }
                   // if swapped is false, break
                   if( swapped == 0)
-                     {         
+                     {
                      break;
-                     }   
+                     }
                   }
 
                }
@@ -534,7 +534,7 @@ class TestParser(unittest.TestCase):
 
               // recursive case
               else if( number > 1 ) {
-                return number*recur_Fact(number-1);    
+                return number*recur_Fact(number-1);
               }
             }
         """
@@ -722,13 +722,11 @@ class TestParser(unittest.TestCase):
         # print(x.signature[0].pointer_modifiers)
         self.check_correct_element(symbol_table,'do_stuff', 0, 'void do_stuff(int* array)')
 
-
     def enable_parser_debugging(self):
         if self.debug:
             self.parser.prod_logger.add_switch(Logger.PRODUCTION)
             self.parser.prod_logger.add_switch(Logger.INFO)
             self.parser.prod_logger.add_switch(Logger.SOURCE)
-
 
     def check_correct_element(self, symbol_table_clone, check_value, check_scope, check_string):
         found_symbol, in_scope = symbol_table_clone.find(check_value)

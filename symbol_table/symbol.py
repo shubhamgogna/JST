@@ -13,24 +13,18 @@
 # You should have received a copy of the GNU General Public License
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
-###############################################################################
-# File Description: Class for representing the various forms an identifier
-# in code can have, such as a variable, function, typedef, etc.
-###############################################################################
-
 import copy
 import itertools
 
 
 class Symbol(object):
-
     EMPTY_ARRAY_DIM = -1
 
     def __init__(self, identifier, lineno=-1, column_no=0, type=None):
         self.finalized = False
         self.symbol_class = None
-        self.type = None  # TypeDeclaration
         self.identifier = identifier
+        self.type = None  # TypeDeclaration
         self.pointer_modifiers = []
         self.array_dims = []
         self.storage_specifiers = []  # auto, static, extern, etc.
@@ -43,25 +37,17 @@ class Symbol(object):
         self.is_enum = False
         self.is_function = False
 
-
     def add_pointer_level(self, pointer_declarations):
         self.pointer_modifiers.extend(pointer_declarations)
 
-    def add_array_dimension(self, dimension):
-        if (dimension is Symbol.EMPTY_ARRAY_DIM and self.array_dims and self.array_dims[-1] is Symbol.EMPTY_ARRAY_DIM) \
-                or (dimension is not Symbol.EMPTY_ARRAY_DIM and dimension < 0):
-            raise Exception("Invalid array dimension ({}) when {} already specified".format(dimension, self.array_dims))
-
-        self.array_dims.append(dimension)
-
-    ## Basically the same as __str__ but doesn't include the identifier
+    # Basically the same as __str__ but doesn't include the identifier
     def to_abstract_str(self):
         pointer_str = len(self.pointer_modifiers) * '*' if len(self.pointer_modifiers) > 0 else ''
         type_str = '{}{}'.format(self.type if self.type else 'void', pointer_str)
 
         array_str = ''
         for dim in self.array_dims:
-            array_str += '[{}]'.format(dim if dim is not Symbol.EMPTY_ARRAY_DIM else '')
+            array_str += '[{}]'.format(dim if dim is not None else '')
 
         return '{}{}'.format(type_str, array_str)
 
@@ -77,7 +63,7 @@ class Symbol(object):
             type_str = '{}{}'.format(self.type if self.type else 'void', pointer_str)
             array_str = ''
             for dim in self.array_dims:
-                array_str += '[{}]'.format(dim if dim is not Symbol.EMPTY_ARRAY_DIM else '')
+                array_str += '[{}]'.format(dim if dim is not None else '')
 
             self_str = '{} {}{}'.format(type_str, self.identifier, array_str)
 
@@ -91,12 +77,24 @@ class Symbol(object):
 
 
 class VariableSymbol(Symbol):
-    def __init__(self, identifier, lineno):
-        super(VariableSymbol, self).__init__(identifier, lineno)
+    def __init__(self, identifier, lineno=-1, column_no=0):
+        super(VariableSymbol, self).__init__(identifier, lineno, column_no)
+
+    # Sets the array dimensions for the VariableSymbol.
+    #
+    # @param dimensions List of integers (optionally with None in the last element)
+    def set_array_dimensions(self, dimensions):
+        if dimensions is None:
+            self.array_dims = None
+        elif type(dimensions) is list:
+            self.array_dims = dimensions    # TODO Deepcopy?
+        else:
+            raise ValueError('Dimensions must be a list of integers.')
 
     @property
     def immutable(self):
         return 'const' in self.type.qualifiers
+
 
 class FunctionSymbol(Symbol):
     def __init__(self, identifier, lineno):

@@ -220,12 +220,25 @@ class Parser(object):
 
         print(type(init_declarator_list))
         print(init_declarator_list)
+
         for init_declarator in init_declarator_list:
-            symbol, _ = self.compiler_state.symbol_table.find(init_declarator['declarator'])
-            if not symbol:
-                symbol = Symbol(identifier=init_declarator['declarator'])
+
+            # Code specific to array declaration
+            if type(init_declarator['declarator']) is dict:
+                identifier = init_declarator['declarator']['identifier']
+                dimensions = init_declarator['declarator']['dimensions']
+                symbol, _ = self.compiler_state.symbol_table.find(identifier)
+                if not symbol:
+                    symbol = VariableSymbol(identifier)
+                    symbol.set_array_dimensions(dimensions)
                 self.compiler_state.symbol_table.insert(symbol)
-            symbol.type = declaration_specifiers #TODO: uncomment me
+
+            else:
+                symbol, _ = self.compiler_state.symbol_table.find(init_declarator['declarator'])
+                if not symbol:
+                    symbol = Symbol(identifier=init_declarator['declarator'])
+                self.compiler_state.symbol_table.insert(symbol)
+            symbol.type = declaration_specifiers
 
     def p_declaration_2(self, t):
         """declaration : declaration_specifiers SEMI"""
@@ -539,8 +552,6 @@ class Parser(object):
         self.output_production(t, production_message='init_declarator -> declarator')
 
         print(1, type(t[1]))
-
-
         t[0] = {"declarator": t[1], "initializer": None}
 
     def p_init_declarator_2(self, t):
@@ -548,7 +559,6 @@ class Parser(object):
         self.output_production(t, production_message='init_declarator -> declarator EQUALS initializer')
 
         print(2, type(t[1]))
-
         t[0] = {"declarator": t[1], "initializer": t[3]}
 
     #
@@ -680,6 +690,7 @@ class Parser(object):
         """
         self.output_production(t, production_message='declarator -> direct_declarator')
 
+        print(t[1])
         t[0] = t[1]
 
     #
@@ -719,16 +730,21 @@ class Parser(object):
         self.output_production(t, production_message=
             'direct_declarator -> direct_declarator LBRACKET constant_expression_option RBRACKET')
 
-        if issubclass(type(t[3]), ConstantValue) and t[3].type == 'int' or type(t[3]) is int:
-            dimension = t[3].value if type(t[3]) is ConstantValue else t[3]
-            t[1].add_array_dimension(dimension)  # TODO validate?
-        elif t[3] is None:
-            t[1].add_array_dimension(Symbol.EMPTY_ARRAY_DIM)
-        else:
-            raise Exception(
-                'Only integral types may be used to specify array dimensions ({} given)'.format(t[3].type))
+        if type(t[1]) is str:
+            if t[3] is not None:
+                value = t[3].value if type(t[3]) is ConstantValue else t[3]
+                t[0] = {'identifier': t[1], 'dimensions': [value]}
+            else:
+                t[0] = {'identifier': t[1], 'dimensions': [None]}
 
-        t[0] = t[1]
+        elif type(t[1]) is dict:
+            if 'identifier' in t[1] and 'dimensions' in t[1]:
+                if t[3] is not None:
+                    value = t[3].value if type(t[3]) is ConstantValue else t[3]
+                    t[1]['dimensions'].append(value)
+                else:
+                    raise ValueError('Only the first dimension of an array declaration can be empty.')
+            t[0] = t[1]
 
     def p_direct_declarator_4(self, t):
         """
