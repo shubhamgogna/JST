@@ -21,8 +21,7 @@
 from exceptions.compile_error import CompileError
 
 import ply.yacc as yacc
-from symbol_table.symbol import Symbol, PointerDeclaration, TypeDeclaration, ConstantValue, FunctionSymbol, \
-    VariableSymbol
+from symbol_table.symbol import Symbol, VariableSymbol, TypeDeclaration, ConstantValue, FunctionSymbol
 
 
 ## Parser Class
@@ -223,6 +222,8 @@ class Parser(object):
 
         for init_declarator in init_declarator_list:
 
+            pointers = init_declarator['pointers']
+
             # Code specific to array declaration
             if type(init_declarator['declarator']) is dict:
                 identifier = init_declarator['declarator']['identifier']
@@ -234,10 +235,14 @@ class Parser(object):
                 self.compiler_state.symbol_table.insert(symbol)
 
             else:
+                # Old code, not sure if still needed vvvvvvvvvvvv
                 symbol, _ = self.compiler_state.symbol_table.find(init_declarator['declarator'])
                 if not symbol:
                     symbol = Symbol(identifier=init_declarator['declarator'])
                 self.compiler_state.symbol_table.insert(symbol)
+                # Old code, not sure if still needed ^^^^^^^^^^^^^
+
+            symbol.set_pointer_modifiers(pointers)
             symbol.type = declaration_specifiers
 
     def p_declaration_2(self, t):
@@ -552,14 +557,14 @@ class Parser(object):
         self.output_production(t, production_message='init_declarator -> declarator')
 
         print(1, type(t[1]))
-        t[0] = {"declarator": t[1], "initializer": None}
+        t[0] = {'pointers': t[1]['pointers'], 'declarator': t[1]['direct_declarator'], 'initializer': None}
 
     def p_init_declarator_2(self, t):
         """init_declarator : declarator EQUALS initializer"""
         self.output_production(t, production_message='init_declarator -> declarator EQUALS initializer')
 
         print(2, type(t[1]))
-        t[0] = {"declarator": t[1], "initializer": t[3]}
+        t[0] = {'pointers': t[1]['pointers'], 'declarator': t[1]['direct_declarator'], "initializer": t[3]}
 
     #
     # struct-declaration:
@@ -678,11 +683,8 @@ class Parser(object):
         """
         self.output_production(t, production_message='declarator -> pointer direct_declarator')
 
-        # the direct_declarator might come up as a string/identifier in the case of function parameters
-        declarator = Symbol(identifier=t[2]) if isinstance(t[2], str) else t[2]
-        declarator.add_pointer_level(t[1])
-
-        t[0] = declarator
+        # Create a dict out of the pointers and the direct_declarator
+        t[0] = {'pointers': t[1], 'direct_declarator': t[2]}
 
     def p_declarator_2(self, t):
         """
@@ -690,8 +692,8 @@ class Parser(object):
         """
         self.output_production(t, production_message='declarator -> direct_declarator')
 
-        print(t[1])
-        t[0] = t[1]
+        # Create a dict out of the non-existing pointers and the direct_declarator
+        t[0] = {'pointers': None, 'direct_declarator': t[1]}
 
     #
     # direct-declarator:
@@ -829,9 +831,8 @@ class Parser(object):
         """
         self.output_production(t, production_message='pointer -> TIMES type_qualifier_list')
 
-        pointer_declaration = PointerDeclaration()
-        pointer_declaration.add_qualifiers(t[2])
-        t[0] = [pointer_declaration]
+        # Create a new list for the current pointer with qualifiers
+        t[0] = [t[2]]
 
     def p_pointer_2(self, t):
         """
@@ -839,7 +840,8 @@ class Parser(object):
         """
         self.output_production(t, production_message='pointer -> TIMES')
 
-        t[0] = [PointerDeclaration()]
+        # Create a new list for the current pointer with no qualifiers
+        t[0] = []
 
     def p_pointer_3(self, t):
         """
@@ -847,10 +849,10 @@ class Parser(object):
         """
         self.output_production(t, production_message='pointer -> TIMES type_qualifier_list pointer')
 
-        first_pointer = PointerDeclaration()
-        first_pointer.add_qualifiers(t[2])
-
-        t[0] = [first_pointer] + t[3]
+        # Current pointer is special
+        # Prepend the list of qualifiers
+        t[3].insert(0, t[2])
+        t[0] = t[3]
 
     def p_pointer_4(self, t):
         """
@@ -858,7 +860,10 @@ class Parser(object):
         """
         self.output_production(t, production_message='pointer -> TIMES pointer')
 
-        t[0] = [PointerDeclaration()] + t[2]
+        # Current pointer is not special
+        # Prepend the empty list of qualifiers
+        t[2].insert(0, [])
+        t[0] = t[2]
 
     #
     # type-qualifier-list:
@@ -867,9 +872,14 @@ class Parser(object):
         """type_qualifier_list : type_qualifier"""
         self.output_production(t, production_message='type_qualifier_list -> type_qualifier')
 
+        t[0] = [t[1]]
+
     def p_type_qualifier_list_2(self, t):
         """type_qualifier_list : type_qualifier_list type_qualifier"""
         self.output_production(t, production_message='type_qualifier_list -> type_qualifier_list type_qualifier')
+
+        t[1].extend([t[2]])
+        t[0] = t[1]
 
     #
     # parameter-type-list:
@@ -935,7 +945,7 @@ class Parser(object):
         abstract_declarator = t[2]
         if abstract_declarator:
             if abstract_declarator.get('pointer_modifiers', None):
-                parameter_declaration.add_pointer_level(abstract_declarator['pointer_modifiers'])
+                parameter_declaration.set_pointer_modifiers(abstract_declarator['pointer_modifiers'])
             if abstract_declarator.get('array_dims', None):
                 # clean up when we have time
                 for dim in abstract_declarator['array_dims']:

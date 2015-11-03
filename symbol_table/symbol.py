@@ -37,8 +37,8 @@ class Symbol(object):
         self.is_enum = False
         self.is_function = False
 
-    def add_pointer_level(self, pointer_declarations):
-        self.pointer_modifiers.extend(pointer_declarations)
+    def set_pointer_modifiers(self, pointer_declarations=None):
+        self.pointer_modifiers = pointer_declarations
 
     # Basically the same as __str__ but doesn't include the identifier
     def to_abstract_str(self):
@@ -169,47 +169,70 @@ class ConstantValue(object):
         self.type = type
 
 
+###############################################################################
+# Declaration Classes Below
+###############################################################################
+
+
 class TypeDeclaration(object):
     FLOAT_TYPES = {'float', 'double'}
     INT_TYPES = {'char', 'short', 'int'}
 
     def __init__(self):
-        self.storage_class = []
-        self.qualifiers = set()  # in gcc, type qualifiers are idempotent
-        self.type_specifier = []  # being a list allows for things like 'unsigned int', 'long double'
+        # Storage class items cannot be repeated + any order
+        self.storage_classes = set() # TODO convert to set
+        # Type qualifiers can be repeated + any order
+        self.type_qualifiers = set()
+        # Type specifiers can have special meanings in cases
+        # such as 'unsigned int' or 'long double'
+        self.type_specifiers = []
 
     def add_storage_class(self, storage_class_specifier):
-        if storage_class_specifier in self.storage_class:
-            raise Exception('Duplication of storage class specifier "{}".'.format(storage_class_specifier))
-
-        self.storage_class.append(storage_class_specifier)
+        if storage_class_specifier in self.storage_classes:
+            raise ValueError('Duplicate storage class specifier "{}".'.format(storage_class_specifier))
+        else:
+            self.storage_classes.add(storage_class_specifier)
 
     def add_qualifier(self, type_qualifier):
-        self.qualifiers.add(type_qualifier)
+        self.type_qualifiers.add(type_qualifier)
 
     def add_type_specifier(self, specifier):
+        self.type_specifiers.append(specifier)
 
-        if (specifier is 'long' and 2 <= self.type_specifier.count('long')) or specifier in self.type_specifier:
-            raise Exception('Too many instances of type specifier "{}" in type declaration'.format(specifier))
-
-        self.type_specifier.append(specifier)
-
-        # TODO: check for unsigned along with float types and such
+        result = self.__validate_type_specifiers()
+        if result[0] is False:
+            raise ValueError(result[1])
 
     def __str__(self):
-        storage_class_str = ' '.join(self.storage_class) + ' ' if self.storage_class else ''
-        qualifier_str = ' '.join(self.qualifiers) + ' ' if self.qualifiers else ''
-        specifier_str = ' '.join(self.type_specifier) if self.type_specifier else 'UNKNOWN'
+        storage_class_str = ' '.join(self.storage_classes) + ' ' if self.storage_classes else ''
+        qualifier_str = ' '.join(self.type_qualifiers) + ' ' if self.type_qualifiers else ''
+        specifier_str = ' '.join(self.type_specifiers) if self.type_specifiers else 'UNKNOWN'
 
         return '{}{}{}'.format(storage_class_str, qualifier_str, specifier_str)
 
     def __repr__(self):
         return str(self)
 
+    def __validate_type_specifiers(self):
+        cloned = [specifier for specifier in self.type_specifiers]
+        contains_unsigned, contains_signed = False, False
+        while 'unsigned' in cloned:
+            cloned.remove('unsigned')
+            contains_unsigned = True
+        while 'signed' in cloned:
+            cloned.remove('signed')
+            contains_signed = True
 
-class PointerDeclaration(object):
-    def __init__(self):
-        self.qualifiers = []
-
-    def add_qualifiers(self, qualifiers):
-        pass
+        if len(cloned) is 0:
+            return True, None
+        elif len(cloned) is 1:
+            if (contains_unsigned or contains_signed) and (cloned[0] == 'float' or cloned[0] == 'double'):
+                return False, 'Floats or doubles cannot be (un)signed.'
+            else:
+                return True, None
+        else:
+            joined = ' '.join(cloned)
+            if joined == 'long long' or joined == 'long double':
+                return True, None
+            else:
+                return False, 'Invalid combination of types.'
