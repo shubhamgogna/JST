@@ -46,23 +46,25 @@
 
       <p>We recommend using PyCharm to run the compiler and run the unit tests. However, the compiler can be run and tested from the command line with the commands below.</p>
 
-<pre><code>python3 bin/jstcc.py [options]
+<pre><code>python3 bin/jstcc.py [input file] [options]
 
 # Options include:
 # -o [file name]
-#   Change output file name
-# -s[0-4]
+#   Redirect STDOUT/STDERR to file name
+# --symdebug [0, 1]
+#   0: No debug
+#   1: Print Symbol Table
+# -s [0, 1, 2, 3]
 #   0: No debug
 #   1: Tokens
 #   2: Source Code
 #   3: Tokens and Source Code
-#   4: Tokens, Source Code, and Symbol Table
-# -p[0-3]
+# -p [0, 1, 2, 3]
 #   0: No debug
 #   1: Productions
 #   2: Productions and Source Code
 #   3: Productions, Source, Misc info
-# -w[0-1]
+# -w [0, 1]
 #   Warnings
 </code></pre>
 
