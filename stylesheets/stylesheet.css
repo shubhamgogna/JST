@@ -95,7 +95,7 @@ h6 {
 }
 
 p {
-  margin: 10px 0 15px 0;
+  margin: 5px 0 5px 0;
 }
 
 footer p {
@@ -141,9 +141,6 @@ strong {
 img {
   position: relative;
   margin: 0 auto;
-  max-width: 739px;
-  padding: 5px;
-  margin: 10px 0 10px 0;
   border: 1px solid #ebebeb;
 
   box-shadow: 0 0 5px #ebebeb;
