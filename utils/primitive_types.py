@@ -14,7 +14,11 @@
 # along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
 
 class Type(object):
+    CHAR = 'char'
+    SHORT = 'short'
     INT = 'int'
-
-    def __init__(self):
-        pass
+    LONG = 'long'
+    SIGNED = 'signed'
+    UNSIGNED = 'unsigned'
+    FLOAT = 'float'
+    DOUBLE = 'double'

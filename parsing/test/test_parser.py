@@ -138,6 +138,8 @@ class TestParser(unittest.TestCase):
         self.parser.parse(data)
         symbol_table_clone = self.compiler_state.cloned_tables[0]
 
+        print(symbol_table_clone)
+
         self.check_correct_element(symbol_table_clone, 'i', 1, 'int*** i')
 
     def test_declare_global_constant(self):
@@ -208,9 +210,11 @@ class TestParser(unittest.TestCase):
                '}\n' \
                ''
         self.parser.parse(data)
-        symbol_table_clone = self.compiler_state.cloned_tables[0]
-        self.check_correct_element(symbol_table_clone, 'wtf_result', 2, 'int wtf_result')
-        self.check_correct_element(symbol_table_clone, 'i_guess_its_fine', 2, 'int i_guess_its_fine')
+        if_symbol_table_clone = self.compiler_state.cloned_tables[0]
+        else_symbol_table_clone = self.compiler_state.cloned_tables[1]
+
+        self.check_correct_element(if_symbol_table_clone, 'wtf_result', 2, 'int wtf_result')
+        self.check_correct_element(else_symbol_table_clone, 'i_guess_its_fine', 2, 'int i_guess_its_fine')
 
     def test_lone_else_fails(self):
 
@@ -423,28 +427,25 @@ class TestParser(unittest.TestCase):
 
     def test_bubble_sort(self):
         data = """
-            // function prototypes
             void print( int* list, int size);
             void bubbleSort(int* list, int size);
 
-            // main
             int main() {
-               // initialize vars
-               int* list = (int*)malloc(10);
+               int list[10];
+               //int* list = (int*) malloc(10);
                int i;
-               srand(time(NULL));
+               //srand(time(NULL));
 
                // create list
-               for(i =0; i<10;i++)
-                  {
-                   list[i] = rand() % 10 + 1; 
-                  }
+               for(i =0; i<10;i++) {
+                   //list[i] = rand() % 10 + 1;
+               }
                print(list, 10);
 
                // bubble sort
                bubbleSort( list, 10 );
 
-               printf( "Sorted " );
+               //printf( "Sorted " );
                print(list, 10);
 
                !!C
@@ -454,52 +455,40 @@ class TestParser(unittest.TestCase):
 
             }
 
-
-            // fxn imp
-            void bubbleSort(int* list, int size){
-               // initialize vars
+            void bubbleSort(int* list, int size) {
                int i,j;
                int temp;
                int swapped;
-               
-               // loop through list
-               for( i = 0; i < size; i++)
-                  {
+
+               for( i = 0; i < size; i++) {
 
                   // swapped is false
                   swapped = 0;
 
-                  // loop through list
-                  for( j = 0; j < size - 1; j++)
-                     {
-                     // if smaller, swap
-                     if( list[j+1] < list[j])
-                        {
+                  for( j = 0; j < size - 1; j++) {
+                     if(list[j+1] < list[j]) {
                         temp = list[j];
                         list[j] = list[j+1];
                         list[j+1] = temp;
                         swapped = 1;
-                        }
                      }
-                  // if swapped is false, break
-                  if( swapped == 0)
-                     {         
+                  }
+
+                  if (swapped == 0) {
                      break;
-                     }   
                   }
-
                }
+            }
 
-            void print( int* list, int size ){
+            void print(int* list, int size) {
                int i;
-               printf("List is: ");
+               //printf("List is: ");
 
-               for(i =0; i < size; i++)
-                  {
-                  printf( "%d ", list[i] );
-                  }
-               printf("\n");
+               for(i =0; i < size; i++) {
+                  //printf( "%d ", list[i] );
                }
+               //printf("");
+            }
         """
         self.parser.parse(data)
         #symbol_table_clone = self.compiler_state.cloned_tables[0]
@@ -511,18 +500,18 @@ class TestParser(unittest.TestCase):
 
     def test_recursive_factorial(self):
         data = """
-            long int recur_Fact( int number);
+            long int recur_Fact(int number);
 
             int main() {
               int number;
               long int fact;
 
-              printf( "Enter number to get factorial of: ");
-              scanf( "%d", &number );
+              //printf( "Enter number to get factorial of: ");
+              //scanf( "%d", &number );
 
               fact = recur_Fact(number);
 
-              printf("Factorial of %d is:  %ld\n", number, fact);
+              //printf("Factorial of %d is:  %ld", number, fact);
 
               return 0;
             }
@@ -554,12 +543,12 @@ class TestParser(unittest.TestCase):
               int number;
               long int fact;
 
-              printf( "Enter number to get factorial of: ");
-              scanf( "%d", &number );
+              //printf( "Enter number to get factorial of: ");
+              //scanf( "%d", &number );
 
               fact = iter_Fact(number);
 
-              printf( "Factorial of %d is:  %ld \n", number, fact);
+              //printf( "Factorial of %d is:  %ld ", number, fact);
 
               return 0;
             }

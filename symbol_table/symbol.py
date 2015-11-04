@@ -54,6 +54,10 @@ class Symbol(object):
 
         self.array_dims.append(dimension)
 
+    @property
+    def immutable(self):
+        return 'const' in self.type.qualifiers
+
     ## Basically the same as __str__ but doesn't include the identifier
     def to_abstract_str(self):
         pointer_str = len(self.pointer_modifiers) * '*' if len(self.pointer_modifiers) > 0 else ''
@@ -94,10 +98,6 @@ class VariableSymbol(Symbol):
     def __init__(self, identifier, lineno):
         super(VariableSymbol, self).__init__(identifier, lineno)
 
-    @property
-    def immutable(self):
-        return 'const' in self.type.qualifiers
-
 class FunctionSymbol(Symbol):
     def __init__(self, identifier, lineno):
         super(FunctionSymbol, self).__init__(identifier, lineno)
@@ -129,6 +129,9 @@ class FunctionSymbol(Symbol):
     def arguments_match_parameter_types(self, argument_list):
         for signature_symbol, argument in itertools.zip_longest(self.signature, argument_list):
             arg_type_str = ''
+
+            print(type(argument))
+
             if isinstance(argument, Symbol):
                 arg_type_str = argument.to_abstract_str()
             elif isinstance(argument, ConstantValue):

@@ -189,7 +189,7 @@ class Lexer(object):
     def t_NEWLINE(self, t):
         r'\n+'
 
-        #Note: Newline is not a token and thus will not be printed for DEBUG_TOKENS
+        # Note: Newline is not a token and thus will not be printed for DEBUG_TOKENS
 
         # Handle writing source code line
         self.debug_out_source()

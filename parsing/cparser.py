@@ -221,11 +221,19 @@ class Parser(object):
         print(type(init_declarator_list))
         print(init_declarator_list)
         for init_declarator in init_declarator_list:
-            symbol, _ = self.compiler_state.symbol_table.find(init_declarator['declarator'])
-            if not symbol:
-                symbol = Symbol(identifier=init_declarator['declarator'])
-                self.compiler_state.symbol_table.insert(symbol)
-            symbol.type = declaration_specifiers #TODO: uncomment me
+            symbol = None
+            declarator = init_declarator['declarator']
+            if isinstance(declarator, str):
+                symbol, _ = self.compiler_state.symbol_table.find(init_declarator['declarator'])
+                if not symbol:
+                    symbol = Symbol(identifier=init_declarator['declarator'])
+                    self.compiler_state.symbol_table.insert(symbol)
+            elif isinstance(declarator, dict) and declarator.get('symbol', None):
+                symbol = declarator['symbol']
+            else:
+                symbol = declarator
+
+            symbol.type = declaration_specifiers
 
     def p_declaration_2(self, t):
         """declaration : declaration_specifiers SEMI"""
@@ -671,6 +679,7 @@ class Parser(object):
         # the direct_declarator might come up as a string/identifier in the case of function parameters
         declarator = Symbol(identifier=t[2]) if isinstance(t[2], str) else t[2]
         declarator.add_pointer_level(t[1])
+        self.compiler_state.symbol_table.insert(declarator)
 
         t[0] = declarator
 
@@ -719,14 +728,37 @@ class Parser(object):
         self.output_production(t, production_message=
             'direct_declarator -> direct_declarator LBRACKET constant_expression_option RBRACKET')
 
-        if issubclass(type(t[3]), ConstantValue) and t[3].type == 'int' or type(t[3]) is int:
-            dimension = t[3].value if type(t[3]) is ConstantValue else t[3]
-            t[1].add_array_dimension(dimension)  # TODO validate?
-        elif t[3] is None:
-            t[1].add_array_dimension(Symbol.EMPTY_ARRAY_DIM)
+        symbol = None
+        if isinstance(t[1], str):
+            symbol, _ = self.compiler_state.symbol_table.find(t[1])
+
+            if not symbol:
+                symbol = VariableSymbol(identifier=t[1], lineno=t.lineno(1))
+                self.compiler_state.symbol_table.insert(symbol)
+
         else:
-            raise Exception(
-                'Only integral types may be used to specify array dimensions ({} given)'.format(t[3].type))
+            symbol, _ = self.compiler_state.symbol_table.find(t[1])
+
+            if not symbol:
+                raise Exception('Debug: One would think that there would be a symbol table entry for {}'.format(t[1]))
+
+        # Use the commented out code once we are officially ready to do compile-time constant expression evaluation
+        if True:  # t[3].get('constant', None):
+            # if t[3]['constant'].type == ConstantValue.INTEGER:
+            #     symbol.add_array_dimension(t[3]['constant'].value)
+            # else:
+            #     raise Exception(
+            #         'Only integral types may be used to specify array dimensions ({} given)'.format(t[3].type))
+            if issubclass(type(t[3]), ConstantValue) and t[3].type == 'int' or type(t[3]) is int:
+                dimension = t[3].value if type(t[3]) is ConstantValue else t[3]
+                symbol.add_array_dimension(dimension)  # TODO validate?
+            elif t[3]['constant'] is None:
+                symbol.add_array_dimension(Symbol.EMPTY_ARRAY_DIM)
+            else:
+                raise Exception(
+                    'Only integral types may be used to specify array dimensions ({} given)'.format(t[3].type))
+        # else:
+        #     symbol.add_array_dimension(Symbol.EMPTY_ARRAY_DIM)
 
         t[0] = t[1]
 
@@ -752,7 +784,8 @@ class Parser(object):
                 function_symbol.add_named_parameters(t[3])
                 function_symbol.finalized = True
             else:
-                error_message = 'Function definition does not match signature.'
+                error_message = \
+                    'Function definition does not match signature for function "{}"'.format(function_symbol.identifier)
                 raise CompileError(message=error_message, line_num=lineno, token_col=0,
                                        source_line=self.compiler_state.source_code[lineno])
         else:  #
@@ -1062,7 +1095,7 @@ class Parser(object):
         """constant_expression_option : empty"""
         self.output_production(t, production_message='constant_expression_option -> empty')
 
-        t[0] = None
+        t[0] = {'constant': None}
 
     def p_constant_expression_option_to_constant_expression(self, t):
         """constant_expression_option : constant_expression"""
@@ -1329,6 +1362,16 @@ class Parser(object):
         self.output_production(t, production_message=
             'assignment_expression -> unary_expression assignment_operator assignment_expression')
 
+        symbol = t[1]
+        if symbol.immutable:
+            message = 'Unable to modify immutable symbol {} (via {})'.format(symbol.identifier, t[2])
+            lineno = t.lineno(1)
+            column = 0
+            source_line = self.compiler_state.source_code[lineno - 1]
+            raise CompileError(message, lineno, column, source_line)
+
+        # t[0] = ast.Assignment()
+
     #
     # assignment_operator:
     #
@@ -1463,6 +1506,8 @@ class Parser(object):
         """
         self.output_production(t, production_message='unary_expression -> unary_operator cast_expression')
 
+        t[0] = t[2]  # TODO: handle appropriately with AST nodes
+
     def p_unary_expression_5(self, t):
         """
         unary_expression : SIZEOF unary_expression
@@ -1534,25 +1579,30 @@ class Parser(object):
         """
         self.output_production(t, production_message='postfix_expression -> postfix_expression LPAREN argument_expression_list RPAREN')
 
-        # print(t[3][0])
-        # print()
-        # print(t[3][0].type)
-
         if isinstance(t[1], str):
             function_symbol, _ = self.compiler_state.symbol_table.find(t[1])
-            if function_symbol.arguments_match_parameter_types(t[3]):
+
+            if function_symbol:
+
+                if function_symbol.arguments_match_parameter_types(t[3]):
 
 
-                # create AST node
+                    # create AST node
 
-                pass
-            else:
-                error_message = 'Argument types do not match parameter types for function call'
-                lineno = t.lineno(1)
-                source_line = self.compiler_state.source_code[lineno - 1]
-                raise CompileError(error_message, lineno, 0, source_line)
+                    pass
+                else:
+                    error_message = 'Argument types do not match parameter types for function call'
+                    lineno = t.lineno(1)
+                    source_line = self.compiler_state.source_code[lineno - 1]
+                    raise CompileError(error_message, lineno, 0, source_line)
+        elif isinstance(t[1], FunctionSymbol):
+            # create AST node
+            pass
         else:
+            print(t[1])
             raise Exception('Debug: We should be getting an identifier here')
+
+        # t[0] = ast.FunctionCall()
 
     def p_postfix_expression_to_function_call(self, t):
         """
@@ -1611,7 +1661,12 @@ class Parser(object):
         """
         self.output_production(t, production_message='primary_expression -> identifier')
 
-        t[0] = t[1]
+        symbol, _ = self.compiler_state.symbol_table.find(t[1])
+        if not symbol:
+            symbol = Symbol(t[1])
+            self.compiler_state.symbol_table.insert(symbol)
+
+        t[0] = symbol
 
     def p_primary_expression_constant(self, t):
         """
@@ -1638,7 +1693,8 @@ class Parser(object):
         t[0] = t[1]
 
     def p_string_literal_plus_string_literal_fragment(self, t):
-        """string_literal : string_literal SCONST
+        """
+        string_literal : string_literal SCONST
         """
         self.output_production(t, production_message='string_literal_list -> string_literal_list SCONST')
 
@@ -1662,7 +1718,7 @@ class Parser(object):
         """
         self.output_production(t, production_message='argument_expression_list ->  assignment_expression')
 
-        t[0] = [t[1]]
+        t[0] = [t[1]] if t[1] else []
 
     def p_argument_expression_list_list_comma_expression(self, t):
         """
@@ -1671,7 +1727,9 @@ class Parser(object):
         self.output_production(t, production_message=
             'argument_expression_list -> argument_expression_list COMMA assignment_expression')
 
-        t[0] = t[1] + t[3]
+        print(t[1], t[3])
+
+        t[0] = t[1] + [t[3]]
 
     #
     # constant:

@@ -72,15 +72,6 @@ class ${name}(BaseAstNode):
 ${init_method}
 ${children_method}
 ${to_3ac_stub}
-
-    # This method will likely be implemented in the BaseAstNode
-    # def to_graph_viz_str(self):
-    #     descendant_names = ', '.join([child.name() for child in self.children])
-    #     output = '{} -> {{}};\\n'.format(self, descendant_names)
-    #     for child in self.children:
-    #         ouptut += child.to_graph_viz_str()
-    #     return output
-
 """
 
 
@@ -177,7 +168,7 @@ def generate_to_3ac_method_stub(definition: dict):
     parameters = definition.get("3ac_parameters", [])
     parameter_list = ', '.join(parameters) + ', ' if parameters else ''
 
-    src =  '    def to_3ac(self, {}include_source=False):\n'.format(parameter_list)
+    src =  "    def to_3ac(self, {}return_register:str=None, include_source=False):\n".format(parameter_list)
     src += "        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'" \
            ".format(type(self).__name__))\n"
     return src
