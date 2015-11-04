@@ -17,7 +17,12 @@
 # File Description: The massive Parser file containing the productions and
 # operations for parsing the ANSI C grammar.
 ###############################################################################
-from ast.ast_nodes import Assignment
+
+import ast
+from ast.ast_nodes import *
+##from ast.ast_nodes import Constant
+##from ast.ast_nodes import Assignment
+
 
 from exceptions.compile_error import CompileError
 
@@ -31,6 +36,9 @@ from symbol_table.symbol import Symbol, PointerDeclaration, TypeDeclaration, Con
 # This class is responsible for working in tandem with the Lexer to parse the given C program input and then
 # constructing the Abstract Syntax Tree that corresponds to the program. Compile time checking is done by this class.
 #
+from ticket_counting.ticket_counters import UUID_TICKETS
+
+
 class Parser(object):
     ## The constructor for a new Parser object.
     #
@@ -1455,7 +1463,7 @@ class Parser(object):
                           | binary_expression LOR binary_expression
         """
         self.output_production(t, production_message=
-            'assignment_expression -> binary_expression {} binary_expression'.format(t[2]))
+            'binary_expression -> binary_expression {} binary_expression'.format(t[2]))
 
         if Parser.is_a_constant(t[1]) and Parser.is_a_constant(t[3]):
             t[0] = Parser.perform_binary_operation(t[1], t[2], t[3])
@@ -1753,7 +1761,11 @@ class Parser(object):
         """
         self.output_production(t, production_message='constant -> ICONST {}'.format(t[1]))
 
-        t[0] = ConstantValue( int(t[1]), 'int')
+        node = Constant(int(t[1]), Constant.INTEGER, uuid=UUID_TICKETS.get())
+
+        print(node)
+
+        t[0] = {'constant': node, 'ast_node': node}
 
     def p_constant_float(self, t):
         """
@@ -1865,7 +1877,7 @@ class Parser(object):
         production_message = '{rhs:>30} -> {lhs}'.format(rhs=message_parts[0], lhs=message_parts[1])
 
         line = t.lineno(1)
-        if line - 1 < len(self.compiler_state.source_code):
+        if 0 <= line - 1 < len(self.compiler_state.source_code):
             self.prod_logger.source(self.compiler_state.source_code[line - 1], line=line)
         self.prod_logger.production(production_message)
 

@@ -34,7 +34,7 @@ A configuration file should appear as (for a format example, not necessarily cor
     "single_children": ["initialization_expression", "stop_condition_expression", "increment_expression"],
     "list_children": ["body_statments"],
     "3ac_parameters": ["a_dummy_parameter"],
-    "ticket_counters": ["label_ticket_counter"]
+    "ticket_counting": ["label_ticket_counter"]
     "python_3ac_gen_code": ""
   }
 ]

@@ -14,7 +14,7 @@
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
-from ticket_counters.label_counter import LabelCounter
+from ticket_counting.ticket_counters import LabelCounter
 
 
 class TestLabelCounter(unittest.TestCase):
