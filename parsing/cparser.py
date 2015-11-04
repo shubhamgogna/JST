@@ -195,7 +195,7 @@ class Parser(object):
         """function_definition : declaration_specifiers declarator enter_function_scope compound_statement"""
         self.output_production(t, production_message='function_definition -> declaration_specifiers declarator compound_statement')
 
-        function_symbol = t[2].get('symbol', None)
+        function_symbol = t[2].get('direct_declarator').get('symbol', None)
         if function_symbol:
             function_symbol.type = t[1]
         else:
@@ -1755,7 +1755,8 @@ class Parser(object):
         """
         self.prod_logger.info('Entering scope {}'.format(len(self.compiler_state.symbol_table.table)))
 
-        function_symbol = t[-1]['symbol']
+        print(t[-1])
+        function_symbol = t[-1]['direct_declarator']['symbol']
         self.compiler_state.symbol_table.push()
         for named_parameter in function_symbol.named_parameters:
             self.compiler_state.symbol_table.insert(named_parameter)  # TODO: may need to turn these into symbols

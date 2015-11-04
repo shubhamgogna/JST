@@ -59,7 +59,7 @@ class Symbol(object):
         if self.identifier == '':  # a case like when the symbol is part of a function signature
             self_str = self.to_abstract_str()
         else:
-            pointer_str = len(self.pointer_modifiers) * '*' if len(self.pointer_modifiers) > 0 else ''
+            pointer_str = len(self.pointer_modifiers) * '*' if self.pointer_modifiers is not None and len(self.pointer_modifiers) > 0 else ''
             type_str = '{}{}'.format(self.type if self.type else 'void', pointer_str)
             array_str = ''
             for dim in self.array_dims:
