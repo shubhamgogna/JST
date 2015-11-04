@@ -27,3 +27,21 @@ class LabelCounter(object):
     @staticmethod
     def reset():
         LabelCounter.next_value = 0
+
+
+class GenericTicketCounter(object):
+    def __init__(self, prefix=''):
+        if prefix == '':
+            self.prefix = ''
+        else:
+            self.prefix = prefix + '_'
+        self.next_value = 0
+
+    def get(self):
+        ticket = '{prefix}{value:>05}'.format(prefix=self.prefix, value=self.next_value)
+        self.next_value += 1
+        return ticket
+
+UUID_TICKETS = GenericTicketCounter()
+INT_REGISTER_TICKETS = GenericTicketCounter(prefix='ireg')
+FLOAT_REGISTER_TICKETS = GenericTicketCounter(prefix='freg')
