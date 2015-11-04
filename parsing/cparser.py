@@ -17,6 +17,7 @@
 # File Description: The massive Parser file containing the productions and
 # operations for parsing the ANSI C grammar.
 ###############################################################################
+from ast.ast_nodes import Assignment
 
 from exceptions.compile_error import CompileError
 
@@ -205,6 +206,11 @@ class Parser(object):
         ast_node_args = {"lines": (t.lineno(1), t.linespan(4)[1])}
         # t[0] = ast.FunctionDefinition(declaration_specifiers=t[1], declarator=t[2], compound_statement=t[3],
         #                               **ast_node_args)
+
+        # compound statement is assignment_expr node.
+
+        t[0] = FunctionDefinition()
+
 
     #
     # declaration:
@@ -1196,6 +1202,8 @@ class Parser(object):
         """
         self.output_production(t, production_message='expression_statement -> expression_option SEMI')
 
+        t[0] = t[1]
+
     #
     # compound-statement:
     #
@@ -1204,6 +1212,9 @@ class Parser(object):
         compound_statement : LBRACE enter_scope insert_mode declaration_list lookup_mode statement_list leave_scope RBRACE
         """
         self.output_production(t, production_message='compound_statement -> LBRACE declaration_list statement_list RBRACE')
+
+        t[0] = t[6]
+
 
     def p_compound_statement_2(self, t):
         """
@@ -1231,6 +1242,8 @@ class Parser(object):
         statement_list : statement
         """
         self.output_production(t, production_message='statement_list -> statement')
+
+        t[0] = t[1]
 
     def p_statement_list_2(self, t):
         """
@@ -1370,7 +1383,7 @@ class Parser(object):
             source_line = self.compiler_state.source_code[lineno - 1]
             raise CompileError(message, lineno, column, source_line)
 
-        # t[0] = ast.Assignment()
+        t[0] = {'ast_node': Assignment(t[2],t[1],t[2])}
 
     #
     # assignment_operator:

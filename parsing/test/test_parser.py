@@ -712,6 +712,25 @@ class TestParser(unittest.TestCase):
         self.check_correct_element(symbol_table,'do_stuff', 0, 'void do_stuff(int* array)')
 
 
+    def test_simple_assign(self):
+        self.enable_parser_debugging()
+
+        data = '''
+
+            int main()
+            {
+
+            int g;
+            g = 5;
+            }
+
+            '''
+        self.parser.parse(data)
+
+
+
+
+
     def enable_parser_debugging(self):
         if self.debug:
             self.parser.prod_logger.add_switch(Logger.PRODUCTION)
