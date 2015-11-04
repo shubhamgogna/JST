@@ -27,7 +27,7 @@ class CompilerState:
     def __init__(self, source_code=None,
                  print_table=True, table_logfile='log_symbol_table.txt',
                  print_tokens=True, print_source_scanner=True, scanner_logfile='log_scanner_tokens.txt',
-                 print_productions=True, print_source_parser=True, print_info=False, parser_logfile=sys.stdout):#'log_parser_productions.txt'):
+                 print_productions=True, print_source_parser=True, print_info=False, parser_logfile='log_parser_productions.txt'):
 
         # Initialize table
         self.symbol_table = SymbolTable()
