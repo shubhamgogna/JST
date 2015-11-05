@@ -73,6 +73,9 @@ class TestAst(unittest.TestCase):
             '}\n'\
             ''
         ast = self.parser.parse(data)
+        print(ast, type(ast))
+        print(ast.to_graph_viz_str())
+        print(ast.children)
 
 
     def test_if_else(self):

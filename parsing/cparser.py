@@ -20,8 +20,6 @@
 
 import ast
 from ast.ast_nodes import *
-##from ast.ast_nodes import Constant
-##from ast.ast_nodes import Assignment
 
 
 from exceptions.compile_error import CompileError
@@ -37,6 +35,7 @@ from symbol_table.symbol import Symbol, PointerDeclaration, TypeDeclaration, Con
 # constructing the Abstract Syntax Tree that corresponds to the program. Compile time checking is done by this class.
 #
 from ticket_counting.ticket_counters import UUID_TICKETS
+from utils.primitive_types import Type
 
 
 class Parser(object):
@@ -142,48 +141,70 @@ class Parser(object):
 
     def p_program(self, t):
         """
-        program : translation_unit leave_scope
+        program : translation_unit_opt leave_scope
         """
-        t[0] = None
+        t[0] = t[1]
 
     #
     # translation-unit:
     #
     def p_translation_unit(self, t):
         """
-        translation_unit : translation_unit_opt
-                         | empty
+        translation_unit_opt : translation_unit
+                             | empty
         """
-        self.output_production(t, production_message='translation_unit -> translation_unit_opt')
+        self.output_production(t, production_message='translation_unit_opt -> translation_unit')
+
+        t[0] = FileAST(external_declarations=t[1] if t[1] else [], uuid=UUID_TICKETS.get())
+
+        print('children: ', t[0].children[0].to_graph_viz_str())
 
     def p_translation_unit_1(self, t):
         """
-        translation_unit_opt : external_declaration
+        translation_unit : external_declaration
         """
-        self.output_production(t, production_message='translation_unit_1 -> external_declaration')
+        self.output_production(t, production_message='translation_unit -> external_declaration')
+
+        t[0] = [t[1]['ast_node']]
 
     def p_translation_unit_2(self, t):
         """
-        translation_unit_opt : translation_unit external_declaration
+        translation_unit : translation_unit external_declaration
         """
         self.output_production(t, production_message='translation_unit_2 -> translation_unit external_declaration')
+
+        if t[2] is not None:
+            t[1].extend(t[2])
+
+        t[0] = t[1]
 
     #
     # external-declaration:
     #
     def p_external_declaration_1(self, t):
-        """external_declaration : function_definition"""
+        """
+        external_declaration : function_definition
+        """
         self.output_production(t, production_message='external_declaration -> function_definition')
 
+        t[0] = t[1]
+
+
     def p_external_declaration_2(self, t):
-        """external_declaration : declaration"""
+        """
+        external_declaration : declaration
+        """
         self.output_production(t, production_message='external_declaration -> declaration')
+
+        t[0] = t[1]
 
     #
     # function-definition
     #
     def p_function_definition_1(self, t):
-        """function_definition : declaration_specifiers declarator enter_function_scope declaration_list compound_statement"""
+        """
+        function_definition : declaration_specifiers declarator enter_function_scope declaration_list compound_statement
+        """
         self.output_production(t, production_message=
             'function_definition -> declaration_specifiers declarator declaration_list compound_statement')
 
@@ -193,9 +214,18 @@ class Parser(object):
         else:
             raise Exception('Debug check: Expected a function_symbol...')
 
+        FunctionDefinition(declarations=function_symbol, param_declarations=function_symbol.named_parameters, body=t[5], uuid=UUID_TICKETS.get())
+
     def p_function_definition_2(self, t):
         """function_definition : declarator enter_function_scope declaration_list compound_statement"""
         self.output_production(t, production_message='function_definition -> declarator declaration_list compound_statement')
+
+        declarator = t[1]
+        td = TypeDeclaration()
+        td.add_type_specifier(Type.INT)
+        declarator.type = td
+
+        t[0] = FunctionDefinition(declarations=declarator, param_declarations=declarator.named_parameters, body=t[3], uuid=UUID_TICKETS)
 
     def p_function_definition_3(self, t):
         """function_definition : declarator enter_function_scope compound_statement"""
@@ -216,7 +246,9 @@ class Parser(object):
         #                               **ast_node_args)
 
 
-        # t[0] = {FunctionDefinition()}
+        t[0] = {'ast_node': FunctionDefinition(declarations=function_symbol,
+                                               param_declarations=function_symbol.named_parameters,
+                                               body=t[4], uuid=UUID_TICKETS.get())}
 
 
     #
@@ -767,20 +799,20 @@ class Parser(object):
                 raise Exception('Debug: One would think that there would be a symbol table entry for {}'.format(t[1]))
 
         # Use the commented out code once we are officially ready to do compile-time constant expression evaluation
-        if True:  # t[3].get('constant', None):
-            # if t[3]['constant'].type == ConstantValue.INTEGER:
-            #     symbol.add_array_dimension(t[3]['constant'].value)
+        if t[3].get('constant', None):
+             if t[3]['constant'].type == ConstantValue.INTEGER:
+                 symbol.add_array_dimension(t[3]['constant'].value)
+             else:
+                 raise Exception(
+                     'Only integral types may be used to specify array dimensions ({} given)'.format(t[3].type))
+            # if issubclass(type(t[3]), ConstantValue) and t[3].type == 'int' or type(t[3]) is int:
+            #     dimension = t[3].value if type(t[3]) is ConstantValue else t[3]
+            #     symbol.add_array_dimension(dimension)  # TODO validate?
+            # elif t[3]['constant'] is None:
+            #     symbol.add_array_dimension(Symbol.EMPTY_ARRAY_DIM)
             # else:
             #     raise Exception(
             #         'Only integral types may be used to specify array dimensions ({} given)'.format(t[3].type))
-            if issubclass(type(t[3]['constant']), Constant) and (t[3]['constant'].type == 'int' or type(t[3]['constant']) is int):
-                dimension = t[3]['constant'].value if type(t[3]['constant']) is Constant else t[3]['constant']
-                symbol.add_array_dimension(dimension)  # TODO validate?
-            elif t[3]['constant'] is None:
-                symbol.add_array_dimension(Symbol.EMPTY_ARRAY_DIM)
-            else:
-                raise Exception(
-                    'Only integral types may be used to specify array dimensions ({} given)'.format(t[3].type))
         # else:
         #     symbol.add_array_dimension(Symbol.EMPTY_ARRAY_DIM)
 
@@ -1249,17 +1281,25 @@ class Parser(object):
         """
         self.output_production(t, production_message='compound_statement -> LBRACE statement_list RBRACE')
 
+        t[0] = t[4]
+
     def p_compound_statement_3(self, t):
         """
         compound_statement : LBRACE enter_scope insert_mode declaration_list lookup_mode leave_scope RBRACE
         """
         self.output_production(t, production_message='compound_statement -> LBRACE declaration_list RBRACE')
 
+        # optimize away?
+        t[0] = {'ast_node': [t[4]]}
+
     def p_compound_statement_4(self, t):
         """
         compound_statement : LBRACE RBRACE
         """
         self.output_production(t, production_message='compound_statement -> LBRACE RBRACE')
+
+        # optimize away?
+        t[0] = {'ast_node': EmptyStatement(uuid=UUID_TICKETS.get())}
 
     #
     # statement-list:
@@ -1291,11 +1331,20 @@ class Parser(object):
         """
         self.output_production(t, production_message='selection_statement -> IF LPAREN expression RPAREN statement')
 
+        node = If(conditional=t[3], if_true=t[5], if_false=EmptyStatement(), uuid=UUID_TICKETS.get())
+
+        t[0] = {'ast_node': node}
+
     def p_selection_statement_2(self, t):
         """
         selection_statement : IF LPAREN expression RPAREN statement ELSE statement
         """
-        self.output_production(t, production_message='selection_statement -> IF LPAREN expression RPAREN statement ELSE statement')
+        self.output_production(t,
+            production_message='selection_statement -> IF LPAREN expression RPAREN statement ELSE statement')
+
+        node = If(conditional=t[3], if_true=t[5], if_false=t[7], uuid=UUID_TICKETS.get())
+
+        t[0] = {'ast_node': node}
 
     def p_selection_statement_3(self, t):
         """
