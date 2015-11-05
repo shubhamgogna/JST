@@ -716,14 +716,11 @@ class TestParser(unittest.TestCase):
         self.enable_parser_debugging()
 
         data = '''
-
             int main()
             {
-
             int g;
             g = 5;
             }
-
             '''
         self.parser.parse(data)
 

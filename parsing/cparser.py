@@ -215,9 +215,21 @@ class Parser(object):
         # t[0] = ast.FunctionDefinition(declaration_specifiers=t[1], declarator=t[2], compound_statement=t[3],
         #                               **ast_node_args)
 
-        # compound statement is assignment_expr node.
-
-        t[0] = FunctionDefinition()
+        # t[4] is compound statement is assignment_expr node. -> should become the compound_statement in FunctionDefinition?
+        #
+        # Testing t[4] has all appropriate data for simple assignnment!
+        #
+        # print("THIS HAPPENED HERE!!!!!!")
+        # print(t[4]["ast_node"].lvalue)
+        # print(t[4]["ast_node"].op)
+        # print(t[4]["ast_node"].rvalue)
+        # parameters = str(t[4]["ast_node"].lvalue) + str(t[4]["ast_node"].op) + str(t[4]["ast_node"].rvalue)
+        # print("\n\n\n\n\n\n")
+        # print(parameters)
+        #
+        # So probably will need to pass in parameters or something like that to the the body component of FunctionDefinition
+        #
+        # t[0] = {FunctionDefinition()}
 
 
     #
@@ -1391,7 +1403,9 @@ class Parser(object):
             source_line = self.compiler_state.source_code[lineno - 1]
             raise CompileError(message, lineno, column, source_line)
 
-        t[0] = {'ast_node': Assignment(t[2],t[1],t[2])}
+        # t[3] is a constant node so only passing in the value for the assignment node.
+        node_value = t[3]['ast_node'].value
+        t[0] = {'ast_node': Assignment(t[2],t[1],node_value)}
 
     #
     # assignment_operator:
@@ -1411,6 +1425,9 @@ class Parser(object):
                             | OREQUAL
         """
         self.output_production(t, production_message='assignment_operator -> {}'.format(t[1]))
+
+        t[0] = t[1]
+
 
     #
     # constant-expression
@@ -1508,6 +1525,9 @@ class Parser(object):
         self.output_production(t, production_message='unary_expression -> postfix_expression')
 
         t[0] = t[1]
+
+        print("\n\n\n")
+        print(t[1])
 
     def p_unary_expression_2(self, t):
         """
@@ -1761,9 +1781,8 @@ class Parser(object):
         """
         self.output_production(t, production_message='constant -> ICONST {}'.format(t[1]))
 
-        node = Constant(int(t[1]), Constant.INTEGER, uuid=UUID_TICKETS.get())
-
-        print(node)
+        # this was backwards,  type was int and int was type
+        node = Constant(ConstantValue.INTEGER, int(t[1]), uuid=UUID_TICKETS.get())
 
         t[0] = {'constant': node, 'ast_node': node}
 
