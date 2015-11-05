@@ -233,6 +233,8 @@ class Parser(object):
 
         print(type(init_declarator_list))
         print(init_declarator_list)
+
+        t[0] = []
         for init_declarator in init_declarator_list:
             symbol = None
             declarator = init_declarator['declarator']
@@ -247,6 +249,15 @@ class Parser(object):
                 symbol = declarator
 
             symbol.type = declaration_specifiers
+
+            if len(symbol.array_dims) == 0:
+                # Type information is stored in symbol.type
+                # Bitsize has to be calculated from type, so see note directly above
+                t[0].append(Declaration(symbol.identifier, None, None, None, symbol.type, None, None))
+            else:
+                t[0].append(ArrayDeclaration(symbol.identifier, symbol.array_dims, None, symbol.type))
+
+        t[0] = {'ast_node': t[0]}
 
     def p_declaration_2(self, t):
         """declaration : declaration_specifiers SEMI"""
@@ -762,8 +773,8 @@ class Parser(object):
             # else:
             #     raise Exception(
             #         'Only integral types may be used to specify array dimensions ({} given)'.format(t[3].type))
-            if issubclass(type(t[3]), ConstantValue) and t[3].type == 'int' or type(t[3]) is int:
-                dimension = t[3].value if type(t[3]) is ConstantValue else t[3]
+            if issubclass(type(t[3]['constant']), Constant) and (t[3]['constant'].type == 'int' or type(t[3]['constant']) is int):
+                dimension = t[3]['constant'].value if type(t[3]['constant']) is Constant else t[3]['constant']
                 symbol.add_array_dimension(dimension)  # TODO validate?
             elif t[3]['constant'] is None:
                 symbol.add_array_dimension(Symbol.EMPTY_ARRAY_DIM)

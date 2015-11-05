@@ -54,9 +54,10 @@ class IterationNode(BaseAstNode):
 # This is a nested declaration of an array with the given type
 ##
 class ArrayDeclaration(BaseAstNode):
-    def __init__(self, dim, dim_qualifiers, type, **kwargs):
+    def __init__(self, identifier, dim, dim_qualifiers, type, **kwargs):
         super(ArrayDeclaration, self).__init__(**kwargs)
 
+        self.identifier = identifier
         self.dim = dim
         self.dim_qualifiers = dim_qualifiers
 
