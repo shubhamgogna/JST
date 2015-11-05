@@ -1312,6 +1312,8 @@ class Parser(object):
         """
         self.output_production(t, production_message='iteration_statement -> WHILE LPAREN expression RPAREN statement')
 
+        t[0] = {'ast_node': IterationNode(True, None, t[3], None, t[5])}
+
     def p_iteration_statement_2(self, t):
         """
         iteration_statement : FOR LPAREN expression_option SEMI expression_option SEMI expression_option RPAREN statement
@@ -1320,11 +1322,15 @@ class Parser(object):
             'iteration_statement -> FOR LPAREN expression_option SEMI expression_option SEMI expression_option RPAREN '
             'statement')
 
+        t[0] = {'ast_node': IterationNode(True, t[3], t[5], t[7], t[9])}
+
     def p_iteration_statement_3(self, t):
         """
         iteration_statement : DO statement WHILE LPAREN expression RPAREN SEMI
         """
         self.output_production(t, production_message='iteration_statement -> DO statement WHILE LPAREN expression RPAREN SEMI')
+
+        t[0] = {'ast_node': IterationNode(False, None, t[5], None, t[2])}
 
     #
     # jump_statement:
