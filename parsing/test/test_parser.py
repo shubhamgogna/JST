@@ -712,7 +712,7 @@ class TestParser(unittest.TestCase):
         self.check_correct_element(symbol_table,'do_stuff', 0, 'void do_stuff(int* array)')
 
 
-    def test_simple_assign(self):
+    def test_simple_assign_const(self):
         self.enable_parser_debugging()
 
         data = '''
@@ -725,6 +725,20 @@ class TestParser(unittest.TestCase):
         self.parser.parse(data)
 
 
+    def test_simple_assign_var(self):
+        self.enable_parser_debugging()
+
+        data = '''
+            int main()
+            {
+            int g;
+            int G;
+
+            g = 5;
+            G = g;
+            }
+            '''
+        self.parser.parse(data)
 
 
 

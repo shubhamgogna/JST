@@ -215,20 +215,7 @@ class Parser(object):
         # t[0] = ast.FunctionDefinition(declaration_specifiers=t[1], declarator=t[2], compound_statement=t[3],
         #                               **ast_node_args)
 
-        # t[4] is compound statement is assignment_expr node. -> should become the compound_statement in FunctionDefinition?
-        #
-        # Testing t[4] has all appropriate data for simple assignnment!
-        #
-        # print("THIS HAPPENED HERE!!!!!!")
-        # print(t[4]["ast_node"].lvalue)
-        # print(t[4]["ast_node"].op)
-        # print(t[4]["ast_node"].rvalue)
-        # parameters = str(t[4]["ast_node"].lvalue) + str(t[4]["ast_node"].op) + str(t[4]["ast_node"].rvalue)
-        # print("\n\n\n\n\n\n")
-        # print(parameters)
-        #
-        # So probably will need to pass in parameters or something like that to the the body component of FunctionDefinition
-        #
+
         # t[0] = {FunctionDefinition()}
 
 
@@ -1233,7 +1220,16 @@ class Parser(object):
         """
         self.output_production(t, production_message='compound_statement -> LBRACE declaration_list statement_list RBRACE')
 
-        t[0] = t[6]
+        # test is t[6] got simple assignments:
+        #
+        # for item in t[6]['ast_node']:
+        #     print(item.lvalue)
+        #     print(item.op)
+        #     print(item.rvalue)
+
+        # t[6] is statement_list so need to pass this up
+        # t[4] is declaration_list so will probably need to pass this up too....
+        t[0] = {'declaration_list': t[4], 'statement_list': t[6]}
 
 
     def p_compound_statement_2(self, t):
@@ -1270,6 +1266,10 @@ class Parser(object):
         statement_list : statement_list statement
         """
         self.output_production(t, production_message='statement_list -> statement_list statement')
+
+        # set t[0] as t[1] combined with t[2]
+        statements = {'ast_node': [t[1]['ast_node'], t[2]['ast_node']]}
+        t[0] = statements
 
     #
     # selection-statement
@@ -1403,9 +1403,15 @@ class Parser(object):
             source_line = self.compiler_state.source_code[lineno - 1]
             raise CompileError(message, lineno, column, source_line)
 
-        # t[3] is a constant node so only passing in the value for the assignment node.
-        node_value = t[3]['ast_node'].value
-        t[0] = {'ast_node': Assignment(t[2],t[1],node_value)}
+        # for simple assign to variable: t[3] is symbol. so only pass id
+        if type(t[3]) is Symbol:
+            symbol_id = t[3].identifier
+            t[0] = {'ast_node': Assignment(t[2],t[1],symbol_id)}
+
+        # for simple assign to const: t[3] is a constant node so only passing in the value for the assignment node.
+        elif t[3]['ast_node']:
+            node_value = t[3]['ast_node'].value
+            t[0] = {'ast_node': Assignment(t[2],t[1],node_value)}
 
     #
     # assignment_operator:
@@ -1525,9 +1531,6 @@ class Parser(object):
         self.output_production(t, production_message='unary_expression -> postfix_expression')
 
         t[0] = t[1]
-
-        print("\n\n\n")
-        print(t[1])
 
     def p_unary_expression_2(self, t):
         """
