@@ -762,12 +762,18 @@ class Parser(object):
             # else:
             #     raise Exception(
             #         'Only integral types may be used to specify array dimensions ({} given)'.format(t[3].type))
+            print('\n\n\n')
+            print(type(t[3]['ast_node'].value))
+
+
             if issubclass(type(t[3]), ConstantValue) and t[3].type == 'int' or type(t[3]) is int:
                 dimension = t[3].value if type(t[3]) is ConstantValue else t[3]
                 symbol.add_array_dimension(dimension)  # TODO validate?
             elif t[3]['constant'] is None:
                 symbol.add_array_dimension(Symbol.EMPTY_ARRAY_DIM)
             else:
+                print('\n\n\n')
+                print(type(t[3]))
                 raise Exception(
                     'Only integral types may be used to specify array dimensions ({} given)'.format(t[3].type))
         # else:
@@ -1784,7 +1790,7 @@ class Parser(object):
         """
         self.output_production(t, production_message='constant -> ICONST {}'.format(t[1]))
 
-        # this was backwards,  type was int and int was type
+        # this was backwards,  type was value and value was type
         node = Constant(ConstantValue.INTEGER, int(t[1]), uuid=UUID_TICKETS.get())
 
         t[0] = {'constant': node, 'ast_node': node}

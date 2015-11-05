@@ -741,6 +741,19 @@ class TestParser(unittest.TestCase):
         self.parser.parse(data)
 
 
+    def test_array_simple_assign(self):
+        self.enable_parser_debugging()
+
+        data = '''
+            int main()
+            {
+            int a[10];
+            a[1] = 4;
+            }
+            '''
+        self.parser.parse(data)
+
+
 
     def enable_parser_debugging(self):
         if self.debug:
