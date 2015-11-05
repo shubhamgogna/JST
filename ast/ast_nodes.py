@@ -5,13 +5,64 @@
 ##
 
 
-class BaseAstNode(object):
-    def __init__(self, **kwargs):
-        pass
+# The class for the base AST node
+#
+# This class will be inherited from for other types of AST nodes. Should hold all common functionality.
+#
+class BaseAstNode:
+    # Initialize node with desired info
+    #
+    # @param children A list of child nodes
+    # @param line_range A tuple of start line and end line for where this node applies
+    # @param uuid A unique identifier number from a TicketCounter
+    #
+    def __init__(self, childrens=None, line_range=None, uuid=None, **kwargs):
 
+        # initialize children
+        if childrens is None:
+            self.childrens = []
+        else:
+            self.childrens = childrens
+
+        # initialize the line_range
+        self.line_range = line_range
+
+        # initialize the uuid
+        # Note: Since we have multiple ticket counters, we need to pass them in as a param.
+        self.uuid = uuid
+
+    # Define str function to concisely summarize a node with its uuid, name/type, and relevant info
     def __str__(self):
-        pass
+        return '{}_{}'.format(self.uuid, type(self).__name__)
 
+
+    #Define function for converting to 3ac
+    def to_3ac(self, include_source=False):
+        #TODO: something like: self.3ac = '\n'.join([child.to_3ac() for child in self.children])
+        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+
+    # TODO: Probably we will be able to remove the visit functionality since it should be encapsulated by 3ac
+    # Define visit function for the iteration protocol
+    def visit(self, node):
+        #TODO: Copied from pyCparser's visit node.... may need to fix
+        method = 'visit_' + node.__class__.__name__
+        visitor = getattr(self, method, self.generic_visit)
+        return visitor(node)
+
+    # Define generic visit function to call if no explicit visitor function exists for a node.
+    def generic_visit(self, node):
+        #TODO: Copied from pyCparser's visit node.... may need to fix
+        for c_name, c in node.children():
+            self.visit(c)
+
+
+    # Define method for getting a graphViz ready string
+    def to_graph_viz_str(self):
+        descendant_names = ', '.join([str(child) for child in self.childrens])
+        output = '{} -> {{}};\n'.format(self, 'poop')#descendant_names)
+        for child in self.childrens:
+            output += (child.to_graph_viz_str() + ',')
+        return output
 
 ##
 # This type of node handles all loops: for, while, and do...while.
@@ -54,9 +105,10 @@ class IterationNode(BaseAstNode):
 # This is a nested declaration of an array with the given type
 ##
 class ArrayDeclaration(BaseAstNode):
-    def __init__(self, dim, dim_qualifiers, type, **kwargs):
+    def __init__(self, identifier, dim, dim_qualifiers, type, **kwargs):
         super(ArrayDeclaration, self).__init__(**kwargs)
 
+        self.identifier = identifier
         self.dim = dim
         self.dim_qualifiers = dim_qualifiers
 
@@ -468,7 +520,6 @@ class ExpressionList(BaseAstNode):
 class FileAST(BaseAstNode):
     def __init__(self, external_declarations=None, **kwargs):
         super(FileAST, self).__init__(**kwargs)
-
 
 
         self.external_declarations = external_declarations if external_declarations else []
