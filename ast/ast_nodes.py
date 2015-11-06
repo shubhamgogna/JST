@@ -74,6 +74,7 @@ class BaseAstNode:
 
         for child in self.children:
             output += child.to_graph_viz_str()
+            print('hi')
         return output
 
     @property
