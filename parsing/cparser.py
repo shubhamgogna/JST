@@ -25,7 +25,7 @@ from ast.ast_nodes import *
 from exceptions.compile_error import CompileError
 
 import ply.yacc as yacc
-from symbol_table.symbol import Symbol, PointerDeclaration, FunctionSymbol, VariableSymbol
+from symbol_table.symbol import Symbol, FunctionSymbol, VariableSymbol
 
 
 ## Parser Class
@@ -154,8 +154,6 @@ class Parser(object):
                              | empty
         """
         self.output_production(t, production_message='translation_unit_opt -> translation_unit')
-
-        print(t[1], type(t[1]))
 
         t[0] = FileAST(external_declarations=t[1] if t[1] else [])
 
@@ -626,16 +624,11 @@ class Parser(object):
         """
         self.output_production(t, production_message='init_declarator -> declarator')
 
-        print(1, type(t[1]))
-
-
         t[0] = {"declarator": t[1], "initializer": None}
 
     def p_init_declarator_2(self, t):
         """init_declarator : declarator EQUALS initializer"""
         self.output_production(t, production_message='init_declarator -> declarator EQUALS initializer')
-
-        print(2, type(t[1]))
 
         t[0] = {"declarator": t[1], "initializer": t[3]}
 
@@ -1557,7 +1550,15 @@ class Parser(object):
         elif t[1]['ast_node'] and isinstance(t[3], Symbol):
             t[0] = {'ast_node': Assignment(t[2], t[1]['ast_node'], SymbolNode(t[3]))}
         elif t[1]['ast_node'] and t[1]['ast_node']:
-            t[0] = {'ast_node': Assignment(t[2], t[1]['ast_node'], t[3]['ast_node'])}
+
+
+            # TODO: clean up this gross hackpatch
+            rhs = t[3]
+            if not isinstance(t[3], Constant):
+                rhs = t[3]['ast_node']
+
+
+            t[0] = {'ast_node': Assignment(t[2], t[1]['ast_node'], rhs)}
 
 
         # # for simple assign to variable: t[3] is symbol. so only pass id
@@ -1706,7 +1707,7 @@ class Parser(object):
         """
         self.output_production(t, production_message='unary_expression -> PLUSPLUS unary_expression')
 
-        t[0] = {'ast_node': UnaryOperator(t[1], t[2])}
+        t[0] = {'ast_node': UnaryOperator(operator=t[1], expression=t[2]['ast_node'])}
 
         print('\n\n\n\nasdfasdfasdfasdf')
         print(t[0]['ast_node'])
@@ -1871,7 +1872,8 @@ class Parser(object):
         postfix_expression : postfix_expression PLUSPLUS
         """
         self.output_production(t, production_message='postfix_expression -> postfix_expression PLUSPLUS')
-        t[0] = {'ast_node': UnaryOperator(t[2],t[1]) }
+
+        t[0] = {'ast_node': UnaryOperator(operator=t[2], expression=t[1]['ast_node']) }
 
 
     def p_postfix_expression_to_post_decrement(self, t):

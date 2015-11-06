@@ -37,7 +37,7 @@ class TestAst(unittest.TestCase):
         self.lexer = None
         self.compiler_state = None
 
-    def enable_debug(self, productions=True, source=True):
+    def enable_debug(self, productions=True, source=False):
         if self.debug:
             self.parser.prod_logger.add_switch(Logger.INFO)
             if productions:
@@ -94,9 +94,9 @@ class TestAst(unittest.TestCase):
     def test_lone_if(self):
         data = ''\
             'int main() {\n' \
-            '  //int i;\n'\
-            '  if (/*i ==*/ 5) {\n'\
-            '    //i = 6;\n'\
+            '  int i;\n'\
+            '  if (i == 5) {\n'\
+            '    i = 6;\n'\
             '  }\n' \
             '}\n'\
             ''
@@ -110,11 +110,11 @@ class TestAst(unittest.TestCase):
     def test_if_else(self):
         data = ''\
             'int main() {\n' \
-            '  //int i;\n'\
+            '  int i;\n'\
             '  if (/*i ==*/ 5) {\n'\
             '    //i = 6;\n'\
             '  } else {\n'\
-            '    //i = 5;\n' \
+            '    i = 5;\n' \
             '  }\n' \
             '}\n'\
             ''
@@ -147,7 +147,7 @@ class TestAst(unittest.TestCase):
             int g;
             char a;
             float p;
-            const int = 4;
+            //const int = 4;
 
             g = 5;
             a = 2;

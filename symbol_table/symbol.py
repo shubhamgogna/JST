@@ -166,13 +166,13 @@ class FunctionSymbol(Symbol):
         return str(self)
 
 
-class ConstantValue(object):
-    INTEGER = 'int'
-    FLOAT = 'float'
-
-    def __init__(self, value=0, type=INTEGER):
-        self.value = value
-        self.type = type
+# class ConstantValue(object):
+#     INTEGER = 'int'
+#     FLOAT = 'float'
+#
+#     def __init__(self, value=0, type=INTEGER):
+#         self.value = value
+#         self.type = type
 
 
 # class TypeDeclaration(object):
@@ -213,9 +213,9 @@ class ConstantValue(object):
 #         return str(self)
 
 
-class PointerDeclaration(object):
-    def __init__(self):
-        self.qualifiers = []
-
-    def add_qualifiers(self, qualifiers):
-        pass
+# class PointerDeclaration(object):
+#     def __init__(self):
+#         self.qualifiers = []
+#
+#     def add_qualifiers(self, qualifiers):
+#         pass

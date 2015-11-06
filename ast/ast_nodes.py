@@ -62,10 +62,10 @@ class BaseAstNode:
 
     # Define method for getting a graphViz ready string
     def to_graph_viz_str(self):
-        # print(self.name())
-        # for child in self.children:
-        #     if not isinstance(child, BaseAstNode):
-        #         print(self.name(), child)
+        print(self.name())
+        for child in self.children:
+            if not isinstance(child, BaseAstNode):
+                print(self.name(), child)
         # 
         # for child in self.children:
         #     print(self.name(), 'child', child)
@@ -202,16 +202,6 @@ class Assignment(BaseAstNode):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
 
-    # This method will likely be implemented in the BaseAstNode
-    # def to_graph_viz_str(self):
-    #     descendant_names = ', '.join([child.name() for child in self.children])
-    #     output = '{} -> {{}};\n'.format(self, descendant_names)
-    #     for child in self.children:
-    #         ouptut += child.to_graph_viz_str()
-    #     return output
-
-
-
 class BinaryOperator(BaseAstNode):
     def __init__(self, operator, lvalue, rvalue, **kwargs):
         super(BinaryOperator, self).__init__(**kwargs)
@@ -222,7 +212,7 @@ class BinaryOperator(BaseAstNode):
         self.rvalue = rvalue
 
     def name(self):
-        return super(BinaryOperator, self).name(arg=self.operator)
+        return super(BinaryOperator, self).name(arg=OperatorUtils.operator_to_name(self.operator))
 
     @property
     def children(self):
@@ -233,15 +223,6 @@ class BinaryOperator(BaseAstNode):
 
     def to_3ac(self, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
-
-
-    # This method will likely be implemented in the BaseAstNode
-    # def to_graph_viz_str(self):
-    #     descendant_names = ', '.join([child.name() for child in self.children])
-    #     output = '{} -> {{}};\n'.format(self, descendant_names)
-    #     for child in self.children:
-    #         ouptut += child.to_graph_viz_str()
-    #     return output
 
 
 ##
@@ -261,16 +242,6 @@ class Break(BaseAstNode):
 
     def to_3ac(self, break_to_label, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
-
-
-    # This method will likely be implemented in the BaseAstNode
-    # def to_graph_viz_str(self):
-    #     descendant_names = ', '.join([child.name() for child in self.children])
-    #     output = '{} -> {{}};\n'.format(self, descendant_names)
-    #     for child in self.children:
-    #         ouptut += child.to_graph_viz_str()
-    #     return output
-
 
 
 class Case(BaseAstNode):
@@ -293,16 +264,6 @@ class Case(BaseAstNode):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
 
-    # This method will likely be implemented in the BaseAstNode
-    # def to_graph_viz_str(self):
-    #     descendant_names = ', '.join([child.name() for child in self.children])
-    #     output = '{} -> {{}};\n'.format(self, descendant_names)
-    #     for child in self.children:
-    #         ouptut += child.to_graph_viz_str()
-    #     return output
-
-
-
 class Cast(BaseAstNode):
     def __init__(self, to_type, expression, **kwargs):
         super(Cast, self).__init__(**kwargs)
@@ -323,20 +284,11 @@ class Cast(BaseAstNode):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
 
-    # This method will likely be implemented in the BaseAstNode
-    # def to_graph_viz_str(self):
-    #     descendant_names = ', '.join([child.name() for child in self.children])
-    #     output = '{} -> {{}};\n'.format(self, descendant_names)
-    #     for child in self.children:
-    #         ouptut += child.to_graph_viz_str()
-    #     return output
-
-
 class CompoundStatement(BaseAstNode):
     def __init__(self, declaration_list=None, statement_list=None, **kwargs):
         super(CompoundStatement, self).__init__(**kwargs)
 
-        self.declaration_list = declaration_list if declaration_list else EmptyStatement()
+        self.declaration_list = declaration_list
         self.statement_list = statement_list if statement_list else []
 
 
@@ -373,16 +325,6 @@ class Constant(BaseAstNode):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
 
-    # This method will likely be implemented in the BaseAstNode
-    # def to_graph_viz_str(self):
-    #     descendant_names = ', '.join([child.name() for child in self.children])
-    #     output = '{} -> {{}};\n'.format(self, descendant_names)
-    #     for child in self.children:
-    #         ouptut += child.to_graph_viz_str()
-    #     return output
-
-
-
 class Continue(BaseAstNode):
     def __init__(self, **kwargs):
         super(Continue, self).__init__(**kwargs)
@@ -399,18 +341,8 @@ class Continue(BaseAstNode):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
 
-    # This method will likely be implemented in the BaseAstNode
-    # def to_graph_viz_str(self):
-    #     descendant_names = ', '.join([child.name() for child in self.children])
-    #     output = '{} -> {{}};\n'.format(self, descendant_names)
-    #     for child in self.children:
-    #         ouptut += child.to_graph_viz_str()
-    #     return output
-
-
-
 class Declaration(BaseAstNode):
-    def __init__(self, identifier, qualifiers, storage, funcspec, type, initialization_value, bitsize, **kwargs):
+    def __init__(self, identifier, qualifiers, storage, funcspec, type_, initialization_value, bitsize, **kwargs):
         super(Declaration, self).__init__(**kwargs)
 
         self.identifier = identifier
@@ -418,7 +350,7 @@ class Declaration(BaseAstNode):
         self.storage = storage
         self.funcspec = funcspec
 
-        self.type = type
+        self.type_ = type_
         self.initialization_value = initialization_value
         self.bitsize = bitsize
 
@@ -426,7 +358,7 @@ class Declaration(BaseAstNode):
     @property
     def children(self):
         children = []
-        children.append(self.type)
+        children.append(self.type_)
         children.append(self.identifier)
         if self.initialization_value is not None:
             children.append(self.initialization_value)
@@ -434,16 +366,6 @@ class Declaration(BaseAstNode):
 
     def to_3ac(self, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
-
-
-    # This method will likely be implemented in the BaseAstNode
-    # def to_graph_viz_str(self):
-    #     descendant_names = ', '.join([child.name() for child in self.children])
-    #     output = '{} -> {{}};\n'.format(self, descendant_names)
-    #     for child in self.children:
-    #         ouptut += child.to_graph_viz_str()
-    #     return output
-
 
 
 class DeclarationList(BaseAstNode):
@@ -460,16 +382,6 @@ class DeclarationList(BaseAstNode):
 
     def to_3ac(self, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
-
-
-    # This method will likely be implemented in the BaseAstNode
-    # def to_graph_viz_str(self):
-    #     descendant_names = ', '.join([child.name() for child in self.children])
-    #     output = '{} -> {{}};\n'.format(self, descendant_names)
-    #     for child in self.children:
-    #         ouptut += child.to_graph_viz_str()
-    #     return output
-
 
 
 class Default(BaseAstNode):
@@ -490,16 +402,6 @@ class Default(BaseAstNode):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
 
-    # This method will likely be implemented in the BaseAstNode
-    # def to_graph_viz_str(self):
-    #     descendant_names = ', '.join([child.name() for child in self.children])
-    #     output = '{} -> {{}};\n'.format(self, descendant_names)
-    #     for child in self.children:
-    #         ouptut += child.to_graph_viz_str()
-    #     return output
-
-
-
 class EmptyStatement(BaseAstNode):
     def __init__(self, **kwargs):
         super(EmptyStatement, self).__init__(**kwargs)
@@ -511,16 +413,6 @@ class EmptyStatement(BaseAstNode):
 
     def to_3ac(self, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
-
-
-    # This method will likely be implemented in the BaseAstNode
-    # def to_graph_viz_str(self):
-    #     descendant_names = ', '.join([child.name() for child in self.children])
-    #     output = '{} -> {{}};\n'.format(self, descendant_names)
-    #     for child in self.children:
-    #         ouptut += child.to_graph_viz_str()
-    #     return output
-
 
 
 class ExpressionList(BaseAstNode):
@@ -539,15 +431,6 @@ class ExpressionList(BaseAstNode):
 
     def to_3ac(self, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
-
-
-    # This method will likely be implemented in the BaseAstNode
-    # def to_graph_viz_str(self):
-    #     descendant_names = ', '.join([child.name() for child in self.children])
-    #     output = '{} -> {{}};\n'.format(self, descendant_names)
-    #     for child in self.children:
-    #         ouptut += child.to_graph_viz_str()
-    #     return output
 
 
 ##
@@ -570,13 +453,13 @@ class FileAST(BaseAstNode):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
 
-    # This method will likely be implemented in the BaseAstNode
-    # def to_graph_viz_str(self):
-    #     descendant_names = ', '.join([child.name() for child in self.children])
-    #     output = '{} -> {{}};\n'.format(self, descendant_names)
-    #     for child in self.children:
-    #         ouptut += child.to_graph_viz_str()
-    #     return output
+    
+    
+    
+    
+    
+    
+    
 
     def to_graph_viz_str(self):
         return 'digraph {\n' + super(FileAST, self).to_graph_viz_str() + '}'
@@ -603,16 +486,6 @@ class FunctionCall(BaseAstNode):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
 
-    # This method will likely be implemented in the BaseAstNode
-    # def to_graph_viz_str(self):
-    #     descendant_names = ', '.join([child.name() for child in self.children])
-    #     output = '{} -> {{}};\n'.format(self, descendant_names)
-    #     for child in self.children:
-    #         ouptut += child.to_graph_viz_str()
-    #     return output
-
-
-
 class FunctionDeclaration(BaseAstNode):
     def __init__(self, arguments, type, identifier, **kwargs):
         super(FunctionDeclaration, self).__init__(**kwargs)
@@ -633,15 +506,6 @@ class FunctionDeclaration(BaseAstNode):
 
     def to_3ac(self, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
-
-
-    # This method will likely be implemented in the BaseAstNode
-    # def to_graph_viz_str(self):
-    #     descendant_names = ', '.join([child.name() for child in self.children])
-    #     output = '{} -> {{}};\n'.format(self, descendant_names)
-    #     for child in self.children:
-    #         ouptut += child.to_graph_viz_str()
-    #     return output
 
 
 class FunctionDefinition(BaseAstNode):
@@ -672,15 +536,6 @@ class FunctionDefinition(BaseAstNode):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
 
-    # This method will likely be implemented in the BaseAstNode
-    # def to_graph_viz_str(self):
-    #     descendant_names = ', '.join([child.name() for child in self.children])
-    #     output = '{} -> {{}};\n'.format(self, descendant_names)
-    #     for child in self.children:
-    #         ouptut += child.to_graph_viz_str()
-    #     return output
-
-
 class Goto(BaseAstNode):
     def __init__(self, name, **kwargs):
         super(Goto, self).__init__(**kwargs)
@@ -696,15 +551,6 @@ class Goto(BaseAstNode):
 
     def to_3ac(self, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
-
-
-    # This method will likely be implemented in the BaseAstNode
-    # def to_graph_viz_str(self):
-    #     descendant_names = ', '.join([child.name() for child in self.children])
-    #     output = '{} -> {{}};\n'.format(self, descendant_names)
-    #     for child in self.children:
-    #         ouptut += child.to_graph_viz_str()
-    #     return output
 
 
 class ID(BaseAstNode):
@@ -725,16 +571,6 @@ class ID(BaseAstNode):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
 
-    # This method will likely be implemented in the BaseAstNode
-    # def to_graph_viz_str(self):
-    #     descendant_names = ', '.join([child.name() for child in self.children])
-    #     output = '{} -> {{}};\n'.format(self, descendant_names)
-    #     for child in self.children:
-    #         ouptut += child.to_graph_viz_str()
-    #     return output
-
-
-
 class IdentifierType(BaseAstNode):
     def __init__(self, names, **kwargs):
         super(IdentifierType, self).__init__(**kwargs)
@@ -750,16 +586,6 @@ class IdentifierType(BaseAstNode):
 
     def to_3ac(self, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
-
-
-    # This method will likely be implemented in the BaseAstNode
-    # def to_graph_viz_str(self):
-    #     descendant_names = ', '.join([child.name() for child in self.children])
-    #     output = '{} -> {{}};\n'.format(self, descendant_names)
-    #     for child in self.children:
-    #         ouptut += child.to_graph_viz_str()
-    #     return output
-
 
 
 class If(BaseAstNode):
@@ -784,16 +610,6 @@ class If(BaseAstNode):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
 
-    # This method will likely be implemented in the BaseAstNode
-    # def to_graph_viz_str(self):
-    #     descendant_names = ', '.join([child.name() for child in self.children])
-    #     output = '{} -> {{}};\n'.format(self, descendant_names)
-    #     for child in self.children:
-    #         ouptut += child.to_graph_viz_str()
-    #     return output
-
-
-
 class InitializerList(BaseAstNode):
     def __init__(self, initializers=None, **kwargs):
         super(InitializerList, self).__init__(**kwargs)
@@ -810,16 +626,6 @@ class InitializerList(BaseAstNode):
 
     def to_3ac(self, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
-
-
-    # This method will likely be implemented in the BaseAstNode
-    # def to_graph_viz_str(self):
-    #     descendant_names = ', '.join([child.name() for child in self.children])
-    #     output = '{} -> {{}};\n'.format(self, descendant_names)
-    #     for child in self.children:
-    #         ouptut += child.to_graph_viz_str()
-    #     return output
-
 
 
 class Label(BaseAstNode):
@@ -843,16 +649,6 @@ class Label(BaseAstNode):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
 
-    # This method will likely be implemented in the BaseAstNode
-    # def to_graph_viz_str(self):
-    #     descendant_names = ', '.join([child.name() for child in self.children])
-    #     output = '{} -> {{}};\n'.format(self, descendant_names)
-    #     for child in self.children:
-    #         ouptut += child.to_graph_viz_str()
-    #     return output
-
-
-
 class ParameterList(BaseAstNode):
     def __init__(self, parameters=None, **kwargs):
         super(ParameterList, self).__init__(**kwargs)
@@ -871,24 +667,15 @@ class ParameterList(BaseAstNode):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
 
-    # This method will likely be implemented in the BaseAstNode
-    # def to_graph_viz_str(self):
-    #     descendant_names = ', '.join([child.name() for child in self.children])
-    #     output = '{} -> {{}};\n'.format(self, descendant_names)
-    #     for child in self.children:
-    #         ouptut += child.to_graph_viz_str()
-    #     return output
-
-
-
 class PointerDeclaration(BaseAstNode):
-    def __init__(self, qualifiers, type_, **kwargs):
+    def __init__(self, qualifiers=None, type_=None, **kwargs):
         super(PointerDeclaration, self).__init__(**kwargs)
 
-        self.qualifiers = qualifiers
+        self.qualifiers = qualifiers if qualifiers else []
+        self.type = type_  # TODO: what does this do/hold?
 
-        self.type = type_
-
+    def add_qualifiers(self, qualifiers):
+        pass
 
     @property
     def children(self):
@@ -898,16 +685,6 @@ class PointerDeclaration(BaseAstNode):
 
     def to_3ac(self, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
-
-
-    # This method will likely be implemented in the BaseAstNode
-    # def to_graph_viz_str(self):
-    #     descendant_names = ', '.join([child.name() for child in self.children])
-    #     output = '{} -> {{}};\n'.format(self, descendant_names)
-    #     for child in self.children:
-    #         ouptut += child.to_graph_viz_str()
-    #     return output
-
 
 
 class Return(BaseAstNode):
@@ -928,16 +705,6 @@ class Return(BaseAstNode):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
 
-    # This method will likely be implemented in the BaseAstNode
-    # def to_graph_viz_str(self):
-    #     descendant_names = ', '.join([child.name() for child in self.children])
-    #     output = '{} -> {{}};\n'.format(self, descendant_names)
-    #     for child in self.children:
-    #         ouptut += child.to_graph_viz_str()
-    #     return output
-
-
-
 class Switch(BaseAstNode):
     def __init__(self, conditional, body_statement, **kwargs):
         super(Switch, self).__init__(**kwargs)
@@ -956,17 +723,6 @@ class Switch(BaseAstNode):
 
     def to_3ac(self, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
-
-
-    # This method will likely be implemented in the BaseAstNode
-    # def to_graph_viz_str(self):
-    #     descendant_names = ', '.join([child.name() for child in self.children])
-    #     output = '{} -> {{}};\n'.format(self, descendant_names)
-    #     for child in self.children:
-    #         ouptut += child.to_graph_viz_str()
-    #     return output
-
-
 
 class TernaryOperator(BaseAstNode):
     def __init__(self, conditional, if_true_expression, if_false_expression, **kwargs):
@@ -990,18 +746,6 @@ class TernaryOperator(BaseAstNode):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
 
-    # This method will likely be implemented in the BaseAstNode
-    # def to_graph_viz_str(self):
-    #     descendant_names = ', '.join([child.name() for child in self.children])
-    #     output = '{} -> {{}};\n'.format(self, descendant_names)
-    #     for child in self.children:
-    #         ouptut += child.to_graph_viz_str()
-    #     return output
-
-
-##
-# WHAT ARE SOME OF THESE THINGS? I kinda think we can throw this one out since it prolly doesn't generate code.
-##
 class TypeDeclaration(BaseAstNode):
     FLOAT_TYPES = {Type.FLOAT, Type.DOUBLE}
     INT_TYPES = {Type.CHAR, Type.SHORT, Type.INT, Type.LONG, Type.SIGNED, Type.UNSIGNED}
@@ -1087,14 +831,6 @@ class UnaryOperator(BaseAstNode):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
 
-    # This method will likely be implemented in the BaseAstNode
-    # def to_graph_viz_str(self):
-    #     descendant_names = ', '.join([child.name() for child in self.children])
-    #     output = '{} -> {{}};\n'.format(self, descendant_names)
-    #     for child in self.children:
-    #         ouptut += child.to_graph_viz_str()
-    #     return output
-
 class SymbolNode(BaseAstNode):
     def __init__(self, symbol, **kwargs):
         super(SymbolNode, self).__init__(**kwargs)
@@ -1113,11 +849,3 @@ class SymbolNode(BaseAstNode):
 
     def to_3ac(self, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
-
-    # This method will likely be implemented in the BaseAstNode
-    # def to_graph_viz_str(self):
-    #     descendant_names = ', '.join([child.name() for child in self.children])
-    #     output = '{} -> {{}};\n'.format(self, descendant_names)
-    #     for child in self.children:
-    #         ouptut += child.to_graph_viz_str()
-    #     return output
