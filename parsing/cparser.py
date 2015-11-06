@@ -1561,6 +1561,7 @@ class Parser(object):
             t[0] = {'ast_node': Assignment(t[2], t[1]['ast_node'], rhs)}
 
 
+
         # # for simple assign to variable: t[3] is symbol. so only pass id
         # if type(t[3]) is Symbol:
         #     # symbol_id = t[3].identifier
