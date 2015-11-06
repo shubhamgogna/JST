@@ -200,6 +200,7 @@ class TestAst(unittest.TestCase):
             g = a[1];
             g = a[g + 1];
             }
+
             '''
         self.parser.parse(data)
         ast = self.parser.parse(data)
@@ -211,9 +212,10 @@ class TestAst(unittest.TestCase):
         data = '''
             int main()
             {
-            int a[10][10];
-            int g;
+            int b[10][10];
+            b[1][1] = 5;
             }
+
             '''
         self.parser.parse(data)
         ast = self.parser.parse(data)
