@@ -262,10 +262,10 @@ class Parser(object):
         print(t[4], type(t[4]))
 
 
-        declaration = FunctionDeclaration(function_symbol.named_parameters, type=function_symbol.type, uuid=UUID_TICKETS.get())
+        declaration = FunctionDeclaration(function_symbol.named_parameters, type=function_symbol.type)
         node = FunctionDefinition(declarations=declaration,
                                                param_declarations=function_symbol.named_parameters,
-                                               body=t[4].get('ast_node', EmptyStatement))
+                                               body=t[4].get('ast_node', EmptyStatement()))
 
         t[0] = {'ast_node': node}
 
@@ -1548,12 +1548,12 @@ class Parser(object):
         # for simple assign to variable: t[3] is symbol. so only pass id
         if type(t[3]) is Symbol:
             symbol_id = t[3].identifier
-            t[0] = {'ast_node': Assignment(t[2],t[1],symbol_id,uuid=UUID_TICKETS.get())}
+            t[0] = {'ast_node': Assignment(t[2],t[1],symbol_id)}
 
         # for simple assign to const: t[3] is a constant node
         # for array references: t[3] is arrayRef node
         elif t[3]['ast_node']:
-            t[0] = {'ast_node': Assignment(t[2],t[1],t[3]['ast_node'],uuid=UUID_TICKETS.get())}
+            t[0] = {'ast_node': Assignment(t[2],t[1],t[3]['ast_node'])}
 
         # print('\n\n\n\n')
         print(type(t[0]['ast_node'].lvalue))

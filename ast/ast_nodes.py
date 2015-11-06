@@ -73,8 +73,7 @@ class BaseAstNode:
         output = '\t{} -> {{{}}};\n'.format(self.name(), descendant_names)
 
         for child in self.children:
-            if isinstance(child, BaseAstNode):
-                output += child.to_graph_viz_str()
+            output += child.to_graph_viz_str()
         return output
 
     @property
@@ -404,9 +403,8 @@ class Declaration(BaseAstNode):
     @property
     def children(self):
         children = []
-        if self.type is not None:
-            children.append(self.type)
-        if self.type is not None:
+        children.append(self.type)
+        if self.initialization_value is not None:
             children.append(self.initialization_value)
         return tuple(children)
 

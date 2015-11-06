@@ -48,21 +48,20 @@ class TestAst(unittest.TestCase):
 
     def test_empty_file(self):
         data = ""
-
         ast = self.parser.parse(data)
         print(ast)
 
     def test_plain_main(self):
         data = "int main() {return 0;}"
-
         ast = self.parser.parse(data)
         print(ast.to_graph_viz_str())
 
-    def test_simple_declaration(self):
+    def test_simple_variable_declaration(self):
         data = """
             int main() {int i;}
             """
         ast = self.parser.parse(data)
+
         print(ast.to_graph_viz_str())
 
     def test_const_declaration(self):
@@ -79,7 +78,7 @@ class TestAst(unittest.TestCase):
         ast = self.parser.parse(data)
         print(ast.to_graph_viz_str())
 
-    def test_simple_declaration(self):
+    def test_2d_array_declaration(self):
         data = """
             int main() {int i[5][7];}
             """
@@ -159,7 +158,6 @@ class TestAst(unittest.TestCase):
             G = g;
             }
             """
-
         ast = self.parser.parse(data)
         print(ast.to_graph_viz_str())
 
@@ -173,7 +171,6 @@ class TestAst(unittest.TestCase):
             a[1] = 4;
             }
             '''
-
         ast = self.parser.parse(data)
         print(ast.to_graph_viz_str())
 
@@ -189,7 +186,6 @@ class TestAst(unittest.TestCase):
             g = a[1];
             }
             '''
-
         ast = self.parser.parse(data)
         print(ast.to_graph_viz_str())
 
@@ -221,9 +217,7 @@ class TestAst(unittest.TestCase):
             g = a[1];
             g = a[g + 1];
             }
-
             '''
-
         ast = self.parser.parse(data)
         print(ast.to_graph_viz_str())
 
@@ -288,10 +282,9 @@ class TestAst(unittest.TestCase):
         data = '''
             int main()
             {
-            int b[10][10];
-            b[1][1] = 5;
+            int a[10][10];
+            int g;
             }
-
             '''
 
         ast = self.parser.parse(data)
