@@ -67,14 +67,13 @@ class BaseAstNode:
     def to_graph_viz_str(self):
         for child in self.children:
             if not isinstance(child, BaseAstNode):
-                print(child)
+                print(self.name(), child)
 
         descendant_names = ', '.join([child.name() for child in self.children])
         output = '\t{} -> {{{}}};\n'.format(self.name(), descendant_names)
 
         for child in self.children:
             output += child.to_graph_viz_str()
-            print(output)
         return output
 
 ##
@@ -338,7 +337,8 @@ class CompoundStatement(BaseAstNode):
     @property
     def children(self):
         children = []
-        children.append(self.declaration_list)
+        if self.declaration_list is not None:
+            children.append(self.declaration_list)
         children.extend(self.statement_list)
         return tuple(children)
 
@@ -441,8 +441,6 @@ class Declaration(BaseAstNode):
 class DeclarationList(BaseAstNode):
     def __init__(self, declaration_list=None, **kwargs):
         super(DeclarationList, self).__init__(**kwargs)
-
-
 
         self.declaration_list = declaration_list if declaration_list else []
 

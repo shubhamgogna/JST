@@ -1336,7 +1336,12 @@ class Parser(object):
 
         print(t[4], type(t[4]))
 
-        t[0] = t[4] if t[4] else {'ast_node': EmptyStatement()}
+        node = CompoundStatement(statement_list=t[4].get('ast_node', []))
+
+        print(node.children)
+
+
+        t[0] = {'ast_node': node}
 
     def p_compound_statement_3(self, t):
         """
@@ -1392,7 +1397,7 @@ class Parser(object):
         """
         self.output_production(t, production_message='selection_statement -> IF LPAREN expression RPAREN statement')
 
-        node = If(conditional=t[3], if_true=t[5], if_false=EmptyStatement())
+        node = If(conditional=t[3]['ast_node'], if_true=t[5]['ast_node'], if_false=EmptyStatement())
 
         t[0] = {'ast_node': node}
 
