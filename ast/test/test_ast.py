@@ -341,3 +341,28 @@ class TestAst(unittest.TestCase):
 
         ast = self.parser.parse(data)
         print(ast.to_graph_viz_str())
+
+    def test_def_on_top(self):
+        data = """
+            // definition on top
+            int do_stuff() {
+                return 5;
+            }
+            """
+        ast = self.parser.parse(data)
+        print(ast.to_graph_viz_str())
+
+    def test_def_on_top_call(self):
+        data = """
+
+            // definition on top, call after that
+            int do_stuff() {
+                return 5;
+            }
+
+            int main() {
+                return do_stuff();
+            }
+            """
+        ast = self.parser.parse(data)
+        print(ast.to_graph_viz_str())
