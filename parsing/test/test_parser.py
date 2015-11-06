@@ -775,13 +775,27 @@ class TestParser(unittest.TestCase):
             {
             int g;
             int a[10];
+            a[6] = 4;
+            g = a[5 + 1];
+            }
+            '''
+        self.parser.parse(data)
+
+
+    def test_array_access_var_expr(self):
+        self.enable_parser_debugging()
+
+        data = '''
+            int main()
+            {
+            int g;
+            int a[10];
             a[1] = 4;
             g = a[1];
             g = a[g + 1];
             }
             '''
         self.parser.parse(data)
-
 
 
 

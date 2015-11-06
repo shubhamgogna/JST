@@ -1328,7 +1328,7 @@ class Parser(object):
         """
         self.output_production(t, production_message='statement_list -> statement')
 
-        t[0] = t[1]
+        t[0] = {'ast_node': [ t[1]['ast_node'] ] }
 
     def p_statement_list_2(self, t):
         """
@@ -1337,8 +1337,9 @@ class Parser(object):
         self.output_production(t, production_message='statement_list -> statement_list statement')
 
         # set t[0] as t[1] combined with t[2]
-        statements = {'ast_node': [t[1]['ast_node'], t[2]['ast_node']]}
-        t[0] = statements
+        t[1]['ast_node'].append(t[2]['ast_node'])
+        t[0] = {'ast_node': t[1]['ast_node'] }
+
 
     #
     # selection-statement
@@ -1574,13 +1575,18 @@ class Parser(object):
         self.output_production(t, production_message=
             'binary_expression -> binary_expression {} binary_expression'.format(t[2]))
 
-        if Parser.is_a_constant(t[1]) and Parser.is_a_constant(t[3]):
-            t[0] = Parser.perform_binary_operation(t[1], t[2], t[3])
-            # TODO Maybe log the evaluated expression?
-            # print(t[0] if type(t[0]) is not ConstantValue else t[0].value)
+
+        if type(t[1]) is dict:
+            left_operand = t[1].get('ast_node', None)
+            right_operand = t[1].get('ast_node', None)
+
+            if Parser.is_a_constant(left_operand) and Parser.is_a_constant(t[3]['ast_node']):
+                t[0] = {'ast_node': Parser.perform_binary_operation(left_operand, t[2], right_operand)}
+                # TODO Maybe log the evaluated expression?
+                # print(t[0] if type(t[0]) is not ConstantValue else t[0].value)
         else:
-            # TODO: implement this via AST Nodes
-            t[0] = None
+            # not constant expression, so need binary operator node
+            t[0] = {'ast_node': BinaryOperator(t[2],t[1],t[3])}
 
     def p_binary_expression_to_cast_expression(self, t):
         """
@@ -2002,7 +2008,7 @@ class Parser(object):
     # Output: Returns True if the item is usable for the constant expression; False otherwise.
     @staticmethod
     def is_a_constant(item):
-        valid_types = (ConstantValue, int, float)
+        valid_types = (Constant, int, float)
         return isinstance(item, valid_types)
 
     # Performs compile-time operations to evaluate binary (two-operand) constant expressions.
@@ -2014,10 +2020,11 @@ class Parser(object):
     #
     # Output: Returns an object representing the (constant) result of the operation.
     @staticmethod
-    def perform_binary_operation(left: ConstantValue, operator: str, right: ConstantValue):
-        left_value = left.value if type(left) is ConstantValue else left
-        right_value = right.value if type(right) is ConstantValue else right
+    def perform_binary_operation(left: Constant, operator: str, right: Constant):
+        left_value = left.value if isinstance(left, Constant) else left
+        right_value = right.value if isinstance(right, Constant) else right
         if operator == '+':
+            print(left_value + right_value)
             return left_value + right_value
         elif operator == '-':
             return left_value - right_value
