@@ -25,8 +25,7 @@ from ast.ast_nodes import *
 from exceptions.compile_error import CompileError
 
 import ply.yacc as yacc
-from symbol_table.symbol import Symbol, PointerDeclaration, TypeDeclaration, ConstantValue, FunctionSymbol, \
-    VariableSymbol
+from symbol_table.symbol import Symbol, PointerDeclaration, FunctionSymbol, VariableSymbol
 
 
 ## Parser Class
@@ -155,9 +154,9 @@ class Parser(object):
         """
         self.output_production(t, production_message='translation_unit_opt -> translation_unit')
 
-        t[0] = FileAST(external_declarations=t[1] if t[1] else [], uuid=UUID_TICKETS.get())
+        print(t[1], type(t[1]))
 
-        print('children: ', t[0].children[0].to_graph_viz_str())
+        t[0] = FileAST(external_declarations=t[1] if t[1] else [])
 
     def p_translation_unit_1(self, t):
         """
@@ -189,7 +188,6 @@ class Parser(object):
 
         t[0] = t[1]
 
-
     def p_external_declaration_2(self, t):
         """
         external_declaration : declaration
@@ -214,7 +212,10 @@ class Parser(object):
         else:
             raise Exception('Debug check: Expected a function_symbol...')
 
-        FunctionDefinition(declarations=function_symbol, param_declarations=function_symbol.named_parameters, body=t[5], uuid=UUID_TICKETS.get())
+        declaration = FunctionDeclaration(arguments=function_symbol.named_parameters, type=None, uuid=UUID_TICKETS.get())
+        node = FunctionDefinition(declarations=declaration, param_declarations=function_symbol.named_parameters, body=t[5], uuid=UUID_TICKETS.get())
+
+        t[0] = {'ast_node': node}
 
     def p_function_definition_2(self, t):
         """function_definition : declarator enter_function_scope declaration_list compound_statement"""
@@ -225,14 +226,23 @@ class Parser(object):
         td.add_type_specifier(Type.INT)
         declarator.type = td
 
-        t[0] = FunctionDefinition(declarations=declarator, param_declarations=declarator.named_parameters, body=t[3], uuid=UUID_TICKETS)
+        declaration = FunctionDeclaration(declarator.named_parameters, type=declarator.type, uuid=UUID_TICKETS.get())
+        node = FunctionDefinition(declarations=declaration, param_declarations=declarator.named_parameters, body=t[3])
+
+        t[0] = {'ast_node': node}
 
     def p_function_definition_3(self, t):
-        """function_definition : declarator enter_function_scope compound_statement"""
+        """
+        function_definition : declarator enter_function_scope compound_statement
+        """
         self.output_production(t, production_message='function_definition -> declarator declaration_list compound_statement')
 
+        # node = FunctionDefinition
+
     def p_function_definition_4(self, t):
-        """function_definition : declaration_specifiers declarator enter_function_scope compound_statement"""
+        """
+        function_definition : declaration_specifiers declarator enter_function_scope compound_statement
+        """
         self.output_production(t, production_message='function_definition -> declaration_specifiers declarator compound_statement')
 
         function_symbol = t[2].get('symbol', None)
@@ -242,13 +252,13 @@ class Parser(object):
             raise Exception('Debug check: Expected a function_symbol...')
 
         ast_node_args = {"lines": (t.lineno(1), t.linespan(4)[1])}
-        # t[0] = ast.FunctionDefinition(declaration_specifiers=t[1], declarator=t[2], compound_statement=t[3],
-        #                               **ast_node_args)
 
-
-        t[0] = {'ast_node': FunctionDefinition(declarations=function_symbol,
+        declaration = FunctionDeclaration(function_symbol.named_parameters, type=function_symbol.type, uuid=UUID_TICKETS.get())
+        node = FunctionDefinition(declarations=declaration,
                                                param_declarations=function_symbol.named_parameters,
-                                               body=t[4], uuid=UUID_TICKETS.get())}
+                                               body=t[4]['ast_node'], uuid=UUID_TICKETS.get())
+
+        t[0] = {'ast_node': node}
 
 
     #
@@ -800,7 +810,7 @@ class Parser(object):
 
         # Use the commented out code once we are officially ready to do compile-time constant expression evaluation
         if t[3].get('constant', None):
-             if t[3]['constant'].type == ConstantValue.INTEGER:
+             if t[3]['constant'].type == Constant.INTEGER:
                  symbol.add_array_dimension(t[3]['constant'].value)
              else:
                  raise Exception(
@@ -1882,7 +1892,7 @@ class Parser(object):
         self.output_production(t, production_message='constant -> ICONST {}'.format(t[1]))
 
         # this was backwards,  type was value and value was type
-        node = Constant(ConstantValue.INTEGER, int(t[1]), uuid=UUID_TICKETS.get())
+        node = Constant(Constant.INTEGER, int(t[1]), uuid=UUID_TICKETS.get())
 
         t[0] = {'constant': node, 'ast_node': node}
 
@@ -1900,7 +1910,7 @@ class Parser(object):
         """
         self.output_production(t, production_message='constant -> CCONST ({})'.format(t[1]))
 
-        t[0] = ConstantValue(t[1], 'char')
+        t[0] = Constant(t[1], Constant.INTEGER)
 
     #
     # identifier:
@@ -2021,8 +2031,10 @@ class Parser(object):
     # Output: Returns an object representing the (constant) result of the operation.
     @staticmethod
     def perform_binary_operation(left: Constant, operator: str, right: Constant):
+
         left_value = left.value if isinstance(left, Constant) else left
         right_value = right.value if isinstance(right, Constant) else right
+
         if operator == '+':
             print(left_value + right_value)
             return left_value + right_value
@@ -2071,7 +2083,7 @@ class Parser(object):
     #
     # Output: Returns an object representing the (constant) result of the operation.
     @staticmethod
-    def perform_unary_operation(operator: str, operand: ConstantValue):
+    def perform_unary_operation(operator: str, operand: Constant):
         value = operand.value if type(operand) is ConstantValue else operand
         if operator == '+':
             raise Exception('No idea when this is used.')

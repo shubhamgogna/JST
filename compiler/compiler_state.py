@@ -15,7 +15,6 @@
 
 import sys
 from symbol_table.symbol_table import SymbolTable
-from symbol_table.symbol import TypeDeclaration
 from loggers.logger import Logger
 
 
@@ -79,7 +78,6 @@ class CompilerState:
         self.function_scope_entered = False
 
         self.insert_mode = True
-        self.most_recent_type_declaration = TypeDeclaration()
 
         # for debugging purposes
         self.clone_symbol_table_on_scope_exit = False

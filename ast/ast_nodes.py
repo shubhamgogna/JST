@@ -9,6 +9,10 @@
 #
 # This class will be inherited from for other types of AST nodes. Should hold all common functionality.
 #
+from ticket_counting.ticket_counters import UUID_TICKETS
+from utils.primitive_types import Type
+
+
 class BaseAstNode:
     # Initialize node with desired info
     #
@@ -29,12 +33,15 @@ class BaseAstNode:
 
         # initialize the uuid
         # Note: Since we have multiple ticket counters, we need to pass them in as a param.
-        self.uuid = uuid
+        self.uuid = uuid if uuid else UUID_TICKETS.get()
 
     # Define str function to concisely summarize a node with its uuid, name/type, and relevant info
     def __str__(self):
         return '{}_{}'.format(self.uuid, type(self).__name__)
 
+
+    def name(self):
+        return '{}_{}'.format(self.uuid, type(self).__name__)
 
     #Define function for converting to 3ac
     def to_3ac(self, include_source=False):
@@ -58,10 +65,11 @@ class BaseAstNode:
 
     # Define method for getting a graphViz ready string
     def to_graph_viz_str(self):
-        descendant_names = ', '.join([str(child) for child in self.childrens])
-        output = '{} -> {{}};\n'.format(self, 'poop')#descendant_names)
-        for child in self.childrens:
-            output += (child.to_graph_viz_str() + ',')
+        descendant_names = ', '.join([child.name() for child in self.children])
+        output = '\t{} -> {{{}}};\n'.format(self.name(), descendant_names)
+
+        for child in self.children:
+            output += child.to_graph_viz_str()
         return output
 
 ##
@@ -316,6 +324,9 @@ class Cast(BaseAstNode):
 
 
 class Constant(BaseAstNode):
+    INTEGER = 'int'
+    FLOAT = 'float'
+
     def __init__(self, type, value, **kwargs):
         super(Constant, self).__init__(**kwargs)
 
@@ -465,9 +476,6 @@ class EmptyStatement(BaseAstNode):
     def __init__(self, **kwargs):
         super(EmptyStatement, self).__init__(**kwargs)
 
-
-
-
     @property
     def children(self):
         children = []
@@ -526,9 +534,9 @@ class FileAST(BaseAstNode):
 
     @property
     def children(self):
-        children = []
-        children.extend(self.external_declarations)
-        return tuple(children)
+        childrens = []
+        childrens.extend(self.external_declarations)
+        return tuple(childrens)
 
     def to_3ac(self, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
@@ -542,6 +550,8 @@ class FileAST(BaseAstNode):
     #         ouptut += child.to_graph_viz_str()
     #     return output
 
+    def to_graph_viz_str(self):
+        return 'digraph {\n' + super(FileAST, self).to_graph_viz_str() + '}'
 
 
 class FunctionCall(BaseAstNode):
@@ -586,7 +596,7 @@ class FunctionDeclaration(BaseAstNode):
     @property
     def children(self):
         children = []
-        children.append(self.arguments)
+        children.extend(self.arguments)
         children.append(self.type)
         return tuple(children)
 
@@ -953,33 +963,60 @@ class TernaryOperator(BaseAstNode):
 # WHAT ARE SOME OF THESE THINGS? I kinda think we can throw this one out since it prolly doesn't generate code.
 ##
 class TypeDeclaration(BaseAstNode):
-    def __init__(self, declaration_name, qualifiers, type, **kwargs):
+    FLOAT_TYPES = {Type.FLOAT, Type.DOUBLE}
+    INT_TYPES = {Type.CHAR, Type.SHORT, Type.INT, Type.LONG, Type.SIGNED, Type.UNSIGNED}
+
+    def __init__(self, **kwargs):
         super(TypeDeclaration, self).__init__(**kwargs)
 
-        self.declaration_name = declaration_name
-        self.qualifiers = qualifiers
+        self.storage_class = []
+        self.qualifiers = set()  # in gcc, type qualifiers are idempotent
+        self.type_specifier = []  # being a list allows for things like 'unsigned int', 'long double'
 
-        self.type = type
+        # From pycparser
+        # def __init__(self, declaration_name, qualifiers, type, **kwargs):
+        #     self.declaration_name = declaration_name
+        #     self.qualifiers = qualifiers
+        #
+        #     self.type = type
+
+    def add_storage_class(self, storage_class_specifier):
+        if storage_class_specifier in self.storage_class:
+            raise Exception('Duplication of storage class specifier "{}".'.format(storage_class_specifier))
+
+        self.storage_class.append(storage_class_specifier)
+
+    def add_qualifier(self, type_qualifier):
+        self.qualifiers.add(type_qualifier)
+
+    def add_type_specifier(self, specifier):
+
+        if (specifier is 'long' and 2 <= self.type_specifier.count('long')) or specifier in self.type_specifier:
+            raise Exception('Too many instances of type specifier "{}" in type declaration'.format(specifier))
+
+        self.type_specifier.append(specifier)
+
+        # TODO: check for unsigned along with float types and such
+
+    def __str__(self):
+        storage_class_str = ' '.join(self.storage_class) + ' ' if self.storage_class else ''
+        qualifier_str = ' '.join(self.qualifiers) + ' ' if self.qualifiers else ''
+        specifier_str = ' '.join(self.type_specifier) if self.type_specifier else 'UNKNOWN'
+
+        return '{}{}{}'.format(storage_class_str, qualifier_str, specifier_str)
+
+    def __repr__(self):
+        return self.name() + ': ' + str(self)
 
 
     @property
     def children(self):
         children = []
-        children.append(self.type)
+        # children.append(self.type)  # TODO: keep this?
         return tuple(children)
 
     def to_3ac(self, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
-
-
-    # This method will likely be implemented in the BaseAstNode
-    # def to_graph_viz_str(self):
-    #     descendant_names = ', '.join([child.name() for child in self.children])
-    #     output = '{} -> {{}};\n'.format(self, descendant_names)
-    #     for child in self.children:
-    #         ouptut += child.to_graph_viz_str()
-    #     return output
-
 
 
 class UnaryOperator(BaseAstNode):
