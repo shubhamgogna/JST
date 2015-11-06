@@ -48,7 +48,7 @@ class TestAst(unittest.TestCase):
 
     def test_empty_file(self):
         data = ""
-        
+
         ast = self.parser.parse(data)
         print(ast)
 
@@ -255,6 +255,28 @@ class TestAst(unittest.TestCase):
             {
                 int i;
                 for(i = 0; i < 1; i++) {}
+            }
+            """
+        ast = self.parser.parse(data)
+        print(ast.to_graph_viz_str())
+
+    def test_while_loop(self):
+        data = """
+            int main()
+            {
+                int i;
+                while(i < 5){}
+            }
+            """
+        ast = self.parser.parse(data)
+        print(ast.to_graph_viz_str())
+
+    def test_do_while_loop(self):
+        data = """
+            int main()
+            {
+                int i;
+                do {} while (i > 10);
             }
             """
         ast = self.parser.parse(data)

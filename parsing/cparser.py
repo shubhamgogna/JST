@@ -1421,7 +1421,11 @@ class Parser(object):
         """
         self.output_production(t, production_message='iteration_statement -> WHILE LPAREN expression RPAREN statement')
 
-        t[0] = {'ast_node': IterationNode(True, None, t[3], None, t[5])}
+        t[0] = {'ast_node': IterationNode(True,
+                                          None,
+                                          t[3]['ast_node'] if t[3] else None,
+                                          None,
+                                          t[5]['ast_node'] if t[5] else None)}
 
     def p_iteration_statement_2(self, t):
         """
@@ -1431,7 +1435,11 @@ class Parser(object):
             'iteration_statement -> FOR LPAREN expression_option SEMI expression_option SEMI expression_option RPAREN '
             'statement')
 
-        t[0] = {'ast_node': IterationNode(True, t[3], t[5], t[7], t[9])}
+        t[0] = {'ast_node': IterationNode(True,
+                                          t[3]['ast_node'] if t[3] else None,
+                                          t[5]['ast_node'] if t[5] else None,
+                                          t[7]['ast_node'] if t[7] else None,
+                                          t[9]['ast_node'] if t[9] else None)}
 
     def p_iteration_statement_3(self, t):
         """
@@ -1439,7 +1447,11 @@ class Parser(object):
         """
         self.output_production(t, production_message='iteration_statement -> DO statement WHILE LPAREN expression RPAREN SEMI')
 
-        t[0] = {'ast_node': IterationNode(False, None, t[5], None, t[2])}
+        t[0] = {'ast_node': IterationNode(False,
+                                          None,
+                                          t[5]['ast_node'] if t[5] else None,
+                                          None,
+                                          t[2]['ast_node'] if t[2] else None)}
 
     #
     # jump_statement:
