@@ -194,7 +194,7 @@ class Parser(object):
         """
         self.output_production(t, production_message='external_declaration -> declaration')
 
-        t[0] = t[1]
+        t[0] = {'ast_node': DeclarationList(t[1]['ast_node'])}
 
     #
     # function-definition
@@ -212,7 +212,7 @@ class Parser(object):
         else:
             raise Exception('Debug check: Expected a function_symbol...')
 
-        declaration = FunctionDeclaration(arguments=function_symbol.named_parameters, type=None, uuid=UUID_TICKETS.get())
+        declaration = FunctionDeclaration(arguments=function_symbol.named_parameters, type=None, identifier=function_symbol.identifier)
         node = FunctionDefinition(declarations=declaration,
                                   param_declarations=function_symbol.named_parameters,
                                   body=t[5].get('ast_node', EmptyStatement()))
@@ -261,7 +261,7 @@ class Parser(object):
         print(t[4], type(t[4]))
 
 
-        declaration = FunctionDeclaration(function_symbol.named_parameters, type=function_symbol.type)
+        declaration = FunctionDeclaration(function_symbol.named_parameters, type=function_symbol.type, identifier=function_symbol.identifier)
         node = FunctionDefinition(declarations=declaration,
                                                param_declarations=function_symbol.named_parameters,
                                                body=t[4].get('ast_node', EmptyStatement()))
@@ -303,9 +303,9 @@ class Parser(object):
             if len(symbol.array_dims) == 0:
                 # Type information is stored in symbol.type
                 # Bitsize has to be calculated from type, so see note directly above
-                t[0].append(Declaration(symbol.identifier, None, None, None, symbol.type, None, TypeCheck.get_bit_size(symbol.type)))
+                t[0].append(Declaration(ID(symbol.identifier), None, None, None, symbol.type, None, TypeCheck.get_bit_size(symbol.type)))
             else:
-                t[0].append(ArrayDeclaration(symbol.identifier, symbol.array_dims, None, symbol.type))
+                t[0].append(ArrayDeclaration(ID(symbol.identifier), symbol.array_dims, None, symbol.type))
 
         t[0] = {'ast_node': t[0]}
 
@@ -912,13 +912,16 @@ class Parser(object):
                 raise CompileError(message=error_message, line_num=lineno, token_col=0,
                                            source_line=self.compiler_state.source_code[lineno])
 
-            if function_symbol.parameter_types_match(t[3]):  # the prototype was given, and now the definition
-                function_symbol.add_named_parameters(t[3])
-                function_symbol.finalized = True
-            else:
-                error_message = 'Function definition does not match signature.'
-                raise CompileError(message=error_message, line_num=lineno, token_col=0,
-                                       source_line=self.compiler_state.source_code[lineno])
+            # TODO Should probably check params to make sure it's not being re-declared
+            function_symbol.finalized = True
+
+            # if function_symbol.parameter_types_match(t[3]):  # the prototype was given, and now the definition
+            #     function_symbol.add_named_parameters(t[3])
+            #     function_symbol.finalized = True
+            # else:
+            #     error_message = 'Function definition does not match signature.'
+            #     raise CompileError(message=error_message, line_num=lineno, token_col=0,
+            #                            source_line=self.compiler_state.source_code[lineno])
         else:
             function_symbol = FunctionSymbol(identifier=t[1], lineno=lineno)
             function_symbol.set_signature(parameters=[])
@@ -1785,7 +1788,7 @@ class Parser(object):
 
         # For array stuffs:
 
-        t[0] = {"ast_node": ArrayReference(t[1], t[3], uuid=UUID_TICKETS.get())}
+        t[0] = {"ast_node": ArrayReference(t[1]['ast_node'], t[3]['ast_node'])}
 
 
     def p_postfix_expression_to_parameterized_function_call(self, t):
@@ -1794,8 +1797,9 @@ class Parser(object):
         """
         self.output_production(t, production_message='postfix_expression -> postfix_expression LPAREN argument_expression_list RPAREN')
 
-        if isinstance(t[1], str):
-            function_symbol, _ = self.compiler_state.symbol_table.find(t[1])
+        if isinstance(t[1]['ast_node'], SymbolNode):
+            # function_symbol, _ = self.compiler_state.symbol_table.find(t[1])
+            function_symbol = t[1]['ast_node'].symbol
 
             if function_symbol:
 

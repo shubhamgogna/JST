@@ -320,7 +320,9 @@ class TestAst(unittest.TestCase):
 
             int main()
             {
-                return do_stuff();
+                int* ptr;
+                int num;
+                return do_stuff(ptr, num);
             }
             """
 

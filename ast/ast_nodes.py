@@ -10,6 +10,7 @@
 # This class will be inherited from for other types of AST nodes. Should hold all common functionality.
 #
 from ticket_counting.ticket_counters import UUID_TICKETS
+from utils.compile_time_utils import OperatorUtils
 from utils.primitive_types import Type
 
 
@@ -33,8 +34,11 @@ class BaseAstNode:
         return '{}_{}'.format(self.uuid, type(self).__name__)
 
 
-    def name(self):
-        return '{}_{}'.format(type(self).__name__, self.uuid)
+    def name(self, arg=None):
+        extra = '_' + str(arg) if arg else ''
+        name_str = '{}{}_{}'.format(type(self).__name__, extra, self.uuid)
+
+        return name_str
 
     #Define function for converting to 3ac
     def to_3ac(self, include_source=False):
@@ -63,10 +67,10 @@ class BaseAstNode:
             if not isinstance(child, BaseAstNode):
                 print(self.name(), child)
 
-        # for child in self.children:
-        #     print(self.name(), 'child', child.name())
+        for child in self.children:
+            print(self.name(), 'child', child)
 
-        # print('\n'.join([str(child) for child in self.children]))
+        print('\n'.join([str(child) for child in self.children]))
 
         descendant_names = ', '.join([child.name() for child in self.children])
 
@@ -113,20 +117,23 @@ class IterationNode(BaseAstNode):
 # This is a nested declaration of an array with the given type
 ##
 class ArrayDeclaration(BaseAstNode):
-    def __init__(self, identifier, dim, dim_qualifiers, type, **kwargs):
+    def __init__(self, identifier, dim, dim_qualifiers, type_declaration, **kwargs):
         super(ArrayDeclaration, self).__init__(**kwargs)
 
-        self.identifier = identifier
+        print()
+        print('ArrayDecl', dim, type(dim))
         self.dim = dim
         self.dim_qualifiers = dim_qualifiers
 
-        self.type = type
+        self.identifier = identifier
+        self.type_declaration = type_declaration
 
 
     @property
     def children(self):
         children = []
-        children.append(self.type)
+        children.append(self.type_declaration)
+        children.append(self.identifier)
         return tuple(children)
 
     def to_3ac(self, include_source=False):
@@ -136,10 +143,10 @@ class ArrayDeclaration(BaseAstNode):
 # REVISIT ME - Might need to swtich attrs to children depending on how we handle arrays
 ##
 class ArrayReference(BaseAstNode):
-    def __init__(self, array_name, subscript, **kwargs):
+    def __init__(self, array_symbol, subscript, **kwargs):
         super(ArrayReference, self).__init__(**kwargs)
 
-        self.array_name = array_name
+        self.array_symbol = array_symbol
         self.subscript = subscript
 
 
@@ -147,6 +154,7 @@ class ArrayReference(BaseAstNode):
     @property
     def children(self):
         children = []
+        children.append(self.array_symbol)
         return tuple(children)
 
     def to_3ac(self, include_source=False):
@@ -164,14 +172,16 @@ class ArrayReference(BaseAstNode):
 
 
 class Assignment(BaseAstNode):
-    def __init__(self, op, lvalue, rvalue, **kwargs):
+    def __init__(self, operator, lvalue, rvalue, **kwargs):
         super(Assignment, self).__init__(**kwargs)
 
-        self.op = op
+        self.operator = operator
 
         self.lvalue = lvalue
         self.rvalue = rvalue
 
+    def name(self):
+        return super(Assignment, self).name(arg=OperatorUtils.operator_to_name(self.operator))
 
     @property
     def children(self):
@@ -195,14 +205,16 @@ class Assignment(BaseAstNode):
 
 
 class BinaryOperator(BaseAstNode):
-    def __init__(self, op, lvalue, rvalue, **kwargs):
+    def __init__(self, operator, lvalue, rvalue, **kwargs):
         super(BinaryOperator, self).__init__(**kwargs)
 
-        self.op = op
+        self.operator = operator
 
         self.lvalue = lvalue
         self.rvalue = rvalue
 
+    def name(self):
+        return super(BinaryOperator, self).name(arg=self.operator)
 
     @property
     def children(self):
@@ -561,18 +573,19 @@ class FileAST(BaseAstNode):
 
 
 class FunctionCall(BaseAstNode):
-    def __init__(self, name, arguments, **kwargs):
+    def __init__(self, identifier, arguments, **kwargs):
         super(FunctionCall, self).__init__(**kwargs)
 
-
-        self.name = name
+        self.identifier = identifier
         self.arguments = arguments
 
+    def name(self):
+        super(FunctionCall, self).name(arg=self.identifier)
 
     @property
     def children(self):
         children = []
-        children.append(self.name)
+        children.append(self.identifier)
         children.append(self.arguments)
         return tuple(children)
 
@@ -591,13 +604,15 @@ class FunctionCall(BaseAstNode):
 
 
 class FunctionDeclaration(BaseAstNode):
-    def __init__(self, arguments, type, **kwargs):
+    def __init__(self, arguments, type, identifier, **kwargs):
         super(FunctionDeclaration, self).__init__(**kwargs)
 
-
+        self.identifier = identifier
         self.arguments = arguments
         self.type = type
 
+    def name(self):
+        return super(FunctionDeclaration, self).name(arg=self.identifier)
 
     @property
     def children(self):
@@ -623,10 +638,17 @@ class FunctionDefinition(BaseAstNode):
     def __init__(self, declarations, param_declarations, body, **kwargs):
         super(FunctionDefinition, self).__init__(**kwargs)
 
+        self.identifier = declarations.identifier
+
         self.declarations = declarations
         self.body = body
 
         self.param_declarations = param_declarations if param_declarations else []
+
+    def name(self):
+        print('FuncDef-declarations:', type(self.declarations))
+
+        return super(FunctionDefinition, self).name(arg=self.identifier)
 
     @property
     def children(self):
@@ -680,6 +702,9 @@ class ID(BaseAstNode):
         super(ID, self).__init__(**kwargs)
 
         self.identifier = identifier
+
+    def name(self):
+        return super(ID, self).name(arg=self.identifier)
 
     @property
     def children(self):
@@ -795,6 +820,8 @@ class Label(BaseAstNode):
 
         self.body_statement = body_statement
 
+    def name(self):
+        return super(Label, self).name(arg=self.label_name)
 
     @property
     def children(self):
@@ -983,6 +1010,9 @@ class TypeDeclaration(BaseAstNode):
         #
         #     self.type = type
 
+    def name(self):
+        return super(TypeDeclaration, self).name(arg='_'.join(self.type_specifier))
+
     def add_storage_class(self, storage_class_specifier):
         if storage_class_specifier in self.storage_class:
             raise Exception('Duplication of storage class specifier "{}".'.format(storage_class_specifier))
@@ -1030,6 +1060,8 @@ class UnaryOperator(BaseAstNode):
 
         self.expression = expression
 
+    def name(self):
+        return super(UnaryOperator, self).name(arg=OperatorUtils.operator_to_name(self.operator))
 
     @property
     def children(self):
