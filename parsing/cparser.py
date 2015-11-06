@@ -1346,8 +1346,8 @@ class Parser(object):
         """
         self.output_production(t, production_message='compound_statement -> LBRACE declaration_list RBRACE')
 
-        # optimize away?
-        t[0] = {'ast_node': [t[4]]}
+        node = CompoundStatement(declaration_list=t[4].get('ast_node', []))
+        t[0] = {'ast_node': node}
 
     def p_compound_statement_4(self, t):
         """
