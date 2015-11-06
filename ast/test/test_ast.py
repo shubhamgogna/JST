@@ -132,7 +132,6 @@ class TestAst(unittest.TestCase):
         ast = self.parser.parse(data)
         print(ast.to_graph_viz_str())
 
-
     def test_simple_assign_const(self):
         self.enable_debug()
 
@@ -297,3 +296,71 @@ class TestAst(unittest.TestCase):
         ast = self.parser.parse(data)
         print(ast.to_graph_viz_str())
 
+    def test_array_twodim(self):
+        self.enable_debug()
+
+        data = '''
+            int main()
+            {
+            int b[10][10];
+            b[1][1] = 5;
+            }
+
+            '''
+
+        ast = self.parser.parse(data)
+        print(ast.to_graph_viz_str())
+
+    def test_function_decl_top_impl_bottom(self):
+        self.enable_debug()
+
+        data = """
+            int do_stuff();
+
+            int do_stuff()
+            {
+                return 5;
+            }
+            """
+
+        ast = self.parser.parse(data)
+        print(ast.to_graph_viz_str())
+
+    def test_function_decl_top_impl_bottom_call_middle(self):
+        self.enable_debug()
+
+        data = """
+            int do_stuff();
+
+            int main()
+            {
+                return do_stuff();
+            }
+
+            int do_stuff()
+            {
+                return 5;
+            }
+            """
+
+        ast = self.parser.parse(data)
+        print(ast.to_graph_viz_str())
+
+    def test_function_parameters(self):
+        self.enable_debug()
+
+        data = """
+            int do_stuff(int* ret, int x)
+            {
+                *ret = x + x;
+                return 5;
+            }
+
+            int main()
+            {
+                return do_stuff();
+            }
+            """
+
+        ast = self.parser.parse(data)
+        print(ast.to_graph_viz_str())
