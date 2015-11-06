@@ -1650,18 +1650,17 @@ class Parser(object):
         self.output_production(t, production_message=
             'binary_expression -> binary_expression {} binary_expression'.format(t[2]))
 
-
-        if type(t[1]) is dict:
+        if type(t[1]) is dict and type(t[3]) is dict:
             left_operand = t[1].get('ast_node', None)
             right_operand = t[3].get('ast_node', None)
 
-            if Parser.is_a_constant(left_operand) and Parser.is_a_constant(t[3]['ast_node']):
+            if Parser.is_a_constant(left_operand) and Parser.is_a_constant(right_operand):
                 t[0] = {'ast_node': Parser.perform_binary_operation(left_operand, t[2], right_operand)}
-                # TODO Maybe log the evaluated expression?
-                # print(t[0] if type(t[0]) is not ConstantValue else t[0].value)
+            else:
+                t[0] = {'ast_node': BinaryOperator(t[2], left_operand, right_operand)}
         else:
             # not constant expression, so need binary operator node
-            t[0] = {'ast_node': BinaryOperator(t[2],t[1],t[3])}
+            t[0] = {'ast_node': BinaryOperator(t[2], t[1], t[3])}
 
     def p_binary_expression_to_cast_expression(self, t):
         """
@@ -1882,7 +1881,7 @@ class Parser(object):
             symbol = Symbol(t[1])
             self.compiler_state.symbol_table.insert(symbol)
 
-        t[0] = symbol
+        t[0] = {'ast_node': SymbolNode(symbol)}
 
     def p_primary_expression_constant(self, t):
         """
