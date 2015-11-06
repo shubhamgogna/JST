@@ -273,6 +273,28 @@ class TestAst(unittest.TestCase):
         ast = self.parser.parse(data)
         print(ast.to_graph_viz_str())
 
+    def test_while_loop(self):
+        data = """
+            int main()
+            {
+                int i;
+                while(i < 5){}
+            }
+            """
+        ast = self.parser.parse(data)
+        print(ast.to_graph_viz_str())
+
+    def test_do_while_loop(self):
+        data = """
+            int main()
+            {
+                int i;
+                do {} while (i > 10);
+            }
+            """
+        ast = self.parser.parse(data)
+        print(ast.to_graph_viz_str())
+
     def test_function_decl_top_impl_bottom(self):
         self.enable_debug()
 
@@ -366,5 +388,6 @@ class TestAst(unittest.TestCase):
                 char k;
             }
             '''
+
         ast = self.parser.parse(data)
         print(ast.to_graph_viz_str())
