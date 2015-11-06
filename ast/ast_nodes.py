@@ -41,7 +41,7 @@ class BaseAstNode:
 
 
     def name(self):
-        return '{}_{}'.format(self.uuid, type(self).__name__)
+        return '{}_{}'.format(type(self).__name__, self.uuid)
 
     #Define function for converting to 3ac
     def to_3ac(self, include_source=False):
@@ -65,11 +65,16 @@ class BaseAstNode:
 
     # Define method for getting a graphViz ready string
     def to_graph_viz_str(self):
+        for child in self.children:
+            if not isinstance(child, BaseAstNode):
+                print(child)
+
         descendant_names = ', '.join([child.name() for child in self.children])
         output = '\t{} -> {{{}}};\n'.format(self.name(), descendant_names)
 
         for child in self.children:
             output += child.to_graph_viz_str()
+            print(output)
         return output
 
 ##
@@ -322,6 +327,23 @@ class Cast(BaseAstNode):
     #     return output
 
 
+class CompoundStatement(BaseAstNode):
+    def __init__(self, declaration_list=None, statement_list=None, **kwargs):
+        super(CompoundStatement, self).__init__(**kwargs)
+
+        self.declaration_list = declaration_list if declaration_list else EmptyStatement()
+        self.statement_list = statement_list if statement_list else []
+
+
+    @property
+    def children(self):
+        children = []
+        children.append(self.declaration_list)
+        children.extend(self.statement_list)
+        return tuple(children)
+
+    def to_3ac(self, include_source=False):
+        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
 class Constant(BaseAstNode):
     INTEGER = 'int'

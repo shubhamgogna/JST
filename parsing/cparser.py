@@ -34,6 +34,7 @@ from symbol_table.symbol import Symbol, PointerDeclaration, FunctionSymbol, Vari
 # constructing the Abstract Syntax Tree that corresponds to the program. Compile time checking is done by this class.
 #
 from ticket_counting.ticket_counters import UUID_TICKETS
+from utils.compile_time_utils import TypeCheck
 from utils.primitive_types import Type
 
 
@@ -213,7 +214,9 @@ class Parser(object):
             raise Exception('Debug check: Expected a function_symbol...')
 
         declaration = FunctionDeclaration(arguments=function_symbol.named_parameters, type=None, uuid=UUID_TICKETS.get())
-        node = FunctionDefinition(declarations=declaration, param_declarations=function_symbol.named_parameters, body=t[5], uuid=UUID_TICKETS.get())
+        node = FunctionDefinition(declarations=declaration,
+                                  param_declarations=function_symbol.named_parameters,
+                                  body=t[5].get('ast_node', EmptyStatement()))
 
         t[0] = {'ast_node': node}
 
@@ -227,7 +230,7 @@ class Parser(object):
         declarator.type = td
 
         declaration = FunctionDeclaration(declarator.named_parameters, type=declarator.type, uuid=UUID_TICKETS.get())
-        node = FunctionDefinition(declarations=declaration, param_declarations=declarator.named_parameters, body=t[3])
+        node = FunctionDefinition(declarations=declaration, param_declarations=declarator.named_parameters, body=t[3].get('ast_node', EmptyStatement))
 
         t[0] = {'ast_node': node}
 
@@ -253,10 +256,13 @@ class Parser(object):
 
         ast_node_args = {"lines": (t.lineno(1), t.linespan(4)[1])}
 
+        print(t[4], type(t[4]))
+
+
         declaration = FunctionDeclaration(function_symbol.named_parameters, type=function_symbol.type, uuid=UUID_TICKETS.get())
         node = FunctionDefinition(declarations=declaration,
                                                param_declarations=function_symbol.named_parameters,
-                                               body=t[4]['ast_node'], uuid=UUID_TICKETS.get())
+                                               body=t[4].get('ast_node', EmptyStatement))
 
         t[0] = {'ast_node': node}
 
@@ -295,7 +301,7 @@ class Parser(object):
             if len(symbol.array_dims) == 0:
                 # Type information is stored in symbol.type
                 # Bitsize has to be calculated from type, so see note directly above
-                t[0].append(Declaration(symbol.identifier, None, None, None, symbol.type, None, None))
+                t[0].append(Declaration(symbol.identifier, None, None, None, symbol.type, None, TypeCheck.get_bit_size(symbol.type)))
             else:
                 t[0].append(ArrayDeclaration(symbol.identifier, symbol.array_dims, None, symbol.type))
 
@@ -305,6 +311,8 @@ class Parser(object):
         """declaration : declaration_specifiers SEMI"""
         self.output_production(t, production_message='declaration -> declaration_specifiers SEMI')
 
+
+
     #
     # declaration-list:
     #
@@ -312,11 +320,15 @@ class Parser(object):
         """declaration_list : declaration"""
         self.output_production(t, production_message='declaration_list -> declaration')
 
+        t[0] = {'ast_node': [t[1]['ast_node']]}
+
     def p_declaration_list_2(self, t):
         """
         declaration_list : declaration_list declaration
         """
         self.output_production(t, production_message='declaration_list -> declaration_list declaration')
+
+        t[1].get('ast_node', None).append(t[2]['ast_node'])
 
     #
     # declaration-specifiers
@@ -1236,6 +1248,8 @@ class Parser(object):
         """
         self.output_production(t, production_message='statement -> jump_statement')
 
+        print(t[1], type(t[1]))
+
         t[0] = t[1]
 
     #
@@ -1297,7 +1311,18 @@ class Parser(object):
         # t[6] is statement_list so need to pass this up.... we don't have a node to hold this
         #       so as of now it will just be whatever node has been passed up.
         # t[4] is declaration_list so will probably need to pass this up too....
-        t[0] = {'declaration_list': t[4], 'statement_list': t[6]}
+
+        # presumably, a compound_list is just a list of AST Nodes
+        # declaration_list is a node type, statement_list is a list of nodes
+        print(t[4])
+        print(t[6])
+        compound_statement = t[4].get('ast_node', [])
+        compound_statement.extend(t[6].get('ast_node', []))
+
+
+        t[0] = {'ast_node': compound_statement}
+
+        # t[0] = {'declaration_list': t[4], 'statement_list': t[6]}
 
 
 
@@ -1309,7 +1334,9 @@ class Parser(object):
         """
         self.output_production(t, production_message='compound_statement -> LBRACE statement_list RBRACE')
 
-        t[0] = t[4]
+        print(t[4], type(t[4]))
+
+        t[0] = t[4] if t[4] else {'ast_node': EmptyStatement()}
 
     def p_compound_statement_3(self, t):
         """
@@ -1327,7 +1354,7 @@ class Parser(object):
         self.output_production(t, production_message='compound_statement -> LBRACE RBRACE')
 
         # optimize away?
-        t[0] = {'ast_node': EmptyStatement(uuid=UUID_TICKETS.get())}
+        t[0] = {'ast_node': EmptyStatement()}
 
     #
     # statement-list:
@@ -1338,6 +1365,8 @@ class Parser(object):
         """
         self.output_production(t, production_message='statement_list -> statement')
 
+        print(t[1])
+
         t[0] = {'ast_node': [ t[1]['ast_node'] ] }
 
     def p_statement_list_2(self, t):
@@ -1345,6 +1374,9 @@ class Parser(object):
         statement_list : statement_list statement
         """
         self.output_production(t, production_message='statement_list -> statement_list statement')
+
+        print(t[1])
+        print(t[2])
 
         # set t[0] as t[1] combined with t[2]
         t[1]['ast_node'].append(t[2]['ast_node'])
@@ -1360,7 +1392,7 @@ class Parser(object):
         """
         self.output_production(t, production_message='selection_statement -> IF LPAREN expression RPAREN statement')
 
-        node = If(conditional=t[3], if_true=t[5], if_false=EmptyStatement(), uuid=UUID_TICKETS.get())
+        node = If(conditional=t[3], if_true=t[5], if_false=EmptyStatement())
 
         t[0] = {'ast_node': node}
 
@@ -1371,7 +1403,7 @@ class Parser(object):
         self.output_production(t,
             production_message='selection_statement -> IF LPAREN expression RPAREN statement ELSE statement')
 
-        node = If(conditional=t[3], if_true=t[5], if_false=t[7], uuid=UUID_TICKETS.get())
+        node = If(conditional=t[3], if_true=t[5], if_false=t[7])
 
         t[0] = {'ast_node': node}
 
@@ -1437,6 +1469,8 @@ class Parser(object):
         """
         self.output_production(t, production_message='jump_statement -> RETURN expression_option SEMI')
 
+        node = Return(expression=t[2]['ast_node'] if t[2] else EmptyStatement())
+        t[0] = {'ast_node': node}
 
     #
     # Expression Option
@@ -1902,7 +1936,7 @@ class Parser(object):
         """
         self.output_production(t, production_message='constant -> FCONST {}'.format(t[1]))
 
-        t[0] = ConstantValue(float(t[1]), 'float')
+        t[0] = Constant(float(t[1]), 'float')
 
     def p_constant_char(self, t):
         """
@@ -2084,7 +2118,7 @@ class Parser(object):
     # Output: Returns an object representing the (constant) result of the operation.
     @staticmethod
     def perform_unary_operation(operator: str, operand: Constant):
-        value = operand.value if type(operand) is ConstantValue else operand
+        value = operand.value if type(operand) is Constant else operand
         if operator == '+':
             raise Exception('No idea when this is used.')
         elif operator == '-':

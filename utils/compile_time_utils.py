@@ -30,6 +30,11 @@ class TypeCheck(object):
         if (type_specifiers.count(Type.FLOAT) + type_specifiers.count(Type.DOUBLE)) > 1:
             raise Exception('Floating point specifiers can only be used once in a declaration.')
 
+    @staticmethod
+    def get_bit_size(type):
+        # TODO implement me!
+        return 4
+
 
 
 class ArrayDimensionCheck(object):
