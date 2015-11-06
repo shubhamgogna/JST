@@ -351,3 +351,16 @@ class TestAst(unittest.TestCase):
             """
         ast = self.parser.parse(data)
         print(ast.to_graph_viz_str())
+
+    def test_declare_const_and_var_types(self):
+        data = '''
+            int main(){
+
+                const int i;
+                float j;
+                char k;
+                
+            }
+            '''
+        ast = self.parser.parse(data)
+        print(ast.to_graph_viz_str())
