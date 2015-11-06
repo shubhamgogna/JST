@@ -70,7 +70,7 @@ class BaseAstNode:
         for child in self.children:
             print(self.name(), 'child', child)
 
-        print('\n'.join([str(child) for child in self.children]))
+        print('\n'.join(['child: ' + str(child) for child in self.children]))
 
         descendant_names = ', '.join([child.name() for child in self.children])
 
@@ -113,6 +113,23 @@ class IterationNode(BaseAstNode):
     def to_3ac(self, a_dummy_parameter, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
+class ArrayDimLister(BaseAstNode):
+    def __init__(self, dimensions, **kwargs):
+        super(ArrayDimLister, self).__init__(**kwargs)
+
+        self.dimensions = dimensions
+
+    def name(self):
+        return super(ArrayDimLister, self).name(arg='_'.join(str(dimension) for dimension in self.dimensions))
+
+    @property
+    def children(self):
+        children = []
+        return tuple(children)
+
+    def to_3ac(self, include_source=False):
+        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+
 ##
 # This is a nested declaration of an array with the given type
 ##
@@ -120,13 +137,13 @@ class ArrayDeclaration(BaseAstNode):
     def __init__(self, identifier, dim, dim_qualifiers, type_declaration, **kwargs):
         super(ArrayDeclaration, self).__init__(**kwargs)
 
-        print()
-        print('ArrayDecl', dim, type(dim))
         self.dim = dim
         self.dim_qualifiers = dim_qualifiers
 
         self.identifier = identifier
         self.type_declaration = type_declaration
+
+        self.array_dim_dummy = ArrayDimLister(self.dim)
 
 
     @property
@@ -134,6 +151,7 @@ class ArrayDeclaration(BaseAstNode):
         children = []
         children.append(self.type_declaration)
         children.append(self.identifier)
+        children.append(self.array_dim_dummy)
         return tuple(children)
 
     def to_3ac(self, include_source=False):
@@ -155,20 +173,11 @@ class ArrayReference(BaseAstNode):
     def children(self):
         children = []
         children.append(self.array_symbol)
+        children.append(self.subscript)
         return tuple(children)
 
     def to_3ac(self, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
-
-
-    # This method will likely be implemented in the BaseAstNode
-    # def to_graph_viz_str(self):
-    #     descendant_names = ', '.join([child.name() for child in self.children])
-    #     output = '{} -> {{}};\n'.format(self, descendant_names)
-    #     for child in self.children:
-    #         ouptut += child.to_graph_viz_str()
-    #     return output
-
 
 
 class Assignment(BaseAstNode):
@@ -201,8 +210,6 @@ class Assignment(BaseAstNode):
     #     for child in self.children:
     #         ouptut += child.to_graph_viz_str()
     #     return output
-
-
 
 class BinaryOperator(BaseAstNode):
     def __init__(self, operator, lvalue, rvalue, **kwargs):
@@ -353,7 +360,8 @@ class Constant(BaseAstNode):
         self.type = type
         self.value = value
 
-
+    def name(self):
+        return super(Constant, self).name(arg=self.value)
 
     @property
     def children(self):
@@ -418,6 +426,7 @@ class Declaration(BaseAstNode):
     def children(self):
         children = []
         children.append(self.type)
+        children.append(self.identifier)
         if self.initialization_value is not None:
             children.append(self.initialization_value)
         return tuple(children)
