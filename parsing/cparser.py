@@ -194,7 +194,7 @@ class Parser(object):
         """
         self.output_production(t, production_message='external_declaration -> declaration')
 
-        t[0] = t[1]
+        t[0] = {'ast_node': DeclarationList(t[1]['ast_node'])}
 
     #
     # function-definition
@@ -907,13 +907,16 @@ class Parser(object):
                 raise CompileError(message=error_message, line_num=lineno, token_col=0,
                                            source_line=self.compiler_state.source_code[lineno])
 
-            if function_symbol.parameter_types_match(t[3]):  # the prototype was given, and now the definition
-                function_symbol.add_named_parameters(t[3])
-                function_symbol.finalized = True
-            else:
-                error_message = 'Function definition does not match signature.'
-                raise CompileError(message=error_message, line_num=lineno, token_col=0,
-                                       source_line=self.compiler_state.source_code[lineno])
+            # TODO Should probably check params to make sure it's not being re-declared
+            function_symbol.finalized = True
+
+            # if function_symbol.parameter_types_match(t[3]):  # the prototype was given, and now the definition
+            #     function_symbol.add_named_parameters(t[3])
+            #     function_symbol.finalized = True
+            # else:
+            #     error_message = 'Function definition does not match signature.'
+            #     raise CompileError(message=error_message, line_num=lineno, token_col=0,
+            #                            source_line=self.compiler_state.source_code[lineno])
         else:
             function_symbol = FunctionSymbol(identifier=t[1], lineno=lineno)
             function_symbol.set_signature(parameters=[])

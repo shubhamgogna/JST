@@ -66,7 +66,7 @@ class BaseAstNode:
         # for child in self.children:
         #     print(self.name(), 'child', child.name())
 
-        # print('\n'.join([str(child) for child in self.children]))
+        print('\n'.join([str(child) for child in self.children]))
 
         descendant_names = ', '.join([child.name() for child in self.children])
 
