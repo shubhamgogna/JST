@@ -1279,16 +1279,28 @@ class Parser(object):
         """
         self.output_production(t, production_message='compound_statement -> LBRACE declaration_list statement_list RBRACE')
 
-        # test is t[6] got simple assignments:
-        #
+        # test is t[6] got simple assignments and array accesses:
         # for item in t[6]['ast_node']:
         #     print(item.lvalue)
         #     print(item.op)
         #     print(item.rvalue)
 
-        # t[6] is statement_list so need to pass this up
+        # test t[6] got array assignments:
+        # print(t[6]['ast_node'])
+        # print('\n\n\n')
+        # print(t[6]['ast_node'])
+        # # print(t[6]['ast_node'].lvalue['ast_node'].array_name)
+        # print(t[6]['ast_node'].lvalue['ast_node'].subscript)
+        # print(t[6]['ast_node'].op)
+        # print(t[6]['ast_node'].rvalue)
+
+        # t[6] is statement_list so need to pass this up.... we don't have a node to hold this
+        #       so as of now it will just be whatever node has been passed up.
         # t[4] is declaration_list so will probably need to pass this up too....
         t[0] = {'declaration_list': t[4], 'statement_list': t[6]}
+
+
+
 
 
     def p_compound_statement_2(self, t):
@@ -1477,23 +1489,25 @@ class Parser(object):
         self.output_production(t, production_message=
             'assignment_expression -> unary_expression assignment_operator assignment_expression')
 
-        symbol = t[1]
-        if symbol.immutable:
-            message = 'Unable to modify immutable symbol {} (via {})'.format(symbol.identifier, t[2])
-            lineno = t.lineno(1)
-            column = 0
-            source_line = self.compiler_state.source_code[lineno - 1]
-            raise CompileError(message, lineno, column, source_line)
+        # for simple assign, will be symbol so do checks on it
+        if type(t[1]) is Symbol:
+            symbol = t[1]
+            if symbol.immutable:
+                message = 'Unable to modify immutable symbol {} (via {})'.format(symbol.identifier, t[2])
+                lineno = t.lineno(1)
+                column = 0
+                source_line = self.compiler_state.source_code[lineno - 1]
+                raise CompileError(message, lineno, column, source_line)
 
         # for simple assign to variable: t[3] is symbol. so only pass id
         if type(t[3]) is Symbol:
             symbol_id = t[3].identifier
-            t[0] = {'ast_node': Assignment(t[2],t[1],symbol_id)}
+            t[0] = {'ast_node': Assignment(t[2],t[1],symbol_id,uuid=UUID_TICKETS.get())}
 
-        # for simple assign to const: t[3] is a constant node so only passing in the value for the assignment node.
+        # for simple assign to const: t[3] is a constant node
+        # for array references: t[3] is arrayRef node
         elif t[3]['ast_node']:
-            node_value = t[3]['ast_node'].value
-            t[0] = {'ast_node': Assignment(t[2],t[1],node_value)}
+            t[0] = {'ast_node': Assignment(t[2],t[1],t[3]['ast_node'],uuid=UUID_TICKETS.get())}
 
     #
     # assignment_operator:
@@ -1698,6 +1712,11 @@ class Parser(object):
         postfix_expression : postfix_expression LBRACKET expression RBRACKET
         """
         self.output_production(t, production_message='postfix_expression -> postfix_expression LBRACKET expression RBRACKET')
+
+        # For array stuffs:
+
+        t[0] = {"ast_node": ArrayReference(t[1], t[3], uuid=UUID_TICKETS.get())}
+
 
     def p_postfix_expression_to_parameterized_function_call(self, t):
         """

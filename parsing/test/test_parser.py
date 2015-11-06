@@ -753,6 +753,36 @@ class TestParser(unittest.TestCase):
             '''
         self.parser.parse(data)
 
+    def test_array_simple_access(self):
+        self.enable_parser_debugging()
+
+        data = '''
+            int main()
+            {
+            int g;
+            int a[10];
+            a[1] = 4;
+            g = a[1];
+            }
+            '''
+        self.parser.parse(data)
+
+    def test_array_access_const_expr(self):
+        self.enable_parser_debugging()
+
+        data = '''
+            int main()
+            {
+            int g;
+            int a[10];
+            a[1] = 4;
+            g = a[1];
+            g = a[g + 1];
+            }
+            '''
+        self.parser.parse(data)
+
+
 
 
     def enable_parser_debugging(self):
