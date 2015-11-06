@@ -23,7 +23,7 @@ from scanning.clexer import Lexer
 class TestAst(unittest.TestCase):
 
     def setUp(self):
-        self.debug = True
+        self.debug = False
 
         self.compiler_state = CompilerState()
         self.lexer = Lexer(compiler_state=self.compiler_state)
