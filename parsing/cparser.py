@@ -1788,8 +1788,9 @@ class Parser(object):
         """
         self.output_production(t, production_message='postfix_expression -> postfix_expression LPAREN argument_expression_list RPAREN')
 
-        if isinstance(t[1], str):
-            function_symbol, _ = self.compiler_state.symbol_table.find(t[1])
+        if isinstance(t[1]['ast_node'], SymbolNode):
+            # function_symbol, _ = self.compiler_state.symbol_table.find(t[1])
+            function_symbol = t[1]['ast_node'].symbol
 
             if function_symbol:
 
