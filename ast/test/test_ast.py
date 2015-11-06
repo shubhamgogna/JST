@@ -366,5 +366,6 @@ class TestAst(unittest.TestCase):
                 char k;
             }
             '''
+
         ast = self.parser.parse(data)
         print(ast.to_graph_viz_str())
