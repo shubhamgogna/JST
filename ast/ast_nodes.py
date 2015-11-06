@@ -102,7 +102,7 @@ class IterationNode(BaseAstNode):
         children.append(self.initialization_expression)
         children.append(self.stop_condition_expression)
         children.append(self.increment_expression)
-        children.extend(self.body_statments)
+        children.append(self.body_statments)
         return tuple(children)
 
     def to_3ac(self, a_dummy_parameter, include_source=False):

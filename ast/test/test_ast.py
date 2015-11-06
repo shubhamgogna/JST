@@ -48,7 +48,7 @@ class TestAst(unittest.TestCase):
 
     def test_empty_file(self):
         data = ""
-        
+
         ast = self.parser.parse(data)
         print(ast)
 
