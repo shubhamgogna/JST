@@ -213,7 +213,7 @@ class Parser(object):
         else:
             raise Exception('Debug check: Expected a function_symbol...')
 
-        declaration = FunctionDeclaration(arguments=function_symbol.named_parameters, type=None, uuid=UUID_TICKETS.get())
+        declaration = FunctionDeclaration(arguments=function_symbol.named_parameters, type=None, identifier=function_symbol.identifier)
         node = FunctionDefinition(declarations=declaration,
                                   param_declarations=function_symbol.named_parameters,
                                   body=t[5].get('ast_node', EmptyStatement()))
@@ -262,7 +262,7 @@ class Parser(object):
         print(t[4], type(t[4]))
 
 
-        declaration = FunctionDeclaration(function_symbol.named_parameters, type=function_symbol.type)
+        declaration = FunctionDeclaration(function_symbol.named_parameters, type=function_symbol.type, identifier=function_symbol.identifier)
         node = FunctionDefinition(declarations=declaration,
                                                param_declarations=function_symbol.named_parameters,
                                                body=t[4].get('ast_node', EmptyStatement()))
