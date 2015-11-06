@@ -240,7 +240,9 @@ class Parser(object):
         """
         self.output_production(t, production_message='function_definition -> declarator declaration_list compound_statement')
 
-        # node = FunctionDefinition
+        declarator = t[1]
+        node = FunctionDefinition(declarations=declarator, param_declarations=declarator.named_parameters, body=t[3]['ast_node'])
+        t[0] = {'ast_node': node}
 
     def p_function_definition_4(self, t):
         """
@@ -253,8 +255,6 @@ class Parser(object):
             function_symbol.type = t[1]
         else:
             raise Exception('Debug check: Expected a function_symbol...')
-
-        ast_node_args = {"lines": (t.lineno(1), t.linespan(4)[1])}
 
         print(t[4], type(t[4]))
 
@@ -1334,13 +1334,7 @@ class Parser(object):
         """
         self.output_production(t, production_message='compound_statement -> LBRACE statement_list RBRACE')
 
-        print(t[4], type(t[4]))
-
         node = CompoundStatement(statement_list=t[4].get('ast_node', []))
-
-        print(node.children)
-
-
         t[0] = {'ast_node': node}
 
     def p_compound_statement_3(self, t):

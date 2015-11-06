@@ -20,14 +20,7 @@ class BaseAstNode:
     # @param line_range A tuple of start line and end line for where this node applies
     # @param uuid A unique identifier number from a TicketCounter
     #
-    def __init__(self, childrens=None, line_range=None, uuid=None, **kwargs):
-
-        # initialize children
-        if childrens is None:
-            self.childrens = []
-        else:
-            self.childrens = childrens
-
+    def __init__(self, line_range=None, uuid=None, **kwargs):
         # initialize the line_range
         self.line_range = line_range
 
