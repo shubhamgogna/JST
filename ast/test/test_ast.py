@@ -57,10 +57,10 @@ class TestAst(unittest.TestCase):
         print(ast)
 
     def test_plain_main(self):
-        data = "int main() {return 0;}"
+        data = "int main() {}"
         ast = self.parser.parse(data)
 
-        print(ast)
+        print(ast.to_graph_viz_str())
 
 
     def test_lone_if(self):
@@ -73,9 +73,10 @@ class TestAst(unittest.TestCase):
             '}\n'\
             ''
         ast = self.parser.parse(data)
+        print(ast.children[0])
+        print(ast.children[0].children)
         print(ast, type(ast))
         print(ast.to_graph_viz_str())
-        print(ast.children)
 
 
     def test_if_else(self):

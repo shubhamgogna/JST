@@ -174,42 +174,42 @@ class ConstantValue(object):
         self.type = type
 
 
-class TypeDeclaration(object):
-    FLOAT_TYPES = {'float', 'double'}
-    INT_TYPES = {'char', 'short', 'int'}
-
-    def __init__(self):
-        self.storage_class = []
-        self.qualifiers = set()  # in gcc, type qualifiers are idempotent
-        self.type_specifier = []  # being a list allows for things like 'unsigned int', 'long double'
-
-    def add_storage_class(self, storage_class_specifier):
-        if storage_class_specifier in self.storage_class:
-            raise Exception('Duplication of storage class specifier "{}".'.format(storage_class_specifier))
-
-        self.storage_class.append(storage_class_specifier)
-
-    def add_qualifier(self, type_qualifier):
-        self.qualifiers.add(type_qualifier)
-
-    def add_type_specifier(self, specifier):
-
-        if (specifier is 'long' and 2 <= self.type_specifier.count('long')) or specifier in self.type_specifier:
-            raise Exception('Too many instances of type specifier "{}" in type declaration'.format(specifier))
-
-        self.type_specifier.append(specifier)
-
-        # TODO: check for unsigned along with float types and such
-
-    def __str__(self):
-        storage_class_str = ' '.join(self.storage_class) + ' ' if self.storage_class else ''
-        qualifier_str = ' '.join(self.qualifiers) + ' ' if self.qualifiers else ''
-        specifier_str = ' '.join(self.type_specifier) if self.type_specifier else 'UNKNOWN'
-
-        return '{}{}{}'.format(storage_class_str, qualifier_str, specifier_str)
-
-    def __repr__(self):
-        return str(self)
+# class TypeDeclaration(object):
+#     FLOAT_TYPES = {'float', 'double'}
+#     INT_TYPES = {'char', 'short', 'int'}
+#
+#     def __init__(self):
+#         self.storage_class = []
+#         self.qualifiers = set()  # in gcc, type qualifiers are idempotent
+#         self.type_specifier = []  # being a list allows for things like 'unsigned int', 'long double'
+#
+#     def add_storage_class(self, storage_class_specifier):
+#         if storage_class_specifier in self.storage_class:
+#             raise Exception('Duplication of storage class specifier "{}".'.format(storage_class_specifier))
+#
+#         self.storage_class.append(storage_class_specifier)
+#
+#     def add_qualifier(self, type_qualifier):
+#         self.qualifiers.add(type_qualifier)
+#
+#     def add_type_specifier(self, specifier):
+#
+#         if (specifier is 'long' and 2 <= self.type_specifier.count('long')) or specifier in self.type_specifier:
+#             raise Exception('Too many instances of type specifier "{}" in type declaration'.format(specifier))
+#
+#         self.type_specifier.append(specifier)
+#
+#         # TODO: check for unsigned along with float types and such
+#
+#     def __str__(self):
+#         storage_class_str = ' '.join(self.storage_class) + ' ' if self.storage_class else ''
+#         qualifier_str = ' '.join(self.qualifiers) + ' ' if self.qualifiers else ''
+#         specifier_str = ' '.join(self.type_specifier) if self.type_specifier else 'UNKNOWN'
+#
+#         return '{}{}{}'.format(storage_class_str, qualifier_str, specifier_str)
+#
+#     def __repr__(self):
+#         return str(self)
 
 
 class PointerDeclaration(object):
