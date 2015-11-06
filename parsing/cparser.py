@@ -329,7 +329,8 @@ class Parser(object):
         """
         self.output_production(t, production_message='declaration_list -> declaration_list declaration')
 
-        t[0] = t[1]['ast_node'].declaration_list.extend(t[2]['ast_node'])
+        t[1]['ast_node'].declaration_list.extend(t[2]['ast_node'])
+        t[0] = t[1]
 
     #
     # declaration-specifiers
@@ -1252,8 +1253,6 @@ class Parser(object):
         """
         self.output_production(t, production_message='statement -> jump_statement')
 
-        print(t[1], type(t[1]))
-
         t[0] = t[1]
 
     #
@@ -1318,14 +1317,12 @@ class Parser(object):
 
         # presumably, a compound_list is just a list of AST Nodes
         # declaration_list is a node type, statement_list is a list of nodes
-        print(t[4])
+        print('declaration', t[4])
         print(t[6])
 
         node = CompoundStatement(declaration_list=(t[4].get('ast_node', None) if t[4] else None), statement_list=t[6].get('ast_node', []))
 
         t[0] = {'ast_node': node}
-
-        # t[0] = {'declaration_list': t[4], 'statement_list': t[6]}
 
 
 
@@ -1367,8 +1364,6 @@ class Parser(object):
         """
         self.output_production(t, production_message='statement_list -> statement')
 
-        print(t[1])
-
         t[0] = {'ast_node': [ t[1]['ast_node'] ] }
 
     def p_statement_list_2(self, t):
@@ -1376,9 +1371,6 @@ class Parser(object):
         statement_list : statement_list statement
         """
         self.output_production(t, production_message='statement_list -> statement_list statement')
-
-        print(t[1])
-        print(t[2])
 
         # set t[0] as t[1] combined with t[2]
         t[1]['ast_node'].append(t[2]['ast_node'])

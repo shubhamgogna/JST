@@ -176,7 +176,7 @@ class TestAst(unittest.TestCase):
         print(ast.to_graph_viz_str())
 
     def test_array_simple_access(self):
-        # self.enable_debug()
+        self.enable_debug()
 
         data = '''
             int main()
