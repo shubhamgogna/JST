@@ -42,7 +42,7 @@
   <div id="main_content_wrap" class="outer">
     <section id="main_content" class="inner">
       <h1>
-        <a id="test-runs" class="anchor" href="#test-runs" aria-hidden="true"><span class="octicon octicon-link"></span></a>While Loop
+        <a id="test-runs" class="anchor" href="#test-runs" aria-hidden="true"><span class="octicon octicon-link"></span></a>Declarations
       </h1>
 
       <h3>
@@ -51,10 +51,46 @@
 
 <pre><code>int main()
 {
-  int x;
+  const int x;
 }</code></pre>
 
-      <a href="http://lokeshdhakar.com/projects/lightbox2/images/picture.svg" data-lightbox="ast-pic"
+      <a href="images/const_declaration.png" data-lightbox="ast-pic"
+      data-title="Visualization of AST with GraphViz">
+        <h3 style="text-align: center;">Generated AST</h3>
+      </a>
+
+      <h3>
+        <a id="input" class="anchor" href="#input" aria-hidden="true"><span class="octicon octicon-link"></span></a>Source
+      </h3>
+
+<pre><code>int main(){
+  int x;
+  int * y;
+  int z[10];
+  const int i;
+  float j;
+  char k;
+}</code></pre>
+
+      <a href="images/declare_const_and_var_types.png" data-lightbox="ast-pic"
+      data-title="Visualization of AST with GraphViz">
+        <h3 style="text-align: center;">Generated AST</h3>
+      </a>
+
+      <h3>
+        <a id="input" class="anchor" href="#input" aria-hidden="true"><span class="octicon octicon-link"></span></a>Source
+      </h3>
+
+<pre><code>int main()
+{
+  int g;
+  int G;
+
+  g = 5;
+  G = g;
+}</code></pre>
+
+      <a href="images/const_declaration.png" data-lightbox="ast-pic"
       data-title="Visualization of AST with GraphViz">
         <h3 style="text-align: center;">Generated AST</h3>
       </a>

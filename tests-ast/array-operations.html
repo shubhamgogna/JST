@@ -51,10 +51,64 @@
 
 <pre><code>int main()
 {
-  int x;
+  int a[10];
+  a[1] = 4;
 }</code></pre>
 
-      <a href="http://lokeshdhakar.com/projects/lightbox2/images/picture.svg" data-lightbox="ast-pic"
+      <a href="images/array_simple_assign.png" data-lightbox="ast-pic"
+      data-title="Visualization of AST with GraphViz">
+        <h3 style="text-align: center;">Generated AST</h3>
+      </a>
+
+      <h3>
+        <a id="input" class="anchor" href="#input" aria-hidden="true"><span class="octicon octicon-link"></span></a>Source
+      </h3>
+
+<pre><code>int main()
+{
+  int g;
+  int a[10];
+  a[1] = 4;
+  g = a[1];
+}</code></pre>
+
+      <a href="images/array_simple_access.png" data-lightbox="ast-pic"
+      data-title="Visualization of AST with GraphViz">
+        <h3 style="text-align: center;">Generated AST</h3>
+      </a>
+
+      <h3>
+        <a id="input" class="anchor" href="#input" aria-hidden="true"><span class="octicon octicon-link"></span></a>Source
+      </h3>
+
+<pre><code>int main()
+{
+  int g;
+  int a[10];
+  a[6] = 4;
+  g = a[5 + 1];
+}</code></pre>
+
+      <a href="images/array_access_const_expr.png" data-lightbox="ast-pic"
+      data-title="Visualization of AST with GraphViz">
+        <h3 style="text-align: center;">Generated AST</h3>
+      </a>
+
+
+      <h3>
+        <a id="input" class="anchor" href="#input" aria-hidden="true"><span class="octicon octicon-link"></span></a>Source
+      </h3>
+
+<pre><code>int main()
+{
+  int g;
+  int a[10];
+  a[1] = 4;
+  g = a[1];
+  g = a[g + 1];
+}</code></pre>
+
+      <a href="images/array_access_var_expr.png" data-lightbox="ast-pic"
       data-title="Visualization of AST with GraphViz">
         <h3 style="text-align: center;">Generated AST</h3>
       </a>
