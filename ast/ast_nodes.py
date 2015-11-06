@@ -70,6 +70,8 @@ class BaseAstNode:
         for child in self.children:
             print(self.name(), 'child', child)
 
+        # print('\n'.join([str(child) for child in self.children]))
+
         descendant_names = ', '.join([child.name() for child in self.children])
 
         print(self.name(), 'descendants', descendant_names)

@@ -339,14 +339,28 @@ class TestAst(unittest.TestCase):
 
     def test_function_def_on_top_call(self):
         data = """
-            // definition on top, call after that
-            int do_stuff() {
+            int do_stuff()
+            {
                 return 5;
             }
 
-            int main() {
+            int main()
+            {
                 return do_stuff();
             }
             """
+        ast = self.parser.parse(data)
+        print(ast.to_graph_viz_str())
+
+    def test_declare_const_and_var_types(self):
+        data = '''
+            int main(){
+
+                const int i;
+                float j;
+                char k;
+                
+            }
+            '''
         ast = self.parser.parse(data)
         print(ast.to_graph_viz_str())
