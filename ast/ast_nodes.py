@@ -117,20 +117,23 @@ class IterationNode(BaseAstNode):
 # This is a nested declaration of an array with the given type
 ##
 class ArrayDeclaration(BaseAstNode):
-    def __init__(self, identifier, dim, dim_qualifiers, type, **kwargs):
+    def __init__(self, identifier, dim, dim_qualifiers, type_declaration, **kwargs):
         super(ArrayDeclaration, self).__init__(**kwargs)
 
-        self.identifier = identifier
+        print()
+        print('ArrayDecl', dim, type(dim))
         self.dim = dim
         self.dim_qualifiers = dim_qualifiers
 
-        self.type = type
+        self.identifier = identifier
+        self.type_declaration = type_declaration
 
 
     @property
     def children(self):
         children = []
-        children.append(self.type)
+        children.append(self.type_declaration)
+        children.append(self.identifier)
         return tuple(children)
 
     def to_3ac(self, include_source=False):
@@ -140,10 +143,10 @@ class ArrayDeclaration(BaseAstNode):
 # REVISIT ME - Might need to swtich attrs to children depending on how we handle arrays
 ##
 class ArrayReference(BaseAstNode):
-    def __init__(self, array_name, subscript, **kwargs):
+    def __init__(self, array_symbol, subscript, **kwargs):
         super(ArrayReference, self).__init__(**kwargs)
 
-        self.array_name = array_name
+        self.array_symbol = array_symbol
         self.subscript = subscript
 
 
@@ -151,6 +154,7 @@ class ArrayReference(BaseAstNode):
     @property
     def children(self):
         children = []
+        children.append(self.array_symbol)
         return tuple(children)
 
     def to_3ac(self, include_source=False):

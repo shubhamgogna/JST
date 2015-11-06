@@ -137,7 +137,7 @@ class FunctionSymbol(Symbol):
             elif isinstance(argument, ConstantValue):
                 arg_type_str = argument.type
             else:
-                raise Exception('Debug: did I forget a class-type?')
+                raise Exception('Debug: did I forget a class-type? Got: {}'.format(type(argument)))
 
             if signature_symbol.to_abstract_str() != arg_type_str:
                 # TODO: make sure that we can match types that are different but still compatible (Ex: char and int)

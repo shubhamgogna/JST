@@ -303,9 +303,9 @@ class Parser(object):
             if len(symbol.array_dims) == 0:
                 # Type information is stored in symbol.type
                 # Bitsize has to be calculated from type, so see note directly above
-                t[0].append(Declaration(symbol.identifier, None, None, None, symbol.type, None, TypeCheck.get_bit_size(symbol.type)))
+                t[0].append(Declaration(ID(symbol.identifier), None, None, None, symbol.type, None, TypeCheck.get_bit_size(symbol.type)))
             else:
-                t[0].append(ArrayDeclaration(symbol.identifier, symbol.array_dims, None, symbol.type))
+                t[0].append(ArrayDeclaration(ID(symbol.identifier), symbol.array_dims, None, symbol.type))
 
         t[0] = {'ast_node': t[0]}
 
@@ -1779,7 +1779,7 @@ class Parser(object):
 
         # For array stuffs:
 
-        t[0] = {"ast_node": ArrayReference(t[1], t[3], uuid=UUID_TICKETS.get())}
+        t[0] = {"ast_node": ArrayReference(t[1]['ast_node'], t[3]['ast_node'])}
 
 
     def p_postfix_expression_to_parameterized_function_call(self, t):
