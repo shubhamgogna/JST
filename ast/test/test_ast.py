@@ -37,7 +37,6 @@ class TestAst(unittest.TestCase):
         self.lexer = None
         self.compiler_state = None
 
-
     def enable_debug(self, productions=True, source=True):
         if self.debug:
             self.parser.prod_logger.add_switch(Logger.INFO)
@@ -48,18 +47,15 @@ class TestAst(unittest.TestCase):
                 self.parser.prod_logger.add_switch(Logger.SOURCE)
 
     def test_empty_file(self):
-
-        i = LABEL_COUNTER.get()
-        print(i)
-
         data = ""
+        
         ast = self.parser.parse(data)
         print(ast)
 
     def test_plain_main(self):
         data = "int main() {return 0;}"
-        ast = self.parser.parse(data)
 
+        ast = self.parser.parse(data)
         print(ast.to_graph_viz_str())
 
     def test_simple_declaration(self):
@@ -67,7 +63,6 @@ class TestAst(unittest.TestCase):
             int main() {int i;}
             """
         ast = self.parser.parse(data)
-
         print(ast.to_graph_viz_str())
 
     def test_const_declaration(self):
@@ -75,7 +70,6 @@ class TestAst(unittest.TestCase):
             int main() {const int i;}
             """
         ast = self.parser.parse(data)
-
         print(ast.to_graph_viz_str())
 
     def test_array_declaration(self):
@@ -83,7 +77,6 @@ class TestAst(unittest.TestCase):
             int main() {int i[5];}
             """
         ast = self.parser.parse(data)
-
         print(ast.to_graph_viz_str())
 
     def test_simple_declaration(self):
@@ -91,7 +84,6 @@ class TestAst(unittest.TestCase):
             int main() {int i[5][7];}
             """
         ast = self.parser.parse(data)
-
         print(ast.to_graph_viz_str())
 
     def test_lone_if(self):
@@ -122,7 +114,6 @@ class TestAst(unittest.TestCase):
             '}\n'\
             ''
         ast = self.parser.parse(data)
-
         print(ast.to_graph_viz_str())
 
     def test_if_elif_else(self):
@@ -139,7 +130,6 @@ class TestAst(unittest.TestCase):
             '}\n'\
             ''
         ast = self.parser.parse(data)
-
         print(ast.to_graph_viz_str())
 
 
@@ -159,7 +149,7 @@ class TestAst(unittest.TestCase):
     def test_simple_assign_var(self):
         self.enable_debug()
 
-        data = '''
+        data = """
             int main()
             {
             int g;
@@ -168,8 +158,8 @@ class TestAst(unittest.TestCase):
             g = 5;
             G = g;
             }
-            '''
-        self.parser.parse(data)
+            """
+
         ast = self.parser.parse(data)
         print(ast.to_graph_viz_str())
 
@@ -183,7 +173,7 @@ class TestAst(unittest.TestCase):
             a[1] = 4;
             }
             '''
-        self.parser.parse(data)
+
         ast = self.parser.parse(data)
         print(ast.to_graph_viz_str())
 
@@ -199,7 +189,7 @@ class TestAst(unittest.TestCase):
             g = a[1];
             }
             '''
-        self.parser.parse(data)
+
         ast = self.parser.parse(data)
         print(ast.to_graph_viz_str())
 
@@ -215,7 +205,7 @@ class TestAst(unittest.TestCase):
             g = a[5 + 1];
             }
             '''
-        self.parser.parse(data)
+
         ast = self.parser.parse(data)
         print(ast.to_graph_viz_str())
 
@@ -232,7 +222,7 @@ class TestAst(unittest.TestCase):
             g = a[g + 1];
             }
             '''
-        self.parser.parse(data)
+
         ast = self.parser.parse(data)
         print(ast.to_graph_viz_str())
 
@@ -245,7 +235,6 @@ class TestAst(unittest.TestCase):
             }
             """
         ast = self.parser.parse(data)
-
         print(ast.to_graph_viz_str())
 
     def test_for_loop_2(self):
@@ -257,7 +246,6 @@ class TestAst(unittest.TestCase):
             }
             """
         ast = self.parser.parse(data)
-
         print(ast.to_graph_viz_str())
 
     def test_for_loop_3(self):
@@ -269,7 +257,6 @@ class TestAst(unittest.TestCase):
             }
             """
         ast = self.parser.parse(data)
-
         print(ast.to_graph_viz_str())
 
     def test_array_twodim(self):
@@ -282,8 +269,7 @@ class TestAst(unittest.TestCase):
             int g;
             }
             '''
-        self.parser.parse(data)
-        ast = self.parser.parse(data)
 
+        ast = self.parser.parse(data)
         print(ast.to_graph_viz_str())
 
