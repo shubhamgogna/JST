@@ -70,7 +70,7 @@ class BaseAstNode:
         for child in self.children:
             print(self.name(), 'child', child)
 
-        print('\n'.join([str(child) for child in self.children]))
+        print('\n'.join([str(type(child)) for child in self.children]))
 
         descendant_names = ', '.join([child.name() for child in self.children])
 
@@ -613,7 +613,7 @@ class FunctionDeclaration(BaseAstNode):
     @property
     def children(self):
         children = []
-        children.extend(self.arguments)
+        children.append(self.arguments)
         children.append(self.type)
         return tuple(children)
 
@@ -651,7 +651,7 @@ class FunctionDefinition(BaseAstNode):
         children = []
         children.append(self.declarations)
         children.append(self.body)
-        children.extend(self.param_declarations)
+        children.append(self.param_declarations)
         return tuple(children)
 
     def to_3ac(self, include_source=False):

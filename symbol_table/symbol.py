@@ -20,6 +20,7 @@
 
 import copy
 import itertools
+from ast.ast_nodes import SymbolNode
 
 
 class Symbol(object):
@@ -130,11 +131,11 @@ class FunctionSymbol(Symbol):
         for signature_symbol, argument in itertools.zip_longest(self.signature, argument_list):
             arg_type_str = ''
 
-            print(type(argument))
+            print(argument)
 
-            if isinstance(argument, Symbol):
-                arg_type_str = argument.to_abstract_str()
-            elif isinstance(argument, ConstantValue):
+            if isinstance(argument['ast_node'], SymbolNode):
+                arg_type_str = argument['ast_node'].symbol.to_abstract_str()
+            elif isinstance(argument, ConstantValue):   # TODO
                 arg_type_str = argument.type
             else:
                 raise Exception('Debug: did I forget a class-type?')
