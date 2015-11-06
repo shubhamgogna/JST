@@ -358,10 +358,12 @@ class TestAst(unittest.TestCase):
         data = '''
             int main(){
 
+                int x;
+                int * y;
+                int z[10];
                 const int i;
                 float j;
                 char k;
-
             }
             '''
         ast = self.parser.parse(data)

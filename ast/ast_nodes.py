@@ -62,15 +62,15 @@ class BaseAstNode:
 
     # Define method for getting a graphViz ready string
     def to_graph_viz_str(self):
-        print(self.name())
-        for child in self.children:
-            if not isinstance(child, BaseAstNode):
-                print(self.name(), child)
-
-        for child in self.children:
-            print(self.name(), 'child', child)
-
-        print('\n'.join(['child: ' + str(child) for child in self.children]))
+        # print(self.name())
+        # for child in self.children:
+        #     if not isinstance(child, BaseAstNode):
+        #         print(self.name(), child)
+        # 
+        # for child in self.children:
+        #     print(self.name(), 'child', child)
+        # 
+        # print('\n'.join([str(child) for child in self.children]))
 
         descendant_names = ', '.join([child.name() for child in self.children])
 
@@ -145,7 +145,6 @@ class ArrayDeclaration(BaseAstNode):
 
         self.array_dim_dummy = ArrayDimLister(self.dim)
 
-
     @property
     def children(self):
         children = []
@@ -210,6 +209,8 @@ class Assignment(BaseAstNode):
     #     for child in self.children:
     #         ouptut += child.to_graph_viz_str()
     #     return output
+
+
 
 class BinaryOperator(BaseAstNode):
     def __init__(self, operator, lvalue, rvalue, **kwargs):
@@ -626,7 +627,7 @@ class FunctionDeclaration(BaseAstNode):
     @property
     def children(self):
         children = []
-        children.extend(self.arguments)
+        children.append(self.arguments)
         children.append(self.type)
         return tuple(children)
 
@@ -664,7 +665,7 @@ class FunctionDefinition(BaseAstNode):
         children = []
         children.append(self.declarations)
         children.append(self.body)
-        children.extend(self.param_declarations)
+        children.append(self.param_declarations)
         return tuple(children)
 
     def to_3ac(self, include_source=False):

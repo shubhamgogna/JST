@@ -260,10 +260,10 @@ class Parser(object):
         # print('\n\n\n\n')
         print(t[4], type(t[4]))
 
-
-        declaration = FunctionDeclaration(function_symbol.named_parameters, type=function_symbol.type, identifier=function_symbol.identifier)
+        ast_params = ParameterList([SymbolNode(symbol) for symbol in function_symbol.named_parameters])
+        declaration = FunctionDeclaration(ast_params, type=function_symbol.type, identifier=function_symbol.identifier)
         node = FunctionDefinition(declarations=declaration,
-                                               param_declarations=function_symbol.named_parameters,
+                                               param_declarations=ast_params,
                                                body=t[4].get('ast_node', EmptyStatement()))
 
         t[0] = {'ast_node': node}
