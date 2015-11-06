@@ -57,7 +57,7 @@ class TestAst(unittest.TestCase):
         print(ast)
 
     def test_plain_main(self):
-        data = "int main() {}"
+        data = "int main() {return 0;}"
         ast = self.parser.parse(data)
 
         print(ast.to_graph_viz_str())
@@ -108,7 +108,7 @@ class TestAst(unittest.TestCase):
         ast = self.parser.parse(data)
 
     def test_simple_assign_const(self):
-        self.enable_parser_debugging()
+        self.enable_debug()
 
         data = '''
             int main()
