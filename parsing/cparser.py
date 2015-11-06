@@ -305,7 +305,7 @@ class Parser(object):
             else:
                 t[0].append(ArrayDeclaration(symbol.identifier, symbol.array_dims, None, symbol.type))
 
-        t[0] = {'ast_node': t[0]}
+        t[0] = {'ast_node': DeclarationList(t[0])}
 
     def p_declaration_2(self, t):
         """declaration : declaration_specifiers SEMI"""
