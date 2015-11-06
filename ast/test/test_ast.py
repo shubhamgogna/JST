@@ -273,21 +273,6 @@ class TestAst(unittest.TestCase):
         ast = self.parser.parse(data)
         print(ast.to_graph_viz_str())
 
-    def test_array_twodim(self):
-        self.enable_debug()
-
-        data = '''
-            int main()
-            {
-            int b[10][10];
-            b[1][1] = 5;
-            }
-
-            '''
-
-        ast = self.parser.parse(data)
-        print(ast.to_graph_viz_str())
-
     def test_function_decl_top_impl_bottom(self):
         self.enable_debug()
 
@@ -342,7 +327,7 @@ class TestAst(unittest.TestCase):
         ast = self.parser.parse(data)
         print(ast.to_graph_viz_str())
 
-    def test_def_on_top(self):
+    def test_function_def_on_top(self):
         data = """
             // definition on top
             int do_stuff() {
@@ -352,9 +337,8 @@ class TestAst(unittest.TestCase):
         ast = self.parser.parse(data)
         print(ast.to_graph_viz_str())
 
-    def test_def_on_top_call(self):
+    def test_function_def_on_top_call(self):
         data = """
-
             // definition on top, call after that
             int do_stuff() {
                 return 5;
