@@ -49,12 +49,50 @@
         <a id="input" class="anchor" href="#input" aria-hidden="true"><span class="octicon octicon-link"></span></a>Source
       </h3>
 
-<pre><code>int main()
+<pre><code>// definition on top
+int do_stuff()
 {
-  int x;
+  return 5;
 }</code></pre>
 
-      <a href="http://lokeshdhakar.com/projects/lightbox2/images/picture.svg" data-lightbox="ast-pic"
+      <a href="images/function_def_on_top.png" data-lightbox="ast-pic"
+      data-title="Visualization of AST with GraphViz">
+        <h3 style="text-align: center;">Generated AST</h3>
+      </a>
+
+      <h3>
+        <a id="input" class="anchor" href="#input" aria-hidden="true"><span class="octicon octicon-link"></span></a>Source
+      </h3>
+
+<pre><code>int do_stuff();
+
+int do_stuff()
+{
+    return 5;
+}</code></pre>
+
+      <a href="images/function_declaration_top_implementation_bottom.png" data-lightbox="ast-pic"
+      data-title="Visualization of AST with GraphViz">
+        <h3 style="text-align: center;">Generated AST</h3>
+      </a>
+
+      <h3>
+        <a id="input" class="anchor" href="#input" aria-hidden="true"><span class="octicon octicon-link"></span></a>Source
+      </h3>
+
+<pre><code>int do_stuff();
+
+int main()
+{
+  return do_stuff();
+}
+
+int do_stuff()
+{
+  return 5;
+}</code></pre>
+
+      <a href="images/function_declaration_top_implementation_bottom_call_middle.png" data-lightbox="ast-pic"
       data-title="Visualization of AST with GraphViz">
         <h3 style="text-align: center;">Generated AST</h3>
       </a>

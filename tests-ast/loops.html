@@ -52,10 +52,40 @@
 <pre><code>int main()
 {
     int i;
+    for(i = 0; ;) {}
+}</code></pre>
+
+      <a href="images/for_loop_1.png" data-lightbox="ast-pic"
+      data-title="Visualization of AST with GraphViz">
+        <h3 style="text-align: center;">Generated AST</h3>
+      </a>
+
+      <h3>
+        <a id="input" class="anchor" href="#input" aria-hidden="true"><span class="octicon octicon-link"></span></a>Source
+      </h3>
+
+<pre><code>int main()
+{
+    int i;
+    for(i = 0; ; i++) {}
+}</code></pre>
+
+      <a href="images/for_loop_2.png" data-lightbox="ast-pic"
+      data-title="Visualization of AST with GraphViz">
+        <h3 style="text-align: center;">Generated AST</h3>
+      </a>
+
+      <h3>
+        <a id="input" class="anchor" href="#input" aria-hidden="true"><span class="octicon octicon-link"></span></a>Source
+      </h3>
+
+<pre><code>int main()
+{
+    int i;
     for(i = 0; i &lt; 1; i++) {}
 }</code></pre>
 
-      <a href="http://lokeshdhakar.com/projects/lightbox2/images/picture.svg" data-lightbox="ast-pic"
+      <a href="images/for_loop_3.png" data-lightbox="ast-pic"
       data-title="Visualization of AST with GraphViz">
         <h3 style="text-align: center;">Generated AST</h3>
       </a>
@@ -70,7 +100,7 @@
     while(i &lt; 5){}
 }</code></pre>
 
-      <a href="http://lokeshdhakar.com/projects/lightbox2/images/picture.svg" data-lightbox="ast-pic"
+      <a href="images/while_loop.png" data-lightbox="ast-pic"
       data-title="Visualization of AST with GraphViz">
         <h3 style="text-align: center;">Generated AST</h3>
       </a>
@@ -85,7 +115,7 @@
     do {} while (i &gt; 10);
 }</code></pre>
 
-      <a href="http://lokeshdhakar.com/projects/lightbox2/images/picture.svg" data-lightbox="ast-pic"
+      <a href="images/do_while_loop.png" data-lightbox="ast-pic"
       data-title="Visualization of AST with GraphViz">
         <h3 style="text-align: center;">Generated AST</h3>
       </a>

@@ -51,6 +51,20 @@
 
 <pre><code>int main()
 {
+  int x;
+}</code></pre>
+
+      <a href="images/simple_variable_declaration.png" data-lightbox="ast-pic"
+      data-title="Visualization of AST with GraphViz">
+        <h3 style="text-align: center;">Generated AST</h3>
+      </a>
+
+      <h3>
+        <a id="input" class="anchor" href="#input" aria-hidden="true"><span class="octicon octicon-link"></span></a>Source
+      </h3>
+
+<pre><code>int main()
+{
   const int x;
 }</code></pre>
 
@@ -90,7 +104,28 @@
   G = g;
 }</code></pre>
 
-      <a href="images/const_declaration.png" data-lightbox="ast-pic"
+      <a href="images/simple_assign_var.png" data-lightbox="ast-pic"
+      data-title="Visualization of AST with GraphViz">
+        <h3 style="text-align: center;">Generated AST</h3>
+      </a>
+
+      <h3>
+        <a id="input" class="anchor" href="#input" aria-hidden="true"><span class="octicon octicon-link"></span></a>Source
+      </h3>
+
+<pre><code>int main()
+{
+  int g;
+  char a;
+  float p;
+  //const int = 4;
+
+  g = 5;
+  a = 2;
+  p = 1.2;
+}</code></pre>
+
+      <a href="images/simple_assign_const.png" data-lightbox="ast-pic"
       data-title="Visualization of AST with GraphViz">
         <h3 style="text-align: center;">Generated AST</h3>
       </a>
