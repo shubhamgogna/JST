@@ -1219,6 +1219,9 @@ class Parser(object):
 
         t[0] = t[1]
 
+
+
+
     def p_statement_to_compound_statement(self, t):
         """
         statement : compound_statement
@@ -1556,7 +1559,10 @@ class Parser(object):
             t[0] = {'ast_node': Assignment(t[2],t[1],t[3]['ast_node'],uuid=UUID_TICKETS.get())}
 
         # print('\n\n\n\n')
-        print(type(t[0]['ast_node'].lvalue))
+        # print(type(t[0]['ast_node'].lvalue['ast_node'].array_name['ast_node'].array_name))
+        # print('\n\n')
+        # print(type(t[0]['ast_node'].lvalue['ast_node'].subscript['ast_node'].subscript['ast_node']))
+
 
     #
     # assignment_operator:
@@ -2083,6 +2089,8 @@ class Parser(object):
         left_value = left.value if isinstance(left, Constant) else left
         right_value = right.value if isinstance(right, Constant) else right
 
+        # right now only returning the value i.e. int.
+        # might need to change to return a const ast node instead.
         if operator == '+':
             return left_value + right_value
         elif operator == '-':
