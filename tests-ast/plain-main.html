@@ -42,7 +42,7 @@
   <div id="main_content_wrap" class="outer">
     <section id="main_content" class="inner">
       <h1>
-        <a id="test-runs" class="anchor" href="#test-runs" aria-hidden="true"><span class="octicon octicon-link"></span></a>If, Else If, Else
+        <a id="test-runs" class="anchor" href="#test-runs" aria-hidden="true"><span class="octicon octicon-link"></span></a>Plain Main
       </h1>
 
       <h3>
@@ -51,62 +51,10 @@
 
 <pre><code>int main()
 {
-  int i;
-  if (i == 5)
-  {
-    i = 6;
-  }
+  return 0;
 }</code></pre>
 
-      <a href="images/lone_if.png" data-lightbox="ast-pic"
-      data-title="Visualization of AST with GraphViz">
-        <h3 style="text-align: center;">Generated AST</h3>
-      </a>
-
-      <h3>
-        <a id="input" class="anchor" href="#input" aria-hidden="true"><span class="octicon octicon-link"></span></a>Source
-      </h3>
-
-<pre><code>int main()
-{
-  int i;
-  if (i == 5)
-  {
-    //i = 6;
-  }
-  else
-  {
-    //i = 5;
-  }
-}</code></pre>
-
-      <a href="images/if_else.png" data-lightbox="ast-pic"
-      data-title="Visualization of AST with GraphViz">
-        <h3 style="text-align: center;">Generated AST</h3>
-      </a>
-
-      <h3>
-        <a id="input" class="anchor" href="#input" aria-hidden="true"><span class="octicon octicon-link"></span></a>Source
-      </h3>
-
-<pre><code>int main()
-{
-  //int i;
-  if (i == 5)
-  {
-    //i = 6;
-  }
-  else if (i == 6)
-  {
-    //i = 7;
-  }
-  else
-  {
-    //i = 5;
-  }
-}</code></pre>
-
-      <a href="images/if_elif_else.png" data-lightbox="ast-pic"
+      <a href="images/plain_main.png" data-lightbox="ast-pic"
       data-title="Visualization of AST with GraphViz">
         <h3 style="text-align: center;">Generated AST</h3>
       </a>
