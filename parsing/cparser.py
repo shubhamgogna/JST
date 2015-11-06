@@ -847,11 +847,6 @@ class Parser(object):
 
         t[0] = t[1]
 
-
-        print('\n\n\n\n\n\n')
-        print(t[1])
-
-
     def p_direct_declarator_4(self, t):
         """
         direct_declarator : direct_declarator LPAREN parameter_type_list RPAREN
@@ -1195,10 +1190,6 @@ class Parser(object):
         self.output_production(t, production_message='constant_expression_option -> constant_expression')
 
         t[0] = t[1]
-
-
-        print('\n\n\n')
-        print(t[1])
 
     def p_parameter_type_list_option_to_empty(self, t):
         """
