@@ -882,12 +882,12 @@ class ParameterList(BaseAstNode):
 
 
 class PointerDeclaration(BaseAstNode):
-    def __init__(self, qualifiers, type, **kwargs):
+    def __init__(self, qualifiers, type_, **kwargs):
         super(PointerDeclaration, self).__init__(**kwargs)
 
         self.qualifiers = qualifiers
 
-        self.type = type
+        self.type = type_
 
 
     @property
@@ -1021,7 +1021,11 @@ class TypeDeclaration(BaseAstNode):
         #     self.type = type
 
     def name(self):
-        return super(TypeDeclaration, self).name(arg='_'.join(self.type_specifier))
+
+        if(len(self.qualifiers)):
+            return super(TypeDeclaration, self).name(arg='_'.join(self.qualifiers) + '_' + '_'.join(self.type_specifier))
+        else:
+            return super(TypeDeclaration, self).name(arg='_'.join(self.qualifiers) + '_'.join(self.type_specifier))
 
     def add_storage_class(self, storage_class_specifier):
         if storage_class_specifier in self.storage_class:
