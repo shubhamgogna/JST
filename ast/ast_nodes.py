@@ -58,16 +58,27 @@ class BaseAstNode:
 
     # Define method for getting a graphViz ready string
     def to_graph_viz_str(self):
+        print(self.name())
         for child in self.children:
             if not isinstance(child, BaseAstNode):
                 print(self.name(), child)
 
+        for child in self.children:
+            print(self.name(), 'child', child.name())
+
         descendant_names = ', '.join([child.name() for child in self.children])
+
+        print(self.name(), 'descendants', descendant_names)
+
         output = '\t{} -> {{{}}};\n'.format(self.name(), descendant_names)
 
         for child in self.children:
             output += child.to_graph_viz_str()
         return output
+
+    @property
+    def children(self):
+        return tuple([])
 
 ##
 # This type of node handles all loops: for, while, and do...while.
@@ -96,16 +107,6 @@ class IterationNode(BaseAstNode):
     def to_3ac(self, a_dummy_parameter, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
-
-    # This method will likely be implemented in the BaseAstNode
-    # def to_graph_viz_str(self):
-    #     descendant_names = ', '.join([child.name() for child in self.children])
-    #     output = '{} -> {{}};\n'.format(self, descendant_names)
-    #     for child in self.children:
-    #         ouptut += child.to_graph_viz_str()
-    #     return output
-
-
 ##
 # This is a nested declaration of an array with the given type
 ##
@@ -128,16 +129,6 @@ class ArrayDeclaration(BaseAstNode):
 
     def to_3ac(self, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
-
-
-    # This method will likely be implemented in the BaseAstNode
-    # def to_graph_viz_str(self):
-    #     descendant_names = ', '.join([child.name() for child in self.children])
-    #     output = '{} -> {{}};\n'.format(self, descendant_names)
-    #     for child in self.children:
-    #         ouptut += child.to_graph_viz_str()
-    #     return output
-
 
 ##
 # REVISIT ME - Might need to swtich attrs to children depending on how we handle arrays
@@ -396,10 +387,10 @@ class Continue(BaseAstNode):
 
 
 class Declaration(BaseAstNode):
-    def __init__(self, name, qualifiers, storage, funcspec, type, initialization_value, bitsize, **kwargs):
+    def __init__(self, identifier, qualifiers, storage, funcspec, type, initialization_value, bitsize, **kwargs):
         super(Declaration, self).__init__(**kwargs)
 
-        self.name = name
+        self.identifier = identifier
         self.qualifiers = qualifiers
         self.storage = storage
         self.funcspec = funcspec
@@ -412,9 +403,10 @@ class Declaration(BaseAstNode):
     @property
     def children(self):
         children = []
-        children.append(self.type)
-        children.append(self.initialization_value)
-        children.append(self.bitsize)
+        if self.type is not None:
+            children.append(self.type)
+        if self.type is not None:
+            children.append(self.initialization_value)
         return tuple(children)
 
     def to_3ac(self, include_source=False):
