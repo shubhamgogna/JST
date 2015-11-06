@@ -63,17 +63,18 @@ class BaseAstNode:
             if not isinstance(child, BaseAstNode):
                 print(self.name(), child)
 
-        for child in self.children:
-            print(self.name(), 'child', child.name())
+        # for child in self.children:
+        #     print(self.name(), 'child', child.name())
 
-        descendant_names = ', '.join([child.name() for child in self.children])
+        descendant_names = ', '.join([child.name() for child in self.children if isinstance(child, BaseAstNode)])
 
         print(self.name(), 'descendants', descendant_names)
 
         output = '\t{} -> {{{}}};\n'.format(self.name(), descendant_names)
 
         for child in self.children:
-            output += child.to_graph_viz_str()
+            if isinstance(child, BaseAstNode):
+                output += child.to_graph_viz_str()
         return output
 
     @property
