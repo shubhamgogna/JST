@@ -4,12 +4,12 @@
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # JST is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-#  
+#
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -62,6 +62,37 @@ class TestAst(unittest.TestCase):
 
         print(ast.to_graph_viz_str())
 
+    def test_simple_declaration(self):
+        data = """
+            int main() {int i;}
+            """
+        ast = self.parser.parse(data)
+
+        print(ast.to_graph_viz_str())
+
+    def test_const_declaration(self):
+        data = """
+            int main() {const int i;}
+            """
+        ast = self.parser.parse(data)
+
+        print(ast.to_graph_viz_str())
+
+    def test_array_declaration(self):
+        data = """
+            int main() {int i[5];}
+            """
+        ast = self.parser.parse(data)
+
+        print(ast.to_graph_viz_str())
+
+    def test_simple_declaration(self):
+        data = """
+            int main() {int i[5][7];}
+            """
+        ast = self.parser.parse(data)
+
+        print(ast.to_graph_viz_str())
 
     def test_lone_if(self):
         data = ''\
@@ -204,4 +235,40 @@ class TestAst(unittest.TestCase):
             '''
         self.parser.parse(data)
         ast = self.parser.parse(data)
+        print(ast.to_graph_viz_str())
+
+    def test_for_loop_1(self):
+        data = """
+            int main()
+            {
+                int i;
+                for(i = 0; ;) {}
+            }
+            """
+        ast = self.parser.parse(data)
+
+        print(ast.to_graph_viz_str())
+
+    def test_for_loop_2(self):
+        data = """
+            int main()
+            {
+                int i;
+                for(i = 0; ; i++) {}
+            }
+            """
+        ast = self.parser.parse(data)
+
+        print(ast.to_graph_viz_str())
+
+    def test_for_loop_3(self):
+        data = """
+            int main()
+            {
+                int i;
+                for(i = 0; i < 1; i++) {}
+            }
+            """
+        ast = self.parser.parse(data)
+
         print(ast.to_graph_viz_str())
