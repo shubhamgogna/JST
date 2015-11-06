@@ -339,12 +339,13 @@ class TestAst(unittest.TestCase):
 
     def test_function_def_on_top_call(self):
         data = """
-            // definition on top, call after that
-            int do_stuff() {
+            int do_stuff()
+            {
                 return 5;
             }
 
-            int main() {
+            int main()
+            {
                 return do_stuff();
             }
             """

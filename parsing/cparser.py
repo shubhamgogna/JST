@@ -164,7 +164,6 @@ class Parser(object):
         translation_unit : external_declaration
         """
         self.output_production(t, production_message='translation_unit -> external_declaration')
-
         t[0] = [t[1]['ast_node']]
 
     def p_translation_unit_2(self, t):
@@ -174,7 +173,7 @@ class Parser(object):
         self.output_production(t, production_message='translation_unit_2 -> translation_unit external_declaration')
 
         if t[2] is not None:
-            t[1].extend(t[2])
+            t[1].append(t[2]['ast_node'])
 
         t[0] = t[1]
 
@@ -1817,9 +1816,9 @@ class Parser(object):
         """
         self.output_production(t, production_message='postfix_expression -> postfix_expression LPAREN RPAREN')
 
-        find_result = self.compiler_state.symbol_table.find(t[1])
-        if find_result:
-            function_symbol, _ = find_result
+        # find_result = self.compiler_state.symbol_table.find(t[1])
+        if isinstance(t[1]['ast_node'], SymbolNode):
+            function_symbol = t[1]['ast_node'].symbol
             if function_symbol.arguments_match_parameter_types([]):
                 # t[0] = ast.FunctionCall(          )
                 pass
