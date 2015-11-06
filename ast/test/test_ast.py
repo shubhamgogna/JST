@@ -138,7 +138,13 @@ class TestAst(unittest.TestCase):
             int main()
             {
             int g;
+            char a;
+            float p;
+            const int = 4;
+
             g = 5;
+            a = 2;
+            p = 1.2;
             }
             '''
         ast = self.parser.parse(data)
@@ -155,6 +161,7 @@ class TestAst(unittest.TestCase):
 
             g = 5;
             G = g;
+
             }
             """
 
