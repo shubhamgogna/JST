@@ -1828,7 +1828,8 @@ class Parser(object):
             function_symbol = t[1]['ast_node'].symbol
             if function_symbol.arguments_match_parameter_types([]):
                 # t[0] = ast.FunctionCall(          )
-                pass
+                t[0] = {'ast_node': FunctionCall(ID(function_symbol.identifier), EmptyStatement())}
+                # pass
             else:
                 error_message = 'Arguments do not match parameter types in call to {}'\
                     .format(function_symbol.identifier)

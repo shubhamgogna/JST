@@ -66,10 +66,10 @@ class BaseAstNode:
         # for child in self.children:
         #     if not isinstance(child, BaseAstNode):
         #         print(self.name(), child)
-        # 
+        #
         # for child in self.children:
         #     print(self.name(), 'child', child)
-        # 
+        #
         # print('\n'.join([str(child) for child in self.children]))
 
         descendant_names = ', '.join([child.name() for child in self.children])
@@ -590,7 +590,7 @@ class FunctionCall(BaseAstNode):
         self.arguments = arguments
 
     def name(self):
-        super(FunctionCall, self).name(arg=self.identifier)
+        return super(FunctionCall, self).name(arg=self.identifier)
 
     @property
     def children(self):
