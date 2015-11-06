@@ -62,14 +62,14 @@ class BaseAstNode:
 
     # Define method for getting a graphViz ready string
     def to_graph_viz_str(self):
-        print(self.name())
-        for child in self.children:
-            if not isinstance(child, BaseAstNode):
-                print(self.name(), child)
+        # print(self.name())
+        # for child in self.children:
+        #     if not isinstance(child, BaseAstNode):
+        #         print(self.name(), child)
         # 
         # for child in self.children:
         #     print(self.name(), 'child', child)
-        # 
+        #
         # print('\n'.join([str(child) for child in self.children]))
 
         descendant_names = ', '.join([child.name() for child in self.children])
@@ -452,13 +452,6 @@ class FileAST(BaseAstNode):
     def to_3ac(self, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
-
-    
-    
-    
-    
-    
-    
     
 
     def to_graph_viz_str(self):
@@ -473,7 +466,7 @@ class FunctionCall(BaseAstNode):
         self.arguments = arguments
 
     def name(self):
-        super(FunctionCall, self).name(arg=self.identifier)
+        return super(FunctionCall, self).name(arg=self.identifier)
 
     @property
     def children(self):
