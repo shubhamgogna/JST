@@ -38,7 +38,7 @@ class TestAst(unittest.TestCase):
         self.compiler_state = None
 
 
-    def enable_debug(self, productions=True, source=False):
+    def enable_debug(self, productions=True, source=True):
         if self.debug:
             self.parser.prod_logger.add_switch(Logger.INFO)
             if productions:
@@ -142,7 +142,6 @@ class TestAst(unittest.TestCase):
         ast = self.parser.parse(data)
         print(ast.to_graph_viz_str())
 
-
     def test_array_simple_assign(self):
         self.enable_debug()
 
@@ -200,6 +199,20 @@ class TestAst(unittest.TestCase):
             a[1] = 4;
             g = a[1];
             g = a[g + 1];
+            }
+            '''
+        self.parser.parse(data)
+        ast = self.parser.parse(data)
+        print(ast.to_graph_viz_str())
+
+    def test_array_twodim(self):
+        self.enable_debug()
+
+        data = '''
+            int main()
+            {
+            int a[10][10];
+            int g;
             }
             '''
         self.parser.parse(data)

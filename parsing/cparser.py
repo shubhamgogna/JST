@@ -1549,6 +1549,9 @@ class Parser(object):
         elif t[3]['ast_node']:
             t[0] = {'ast_node': Assignment(t[2],t[1],t[3]['ast_node'],uuid=UUID_TICKETS.get())}
 
+        print('\n\n\n\n')
+        print(type(t[0]['ast_node'].lvalue))
+
     #
     # assignment_operator:
     #
