@@ -42,92 +42,22 @@
   <div id="main_content_wrap" class="outer">
     <section id="main_content" class="inner">
       <h1>
-        <a id="test-runs" class="anchor" href="#test-runs" aria-hidden="true"><span class="octicon octicon-link"></span></a>Declarations
+        <a id="test-runs" class="anchor" href="#test-runs" aria-hidden="true"><span class="octicon octicon-link"></span></a>Generating ASTs
       </h1>
 
       <h3>
-        <a id="input" class="anchor" href="#input" aria-hidden="true"><span class="octicon octicon-link"></span></a>Source
+        <a id="input" class="anchor" href="#input" aria-hidden="true"><span class="octicon octicon-link"></span></a>Example function
       </h3>
 
-<pre><code>int main()
-{
-  int i;
-}</code></pre>
+<pre><code>def my_custom_ast(self):
+data = """
+  // Put code here!
+  // int main() {int i[5][7];}
+  """
+ast = self.parser.parse(data)
+print(ast.to_graph_viz_str())</code></pre>
 
-      <a href="images/simple_variable_declaration.png" data-lightbox="ast-pic"
-      data-title="Visualization of AST with GraphViz">
-        <h3 style="text-align: center;">Generated AST</h3>
-      </a>
-
-      <h3>
-        <a id="input" class="anchor" href="#input" aria-hidden="true"><span class="octicon octicon-link"></span></a>Source
-      </h3>
-
-<pre><code>int main()
-{
-  const int i;
-}</code></pre>
-
-      <a href="images/const_declaration.png" data-lightbox="ast-pic"
-      data-title="Visualization of AST with GraphViz">
-        <h3 style="text-align: center;">Generated AST</h3>
-      </a>
-
-      <h3>
-        <a id="input" class="anchor" href="#input" aria-hidden="true"><span class="octicon octicon-link"></span></a>Source
-      </h3>
-
-<pre><code>int main(){
-  int x;
-  int * y;
-  int z[10];
-  const int i;
-  float j;
-  char k;
-}</code></pre>
-
-      <a href="images/declare_const_and_var_types.png" data-lightbox="ast-pic"
-      data-title="Visualization of AST with GraphViz">
-        <h3 style="text-align: center;">Generated AST</h3>
-      </a>
-
-      <h3>
-        <a id="input" class="anchor" href="#input" aria-hidden="true"><span class="octicon octicon-link"></span></a>Source
-      </h3>
-
-<pre><code>int main()
-{
-  int g;
-  int G;
-
-  g = 5;
-  G = g;
-}</code></pre>
-
-      <a href="images/simple_assign_var.png" data-lightbox="ast-pic"
-      data-title="Visualization of AST with GraphViz">
-        <h3 style="text-align: center;">Generated AST</h3>
-      </a>
-
-      <h3>
-        <a id="input" class="anchor" href="#input" aria-hidden="true"><span class="octicon octicon-link"></span></a>Source
-      </h3>
-
-<pre><code>int main()
-{
-  int g;
-  char a;
-  float p;
-
-  g = 5;
-  a = 2;
-  p = 1.2;
-}</code></pre>
-
-      <a href="images/simple_assign_const.png" data-lightbox="ast-pic"
-      data-title="Visualization of AST with GraphViz">
-        <h3 style="text-align: center;">Generated AST</h3>
-      </a>
+    <br><br><br><br><br>
 
     </section>
   </div>
