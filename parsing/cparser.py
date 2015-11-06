@@ -1408,7 +1408,7 @@ class Parser(object):
         self.output_production(t,
             production_message='selection_statement -> IF LPAREN expression RPAREN statement ELSE statement')
 
-        node = If(conditional=t[3], if_true=t[5], if_false=t[7])
+        node = If(conditional=t[3]['ast_node'], if_true=t[5]['ast_node'], if_false=t[7]['ast_node'])
 
         t[0] = {'ast_node': node}
 

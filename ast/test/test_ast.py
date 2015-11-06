@@ -92,6 +92,8 @@ class TestAst(unittest.TestCase):
             ''
         ast = self.parser.parse(data)
 
+        print(ast.to_graph_viz_str())
+
     def test_if_elif_else(self):
         data = ''\
             'int main() {\n' \
@@ -107,6 +109,7 @@ class TestAst(unittest.TestCase):
             ''
         ast = self.parser.parse(data)
 
+        print(ast.to_graph_viz_str())
 
 
     def test_simple_assign_const(self):
