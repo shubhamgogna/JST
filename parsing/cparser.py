@@ -303,7 +303,8 @@ class Parser(object):
             if len(symbol.array_dims) == 0:
                 # Type information is stored in symbol.type
                 # Bitsize has to be calculated from type, so see note directly above
-                t[0].append(Declaration(ID(symbol.identifier), None, None, None, symbol.type, None, TypeCheck.get_bit_size(symbol.type)))
+                init_ast = init_declarator['initializer']['ast_node'] if init_declarator['initializer'] else None
+                t[0].append(Declaration(ID(symbol.identifier), None, None, None, symbol.type, init_ast, TypeCheck.get_bit_size(symbol.type)))
             else:
                 t[0].append(ArrayDeclaration(ID(symbol.identifier), symbol.array_dims, None, symbol.type))
 
@@ -1076,6 +1077,8 @@ class Parser(object):
         initializer : assignment_expression
         """
         self.output_production(t, production_message='initializer -> assignment_expression')
+
+        t[0] = {'ast_node': t[1]['ast_node']}
 
     def p_initializer_2(self, t):
         """initializer : LBRACE initializer_list RBRACE"""

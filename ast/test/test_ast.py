@@ -63,6 +63,13 @@ class TestAst(unittest.TestCase):
         ast = self.parser.parse(data)
         print(ast.to_graph_viz_str())
 
+    def test_simple_variable_initialization(self):
+        data = """
+            int main() {int i = 5; int j = i;}
+            """
+        ast = self.parser.parse(data)
+        print(ast.to_graph_viz_str())
+
     def test_const_declaration(self):
         data = """
             int main() {const int i;}
