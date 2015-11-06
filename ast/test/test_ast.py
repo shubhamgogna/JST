@@ -106,3 +106,90 @@ class TestAst(unittest.TestCase):
             '}\n'\
             ''
         ast = self.parser.parse(data)
+
+    def test_simple_assign_const(self):
+        self.enable_parser_debugging()
+
+        data = '''
+            int main()
+            {
+            int g;
+            g = 5;
+            }
+            '''
+        ast = self.parser.parse(data)
+        print(ast.to_graph_viz_str())
+
+
+
+    def test_simple_assign_var(self):
+        self.enable_parser_debugging()
+
+        data = '''
+            int main()
+            {
+            int g;
+            int G;
+
+            g = 5;
+            G = g;
+            }
+            '''
+        self.parser.parse(data)
+
+
+    def test_array_simple_assign(self):
+        self.enable_parser_debugging()
+
+        data = '''
+            int main()
+            {
+            int a[10];
+            a[1] = 4;
+            }
+            '''
+        self.parser.parse(data)
+
+    def test_array_simple_access(self):
+        self.enable_parser_debugging()
+
+        data = '''
+            int main()
+            {
+            int g;
+            int a[10];
+            a[1] = 4;
+            g = a[1];
+            }
+            '''
+        self.parser.parse(data)
+
+    def test_array_access_const_expr(self):
+        self.enable_parser_debugging()
+
+        data = '''
+            int main()
+            {
+            int g;
+            int a[10];
+            a[6] = 4;
+            g = a[5 + 1];
+            }
+            '''
+        self.parser.parse(data)
+
+
+    def test_array_access_var_expr(self):
+        self.enable_parser_debugging()
+
+        data = '''
+            int main()
+            {
+            int g;
+            int a[10];
+            a[1] = 4;
+            g = a[1];
+            g = a[g + 1];
+            }
+            '''
+        self.parser.parse(data)
