@@ -134,7 +134,7 @@ class TestAst(unittest.TestCase):
 
 
     def test_simple_assign_const(self):
-        self.enable_debug()
+        # self.enable_debug()
 
         data = '''
             int main()
@@ -147,7 +147,7 @@ class TestAst(unittest.TestCase):
         print(ast.to_graph_viz_str())
 
     def test_simple_assign_var(self):
-        self.enable_debug()
+        # self.enable_debug()
 
         data = """
             int main()
@@ -164,7 +164,7 @@ class TestAst(unittest.TestCase):
         print(ast.to_graph_viz_str())
 
     def test_array_simple_assign(self):
-        self.enable_debug()
+        # self.enable_debug()
 
         data = '''
             int main()
@@ -178,7 +178,7 @@ class TestAst(unittest.TestCase):
         print(ast.to_graph_viz_str())
 
     def test_array_simple_access(self):
-        self.enable_debug()
+        # self.enable_debug()
 
         data = '''
             int main()
@@ -194,7 +194,7 @@ class TestAst(unittest.TestCase):
         print(ast.to_graph_viz_str())
 
     def test_array_access_const_expr(self):
-        self.enable_debug()
+        # self.enable_debug()
 
         data = '''
             int main()
@@ -210,7 +210,7 @@ class TestAst(unittest.TestCase):
         print(ast.to_graph_viz_str())
 
     def test_array_access_var_expr(self):
-        self.enable_debug()
+        # self.enable_debug()
 
         data = '''
             int main()
@@ -226,6 +226,23 @@ class TestAst(unittest.TestCase):
 
         ast = self.parser.parse(data)
         print(ast.to_graph_viz_str())
+
+    def test_array_twodim(self):
+        # self.enable_debug()
+
+        data = '''
+            int main()
+            {
+            int b[10][10];
+            b[1][1] = 5;
+            }
+
+            '''
+
+        ast = self.parser.parse(data)
+        print(ast.to_graph_viz_str())
+
+
 
     def test_for_loop_1(self):
         data = """
@@ -257,21 +274,6 @@ class TestAst(unittest.TestCase):
                 for(i = 0; i < 1; i++) {}
             }
             """
-        ast = self.parser.parse(data)
-        print(ast.to_graph_viz_str())
-
-    def test_array_twodim(self):
-        self.enable_debug()
-
-        data = '''
-            int main()
-            {
-            int b[10][10];
-            b[1][1] = 5;
-            }
-
-            '''
-
         ast = self.parser.parse(data)
         print(ast.to_graph_viz_str())
 
