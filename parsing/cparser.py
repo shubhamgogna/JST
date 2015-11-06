@@ -1555,7 +1555,7 @@ class Parser(object):
         elif t[3]['ast_node']:
             t[0] = {'ast_node': Assignment(t[2],t[1],t[3]['ast_node'],uuid=UUID_TICKETS.get())}
 
-        print('\n\n\n\n')
+        # print('\n\n\n\n')
         print(type(t[0]['ast_node'].lvalue))
 
     #
@@ -1636,7 +1636,7 @@ class Parser(object):
 
         if type(t[1]) is dict:
             left_operand = t[1].get('ast_node', None)
-            right_operand = t[1].get('ast_node', None)
+            right_operand = t[3].get('ast_node', None)
 
             if Parser.is_a_constant(left_operand) and Parser.is_a_constant(t[3]['ast_node']):
                 t[0] = {'ast_node': Parser.perform_binary_operation(left_operand, t[2], right_operand)}
@@ -2084,7 +2084,6 @@ class Parser(object):
         right_value = right.value if isinstance(right, Constant) else right
 
         if operator == '+':
-            print(left_value + right_value)
             return left_value + right_value
         elif operator == '-':
             return left_value - right_value
