@@ -1318,7 +1318,7 @@ class Parser(object):
         print(t[4])
         print(t[6])
 
-        node = CompoundStatement(declaration_list=t[4].get('ast_node', None), statement_list=t[6].get('ast_node', []))
+        node = CompoundStatement(declaration_list=(t[4].get('ast_node', None) if t[4] else None), statement_list=t[6].get('ast_node', []))
 
         t[0] = {'ast_node': node}
 
