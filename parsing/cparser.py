@@ -256,6 +256,9 @@ class Parser(object):
         else:
             raise Exception('Debug check: Expected a function_symbol...')
 
+        ast_node_args = {"lines": (t.lineno(1), t.linespan(4)[1])}
+
+        # print('\n\n\n\n')
         print(t[4], type(t[4]))
 
 
@@ -1314,11 +1317,10 @@ class Parser(object):
         # declaration_list is a node type, statement_list is a list of nodes
         print(t[4])
         print(t[6])
-        compound_statement = t[4].get('ast_node', [])
-        compound_statement.extend(t[6].get('ast_node', []))
 
+        node = CompoundStatement(declaration_list=t[4].get('ast_node', None), statement_list=t[6].get('ast_node', []))
 
-        t[0] = {'ast_node': compound_statement}
+        t[0] = {'ast_node': node}
 
         # t[0] = {'declaration_list': t[4], 'statement_list': t[6]}
 
