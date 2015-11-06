@@ -107,8 +107,10 @@ class TestAst(unittest.TestCase):
             ''
         ast = self.parser.parse(data)
 
+
+
     def test_simple_assign_const(self):
-        self.enable_parser_debugging()
+        self.enable_debug()
 
         data = '''
             int main()
@@ -120,10 +122,8 @@ class TestAst(unittest.TestCase):
         ast = self.parser.parse(data)
         print(ast.to_graph_viz_str())
 
-
-
     def test_simple_assign_var(self):
-        self.enable_parser_debugging()
+        self.enable_debug()
 
         data = '''
             int main()
@@ -136,10 +136,12 @@ class TestAst(unittest.TestCase):
             }
             '''
         self.parser.parse(data)
+        ast = self.parser.parse(data)
+        print(ast.to_graph_viz_str())
 
 
     def test_array_simple_assign(self):
-        self.enable_parser_debugging()
+        self.enable_debug()
 
         data = '''
             int main()
@@ -149,9 +151,11 @@ class TestAst(unittest.TestCase):
             }
             '''
         self.parser.parse(data)
+        ast = self.parser.parse(data)
+        print(ast.to_graph_viz_str())
 
     def test_array_simple_access(self):
-        self.enable_parser_debugging()
+        self.enable_debug()
 
         data = '''
             int main()
@@ -163,9 +167,11 @@ class TestAst(unittest.TestCase):
             }
             '''
         self.parser.parse(data)
+        ast = self.parser.parse(data)
+        print(ast.to_graph_viz_str())
 
     def test_array_access_const_expr(self):
-        self.enable_parser_debugging()
+        self.enable_debug()
 
         data = '''
             int main()
@@ -177,10 +183,11 @@ class TestAst(unittest.TestCase):
             }
             '''
         self.parser.parse(data)
-
+        ast = self.parser.parse(data)
+        print(ast.to_graph_viz_str())
 
     def test_array_access_var_expr(self):
-        self.enable_parser_debugging()
+        self.enable_debug()
 
         data = '''
             int main()
@@ -193,3 +200,5 @@ class TestAst(unittest.TestCase):
             }
             '''
         self.parser.parse(data)
+        ast = self.parser.parse(data)
+        print(ast.to_graph_viz_str())
