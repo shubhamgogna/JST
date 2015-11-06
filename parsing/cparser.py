@@ -308,13 +308,11 @@ class Parser(object):
             else:
                 t[0].append(ArrayDeclaration(symbol.identifier, symbol.array_dims, None, symbol.type))
 
-        t[0] = {'ast_node': DeclarationList(t[0])}
+        t[0] = {'ast_node': t[0]}
 
     def p_declaration_2(self, t):
         """declaration : declaration_specifiers SEMI"""
         self.output_production(t, production_message='declaration -> declaration_specifiers SEMI')
-
-
 
     #
     # declaration-list:
@@ -323,10 +321,7 @@ class Parser(object):
         """declaration_list : declaration"""
         self.output_production(t, production_message='declaration_list -> declaration')
 
-        print(t[1])
-        node = DeclarationList([t[1]['ast_node']])
-
-        t[0] = {'ast_node': node}
+        t[0] = {'ast_node': DeclarationList(t[1]['ast_node'])}
 
     def p_declaration_list_2(self, t):
         """
@@ -334,8 +329,7 @@ class Parser(object):
         """
         self.output_production(t, production_message='declaration_list -> declaration_list declaration')
 
-        t[1]['ast_node'].append(t[2]['ast_node'])
-        t[0] = t[1]
+        t[0] = t[1]['ast_node'].declaration_list.extend(t[2]['ast_node'])
 
     #
     # declaration-specifiers
@@ -1324,7 +1318,7 @@ class Parser(object):
         print(t[4])
         print(t[6])
 
-        node = CompoundStatement(declaration_list=t[4].get('ast_node', None), statement_list=t[6].get('ast_node', []))
+        node = CompoundStatement(declaration_list=(t[4].get('ast_node', None) if t[4] else None), statement_list=t[6].get('ast_node', []))
 
         t[0] = {'ast_node': node}
 
