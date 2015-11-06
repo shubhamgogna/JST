@@ -134,9 +134,11 @@ class Parser(object):
     def p_error(self, t):
         print('--- ERROR ---')
         print('Last token: {}'.format(self.lexer.last_token))
+        print('Last production attempted: {}'.format(t))
+        print('Compilatiion unable to continue.')
 
         self.prod_logger.implement_me("p_error")
-        raise NotImplemented("p_error")
+        # raise NotImplemented("p_error")
 
 
     def p_program(self, t):
@@ -1066,7 +1068,9 @@ class Parser(object):
         """
         self.output_production(t, production_message='initializer -> assignment_expression')
 
-        t[0] = {'ast_node': t[1]['ast_node']}
+        node = t[1] if isinstance(t[1], Constant) else t[1]['ast_node']
+
+        t[0] = {'ast_node': node}
 
     def p_initializer_2(self, t):
         """initializer : LBRACE initializer_list RBRACE"""

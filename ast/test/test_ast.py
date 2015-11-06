@@ -72,7 +72,7 @@ class TestAst(unittest.TestCase):
 
     def test_const_declaration(self):
         data = """
-            int main() {const int i;}
+            int main() {const int i = 5;}
             """
         ast = self.parser.parse(data)
         print(ast.to_graph_viz_str())
@@ -147,7 +147,6 @@ class TestAst(unittest.TestCase):
             int g;
             char a;
             float p;
-            //const int = 4;
 
             g = 5;
             a = 2;
@@ -395,11 +394,11 @@ class TestAst(unittest.TestCase):
             int main(){
 
                 int x;
-                int * y;
+                int * y = 0;
                 int z[10];
                 const int i;
                 float j;
-                char k;
+                char k = 'a';
             }
             '''
 
