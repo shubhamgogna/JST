@@ -1552,6 +1552,10 @@ class Parser(object):
 
         elif isinstance(t[1], Symbol) and t[3]['ast_node']:
             t[0] = {'ast_node': Assignment(t[2], SymbolNode(t[1]), t[3]['ast_node'])}
+        elif t[1]['ast_node'] and isinstance(t[3], Symbol):
+            t[0] = {'ast_node': Assignment(t[2], t[1]['ast_node'], SymbolNode(t[3]))}
+        elif t[1]['ast_node'] and t[1]['ast_node']:
+            t[0] = {'ast_node': Assignment(t[2], t[1]['ast_node'], t[3]['ast_node'])}
 
 
         # # for simple assign to variable: t[3] is symbol. so only pass id
