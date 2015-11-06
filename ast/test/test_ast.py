@@ -359,7 +359,7 @@ class TestAst(unittest.TestCase):
                 const int i;
                 float j;
                 char k;
-                
+
             }
             '''
         ast = self.parser.parse(data)
