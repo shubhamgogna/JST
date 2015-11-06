@@ -1425,10 +1425,10 @@ class Parser(object):
         self.output_production(t, production_message='iteration_statement -> WHILE LPAREN expression RPAREN statement')
 
         t[0] = {'ast_node': IterationNode(True,
-                                          None,
-                                          t[3]['ast_node'] if t[3] else None,
-                                          None,
-                                          t[5]['ast_node'] if t[5] else None)}
+                                          EmptyStatement(),
+                                          t[3]['ast_node'] if t[3] else EmptyStatement(),
+                                          EmptyStatement(),
+                                          t[5]['ast_node'] if t[5] else EmptyStatement())}
 
     def p_iteration_statement_2(self, t):
         """
@@ -1439,10 +1439,10 @@ class Parser(object):
             'statement')
 
         t[0] = {'ast_node': IterationNode(True,
-                                          t[3]['ast_node'] if t[3] else None,
-                                          t[5]['ast_node'] if t[5] else None,
-                                          t[7]['ast_node'] if t[7] else None,
-                                          t[9]['ast_node'] if t[9] else None)}
+                                          t[3]['ast_node'] if t[3] else EmptyStatement(),
+                                          t[5]['ast_node'] if t[5] else EmptyStatement(),
+                                          t[7]['ast_node'] if t[7] else EmptyStatement(),
+                                          t[9]['ast_node'] if t[9] else EmptyStatement())}
 
     def p_iteration_statement_3(self, t):
         """
@@ -1451,10 +1451,10 @@ class Parser(object):
         self.output_production(t, production_message='iteration_statement -> DO statement WHILE LPAREN expression RPAREN SEMI')
 
         t[0] = {'ast_node': IterationNode(False,
-                                          None,
-                                          t[5]['ast_node'] if t[5] else None,
-                                          None,
-                                          t[2]['ast_node'] if t[2] else None)}
+                                          EmptyStatement(),
+                                          t[5]['ast_node'] if t[5] else EmptyStatement(),
+                                          EmptyStatement(),
+                                          t[2]['ast_node'] if t[2] else EmptyStatement())}
 
     #
     # jump_statement:
@@ -1539,7 +1539,7 @@ class Parser(object):
             'assignment_expression -> unary_expression assignment_operator assignment_expression')
 
         # for simple assign, will be symbol so do checks on it
-        if type(t[1]) is Symbol:
+        if isinstance(t[1], Symbol) and isinstance(t[3], Symbol):
             symbol = t[1]
             if symbol.immutable:
                 message = 'Unable to modify immutable symbol {} (via {})'.format(symbol.identifier, t[2])
@@ -1547,16 +1547,23 @@ class Parser(object):
                 column = 0
                 source_line = self.compiler_state.source_code[lineno - 1]
                 raise CompileError(message, lineno, column, source_line)
+            else:
+                t[0] = {'ast_node': Assignment(t[2], SymbolNode(t[1]), SymbolNode(t[3]))}
 
-        # for simple assign to variable: t[3] is symbol. so only pass id
-        if type(t[3]) is Symbol:
-            symbol_id = t[3].identifier
-            t[0] = {'ast_node': Assignment(t[2],t[1],symbol_id)}
+        elif isinstance(t[1], Symbol) and t[3]['ast_node']:
+            t[0] = {'ast_node': Assignment(t[2], SymbolNode(t[1]), t[3]['ast_node'])}
 
-        # for simple assign to const: t[3] is a constant node
-        # for array references: t[3] is arrayRef node
-        elif t[3]['ast_node']:
-            t[0] = {'ast_node': Assignment(t[2],t[1],t[3]['ast_node'])}
+
+        # # for simple assign to variable: t[3] is symbol. so only pass id
+        # if type(t[3]) is Symbol:
+        #     # symbol_id = t[3].identifier
+        #     t[0] = {'ast_node': Assignment(t[2], t[1], SymbolNode(t[3]))}
+        #
+        # # for simple assign to const: t[3] is a constant node
+        # # for array references: t[3] is arrayRef node
+        # elif t[3]['ast_node']:
+        #     print('\n > ', t[1])
+        #     t[0] = {'ast_node': Assignment(t[2], t[1], t[3]['ast_node'])}
 
         # print('\n\n\n\n')
         # print(type(t[0]['ast_node'].lvalue['ast_node'].array_name['ast_node'].array_name))

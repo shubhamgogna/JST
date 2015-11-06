@@ -673,14 +673,11 @@ class Goto(BaseAstNode):
     #     return output
 
 
-
 class ID(BaseAstNode):
-    def __init__(self, name, **kwargs):
+    def __init__(self, identifier, **kwargs):
         super(ID, self).__init__(**kwargs)
 
-        self.name = name
-
-
+        self.identifier = identifier
 
     @property
     def children(self):
@@ -1050,3 +1047,29 @@ class UnaryOperator(BaseAstNode):
     #         ouptut += child.to_graph_viz_str()
     #     return output
 
+class SymbolNode(BaseAstNode):
+    def __init__(self, symbol, **kwargs):
+        super(SymbolNode, self).__init__(**kwargs)
+
+        if symbol:
+            self.symbol = symbol
+            self.id_node = ID(symbol.identifier)
+        else:
+            raise ValueError('SymbolNode cannot have a None symbol.')
+
+    @property
+    def children(self):
+        children = []
+        children.append(self.id_node)
+        return tuple(children)
+
+    def to_3ac(self, include_source=False):
+        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+
+    # This method will likely be implemented in the BaseAstNode
+    # def to_graph_viz_str(self):
+    #     descendant_names = ', '.join([child.name() for child in self.children])
+    #     output = '{} -> {{}};\n'.format(self, descendant_names)
+    #     for child in self.children:
+    #         ouptut += child.to_graph_viz_str()
+    #     return output
