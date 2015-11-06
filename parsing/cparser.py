@@ -1435,6 +1435,11 @@ class Parser(object):
             'iteration_statement -> FOR LPAREN expression_option SEMI expression_option SEMI expression_option RPAREN '
             'statement')
 
+        print('FOR', t[3])
+        print('FOR', t[5])
+        print('FOR', t[7])
+        print('FOR', t[9])
+
         t[0] = {'ast_node': IterationNode(True,
                                           t[3]['ast_node'] if t[3] else EmptyStatement(),
                                           t[5]['ast_node'] if t[5] else EmptyStatement(),
@@ -1701,11 +1706,19 @@ class Parser(object):
         """
         self.output_production(t, production_message='unary_expression -> PLUSPLUS unary_expression')
 
+        t[0] = {'ast_node': UnaryOperator(t[1], t[2])}
+
+        print('\n\n\n\nasdfasdfasdfasdf')
+        print(t[0]['ast_node'])
+
     def p_unary_expression_3(self, t):
         """
         unary_expression : MINUSMINUS unary_expression
         """
         self.output_production(t, production_message='unary_expression -> MINUSMINUS unary_expression')
+
+        t[0] = {'ast_node': UnaryOperator(t[1], t[2])}
+
 
     def p_unary_expression_4(self, t):
         """
@@ -1859,12 +1872,15 @@ class Parser(object):
         postfix_expression : postfix_expression PLUSPLUS
         """
         self.output_production(t, production_message='postfix_expression -> postfix_expression PLUSPLUS')
+        t[0] = {'ast_node': UnaryOperator(t[2],t[1]) }
+
 
     def p_postfix_expression_to_post_decrement(self, t):
         """
         postfix_expression : postfix_expression MINUSMINUS
         """
         self.output_production(t, production_message='postfix_expression -> postfix_expression MINUSMINUS')
+        t[0] = {'ast_node': UnaryOperator(t[2],t[1]) }
 
     #
     # primary-expression:
