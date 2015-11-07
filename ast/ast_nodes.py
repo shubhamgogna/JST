@@ -500,25 +500,21 @@ class FunctionDeclaration(BaseAstNode):
 
 
 class FunctionDefinition(BaseAstNode):
-    def __init__(self, declarations, param_declarations, body, **kwargs):
+    def __init__(self, type, identifier, param_declarations, body, **kwargs):
         super(FunctionDefinition, self).__init__(**kwargs)
 
-        self.identifier = declarations.identifier
-
-        self.declarations = declarations
+        self.type = type
+        self.identifier = identifier
         self.body = body
-
-        self.param_declarations = param_declarations if param_declarations else []
+        self.param_declarations = param_declarations if param_declarations else ParameterList([])
 
     def name(self):
-        print('FuncDef-declarations:', type(self.declarations))
-
         return super(FunctionDefinition, self).name(arg=self.identifier)
 
     @property
     def children(self):
         children = []
-        children.append(self.declarations)
+        children.append(self.type)
         children.append(self.body)
         children.append(self.param_declarations)
         return tuple(children)
