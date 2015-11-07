@@ -18,27 +18,9 @@
 import os
 import sys
 import argparse
-
 sys.path.insert(1, os.path.join(sys.path[0], '../'))
-
 from compiler.compiler_state import CompilerState
-from parsing.cparser import Parser
-from scanning.clexer import Lexer
 from exceptions.compile_error import CompileError
-
-# """int main(int argc, char** argv) {int i; return 0;}"""
-# PUT A C PROGRAM HERE! CLICK THE GREEN ARROW IN THE UPPER RIGHT WHEN YOU ARE READY TO RUN!
-dummy_data = """
-    int main() {
-        int i = 0;
-
-        {
-          int f = 5; 사
-        }
-    }
-    void foo(int x) {}
-    int z; !!S
-    """
 
 
 def main():
@@ -62,14 +44,11 @@ def main():
 
     # Set default Symbol Table flags
     print_table = False
-
     if args_dict['symdebug'] is 1:
         print_table = True
 
     # Set default Scanner flags
-    print_tokens = False
-    print_source_scanner = False
-
+    print_tokens, print_source_scanner = False, False
     if args_dict['scandebug'] is 1:
         print_tokens = True
     elif args_dict['scandebug'] is 2:
@@ -79,10 +58,7 @@ def main():
         print_source_scanner = True
 
     # Set default Parser flags
-    print_productions = False
-    print_source_parser = False
-    print_info = False
-
+    print_productions, print_source_parser, print_info = False, False, False
     if args_dict['parsedebug'] is 1:
         print_productions = True
     elif args_dict['parsedebug'] is 2:
@@ -93,20 +69,21 @@ def main():
         print_source_parser = True
         print_info = True
 
-    source_file = open(args_dict['input'], "r")
+    source_file = open(args_dict['input'], 'r')
     data = source_file.read()
-    compiler_state = CompilerState(data,
-        print_table=print_table,
-        print_tokens=print_tokens, print_source_scanner=print_source_scanner,
-        print_productions=print_productions, print_source_parser=print_source_parser, print_info=print_info)
+    compiler_state = CompilerState(print_table=print_table,
+                                   print_tokens=print_tokens,
+                                   print_source_scanner=print_source_scanner,
+                                   print_productions=print_productions,
+                                   print_source_parser=print_source_parser,
+                                   print_info=print_info)
 
     try:
-        parser = Parser(compiler_state, Lexer(compiler_state))
-        parser.parse(data)
+        compiler_state.parse(data)
     except CompileError as error:
         print(error)
     finally:
-        parser.teardown()
+        compiler_state.teardown()
 
 if __name__ == '__main__':
     main()

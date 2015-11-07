@@ -14,243 +14,243 @@
 # along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
+
 from compiler.compiler_state import CompilerState
 from loggers.logger import Logger
-from parsing.cparser import Parser
-from scanning.clexer import Lexer
 
 
 class TestAst(unittest.TestCase):
 
     def setUp(self):
-        self.debug = False
-
         self.compiler_state = CompilerState()
-        self.lexer = Lexer(compiler_state=self.compiler_state)
-        self.parser = Parser(compiler_state=self.compiler_state, lexer=self.lexer)
-
-        self.enable_debug()
+        self.enable_debug(False)
 
     def tearDown(self):
-        self.parser.teardown()
-        self.parser = None
-        self.lexer = None
+        self.compiler_state.teardown()
         self.compiler_state = None
 
-    def enable_debug(self, productions=True, source=False):
-        if self.debug:
-            self.parser.prod_logger.add_switch(Logger.INFO)
+    def enable_debug(self, enable, productions=True, source=False):
+        if enable:
+            prod_logger = self.compiler_state.get_parser_logger()
+
+            prod_logger.add_switch(Logger.INFO)
             if productions:
-                self.parser.prod_logger.add_switch(Logger.PRODUCTION)
+                prod_logger.add_switch(Logger.PRODUCTION)
 
             if source:
-                self.parser.prod_logger.add_switch(Logger.SOURCE)
+                prod_logger.add_switch(Logger.SOURCE)
 
     def test_empty_file(self):
         data = ""
-        ast = self.parser.parse(data)
+        ast = self.compiler_state.parse(data)
         print(ast)
 
     def test_plain_main(self):
-        data = "int main() {return 0;}"
-        ast = self.parser.parse(data)
+        data = """
+            int main()
+            {
+                return 0;
+            }
+            """
+        ast = self.compiler_state.parse(data)
         print(ast.to_graph_viz_str())
 
     def test_simple_variable_declaration(self):
         data = """
-            int main() {int i;}
+            int main()
+            {
+                int i;
+            }
             """
-        ast = self.parser.parse(data)
+        ast = self.compiler_state.parse(data)
         print(ast.to_graph_viz_str())
 
     def test_simple_variable_initialization(self):
         data = """
-            int main() {int i = 5; int j = i;}
+            int main()
+            {
+                int i = 5;
+                int j = i;
+            }
             """
-        ast = self.parser.parse(data)
+        ast = self.compiler_state.parse(data)
         print(ast.to_graph_viz_str())
 
     def test_const_declaration(self):
         data = """
-            int main() {const int i = 5;}
+            int main()
+            {
+                const int i = 5;
+            }
             """
-        ast = self.parser.parse(data)
+        ast = self.compiler_state.parse(data)
         print(ast.to_graph_viz_str())
 
     def test_array_declaration(self):
         data = """
-            int main() {int i[5];}
+            int main()
+            {
+                int i[5];
+            }
             """
-        ast = self.parser.parse(data)
+        ast = self.compiler_state.parse(data)
         print(ast.to_graph_viz_str())
 
     def test_2d_array_declaration(self):
         data = """
-            int main() {int i[5][7];}
+            int main()
+            {
+                int i[5][7];
+            }
             """
-        ast = self.parser.parse(data)
+        ast = self.compiler_state.parse(data)
         print(ast.to_graph_viz_str())
 
     def test_lone_if(self):
-        data = ''\
-            'int main() {\n' \
-            '  int i;\n'\
-            '  if (i == 5) {\n'\
-            '    i = 6;\n'\
-            '  }\n' \
-            '}\n'\
-            ''
-        ast = self.parser.parse(data)
-        print(ast.children[0])
-        print(ast.children[0].children)
-        print(ast, type(ast))
-        print(ast.to_graph_viz_str())
-
-
-    def test_if_else(self):
-        data = ''\
-            'int main() {\n' \
-            '  int i;\n'\
-            '  if (/*i ==*/ 5) {\n'\
-            '    //i = 6;\n'\
-            '  } else {\n'\
-            '    i = 5;\n' \
-            '  }\n' \
-            '}\n'\
-            ''
-        ast = self.parser.parse(data)
-        print(ast.to_graph_viz_str())
-
-    def test_if_elif_else(self):
-        data = ''\
-            'int main() {\n' \
-            '  //int i;\n'\
-            '  if (/*i ==*/ 5) {\n'\
-            '    //i = 6;\n'\
-            '  } else if (/*i ==*/ 6) {\n' \
-            '    //i = 7;\n' \
-            '  } else {\n'\
-            '    //i = 5;\n' \
-            '  }\n' \
-            '}\n'\
-            ''
-        ast = self.parser.parse(data)
-        print(ast.to_graph_viz_str())
-
-
-    def test_simple_assign_const(self):
-        # self.enable_debug()
-
-        data = '''
-            int main()
-            {
-            int g;
-            char a;
-            float p;
-
-            g = 5;
-            a = 2;
-            p = 1.2;
-            }
-            '''
-        ast = self.parser.parse(data)
-        print(ast.to_graph_viz_str())
-
-    def test_simple_assign_var(self):
-        # self.enable_debug()
-
         data = """
             int main()
             {
-            int g;
-            int G;
-
-            g = 5;
-            G = g;
-
+                int i;
+                if (i == 5)
+                {
+                    i = 6;
+                }
             }
             """
+        ast = self.compiler_state.parse(data)
+        print(ast.to_graph_viz_str())
 
-        ast = self.parser.parse(data)
+    def test_if_else(self):
+        data = """
+            int main()
+            {
+                int i;
+                if (i == 5)
+                {
+                    i = 6;
+                }
+                else
+                {
+                    i = 5;
+                }
+            }
+            """
+        ast = self.compiler_state.parse(data)
+        print(ast.to_graph_viz_str())
+
+    def test_if_elif_else(self):
+        data = """
+            int main()
+            {
+                int i;
+                if (i == 5)
+                {
+                    i = 6;
+                }
+                else if(i == 6)
+                {
+                    i = 7;
+                }
+                else
+                {
+                    i = 5;
+                }
+            }
+            """
+        ast = self.compiler_state.parse(data)
+        print(ast.to_graph_viz_str())
+
+    def test_simple_assign_const(self):
+        data = """
+            int main()
+            {
+                int g;
+                char a;
+                float p;
+
+                g = 5;
+                a = 2;
+                p = 1.2;
+            }
+            """
+        ast = self.compiler_state.parse(data)
+        print(ast.to_graph_viz_str())
+
+    def test_simple_assign_var(self):
+        data = """
+            int main()
+            {
+                int g;
+                int G;
+
+                g = 5;
+                G = g;
+            }
+            """
+        ast = self.compiler_state.parse(data)
         print(ast.to_graph_viz_str())
 
     def test_array_simple_assign(self):
-        # self.enable_debug()
-
-        data = '''
+        data = """
             int main()
             {
-            int a[10];
-            a[1] = 4;
+                int a[10];
+                a[1] = 4;
             }
-            '''
-
-        ast = self.parser.parse(data)
+            """
+        ast = self.compiler_state.parse(data)
         print(ast.to_graph_viz_str())
 
     def test_array_simple_access(self):
-        self.enable_debug()
-
-        data = '''
+        data = """
             int main()
             {
-            int g;
-            int a[10];
-            a[1] = 4;
-            g = a[1];
+                int g;
+                int a[10];
+                a[1] = 4;
+                g = a[1];
             }
-            '''
-
-        ast = self.parser.parse(data)
+            """
+        ast = self.compiler_state.parse(data)
         print(ast.to_graph_viz_str())
 
     def test_array_access_const_expr(self):
-        # self.enable_debug()
-
-        data = '''
+        data = """
             int main()
             {
-            int g;
-            int a[10];
-            a[6] = 4;
-            g = a[5 + 1];
+                int g;
+                int a[10];
+                a[6] = 4;
+                g = a[5 + 1];
             }
-            '''
-
-        ast = self.parser.parse(data)
+            """
+        ast = self.compiler_state.parse(data)
         print(ast.to_graph_viz_str())
 
     def test_array_access_var_expr(self):
-        # self.enable_debug()
-
-        data = '''
+        data = """
             int main()
             {
-            int g;
-            int a[10];
-            a[1] = 4;
-            g = a[1];
-            g = a[g + 1];
+                int g;
+                int a[10];
+                a[1] = 4;
+                g = a[1];
+                g = a[g + 1];
             }
-
-            '''
-
-        ast = self.parser.parse(data)
+            """
+        ast = self.compiler_state.parse(data)
         print(ast.to_graph_viz_str())
 
     def test_array_twodim(self):
-        # self.enable_debug()
-
-        data = '''
+        data = """
             int main()
             {
-            int b[10][10];
-            b[1][1] = 5;
+                int b[10][10];
+                b[1][1] = 5;
             }
+            """
 
-            '''
-
-        ast = self.parser.parse(data)
+        ast = self.compiler_state.parse(data)
         print(ast.to_graph_viz_str())
 
     def test_for_loop_1(self):
@@ -261,7 +261,7 @@ class TestAst(unittest.TestCase):
                 for(i = 0; ;) {}
             }
             """
-        ast = self.parser.parse(data)
+        ast = self.compiler_state.parse(data)
         print(ast.to_graph_viz_str())
 
     def test_for_loop_2(self):
@@ -272,7 +272,7 @@ class TestAst(unittest.TestCase):
                 for(i = 0; ; i++) {}
             }
             """
-        ast = self.parser.parse(data)
+        ast = self.compiler_state.parse(data)
         print(ast.to_graph_viz_str())
 
     def test_for_loop_3(self):
@@ -283,7 +283,7 @@ class TestAst(unittest.TestCase):
                 for(i = 0; i < 1; i++) {}
             }
             """
-        ast = self.parser.parse(data)
+        ast = self.compiler_state.parse(data)
         print(ast.to_graph_viz_str())
 
     def test_while_loop(self):
@@ -294,7 +294,7 @@ class TestAst(unittest.TestCase):
                 while(i < 5){}
             }
             """
-        ast = self.parser.parse(data)
+        ast = self.compiler_state.parse(data)
         print(ast.to_graph_viz_str())
 
     def test_do_while_loop(self):
@@ -305,12 +305,10 @@ class TestAst(unittest.TestCase):
                 do {} while (i > 10);
             }
             """
-        ast = self.parser.parse(data)
+        ast = self.compiler_state.parse(data)
         print(ast.to_graph_viz_str())
 
     def test_function_decl_top_impl_bottom(self):
-        self.enable_debug()
-
         data = """
             int do_stuff();
 
@@ -319,13 +317,10 @@ class TestAst(unittest.TestCase):
                 return 5;
             }
             """
-
-        ast = self.parser.parse(data)
+        ast = self.compiler_state.parse(data)
         print(ast.to_graph_viz_str())
 
     def test_function_decl_top_impl_bottom_call_middle(self):
-        self.enable_debug()
-
         data = """
             int do_stuff();
 
@@ -339,13 +334,10 @@ class TestAst(unittest.TestCase):
                 return 5;
             }
             """
-
-        ast = self.parser.parse(data)
+        ast = self.compiler_state.parse(data)
         print(ast.to_graph_viz_str())
 
     def test_function_parameters(self):
-        self.enable_debug()
-
         data = """
             int do_stuff(int* ret, int x)
             {
@@ -360,18 +352,18 @@ class TestAst(unittest.TestCase):
                 return do_stuff(ptr, num);
             }
             """
-
-        ast = self.parser.parse(data)
+        ast = self.compiler_state.parse(data)
         print(ast.to_graph_viz_str())
 
     def test_function_def_on_top(self):
         data = """
-            // definition on top
-            int do_stuff() {
+            // Definition on top
+            int do_stuff()
+            {
                 return 5;
             }
             """
-        ast = self.parser.parse(data)
+        ast = self.compiler_state.parse(data)
         print(ast.to_graph_viz_str())
 
     def test_function_def_on_top_call(self):
@@ -386,11 +378,11 @@ class TestAst(unittest.TestCase):
                 return do_stuff();
             }
             """
-        ast = self.parser.parse(data)
+        ast = self.compiler_state.parse(data)
         print(ast.to_graph_viz_str())
 
     def test_declare_const_and_var_types(self):
-        data = '''
+        data = """
             int main(){
 
                 int x;
@@ -400,7 +392,6 @@ class TestAst(unittest.TestCase):
                 float j;
                 char k = 'a';
             }
-            '''
-
-        ast = self.parser.parse(data)
+            """
+        ast = self.compiler_state.parse(data)
         print(ast.to_graph_viz_str())

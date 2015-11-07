@@ -14,6 +14,9 @@
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
+from parsing.cparser import JSTParser
+from ply import lex, yacc
+from scanning.clexer import JSTLexer
 from symbol_table.symbol_table import SymbolTable
 from loggers.logger import Logger
 
@@ -23,20 +26,21 @@ from loggers.logger import Logger
 # Used by the Lexer and Parser. Contains information and items relevant to both
 # classes that does not belong exclusively in either one.
 class CompilerState:
-    def __init__(self, source_code=None,
-                 print_table=False, table_logfile='log_symbol_table.txt',
-                 print_tokens=False, print_source_scanner=True, scanner_logfile='log_scanner_tokens.txt',
-                 print_productions=False, print_source_parser=False, print_info=False, parser_logfile=sys.stdout):#'log_parser_productions.txt'):
+    def __init__(self,
+                 print_table=False,
+                 table_logfile='log_symbol_table.txt',
+                 print_tokens=False, print_source_scanner=True,
+                 scanner_logfile='log_scanner_tokens.txt',
+                 print_productions=False, print_source_parser=False, print_info=False,
+                 parser_logfile='log_parser_productions.txt',
+                 **kwargs):
+
+        # Initialize variables
+        self.source_code = None
+        self.source_lines = None
 
         # Initialize table
         self.symbol_table = SymbolTable()
-
-        # Lex uses 1 based indexing for line numbers.
-        # We are using 0 based for source_code.
-        if source_code is not None:
-            self.source_code = source_code.split('\n')
-        else:
-            self.source_code = None
 
         # Initialize symbol table logger
         if table_logfile in {sys.stdout, sys.stderr}:
@@ -82,6 +86,34 @@ class CompilerState:
         # for debugging purposes
         self.clone_symbol_table_on_scope_exit = False
         self.cloned_tables = []
+
+        # Create JSTLexer and the lexer object
+        self.jst_lexer = JSTLexer(self)
+        self.lexer = lex.lex(module=self.jst_lexer)
+
+        # Create JSTParser and the parser object
+        self.jst_parser = JSTParser(self)
+        self.parser = yacc.yacc(module=self.jst_parser, start='program')
+
+    def parse(self, source_code):
+        # Lex uses 1 based indexing for line numbers.
+        # We are using 0 based for source_code.
+        if source_code is not None:
+            self.source_code = source_code
+            self.source_lines = source_code.split('\n')
+        else:
+            self.source_code = None
+            self.source_lines = None
+
+        # Print out the first line (otherwise it will be missed)
+        self.token_logger.source(self.source_lines[0])
+
+        # Parse using the parser object
+        return self.parser.parse(input=self.source_code, lexer=self.lexer, tracking=True)
+
+    def teardown(self):
+        self.jst_lexer.teardown()
+        self.jst_parser.teardown()
 
     def get_symbol_table_logger(self):
         return self.symbol_table_logger

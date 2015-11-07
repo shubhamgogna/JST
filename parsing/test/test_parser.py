@@ -14,34 +14,26 @@
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
+
 from compiler.compiler_state import CompilerState
 from exceptions.compile_error import CompileError
 from loggers.logger import Logger
-from parsing.cparser import Parser
-from scanning.clexer import Lexer
 
 
 class TestParser(unittest.TestCase):
     def setUp(self):
         self.debug = True
-
         self.compiler_state = CompilerState()
-        self.lexer = Lexer(compiler_state=self.compiler_state)
-        self.parser = Parser(compiler_state=self.compiler_state, lexer=self.lexer)
-        # self.parser.logger.add_switch(Logger.TOKEN)
 
     def tearDown(self):
-        # self.parser.logger.remove_switch(Logger.TOKEN)
-        self.parser.teardown()
-        self.parser = None
-        self.lexer = None
+        self.compiler_state.teardown()
         self.compiler_state = None
 
     def test_plain_main(self):
         # self.enable_parser_debugging()
 
         data = """int main() {return 0;} !!C"""
-        self.parser.parse(data)
+        self.compiler_state.parse(data)
         symbol_table_clone = self.compiler_state.cloned_tables[0]
 
         print(symbol_table_clone)
@@ -58,7 +50,7 @@ class TestParser(unittest.TestCase):
                 return 0;
             }
             """
-        self.parser.parse(data)
+        self.compiler_state.parse(data)
         symbol_table_clone = self.compiler_state.cloned_tables[0]
 
         self.check_correct_element(symbol_table_clone, 'i', 1, 'int i')
@@ -72,7 +64,7 @@ class TestParser(unittest.TestCase):
                 return 0;
             }
             """
-        self.parser.parse(data)
+        self.compiler_state.parse(data)
         symbol_table_clone = self.compiler_state.cloned_tables[0]
 
         self.check_correct_element(symbol_table_clone, 'i', 1, 'int i')
@@ -89,7 +81,7 @@ class TestParser(unittest.TestCase):
                 return 0;
             }
             """
-        self.parser.parse(data)
+        self.compiler_state.parse(data)
         symbol_table_clone = self.compiler_state.cloned_tables[0]
 
         self.check_correct_element(symbol_table_clone, 'i', 1, 'int i')
@@ -107,7 +99,7 @@ class TestParser(unittest.TestCase):
                 return 0;
             }
             """
-        self.parser.parse(data)
+        self.compiler_state.parse(data)
         symbol_table_clone = self.compiler_state.cloned_tables[0]
 
         self.check_correct_element(symbol_table_clone, 'i', 1, 'int i')
@@ -122,7 +114,7 @@ class TestParser(unittest.TestCase):
                 return 0;
             }
             """
-        self.parser.parse(data)
+        self.compiler_state.parse(data)
         symbol_table_clone = self.compiler_state.cloned_tables[0]
 
         self.check_correct_element(symbol_table_clone, 'i', 1, 'int* i')
@@ -135,7 +127,7 @@ class TestParser(unittest.TestCase):
                 return 0;
             }
             """
-        self.parser.parse(data)
+        self.compiler_state.parse(data)
         symbol_table_clone = self.compiler_state.cloned_tables[0]
 
         print(symbol_table_clone)
@@ -153,7 +145,7 @@ class TestParser(unittest.TestCase):
           return 0;
         }
         """
-        self.parser.parse(data)
+        self.compiler_state.parse(data)
         symbol_table_clone = self.compiler_state.cloned_tables[0]
 
         self.check_correct_element(symbol_table_clone, 'GLOBAL_CONSTANT', 0, 'const int GLOBAL_CONSTANT')
@@ -169,7 +161,7 @@ class TestParser(unittest.TestCase):
               return 0;
             }
             """
-            self.parser.parse(data)
+            self.compiler_state.parse(data)
 
     def test_plain_if(self):
         data = 'int main(int argc, char** argv) {\n' \
@@ -182,7 +174,7 @@ class TestParser(unittest.TestCase):
                '  return 0;\n' \
                '}\n' \
                ''
-        self.parser.parse(data)
+        self.compiler_state.parse(data)
         symbol_table_clone = self.compiler_state.cloned_tables[0]
         self.check_correct_element(symbol_table_clone, 'wtf_result', 2, 'int wtf_result')
 
@@ -191,7 +183,7 @@ class TestParser(unittest.TestCase):
                '  return 0 == 0 ? 1 : 0;\n' \
                '}\n' \
                ''
-        self.parser.parse(data)
+        self.compiler_state.parse(data)
         self.assertTrue(True, "No exceptions means a successful parse.")
 
     def test_plain_if_else(self):
@@ -209,7 +201,7 @@ class TestParser(unittest.TestCase):
                '  return 0;\n' \
                '}\n' \
                ''
-        self.parser.parse(data)
+        self.compiler_state.parse(data)
         if_symbol_table_clone = self.compiler_state.cloned_tables[0]
         else_symbol_table_clone = self.compiler_state.cloned_tables[1]
 
@@ -228,7 +220,7 @@ class TestParser(unittest.TestCase):
                    '  return 0;\n' \
                    '}\n' \
                    ''
-            self.parser.parse(data)
+            self.compiler_state.parse(data)
 
     def test_while_loop(self):
         data = """
@@ -238,7 +230,7 @@ class TestParser(unittest.TestCase):
         }
         !!C
         """
-        self.parser.parse(data)
+        self.compiler_state.parse(data)
         symbol_table_clone = self.compiler_state.cloned_tables[0]
         print('hi', symbol_table_clone)
 
@@ -254,7 +246,7 @@ class TestParser(unittest.TestCase):
           return 0;
         }
         """
-        self.parser.parse(data)
+        self.compiler_state.parse(data)
         symbol_table_clone = self.compiler_state.cloned_tables[0]
 
         self.check_correct_element(symbol_table_clone, 'i', 1, 'int i')
@@ -268,7 +260,7 @@ class TestParser(unittest.TestCase):
           return 0;
         }
         """
-        self.parser.parse(data)
+        self.compiler_state.parse(data)
         symbol_table_clone = self.compiler_state.cloned_tables[0]
 
         self.check_correct_element(symbol_table_clone, 'i', 1, 'int i')
@@ -282,7 +274,7 @@ class TestParser(unittest.TestCase):
           return 0;
         }
         """
-        self.parser.parse(data)
+        self.compiler_state.parse(data)
         symbol_table_clone = self.compiler_state.cloned_tables[0]
 
         self.check_correct_element(symbol_table_clone, 'my_array', 1, 'int my_array[10]')
@@ -296,7 +288,7 @@ class TestParser(unittest.TestCase):
           return 0;
         }
         """
-        self.parser.parse(data)
+        self.compiler_state.parse(data)
         symbol_table_clone = self.compiler_state.cloned_tables[0]
 
         self.check_correct_element(symbol_table_clone, 'my_array', 1, 'int my_array[10]')
@@ -315,7 +307,7 @@ class TestParser(unittest.TestCase):
           return 0;
         }
         """
-        self.parser.parse(data)
+        self.compiler_state.parse(data)
         symbol_table_clone = self.compiler_state.cloned_tables[0]
 
         print(symbol_table_clone)
@@ -334,7 +326,7 @@ class TestParser(unittest.TestCase):
               return 0;
             }
         """
-        self.parser.parse(data)
+        self.compiler_state.parse(data)
         symbol_table_clone = self.compiler_state.cloned_tables[0]
 
         self.check_correct_element(symbol_table_clone, 'do_stuff', 0, 'int do_stuff(char c)')
@@ -350,7 +342,7 @@ class TestParser(unittest.TestCase):
               return 0;
             }
         """
-        self.parser.parse(data)
+        self.compiler_state.parse(data)
         symbol_table_clone = self.compiler_state.cloned_tables[0]
 
         self.check_correct_element(symbol_table_clone, 'do_stuff', 0, 'int do_stuff(char c)')
@@ -372,7 +364,7 @@ class TestParser(unittest.TestCase):
                 !!C
             }
         """
-        self.parser.parse(data)
+        self.compiler_state.parse(data)
         symbol_table_clone_inner = self.compiler_state.cloned_tables[0]
         symbol_table_clone_outer = self.compiler_state.cloned_tables[1]
 
@@ -391,7 +383,7 @@ class TestParser(unittest.TestCase):
               return 0;
             }
         """
-        self.parser.parse(data)
+        self.compiler_state.parse(data)
         symbol_table_clone = self.compiler_state.cloned_tables[0]
 
         self.check_correct_element(symbol_table_clone, 'literal_string', 0, 'char* literal_string')
@@ -405,7 +397,7 @@ class TestParser(unittest.TestCase):
               return 0;
             }
         """
-        self.parser.parse(data)
+        self.compiler_state.parse(data)
         symbol_table_clone = self.compiler_state.cloned_tables[0]
 
         self.check_correct_element(symbol_table_clone, 'array_string', 1, 'char array_string[]')
@@ -420,7 +412,7 @@ class TestParser(unittest.TestCase):
               return 0;
             }
         """
-        self.parser.parse(data)
+        self.compiler_state.parse(data)
         symbol_table_clone = self.compiler_state.cloned_tables[0]
 
         self.check_correct_element(symbol_table_clone, 'literal_string', 0, 'char* literal_string')
@@ -490,7 +482,7 @@ class TestParser(unittest.TestCase):
                //printf("");
             }
         """
-        self.parser.parse(data)
+        self.compiler_state.parse(data)
         #symbol_table_clone = self.compiler_state.cloned_tables[0]
 
         # TODO: Determine what scopes we want to test here
@@ -523,11 +515,11 @@ class TestParser(unittest.TestCase):
 
               // recursive case
               else if( number > 1 ) {
-                return number*recur_Fact(number-1);    
+                return number*recur_Fact(number-1);
               }
             }
         """
-        self.parser.parse(data)
+        self.compiler_state.parse(data)
         #symbol_table_clone = self.compiler_state.cloned_tables[0]
 
         # TODO: Determine what scopes we want to test here
@@ -567,7 +559,7 @@ class TestParser(unittest.TestCase):
               return fact;
             }
         """
-        self.parser.parse(data)
+        self.compiler_state.parse(data)
         #symbol_table_clone = self.compiler_state.cloned_tables[0]
 
         # TODO: Determine what scopes we want to test here
@@ -581,7 +573,7 @@ class TestParser(unittest.TestCase):
     def test_malformed_main_fails(self):
         with self.assertRaises(Exception):
             data = 'badmain(] {return 0;}'
-            self.parser.parse(data)
+            self.compiler_state.parse(data)
 
 
     # def test_declare_typedef(self):
@@ -594,7 +586,7 @@ class TestParser(unittest.TestCase):
     #       return 0;
     #     }
     #     """
-    #     self.parser.parse(data)
+    #     self.compiler_state.parse(data)
     #     symbol_table_clone = self.compiler_state.cloned_tables[0]
     #
     #     # TODO: How are we handling typedefs?
@@ -612,7 +604,7 @@ class TestParser(unittest.TestCase):
     #       !!C
     #     }
     #     """
-    #     self.parser.parse(data)
+    #     self.compiler_state.parse(data)
     #     symbol_table_clone = self.compiler_state.cloned_tables[0]
     #
     #     # TODO: How are we handling typedefs?
@@ -639,7 +631,7 @@ class TestParser(unittest.TestCase):
     #         }
     #     """
     #
-    #     self.parser.parse(data)
+    #     self.compiler_state.parse(data)
     #     symbol_table_clone = self.compiler_state.cloned_tables[0]
     #
     #     # TODO: How are we handling structs?
@@ -682,12 +674,11 @@ class TestParser(unittest.TestCase):
     #         return (a + b) % 4;
     #     }
     #     """
-    #     self.parser.parse(data)
+    #     self.compiler_state.parse(data)
     #     symbol_table_clone = self.compiler_state.cloned_tables[0]
     #
     #     # TODO: Function Pointers??
     #     self.check_correct_element(symbol_table_clone, 'x', 1, 'int x')
-
 
     def test_super_function_testing(self):
         self.enable_parser_debugging()
@@ -702,7 +693,7 @@ class TestParser(unittest.TestCase):
                '  do_stuff(i);\n' \
                '}\n'
 
-        self.parser.parse(data)
+        self.compiler_state.parse(data)
 
         symbol_table = self.compiler_state.cloned_tables[0]
         print(symbol_table)
@@ -711,13 +702,11 @@ class TestParser(unittest.TestCase):
         # print(x.signature[0].pointer_modifiers)
         self.check_correct_element(symbol_table,'do_stuff', 0, 'void do_stuff(int* array)')
 
-
     def enable_parser_debugging(self):
         if self.debug:
-            self.parser.prod_logger.add_switch(Logger.PRODUCTION)
-            self.parser.prod_logger.add_switch(Logger.INFO)
-            self.parser.prod_logger.add_switch(Logger.SOURCE)
-
+            self.compiler_state.get_parser_logger().add_switch(Logger.PRODUCTION)
+            self.compiler_state.get_parser_logger().add_switch(Logger.INFO)
+            self.compiler_state.get_parser_logger().add_switch(Logger.SOURCE)
 
     def check_correct_element(self, symbol_table_clone, check_value, check_scope, check_string):
         found_symbol, in_scope = symbol_table_clone.find(check_value)

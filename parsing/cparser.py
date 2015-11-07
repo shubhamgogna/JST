@@ -18,84 +18,51 @@
 # operations for parsing the ANSI C grammar.
 ###############################################################################
 
-import ast
 from ast.ast_nodes import *
-
-
+import compiler
 from exceptions.compile_error import CompileError
-
-import ply.yacc as yacc
 from symbol_table.symbol import Symbol, FunctionSymbol, VariableSymbol
+from ticket_counting.ticket_counters import UUID_TICKETS
+from utils.compile_time_utils import TypeCheck
+from utils.primitive_types import Type
+from scanning.clexer import JSTLexer
 
 
-## Parser Class
+# Parser Class
 #
 # This class is responsible for working in tandem with the Lexer to parse the given C program input and then
 # constructing the Abstract Syntax Tree that corresponds to the program. Compile time checking is done by this class.
 #
-from ticket_counting.ticket_counters import UUID_TICKETS
-from utils.compile_time_utils import TypeCheck
-from utils.primitive_types import Type
+class JSTParser(object):
 
+    # IMPORTANT: Tokens must be imported from the JSTLexer so PLY can build the table
+    tokens = JSTLexer.tokens
 
-class Parser(object):
-    ## The constructor for a new Parser object.
+    # The constructor for a new Parser object.
     #
     # @param self The object pointer.
     # @param compiler_state The object shared between the Parser and Lexer for maintaining the state of the compiler.
-    # @param lexer The lexer the parser will use to tokenize the input program. Defaults to None. If the value is
-    #              None, the Parser will create its own Lexer.
-    # @param print_productions A boolean flag indicating if the productions should be written as they are encountered.
-    #                          Defaults to False.
-    # @param print_source A boolean flag indicating if the source code for each production should be written as they
-    #                     are encountered. Defaults to False.
-    # @param print_info A boolean flag indicating if any logging tagged as INFO should be written. Defaults to False.
-    # @param prod_file_name The name of the file any output should be written to. Defaults to sys.stdout.
-    # @param kwargs  Any keywork arguments for the PLY.yacc object.
     #
-    # Outputs:
-    #   A constructed instance of a Parser
+    # Outputs: A constructed instance of a JSTParser.
     #
-    # Purpose:
-    #   The constructor initializes the object to be ready to do its job with the desired outputs labeled.
-    #
-    def __init__(self, compiler_state, lexer, **kwargs):
-        if lexer is None:
-            raise ValueError('No Lexer passed to Parser')
+    # Purpose: The constructor initializes the object to be ready to do its job with the desired outputs labeled.
+    def __init__(self, compiler_state):
+        if compiler_state is None or not isinstance(compiler_state, compiler.compiler_state.CompilerState):
+            raise ValueError('The passed compiler_state is not valid.')
 
         self.compiler_state = compiler_state
-        self.lexer = lexer
-        self.tokens = lexer.tokens
-        self.parser = yacc.yacc(module=self, start='program')
         self.prod_logger = self.compiler_state.get_parser_logger()
 
-    ## A method to do any cleanup that can't be handled by typical garbage collection.
+    # A method to do any cleanup that can't be handled by typical garbage collection.
     #
     # @param self The object pointer.
     #
-    # Output:
-    #   None
+    # Output: None
     #
     # Called by method responsible for completing the use of the parser cleanly.
     # TODO: implement __exit__ method?
-    #
     def teardown(self):
         self.prod_logger.finalize()
-
-    ## Completes the action of parsing the given program and producing an AST.
-    #
-    # @param self The object pointer.
-    # @param data The raw string that constitutes the given program.
-    #
-    # Output:
-    #   An AST.
-    #
-    # Called by a program that supplies a program to parse.
-    #
-    def parse(self, data):
-        self.compiler_state.source_code = data.split('\n')
-
-        return self.parser.parse(input=data, lexer=self.lexer, tracking=True)
 
     ## Operator precedences used by ply.yacc to correctly order productions that may be otherwise ambiguous.
     #
@@ -1662,8 +1629,8 @@ class Parser(object):
             left_operand = t[1].get('ast_node', None)
             right_operand = t[3].get('ast_node', None)
 
-            if Parser.is_a_constant(left_operand) and Parser.is_a_constant(right_operand):
-                t[0] = {'ast_node': Parser.perform_binary_operation(left_operand, t[2], right_operand)}
+            if JSTParser.is_a_constant(left_operand) and JSTParser.is_a_constant(right_operand):
+                t[0] = {'ast_node': JSTParser.perform_binary_operation(left_operand, t[2], right_operand)}
             else:
                 t[0] = {'ast_node': BinaryOperator(t[2], left_operand, right_operand)}
         else:
