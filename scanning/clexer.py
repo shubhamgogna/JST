@@ -73,7 +73,7 @@ class JSTLexer(object):
     def t_NEWLINE(self, token):
         r'\n+'
 
-        source_line = self.compiler_state.source_code[token.lexer.lineno]
+        source_line = self.compiler_state.source_lines[token.lexer.lineno - 1]
         self.token_logger.source(source_line)
         token.lexer.lineno += len(token.value)
 

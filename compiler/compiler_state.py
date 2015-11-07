@@ -105,9 +105,6 @@ class CompilerState:
             self.source_code = None
             self.source_lines = None
 
-        # Print out the first line (otherwise it will be missed)
-        self.token_logger.source(self.source_lines[0])
-
         # Parse using the parser object
         return self.parser.parse(input=self.source_code, lexer=self.lexer, tracking=True)
 

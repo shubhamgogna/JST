@@ -2060,7 +2060,7 @@ class JSTParser(object):
 
         line = t.lineno(1)
         if 0 <= line - 1 < len(self.compiler_state.source_code):
-            self.prod_logger.source(self.compiler_state.source_code[line - 1], line=line)
+            self.prod_logger.source(self.compiler_state.source_lines[line - 1], line=line)
         self.prod_logger.production(production_message)
 
     # Determines if an object is usable in evaluating a compile-time constant expressions.
