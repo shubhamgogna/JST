@@ -47,20 +47,6 @@ class JSTLexer(object):
         self.token_logger.finalize()
         self.table_logger.finalize()
 
-    # Compute column.
-    # http://www.dabeaz.com/ply/ply.html#ply_nn9
-    #
-    # @param token A token instance
-    # @param self The object pointer.
-    #
-    # Outputs:
-    #   The column of the given token
-    #
-    def find_column(self, token):
-        # TODO This might be useless... PLY offers some functions in the parser
-        last_newline = token.lexer.lexdata.rfind('\n', 0, token.lexpos)
-        return max(0, (token.lexpos - last_newline) - 1)
-
     # Define a rule so we can track line numbers
     # http://www.dabeaz.com/ply/ply.html#ply_nn9
     #
