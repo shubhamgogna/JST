@@ -66,7 +66,7 @@ class BaseAstNode:
         # for child in self.children:
         #     if not isinstance(child, BaseAstNode):
         #         print(self.name(), child)
-        # 
+        #
         # for child in self.children:
         #     print(self.name(), 'child', child)
         #
@@ -452,7 +452,7 @@ class FileAST(BaseAstNode):
     def to_3ac(self, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
-    
+
 
     def to_graph_viz_str(self):
         return 'digraph {\n' + super(FileAST, self).to_graph_viz_str() + '}'
@@ -744,59 +744,61 @@ class TypeDeclaration(BaseAstNode):
     INT_TYPES = {Type.CHAR, Type.SHORT, Type.INT, Type.LONG, Type.SIGNED, Type.UNSIGNED}
 
     def __init__(self, **kwargs):
+        # Call the parent constructor
         super(TypeDeclaration, self).__init__(**kwargs)
+        # In GCC, storage classes are idempotent (but there can only be one of each)
+        self.storage_classes = set()
+        # In GCC, qualifiers are idempotent
+        self.type_qualifiers = set()
+        # List allows for things like 'long long' and 'long double'
+        self.type_specifiers = []
+        # Indicated if the type is signed/unsigned
+        # None = sign not applicable
+        self.type_sign = None
 
-        self.storage_class = []
-        self.qualifiers = set()  # in gcc, type qualifiers are idempotent
-        self.type_specifier = []  # being a list allows for things like 'unsigned int', 'long double'
-
-        # From pycparser
-        # def __init__(self, declaration_name, qualifiers, type, **kwargs):
-        #     self.declaration_name = declaration_name
-        #     self.qualifiers = qualifiers
-        #
-        #     self.type = type
-
-    def name(self):
-
-        if(len(self.qualifiers)):
-            return super(TypeDeclaration, self).name(arg='_'.join(self.qualifiers) + '_' + '_'.join(self.type_specifier))
-        else:
-            return super(TypeDeclaration, self).name(arg='_'.join(self.qualifiers) + '_'.join(self.type_specifier))
+    def name(self, **kwargs):
+        joined = [self.type_sign if self.type_sign else '',
+                  '_'.join(self.storage_classes),
+                  '_'.join(self.type_qualifiers),
+                  '_'.join(self.type_specifiers)]
+        joined = [i for i in joined if i is not '']
+        return super(TypeDeclaration, self).name(arg='_'.join(joined))
 
     def add_storage_class(self, storage_class_specifier):
-        if storage_class_specifier in self.storage_class:
+        if storage_class_specifier in self.storage_classes:
             raise Exception('Duplication of storage class specifier "{}".'.format(storage_class_specifier))
+        self.storage_classes.add(storage_class_specifier)
 
-        self.storage_class.append(storage_class_specifier)
-
-    def add_qualifier(self, type_qualifier):
-        self.qualifiers.add(type_qualifier)
+    def add_type_qualifier(self, type_qualifier):
+        self.type_qualifiers.add(type_qualifier)
 
     def add_type_specifier(self, specifier):
+        if specifier == 'unsigned' or specifier == 'signed':
+            if self.type_sign is not None:
+                raise Exception('Multiple signed/unsigned specifiers not allowed.')
+            if self.type_specifiers.count('float') != 0 or self.type_specifiers.count('double') != 0:
+                raise Exception('Floating point types cannot be signed or unsigned.')
 
-        if (specifier is 'long' and 2 <= self.type_specifier.count('long')) or specifier in self.type_specifier:
-            raise Exception('Too many instances of type specifier "{}" in type declaration'.format(specifier))
+        if len(self.type_specifiers) >= 2:
+            raise Exception('More than two type specifiers not allowed.')
+        elif len(self.type_specifiers) == 1:
+            if specifier != 'long':
+                raise Exception('\'{}\' cannot be used with the existing type.'.format(specifier))
 
-        self.type_specifier.append(specifier)
-
-        # TODO: check for unsigned along with float types and such
+        self.type_specifiers.append(specifier)
 
     def __str__(self):
-        storage_class_str = ' '.join(self.storage_class) + ' ' if self.storage_class else ''
-        qualifier_str = ' '.join(self.qualifiers) + ' ' if self.qualifiers else ''
-        specifier_str = ' '.join(self.type_specifier) if self.type_specifier else 'UNKNOWN'
-
+        storage_class_str = ' '.join(self.storage_classes) + ' ' if self.storage_classes else ''
+        qualifier_str = ' '.join(self.type_qualifiers) + ' ' if self.type_qualifiers else ''
+        specifier_str = ' '.join(self.type_specifiers) if self.type_specifiers else 'UNKNOWN'
         return '{}{}{}'.format(storage_class_str, qualifier_str, specifier_str)
 
     def __repr__(self):
         return self.name() + ': ' + str(self)
 
-
     @property
     def children(self):
         children = []
-        # children.append(self.type)  # TODO: keep this?
         return tuple(children)
 
     def to_3ac(self, include_source=False):

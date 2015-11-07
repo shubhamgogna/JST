@@ -120,3 +120,11 @@ class CompilerState:
 
     def get_parser_logger(self):
         return self.parser_logger
+
+    def get_line_and_col(self, lineno, lexpos):
+        last_newline = self.source_code.rfind('\n', 0, lexpos)
+        return (
+            lineno,
+            max(0, lexpos - last_newline),
+            self.source_lines[lineno - 1]
+        )

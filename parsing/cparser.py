@@ -308,8 +308,12 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='declaration_specifiers -> storage_class_specifier declaration_specifiers')
 
-        t[2].add_storage_class(t[1])
-        t[0] = t[2]
+        try:
+            t[2].add_storage_class(t[1])
+            t[0] = t[2]
+        except Exception as ex:
+            result = self.compiler_state.get_line_and_col(t.lineno(1), t.lexpos(1))
+            raise CompileError(str(ex), result[0], result[1], result[2])
 
     def p_declaration_specifiers_2(self, t):
         """
@@ -317,8 +321,12 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='declaration_specifiers -> type_specifier declaration_specifiers')
 
-        t[2].add_type_specifier(t[1])
-        t[0] = t[2]
+        try:
+            t[2].add_type_specifier(t[1])
+            t[0] = t[2]
+        except Exception as ex:
+            result = self.compiler_state.get_line_and_col(t.lineno(1), t.lexpos(1))
+            raise CompileError(str(ex), result[0], result[1], result[2])
 
     def p_declaration_specifiers_3(self, t):
         """
@@ -326,8 +334,12 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='declaration_specifiers -> type_qualifier declaration_specifiers')
 
-        t[2].add_qualifier(t[1])
-        t[0] = t[2]
+        try:
+            t[2].add_type_qualifier(t[1])
+            t[0] = t[2]
+        except Exception as ex:
+            result = self.compiler_state.get_line_and_col(t.lineno(1), t.lexpos(1))
+            raise CompileError(str(ex), result[0], result[1], result[2])
 
     def p_declaration_specifiers_4(self, t):
         """
@@ -354,7 +366,7 @@ class JSTParser(object):
         self.output_production(t, production_message='declaration_specifiers -> type_qualifier')
 
         t[0] = TypeDeclaration()
-        t[0].add_qualifier(t[1])
+        t[0].add_type_qualifier(t[1])
 
     #
     # storage-class-specifier
@@ -1681,7 +1693,6 @@ class JSTParser(object):
 
         t[0] = {'ast_node': UnaryOperator(operator=t[1], expression=t[2]['ast_node'])}
 
-        print('\n\n\n\nasdfasdfasdfasdf')
         print(t[0]['ast_node'])
 
     def p_unary_expression_3(self, t):
@@ -1691,7 +1702,6 @@ class JSTParser(object):
         self.output_production(t, production_message='unary_expression -> MINUSMINUS unary_expression')
 
         t[0] = {'ast_node': UnaryOperator(t[1], t[2])}
-
 
     def p_unary_expression_4(self, t):
         """
