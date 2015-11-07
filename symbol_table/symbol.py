@@ -99,6 +99,7 @@ class VariableSymbol(Symbol):
     def __init__(self, identifier, lineno):
         super(VariableSymbol, self).__init__(identifier, lineno)
 
+
 class FunctionSymbol(Symbol):
     def __init__(self, identifier, lineno):
         super(FunctionSymbol, self).__init__(identifier, lineno)

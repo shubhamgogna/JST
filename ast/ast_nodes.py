@@ -303,17 +303,18 @@ class CompoundStatement(BaseAstNode):
     def to_3ac(self, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
+
 class Constant(BaseAstNode):
     INTEGER = 'int'
     FLOAT = 'float'
 
-    def __init__(self, type, value, **kwargs):
+    def __init__(self, type_, value, **kwargs):
         super(Constant, self).__init__(**kwargs)
 
-        self.type = type
+        self.type = type_
         self.value = value
 
-    def name(self):
+    def name(self, **kwargs):
         return super(Constant, self).name(arg=self.value)
 
     @property
@@ -329,15 +330,12 @@ class Continue(BaseAstNode):
     def __init__(self, **kwargs):
         super(Continue, self).__init__(**kwargs)
 
-
-
-
     @property
     def children(self):
         children = []
         return tuple(children)
 
-    def to_3ac(self, continue_to_label, include_source=False):
+    def to_3ac(self, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
 

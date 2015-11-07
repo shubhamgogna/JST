@@ -21,6 +21,7 @@
 from ast.ast_nodes import *
 import compiler
 from exceptions.compile_error import CompileError
+from symbol_table.scope import Scope
 from symbol_table.symbol import Symbol, FunctionSymbol, VariableSymbol
 from ticket_counting.ticket_counters import UUID_TICKETS
 from utils.compile_time_utils import TypeCheck
@@ -131,7 +132,8 @@ class JSTParser(object):
         translation_unit : external_declaration
         """
         self.output_production(t, production_message='translation_unit -> external_declaration')
-        t[0] = [t[1]['ast_node']]
+
+        t[0] = [t[1]]
 
     def p_translation_unit_2(self, t):
         """
@@ -140,7 +142,7 @@ class JSTParser(object):
         self.output_production(t, production_message='translation_unit_2 -> translation_unit external_declaration')
 
         if t[2] is not None:
-            t[1].append(t[2]['ast_node'])
+            t[1].append(t[2])
 
         t[0] = t[1]
 
@@ -187,7 +189,9 @@ class JSTParser(object):
         t[0] = {'ast_node': node}
 
     def p_function_definition_2(self, t):
-        """function_definition : declarator enter_function_scope declaration_list compound_statement"""
+        """
+        function_definition : declarator enter_function_scope declaration_list compound_statement
+        """
         self.output_production(t, production_message='function_definition -> declarator declaration_list compound_statement')
 
         declarator = t[1]
@@ -229,12 +233,9 @@ class JSTParser(object):
 
         ast_params = ParameterList([SymbolNode(symbol) for symbol in function_symbol.named_parameters])
         declaration = FunctionDeclaration(ast_params, type=function_symbol.type, identifier=function_symbol.identifier)
-        node = FunctionDefinition(declarations=declaration,
-                                               param_declarations=ast_params,
-                                               body=t[4].get('ast_node', EmptyStatement()))
+        node = FunctionDefinition(declarations=declaration, param_declarations=ast_params, body=t[4])
 
-        t[0] = {'ast_node': node}
-
+        t[0] = node
 
     #
     # declaration:
@@ -245,37 +246,34 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='declaration -> declaration_specifiers init_declarator_list SEMI')
 
-        init_declarator_list = t[2]
-        declaration_specifiers = t[1]
-
-        print(type(init_declarator_list))
-        print(init_declarator_list)
-
         t[0] = []
-        for init_declarator in init_declarator_list:
-            symbol = None
-            declarator = init_declarator['declarator']
-            if isinstance(declarator, str):
-                symbol, _ = self.compiler_state.symbol_table.find(init_declarator['declarator'])
-                if not symbol:
-                    symbol = Symbol(identifier=init_declarator['declarator'])
-                    self.compiler_state.symbol_table.insert(symbol)
-            elif isinstance(declarator, dict) and declarator.get('symbol', None):
-                symbol = declarator['symbol']
-            else:
-                symbol = declarator
+        for init_declarator_tuple in t[2]:
 
-            symbol.type = declaration_specifiers
+            init_declarator, lineno, lexpos = init_declarator_tuple
+            identifier = init_declarator['declarator']['identifier']
+            array_dims = init_declarator['declarator']['array_dims']
+            initializer = init_declarator['initializer']
+
+            symbol = VariableSymbol(identifier=identifier, lineno=lineno)
+            symbol.type = t[1]
+            symbol.array_dims = array_dims
+
+            result, _ = self.compiler_state.symbol_table.insert(symbol)
+            if result is Scope.INSERT_REDECL:
+                tup = self.compiler_state.get_line_and_col(lineno, lexpos)
+                raise CompileError('Variable is being redeclared.', tup[0], tup[1], tup[2])
+            elif result is Scope.INSERT_SHADOWED:
+                tup = self.compiler_state.get_line_and_col(lineno, lexpos)
+                warning = str(CompileError('Variable is being shadowed.', tup[0], tup[1], tup[2]))
+                print(warning, 'Still need a way to output warnings.')
 
             if len(symbol.array_dims) == 0:
-                # Type information is stored in symbol.type
-                # Bitsize has to be calculated from type, so see note directly above
-                init_ast = init_declarator['initializer']['ast_node'] if init_declarator['initializer'] else None
-                t[0].append(Declaration(ID(symbol.identifier), None, None, None, symbol.type, init_ast, TypeCheck.get_bit_size(symbol.type)))
+                decl_ast = Declaration(ID(symbol.identifier), None, None, None, symbol.type,
+                                       initializer, TypeCheck.get_bit_size(symbol.type))
             else:
-                t[0].append(ArrayDeclaration(ID(symbol.identifier), symbol.array_dims, None, symbol.type))
+                decl_ast = ArrayDeclaration(ID(symbol.identifier), symbol.array_dims, None, symbol.type)
 
-        t[0] = {'ast_node': t[0]}
+            t[0].append(decl_ast)
 
     def p_declaration_2(self, t):
         """declaration : declaration_specifiers SEMI"""
@@ -288,7 +286,7 @@ class JSTParser(object):
         """declaration_list : declaration"""
         self.output_production(t, production_message='declaration_list -> declaration')
 
-        t[0] = {'ast_node': DeclarationList(t[1]['ast_node'])}
+        t[0] = DeclarationList(t[1])
 
     def p_declaration_list_2(self, t):
         """
@@ -585,7 +583,8 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='init_declarator_list -> init_declarator')
 
-        t[0] = [t[1]]
+        # Create a list with a tuple of (string identifier, lineno, and lexpos)
+        t[0] = [(t[1], t.lineno(1), t.lexpos(1))]
 
     def p_init_declarator_list_2(self, t):
         """
@@ -594,7 +593,7 @@ class JSTParser(object):
         self.output_production(t, production_message='init_declarator_list -> init_declarator_list COMMA init_declarator')
 
         # Concat the new init_declarator to the existing list
-        t[0] = t[1] + [t[3]]
+        t[0] = t[1] + [(t[3], t.lineno(3), t.lexpos(3))]
 
     #
     # init-declarator
@@ -754,18 +753,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='direct_declarator -> identifier')
 
-
-        # print(type(t[1]))
-        # print(t[1])
-        # variable_symbol, _ =  self.compiler_state.symbol_table.find(t[1])
-        # if variable_symbol:  # variable already declared
-        #     raise CompileError('Error: redeclaration of {}'.format(t[1]), t.lineno(1), 0, self.compiler_state.source_code[t.lineno(1)])
-        # else:
-        #     variable_symbol = VariableSymbol(identifier=t[1], lineno=t.lineno(1))
-        #     insert_status, shadow_list = self.compiler_state.symbol_table.insert(variable_symbol)
-        # #     # TODO: do the checking better for the success and the shadowing, etc.
-
-        t[0] = t[1]
+        t[0] = {'identifier': t[1]}
 
     def p_direct_declarator_2(self, t):
         """
@@ -773,6 +761,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='direct_declarator -> LPAREN declarator RPAREN')
 
+        raise Exception('Unknown case', t[2])
         t[0] = t[2]
 
     def p_direct_declarator_3(self, t):
@@ -782,43 +771,18 @@ class JSTParser(object):
         self.output_production(t, production_message=
             'direct_declarator -> direct_declarator LBRACKET constant_expression_option RBRACKET')
 
-        symbol = None
-        if isinstance(t[1], str):
-            symbol, _ = self.compiler_state.symbol_table.find(t[1])
+        if t[3] is None:
+            result = self.compiler_state.get_line_and_col(t.lineno(3), t.lexpos(3))
+            # 'result[1] - 1' is a fix to get the pointer to align correctly
+            raise CompileError('Value required for array dimension.', result[0], result[1] - 1, result[2])
+        if t[3].type is not Constant.INTEGER:
+            result = self.compiler_state.get_line_and_col(t.lineno(3), t.lexpos(3))
+            raise CompileError('Array dimension must be an integral type.', result[0], result[1], result[2])
 
-            if not symbol:
-                symbol = VariableSymbol(identifier=t[1], lineno=t.lineno(1))
-                self.compiler_state.symbol_table.insert(symbol)
-
+        if t[1].get('array_dims', None):
+            t[1]['array_dims'].append(t[3].value)
         else:
-            symbol, _ = self.compiler_state.symbol_table.find(t[1])
-
-            if not symbol:
-                raise Exception('Debug: One would think that there would be a symbol table entry for {}'.format(t[1]))
-
-        # Use the commented out code once we are officially ready to do compile-time constant expression evaluation
-        if t[3].get('constant', None):
-             if t[3]['constant'].type == Constant.INTEGER:
-                 symbol.add_array_dimension(t[3]['constant'].value)
-             else:
-                 raise Exception(
-                     'Only integral types may be used to specify array dimensions ({} given)'.format(t[3].type))
-            # if issubclass(type(t[3]), ConstantValue) and t[3].type == 'int' or type(t[3]) is int:
-            #     dimension = t[3].value if type(t[3]) is ConstantValue else t[3]
-            #     symbol.add_array_dimension(dimension)  # TODO validate?
-            # elif t[3]['constant'] is None:
-            #     symbol.add_array_dimension(Symbol.EMPTY_ARRAY_DIM)
-            # else:
-            #     raise Exception(
-            #         'Only integral types may be used to specify array dimensions ({} given)'.format(t[3].type))
-
-
-            # debugging stuff for array ast stuff.......
-            # print('\n\n\n')
-            # print(type(t[3]['ast_node'].value))
-
-        # else:
-        #     symbol.add_array_dimension(Symbol.EMPTY_ARRAY_DIM)
+            t[1]['array_dims'] = [t[3].value]
 
         t[0] = t[1]
 
@@ -871,7 +835,6 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='direct_declarator -> direct_declarator LPAREN RPAREN')
 
-
         # TODO: merge this code into a function with the code for the production for functions with parameters
         lineno = t.lineno(1)
 
@@ -893,7 +856,7 @@ class JSTParser(object):
             #     raise CompileError(message=error_message, line_num=lineno, token_col=0,
             #                            source_line=self.compiler_state.source_code[lineno])
         else:
-            function_symbol = FunctionSymbol(identifier=t[1], lineno=lineno)
+            function_symbol = FunctionSymbol(identifier=t[1]['identifier'], lineno=lineno)
             function_symbol.set_signature(parameters=[])
             function_symbol.add_named_parameters([])
             result, _ = self.compiler_state.symbol_table.insert(function_symbol)
@@ -993,8 +956,8 @@ class JSTParser(object):
 
         if isinstance(t[2], Symbol):
             parameter_declaration = t[2]
-        elif isinstance(t[2], str):
-            parameter_declaration = Symbol(identifier=t[2])
+        elif isinstance(t[2], dict):
+            parameter_declaration = Symbol(identifier=t[2]['identifier'])   # Leaving off here
         else:
             raise Exception("Debug: expected Symbol or str")
 
@@ -1047,16 +1010,18 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='initializer -> assignment_expression')
 
-        node = t[1] if isinstance(t[1], Constant) else t[1]['ast_node']
-
-        t[0] = {'ast_node': node}
+        t[0] = t[1]
 
     def p_initializer_2(self, t):
-        """initializer : LBRACE initializer_list RBRACE"""
+        """
+        initializer : LBRACE initializer_list RBRACE
+        """
         self.output_production(t, production_message='initializer -> LBRACE initializer_list RBRACE')
 
     def p_initializer_3(self, t):
-        """initializer : LBRACE initializer_list COMMA RBRACE"""
+        """
+        initializer : LBRACE initializer_list COMMA RBRACE
+        """
         self.output_production(t, production_message='initializer -> LBRACE initializer_list COMMA RBRACE')
 
     #
@@ -1162,7 +1127,7 @@ class JSTParser(object):
         """constant_expression_option : empty"""
         self.output_production(t, production_message='constant_expression_option -> empty')
 
-        t[0] = {'constant': None}
+        t[0] = None
 
     def p_constant_expression_option_to_constant_expression(self, t):
         """constant_expression_option : constant_expression"""
@@ -1277,37 +1242,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='compound_statement -> LBRACE declaration_list statement_list RBRACE')
 
-        # test is t[6] got simple assignments and array accesses:
-        # for item in t[6]['ast_node']:
-        #     print(item.lvalue)
-        #     print(item.op)
-        #     print(item.rvalue)
-
-        # test t[6] got array assignments:
-        # print(t[6]['ast_node'])
-        # print('\n\n\n')
-        # print(t[6]['ast_node'])
-        # # print(t[6]['ast_node'].lvalue['ast_node'].array_name)
-        # print(t[6]['ast_node'].lvalue['ast_node'].subscript)
-        # print(t[6]['ast_node'].op)
-        # print(t[6]['ast_node'].rvalue)
-
-        # t[6] is statement_list so need to pass this up.... we don't have a node to hold this
-        #       so as of now it will just be whatever node has been passed up.
-        # t[4] is declaration_list so will probably need to pass this up too....
-
-        # presumably, a compound_list is just a list of AST Nodes
-        # declaration_list is a node type, statement_list is a list of nodes
-        print('declaration', t[4])
-        print(t[6])
-
-        node = CompoundStatement(declaration_list=(t[4].get('ast_node', None) if t[4] else None), statement_list=t[6].get('ast_node', []))
-
-        t[0] = {'ast_node': node}
-
-
-
-
+        t[0] = CompoundStatement(declaration_list=t[4], statement_list=t[6])
 
     def p_compound_statement_2(self, t):
         """
@@ -1315,8 +1250,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='compound_statement -> LBRACE statement_list RBRACE')
 
-        node = CompoundStatement(statement_list=t[4].get('ast_node', []))
-        t[0] = {'ast_node': node}
+        t[0] = CompoundStatement(statement_list=t[4])
 
     def p_compound_statement_3(self, t):
         """
@@ -1324,8 +1258,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='compound_statement -> LBRACE declaration_list RBRACE')
 
-        node = CompoundStatement(declaration_list=t[4].get('ast_node', []))
-        t[0] = {'ast_node': node}
+        t[0] = CompoundStatement(declaration_list=t[4])
 
     def p_compound_statement_4(self, t):
         """
@@ -1333,8 +1266,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='compound_statement -> LBRACE RBRACE')
 
-        # optimize away?
-        t[0] = {'ast_node': EmptyStatement()}
+        t[0] = EmptyStatement()
 
     #
     # statement-list:
@@ -1345,7 +1277,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='statement_list -> statement')
 
-        t[0] = {'ast_node': [ t[1]['ast_node'] ] }
+        t[0] = [t[1]]
 
     def p_statement_list_2(self, t):
         """
@@ -1353,10 +1285,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='statement_list -> statement_list statement')
 
-        # set t[0] as t[1] combined with t[2]
-        t[1]['ast_node'].append(t[2]['ast_node'])
-        t[0] = {'ast_node': t[1]['ast_node'] }
-
+        t[0] = t[1].append(t[2])
 
     #
     # selection-statement
@@ -1916,7 +1845,8 @@ class JSTParser(object):
         t[0] = t[1][:-1] + t[2][1:]
 
     def p_primary_expression_parenthesized(self, t):
-        """primary_expression : LPAREN expression RPAREN
+        """
+        primary_expression : LPAREN expression RPAREN
         """
         self.output_production(t, production_message='primary_expression -> LPAREN expression RPAREN')
 
@@ -1949,28 +1879,19 @@ class JSTParser(object):
     # constant:
     #
     def p_constant_int(self, t):
-        """
-        constant : ICONST
-        """
+        """constant : ICONST"""
         self.output_production(t, production_message='constant -> ICONST {}'.format(t[1]))
 
-        # this was backwards,  type was value and value was type
-        node = Constant(Constant.INTEGER, int(t[1]), uuid=UUID_TICKETS.get())
-
-        t[0] = {'constant': node, 'ast_node': node}
+        t[0] = Constant(Constant.INTEGER, t[1], uuid=UUID_TICKETS.get())
 
     def p_constant_float(self, t):
-        """
-        constant : FCONST
-        """
+        """constant : FCONST"""
         self.output_production(t, production_message='constant -> FCONST {}'.format(t[1]))
 
         t[0] = Constant(float(t[1]), 'float')
 
     def p_constant_char(self, t):
-        """
-        constant : CCONST
-        """
+        """constant : CCONST"""
         self.output_production(t, production_message='constant -> CCONST ({})'.format(t[1]))
 
         t[0] = Constant(t[1], Constant.INTEGER)
@@ -1979,11 +1900,9 @@ class JSTParser(object):
     # identifier:
     #
     def p_identifier(self, t):
-        """identifier : ID
-        """
+        """identifier : ID"""
         self.output_production(t, production_message='identifier -> ID ({})'.format(t[1]))
 
-        # the scanner passes a symbol reference to the parser
         t[0] = t[1]
 
     #
