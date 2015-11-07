@@ -182,6 +182,7 @@ class JSTLexer(object):
         self.table_logger.symbol_table('Opening Brace. Symbol Table:\n')
         self.table_logger.symbol_table(str(self.compiler_state.symbol_table))
         self.table_logger.symbol_table('\n')
+        self.token_logger.token(str(t))
         return t
 
     # Define actions for }
@@ -192,6 +193,7 @@ class JSTLexer(object):
         self.table_logger.symbol_table('Closing Brace. Symbol Table:\n')
         self.table_logger.symbol_table(str(self.compiler_state.symbol_table))
         self.table_logger.symbol_table('\n')
+        self.token_logger.token(str(t))
         return t
 
     t_COMMA            = r','
@@ -212,6 +214,7 @@ class JSTLexer(object):
         # Note: since !!S is not token, it will not be printed for DEBUG_TOKENS.
         self.table_logger.symbol_table("!!S encountered. Symbol Table dump: " +
                             str(self.compiler_state.symbol_table))
+        self.token_logger.token(str(t))
 
     # Define actions for printing a message for debugging use
     # @param self The object pointer.
@@ -222,6 +225,7 @@ class JSTLexer(object):
         message = t.value
         message = message.replace('!!P(', '').replace(')!', '')
         print(message)
+        self.token_logger.token(str(t))
 
     # Debug symbol that will produce a token that can force productions to be completed
     # @param self The object pointer.
@@ -268,6 +272,7 @@ class JSTLexer(object):
         else:
             t.type = 'ID'
 
+        self.token_logger.token(str(t))
         return t
 
     # Floating literal
@@ -280,6 +285,7 @@ class JSTLexer(object):
             raise Exception("Specified constant float value ({}) is unacceptable.".format(t.value))
 
         t.value = float(t.value)
+        self.token_logger.token(str(t))
         return t
 
     # Integer literal
@@ -292,6 +298,7 @@ class JSTLexer(object):
             raise Exception("Specified constant integer value ({}) is unacceptable".format(t.value))
 
         t.value = int(t.value)
+        self.token_logger.token(str(t))
         return t
 
     # Character constant 'c' or L'c'
@@ -302,6 +309,7 @@ class JSTLexer(object):
 
         t.value = t.value.replace("'", "")
         t.value = ord(t.value)
+        self.token_logger.token(str(t))
         return t
 
     # String literal
