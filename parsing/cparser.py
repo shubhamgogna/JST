@@ -100,13 +100,8 @@ class JSTParser(object):
     # p_error
     #
     def p_error(self, t):
-        print('--- ERROR ---')
-        print('Last token: {}'.format(self.lexer.last_token))
-        print('Last production attempted: {}'.format(t))
-        print('Compilatiion unable to continue.')
-
-        self.prod_logger.implement_me("p_error")
-        # raise NotImplemented("p_error")
+        result = self.compiler_state.get_line_and_col(t.lineno, t.lexpos)
+        raise CompileError('Parse failure.', result[0], result[1], result[2])
 
 
     def p_program(self, t):
@@ -753,7 +748,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='direct_declarator -> identifier')
 
-        t[0] = {'identifier': t[1]}
+        t[0] = {'identifier': t[1], 'array_dims': []}
 
     def p_direct_declarator_2(self, t):
         """
@@ -779,10 +774,12 @@ class JSTParser(object):
             result = self.compiler_state.get_line_and_col(t.lineno(3), t.lexpos(3))
             raise CompileError('Array dimension must be an integral type.', result[0], result[1], result[2])
 
-        if t[1].get('array_dims', None):
+        if 'identifier' in t[1] and 'array_dims' in t[1]:
             t[1]['array_dims'].append(t[3].value)
         else:
-            t[1]['array_dims'] = [t[3].value]
+            result = self.compiler_state.get_line_and_col(t.lineno(3), t.lexpos(3))
+            raise CompileError('Array dimension cannot be declared without an identifier.',
+                               result[0], result[1], result[2])
 
         t[0] = t[1]
 
@@ -828,6 +825,8 @@ class JSTParser(object):
         """
         self.output_production(t, production_message=
             'direct_declarator -> direct_declarator LPAREN identifier_list RPAREN')
+
+        raise Exception('Not implemented yet')
 
     def p_direct_declarator_6(self, t):
         """
@@ -1166,9 +1165,6 @@ class JSTParser(object):
 
         t[0] = t[1]
 
-
-
-
     def p_statement_to_compound_statement(self, t):
         """
         statement : compound_statement
@@ -1445,51 +1441,23 @@ class JSTParser(object):
         self.output_production(t, production_message=
             'assignment_expression -> unary_expression assignment_operator assignment_expression')
 
-        # for simple assign, will be symbol so do checks on it
-        if isinstance(t[1], Symbol) and isinstance(t[3], Symbol):
-            symbol = t[1]
-            if symbol.immutable:
-                message = 'Unable to modify immutable symbol {} (via {})'.format(symbol.identifier, t[2])
-                lineno = t.lineno(1)
-                column = 0
-                source_line = self.compiler_state.source_code[lineno - 1]
-                raise CompileError(message, lineno, column, source_line)
-            else:
-                t[0] = {'ast_node': Assignment(t[2], SymbolNode(t[1]), SymbolNode(t[3]))}
+        # Make sure left side is modifiable
+        if isinstance(t[1], Constant) or \
+                (isinstance(t[1], SymbolNode) and t[1].symbol.immutable):
+            result = self.compiler_state.get_line_and_col(t.lineno(1), t.lineno(1))
+            raise CompileError('Constants cannot be reassigned.', result[0], result[1], result[2])
 
-        elif isinstance(t[1], Symbol) and t[3]['ast_node']:
-            t[0] = {'ast_node': Assignment(t[2], SymbolNode(t[1]), t[3]['ast_node'])}
-        elif t[1]['ast_node'] and isinstance(t[3], Symbol):
-            t[0] = {'ast_node': Assignment(t[2], t[1]['ast_node'], SymbolNode(t[3]))}
-        elif t[1]['ast_node'] and t[1]['ast_node']:
+        # TODO This function is going to be big. It will:
+        # TODO Verify same type
+        # TODO Verify all the dimensions of an array are being accessed
+        if isinstance(t[1], SymbolNode) and isinstance(t[3], Constant):
+            # TODO verify that constant can be assigned to symbol (validate types)
+            pass
+        elif isinstance(t[1], SymbolNode) and isinstance(t[3], SymbolNode):
+            # TODO verify that symbol can be assigned to symbol (validate types)
+            pass
 
-
-            # TODO: clean up this gross hackpatch
-            rhs = t[3]
-            if not isinstance(t[3], Constant):
-                rhs = t[3]['ast_node']
-
-
-            t[0] = {'ast_node': Assignment(t[2], t[1]['ast_node'], rhs)}
-
-
-
-        # # for simple assign to variable: t[3] is symbol. so only pass id
-        # if type(t[3]) is Symbol:
-        #     # symbol_id = t[3].identifier
-        #     t[0] = {'ast_node': Assignment(t[2], t[1], SymbolNode(t[3]))}
-        #
-        # # for simple assign to const: t[3] is a constant node
-        # # for array references: t[3] is arrayRef node
-        # elif t[3]['ast_node']:
-        #     print('\n > ', t[1])
-        #     t[0] = {'ast_node': Assignment(t[2], t[1], t[3]['ast_node'])}
-
-        # print('\n\n\n\n')
-        # print(type(t[0]['ast_node'].lvalue['ast_node'].array_name['ast_node'].array_name))
-        # print('\n\n')
-        # print(type(t[0]['ast_node'].lvalue['ast_node'].subscript['ast_node'].subscript['ast_node']))
-
+        t[0] = Assignment(t[2], t[1], t[3])
 
     #
     # assignment_operator:
@@ -1793,7 +1761,7 @@ class JSTParser(object):
         postfix_expression : postfix_expression MINUSMINUS
         """
         self.output_production(t, production_message='postfix_expression -> postfix_expression MINUSMINUS')
-        t[0] = {'ast_node': UnaryOperator(t[2],t[1]) }
+        t[0] = {'ast_node': UnaryOperator(t[2],t[1])}
 
     #
     # primary-expression:
@@ -1805,11 +1773,11 @@ class JSTParser(object):
         self.output_production(t, production_message='primary_expression -> identifier')
 
         symbol, _ = self.compiler_state.symbol_table.find(t[1])
-        if not symbol:
-            symbol = Symbol(t[1])
-            self.compiler_state.symbol_table.insert(symbol)
-
-        t[0] = {'ast_node': SymbolNode(symbol)}
+        if symbol is None:
+            result = self.compiler_state.get_line_and_col(t.lineno(1), t.lexpos(1))
+            raise CompileError('Use of variable before declaration.', result[0], result[1], result[2])
+        else:
+            t[0] = SymbolNode(symbol)
 
     def p_primary_expression_constant(self, t):
         """

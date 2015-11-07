@@ -57,7 +57,7 @@ class Symbol(object):
 
     @property
     def immutable(self):
-        return 'const' in self.type.qualifiers
+        return 'const' in self.type.type_qualifiers
 
     ## Basically the same as __str__ but doesn't include the identifier
     def to_abstract_str(self):
