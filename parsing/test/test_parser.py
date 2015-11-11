@@ -530,7 +530,7 @@ class TestParser(unittest.TestCase):
 
             long int recur_Fact( int number) {
               // base case
-              if( number <= 0)
+              if(number <= 0)
                 return 1;
 
               // recursive case
@@ -549,34 +549,38 @@ class TestParser(unittest.TestCase):
 
     def test_iterative_factorial(self):
         data = """
-            long int iter_Fact( int number);
+            long int iter_Fact(int number);
 
-            int main() {
-              int number;
-              long int fact;
+            int main()
+            {
+                int number;
+                long int fact;
 
-              //printf( "Enter number to get factorial of: ");
-              //scanf( "%d", &number );
+                // printf("Enter number to get factorial of: ");
+                // scanf( "%d", &number );
 
-              fact = iter_Fact(number);
+                fact = iter_Fact(number);
 
-              //printf( "Factorial of %d is:  %ld ", number, fact);
+                // printf("Factorial of %d is:  %ld ", number, fact);
 
-              return 0;
+                return 0;
             }
 
-            long int iter_Fact( int number) {
-              int i;
-              long int fact = 1;
+            long int iter_Fact(int number)
+            {
+                int i;
+                long int fact = 1;
 
-              if( i < 0){
-                return 1;
-              }
+                if( i < 0)
+                {
+                    return 1;
+                }
 
-              for( i = number; i > 0; i --) {
-                fact = fact*i;
-              }
-              return fact;
+                for( i = number; i > 0; i --)
+                {
+                    fact = fact*i;
+                }
+                return fact;
             }
         """
         self.compiler_state.parse(data)
@@ -704,12 +708,13 @@ class TestParser(unittest.TestCase):
 
             int main()
             {
-              return 0;
+                return 0;
             }
 
             void do_stuff(int* array)
             {
-              do_stuff(i);
+                int i;
+                do_stuff(i);
             }
         """
 

@@ -298,18 +298,18 @@ class JSTLexer(object):
     # t_TYPEID = r''
 
     # Comments
-    #  @param self The object pointer.
+    # @param self The object pointer.
     # @param t A token instance
     def t_comment(self, t):
-        r' (/\*(.|\n)*?\*/)|(//.*\n)'
-        t.lineno += t.value.count('\n')
+        r'(\/\*(.|\n)*?\*\/)|(\/\/.*\n)'
+        t.lexer.lineno += t.value.count('\n')
 
     # Preprocessor directive (ignored)
     # @param self The object pointer.
     # @param t A token instance
     def t_preprocessor(self, t):
         r'\#(.)*?\n'
-        t.lineno += 1
+        t.lexer.lineno += 1
 
     # Define actions for errors
     # @param self The object pointer.

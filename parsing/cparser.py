@@ -1639,31 +1639,15 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='postfix_expression -> postfix_expression LPAREN argument_expression_list RPAREN')
 
-        if isinstance(t[1], SymbolNode):
-            # function_symbol, _ = self.compiler_state.symbol_table.find(t[1])
+        if isinstance(t[1], SymbolNode) and isinstance(t[1].symbol, FunctionSymbol):
             function_symbol = t[1].symbol
+            matched, message = function_symbol.arguments_match_parameter_types(t[3])
 
-            if function_symbol:
-
-                if function_symbol.arguments_match_parameter_types(t[3]):
-
-
-                    # create AST node
-
-                    pass
-                else:
-                    error_message = 'Argument types do not match parameter types for function call'
-                    lineno = t.lineno(1)
-                    source_line = self.compiler_state.source_code[lineno - 1]
-                    raise CompileError(error_message, lineno, 0, source_line)
-        elif isinstance(t[1], FunctionSymbol):
-            # create AST node
-            pass
-        else:
-            print(t[1])
-            raise Exception('Debug: We should be getting an identifier here')
-
-        # t[0] = ast.FunctionCall()
+            if matched:
+                t[0] = FunctionCall(ID(function_symbol.identifier), ParameterList(t[3]))
+            else:
+                tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+                raise CompileError(message, tup[0], tup[1], tup[2])
 
     def p_postfix_expression_to_function_call(self, t):
         """
@@ -1671,22 +1655,15 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='postfix_expression -> postfix_expression LPAREN RPAREN')
 
-        # find_result = self.compiler_state.symbol_table.find(t[1])
-        # TODO Still needs to be cleaned up
-        if isinstance(t[1], SymbolNode):
+        if isinstance(t[1], SymbolNode) and isinstance(t[1].symbol, FunctionSymbol):
             function_symbol = t[1].symbol
-            if function_symbol.arguments_match_parameter_types([]):
+            matched, message = function_symbol.arguments_match_parameter_types(t[3])
+
+            if matched:
                 t[0] = FunctionCall(ID(function_symbol.identifier), EmptyStatement())
             else:
-                error_message = 'Arguments do not match parameter types in call to {}'\
-                    .format(function_symbol.identifier)
-                raise CompileError(error_message, t.lineno(1), 0,
-                                       source_line=self.compiler_state.source_code[t.lineno(1)])
-        else:
-            error_message = "Call to undeclared function '{}'"\
-                    .format(t[1])
-            raise CompileError(error_message, t.lineno(1), 0,
-                                   source_line=self.compiler_state.source_code[t.lineno(1)])
+                tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+                raise CompileError(message, tup[0], tup[1], tup[2])
 
     def p_postfix_expression_to_struct_member_access(self, t):
         """

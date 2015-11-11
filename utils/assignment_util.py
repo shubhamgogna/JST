@@ -14,7 +14,7 @@
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
 from symbol_table.symbol import FunctionSymbol, VariableSymbol
-from ast.ast_nodes import Constant, SymbolNode
+from ast.ast_nodes import Constant, SymbolNode, FunctionCall, BinaryOperator
 
 
 class AssignmentUtil(object):
@@ -35,6 +35,7 @@ class AssignmentUtil(object):
 
                 if left_type == right_type:
                     return None, ''
+                # TODO Implicit conversion
                 else:
                     return 3, 'Right type ({}) does not match left type ({}).'.format(right_type, left_type)
 
@@ -42,8 +43,18 @@ class AssignmentUtil(object):
 
                 if left_type == right.type:
                     return None, ''
+                # TODO Implicit conversion
                 else:
                     return 3, 'Right type ({}) does not match left type ({}).'.format(right.type, left_type)
+
+            elif isinstance(right, FunctionCall):
+                # TODO Figure out how to get return type info from function call
+                return None, 'TODO'
+
+            elif isinstance(right, BinaryOperator):
+                # TODO Figure out how to get return type info from function call
+                return None, 'TODO'
+
             else:
                 return 3, 'Unknown type of right-hand side.'
 

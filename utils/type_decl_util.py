@@ -16,6 +16,7 @@
 
 class TypeDeclarationUtil(object):
     valid_primative_types = {
+        'void': 0,
         'char': 8,
         'short': 16,
         'short int': 16,

@@ -15,6 +15,7 @@
 
 import copy
 import itertools
+from ast.ast_nodes import SymbolNode, Constant, BinaryOperator
 
 
 class Symbol(object):
@@ -107,25 +108,31 @@ class FunctionSymbol(Symbol):
         self.named_parameters = parameter_type_list
 
     def arguments_match_parameter_types(self, argument_list):
+        if len(self.named_parameters) != len(argument_list):
+            return False, 'Argument count does not match required count for function call.'
+
         if len(argument_list) is 0 and len(self.named_parameters) is 0:
-            return True
-        raise NotImplemented('Needs to be fixed, updated, w/e - Shubham')
-        # for signature_symbol, argument in itertools.zip_longest(self.signature, argument_list):
-        #     arg_type_str = ''
-        #
-        #     print(argument)
-        #
-        #     if isinstance(argument['ast_node'], SymbolNode):
-        #         arg_type_str = argument['ast_node'].symbol.to_abstract_str()
-        #     elif isinstance(argument, ConstantValue):   # TODO
-        #         arg_type_str = argument.type
-        #     else:
-        #         raise Exception('Debug: did I forget a class-type? Got: {}'.format(type(argument)))
-        #
-        #     if signature_symbol.to_abstract_str() != arg_type_str:
-        #         # TODO: make sure that we can match types that are different but still compatible (Ex: char and int)
-        #         return False
-        # return True
+            return True, None
+
+        for parameter, argument in itertools.zip_longest(self.named_parameters, argument_list):
+            parameter_type_str = parameter.get_type_str()
+
+            if isinstance(argument, SymbolNode):
+                argument_type_str = argument.symbol.get_type_str()
+            elif isinstance(argument, Constant):
+                argument_type_str = argument.type
+            elif isinstance(argument, BinaryOperator):
+                # TODO Figure out how to get return type from BinaryOperator
+                argument_type_str = 'TODO, look at arguments_match_parameter_types'
+            else:
+                raise Exception('Unknown parameter node type ({}).'.format(str(type(argument))))
+
+            # TODO: make sure that we can match types that are different but still compatible (Ex: char and int)
+            if parameter_type_str != argument_type_str:
+                return False, 'Argument type ({}) do not match parameter type ({}) for function call.'\
+                    .format(argument_type_str, parameter_type_str)
+
+        return True, None
 
     def __str__(self):
         decl_str = str(self.decl_type) if self.decl_type else 'void'
