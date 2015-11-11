@@ -13,76 +13,62 @@
 # You should have received a copy of the GNU General Public License
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
-###############################################################################
-# File Description: Class for representing the various forms an identifier
-# in code can have, such as a variable, function, typedef, etc.
-###############################################################################
-
 import copy
 import itertools
-from ast.ast_nodes import SymbolNode
 
 
 class Symbol(object):
-
-    EMPTY_ARRAY_DIM = -1
-
-    def __init__(self, identifier, lineno=-1, column_no=0, type=None):
-        self.finalized = False
-        self.symbol_class = None
-        self.type = None  # TypeDeclaration
+    def __init__(self, identifier, lineno, column):
         self.identifier = identifier
-        self.pointer_modifiers = []
-        self.array_dims = []
-        self.storage_specifiers = []  # auto, static, extern, etc.
-        self.type_qualifier = None  # const, volatile
-        self.struct_members = {}
-        self.union_members = {}
-        self.enum_members = {}
-        self.parameters = []
-        self.is_struct = False
-        self.is_enum = False
-        self.is_function = False
+        self.lineno = lineno
+        self.column = column
 
+        # type(decl_type) is TypeDeclaration
+        self.decl_type = None
+        self.finalized = False
+
+    def clone(self):
+        # TODO Verify this is actually a deepcopy
+        return copy.deepcopy(self)
+
+
+class VariableSymbol(Symbol):
+    def __init__(self, identifier, lineno, column):
+        super(VariableSymbol, self).__init__(identifier, lineno, column)
+        self.array_dims = []
+        self.pointer_modifiers = []
+
+    @property
+    def immutable(self):
+        return 'const' in self.decl_type.type_qualifiers
 
     def add_pointer_level(self, pointer_declarations):
         self.pointer_modifiers.extend(pointer_declarations)
 
     def add_array_dimension(self, dimension):
-        if (dimension is Symbol.EMPTY_ARRAY_DIM and self.array_dims and self.array_dims[-1] is Symbol.EMPTY_ARRAY_DIM) \
-                or (dimension is not Symbol.EMPTY_ARRAY_DIM and dimension < 0):
-            raise Exception("Invalid array dimension ({}) when {} already specified".format(dimension, self.array_dims))
-
         self.array_dims.append(dimension)
 
-    @property
-    def immutable(self):
-        return 'const' in self.type.type_qualifiers
-
-    ## Basically the same as __str__ but doesn't include the identifier
+    # Basically the same as __str__ but doesn't include the identifier
     def to_abstract_str(self):
-        pointer_str = len(self.pointer_modifiers) * '*' if len(self.pointer_modifiers) > 0 else ''
-        type_str = '{}{}'.format(self.type if self.type else 'void', pointer_str)
+        pointer_str = '*' * len(self.pointer_modifiers)
+        decl_str = str(self.decl_type) if self.decl_type else 'void'
+        type_str = '{}{}'.format(decl_str, pointer_str)
 
         array_str = ''
         for dim in self.array_dims:
-            array_str += '[{}]'.format(dim if dim is not Symbol.EMPTY_ARRAY_DIM else '')
+            array_str += '[{}]'.format(dim if dim else '')
 
         return '{}{}'.format(type_str, array_str)
 
     def __str__(self):
-        # TODO: lots...
-
-        self_str = ''
-
         if self.identifier == '':  # a case like when the symbol is part of a function signature
             self_str = self.to_abstract_str()
         else:
             pointer_str = len(self.pointer_modifiers) * '*' if len(self.pointer_modifiers) > 0 else ''
-            type_str = '{}{}'.format(self.type if self.type else 'void', pointer_str)
+            type_str = '{}{}'.format(self.decl_type if self.decl_type else 'void', pointer_str)
             array_str = ''
             for dim in self.array_dims:
-                array_str += '[{}]'.format(dim if dim is not Symbol.EMPTY_ARRAY_DIM else '')
+                array_str += '[{}]'.format(dim if dim else '')
 
             self_str = '{} {}{}'.format(type_str, self.identifier, array_str)
 
@@ -91,132 +77,52 @@ class Symbol(object):
     def __repr__(self):
         return str(self)
 
-    def clone(self):
-        return copy.deepcopy(self)
-
-
-class VariableSymbol(Symbol):
-    def __init__(self, identifier, lineno):
-        super(VariableSymbol, self).__init__(identifier, lineno)
-
 
 class FunctionSymbol(Symbol):
-    def __init__(self, identifier, lineno):
-        super(FunctionSymbol, self).__init__(identifier, lineno)
-
-        self.return_type = None
-        self.signature = []
+    def __init__(self, identifier, lineno, column):
+        super(FunctionSymbol, self).__init__(identifier, lineno, column)
+        # Defines what parameters this function takes
+        # It is a list of VariableSymbols that may or may not have identifiers
         self.named_parameters = []
 
-    def set_signature(self, parameters):
-        if self.finalized:
-            raise Exception('Error: redefinition of function {}. (TODO replace with CompileException)'
-                            .format(self.identifier))
-
-        self.signature.extend(parameters)
-
     def parameter_types_match(self, parameter_type_list):
-        for signature_symbol, parameter_symbol in itertools.zip_longest(self.signature, parameter_type_list):
+        for signature_symbol, parameter_symbol in itertools.zip_longest(self.named_parameters, parameter_type_list):
             if signature_symbol.to_abstract_str() != parameter_symbol.to_abstract_str():
                 return False
         return True
 
-    def add_named_parameters(self, paramter_type_list):
+    def set_named_parameters(self, parameter_type_list):
         if self.finalized:
-            raise Exception('Error: redefinition of function {}. (TODO replace with CompileException)'
-                            .format(self.identifier))
-
-        self.named_parameters.extend(paramter_type_list)
+            raise Exception('Attempted redefinition of function {}.'.format(self.identifier))
+        self.named_parameters = parameter_type_list
 
     def arguments_match_parameter_types(self, argument_list):
-        for signature_symbol, argument in itertools.zip_longest(self.signature, argument_list):
-            arg_type_str = ''
-
-            print(argument)
-
-            if isinstance(argument['ast_node'], SymbolNode):
-                arg_type_str = argument['ast_node'].symbol.to_abstract_str()
-            elif isinstance(argument, ConstantValue):   # TODO
-                arg_type_str = argument.type
-            else:
-                raise Exception('Debug: did I forget a class-type? Got: {}'.format(type(argument)))
-
-            if signature_symbol.to_abstract_str() != arg_type_str:
-                # TODO: make sure that we can match types that are different but still compatible (Ex: char and int)
-                return False
-
-        return True
-
+        raise NotImplemented('Needs to be fixed, updated, w/e - Shubham')
+        # for signature_symbol, argument in itertools.zip_longest(self.signature, argument_list):
+        #     arg_type_str = ''
+        #
+        #     print(argument)
+        #
+        #     if isinstance(argument['ast_node'], SymbolNode):
+        #         arg_type_str = argument['ast_node'].symbol.to_abstract_str()
+        #     elif isinstance(argument, ConstantValue):   # TODO
+        #         arg_type_str = argument.type
+        #     else:
+        #         raise Exception('Debug: did I forget a class-type? Got: {}'.format(type(argument)))
+        #
+        #     if signature_symbol.to_abstract_str() != arg_type_str:
+        #         # TODO: make sure that we can match types that are different but still compatible (Ex: char and int)
+        #         return False
+        # return True
 
     def __str__(self):
-        pointer_str = len(self.pointer_modifiers) * '*' if len(self.pointer_modifiers) > 0 else ''
-        type_str = '{}{}'.format(self.type, pointer_str)
-
-        args_as_strings = []
+        decl_str = str(self.decl_type) if self.decl_type else 'void'
+        args_as_strings = ''
 
         if self.named_parameters:
-            args_as_strings = [str(symbol) for symbol in self.named_parameters]
-        elif self.signature:
-            args_as_strings = [symbol.to_abstract_str() for symbol in self.signature]
+            args_as_strings = ', '.join([str(symbol) for symbol in self.named_parameters])
 
-        arg_list_string = ', '.join(args_as_strings) if args_as_strings else ''
-
-        return '{} {}({})'.format(type_str, self.identifier, arg_list_string)
+        return '{} {}({})'.format(decl_str, self.identifier, args_as_strings)
 
     def __repr__(self):
         return str(self)
-
-
-# class ConstantValue(object):
-#     INTEGER = 'int'
-#     FLOAT = 'float'
-#
-#     def __init__(self, value=0, type=INTEGER):
-#         self.value = value
-#         self.type = type
-
-
-# class TypeDeclaration(object):
-#     FLOAT_TYPES = {'float', 'double'}
-#     INT_TYPES = {'char', 'short', 'int'}
-#
-#     def __init__(self):
-#         self.storage_class = []
-#         self.qualifiers = set()  # in gcc, type qualifiers are idempotent
-#         self.type_specifier = []  # being a list allows for things like 'unsigned int', 'long double'
-#
-#     def add_storage_class(self, storage_class_specifier):
-#         if storage_class_specifier in self.storage_class:
-#             raise Exception('Duplication of storage class specifier "{}".'.format(storage_class_specifier))
-#
-#         self.storage_class.append(storage_class_specifier)
-#
-#     def add_qualifier(self, type_qualifier):
-#         self.qualifiers.add(type_qualifier)
-#
-#     def add_type_specifier(self, specifier):
-#
-#         if (specifier is 'long' and 2 <= self.type_specifier.count('long')) or specifier in self.type_specifier:
-#             raise Exception('Too many instances of type specifier "{}" in type declaration'.format(specifier))
-#
-#         self.type_specifier.append(specifier)
-#
-#         # TODO: check for unsigned along with float types and such
-#
-#     def __str__(self):
-#         storage_class_str = ' '.join(self.storage_class) + ' ' if self.storage_class else ''
-#         qualifier_str = ' '.join(self.qualifiers) + ' ' if self.qualifiers else ''
-#         specifier_str = ' '.join(self.type_specifier) if self.type_specifier else 'UNKNOWN'
-#
-#         return '{}{}{}'.format(storage_class_str, qualifier_str, specifier_str)
-#
-#     def __repr__(self):
-#         return str(self)
-
-
-# class PointerDeclaration(object):
-#     def __init__(self):
-#         self.qualifiers = []
-#
-#     def add_qualifiers(self, qualifiers):
-#         pass

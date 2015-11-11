@@ -100,15 +100,14 @@ class JSTParser(object):
     # p_error
     #
     def p_error(self, t):
-        result = self.compiler_state.get_line_and_col(t.lineno, t.lexpos)
+        result = self.compiler_state.get_line_col_source(t.lineno, t.lexpos)
         raise CompileError('Parse failure.', result[0], result[1], result[2])
-
 
     def p_program(self, t):
         """
         program : enter_scope translation_unit_opt leave_scope
         """
-        t[0] = t[1]
+        t[0] = t[2]
 
     #
     # translation-unit:
@@ -165,73 +164,60 @@ class JSTParser(object):
     #
     def p_function_definition_1(self, t):
         """
-        function_definition : declaration_specifiers declarator enter_function_scope declaration_list compound_statement leave_scope
-        """
-        self.output_production(t, production_message=
-            'function_definition -> declaration_specifiers declarator declaration_list compound_statement')
-
-        function_symbol = t[2].get('symbol', None)
-        if function_symbol:
-            function_symbol.type = t[1]
-        else:
-            raise Exception('Debug check: Expected a function_symbol...')
-
-        declaration = FunctionDeclaration(arguments=function_symbol.named_parameters, type=None, identifier=function_symbol.identifier)
-        node = FunctionDefinition(declarations=declaration,
-                                  param_declarations=function_symbol.named_parameters,
-                                  body=t[5].get('ast_node', EmptyStatement()))
-
-        t[0] = {'ast_node': node}
-        raise Exception('Need to be reimplemented')
-
-    def p_function_definition_2(self, t):
-        """
-        function_definition : declarator enter_function_scope declaration_list compound_statement leave_scope
-        """
-        self.output_production(t, production_message='function_definition -> declarator declaration_list compound_statement')
-
-        declarator = t[1]
-        td = TypeDeclaration()
-        td.add_type_specifier(Type.INT)
-        declarator.type = td
-
-        declaration = FunctionDeclaration(declarator.named_parameters, type=declarator.type, uuid=UUID_TICKETS.get())
-        node = FunctionDefinition(declarations=declaration, param_declarations=declarator.named_parameters, body=t[3].get('ast_node', EmptyStatement))
-
-        t[0] = {'ast_node': node}
-        raise Exception('Need to be reimplemented')
-
-    def p_function_definition_3(self, t):
-        """
         function_definition : declarator enter_function_scope compound_statement leave_scope
         """
-        self.output_production(t, production_message='function_definition -> declarator declaration_list compound_statement')
+        self.output_production(t, production_message='function_definition -> declarator compound_statement')
 
-        declarator = t[1]
-        node = FunctionDefinition(declarations=declarator, param_declarations=declarator.named_parameters, body=t[3]['ast_node'])
-        t[0] = {'ast_node': node}
-        raise Exception('Need to be reimplemented')
+        symbol = t[1]
+        symbol.decl_type = TypeDeclaration()
+        symbol.decl_type.add_type_specifier('int')
+        symbol.finalized = True
 
-    def p_function_definition_4(self, t):
+        result, existing = self.compiler_state.symbol_table.insert(symbol)
+        if result is Scope.INSERT_REDECL and existing[0].finalized:
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError('Reimplementation of function not allowed.', tup[0], tup[1], tup[2])
+
+        ast_params = ParameterList([SymbolNode(symbol) for symbol in symbol.named_parameters])
+        t[0] = FunctionDefinition(symbol.decl_type, symbol.identifier, ast_params, t[3])
+        print(symbol)
+
+    def p_function_definition_2(self, t):
         """
         function_definition : declaration_specifiers declarator enter_function_scope compound_statement leave_scope
         """
         self.output_production(t, production_message='function_definition -> declaration_specifiers declarator compound_statement')
 
-        identifier = t[2]['identifier']
-        function_symbol = t[2]['function_symbol']
+        symbol = t[2]
+        symbol.decl_type = t[1]
+        symbol.finalized = True
 
-        if function_symbol.type is None:
-            function_symbol.type = t[1]
-        function_symbol.finalized = True
-
-        result, existing = self.compiler_state.symbol_table.insert(function_symbol)
+        result, existing = self.compiler_state.symbol_table.insert(symbol)
         if result is Scope.INSERT_REDECL and existing[0].finalized:
-            tup = self.compiler_state.get_line_and_col(t.lineno(1), t.lexpos(1))
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
             raise CompileError('Reimplementation of function not allowed.', tup[0], tup[1], tup[2])
 
-        ast_params = ParameterList([SymbolNode(symbol) for symbol in function_symbol.named_parameters])
-        t[0] = FunctionDefinition(function_symbol.type, identifier, ast_params, t[4])
+        ast_params = ParameterList([SymbolNode(symbol) for symbol in symbol.named_parameters])
+        t[0] = FunctionDefinition(symbol.decl_type, symbol.identifier, ast_params, t[4])
+
+    def p_function_definition_3(self, t):
+        """
+        function_definition : declaration_specifiers declarator enter_function_scope declaration_list compound_statement leave_scope
+        """
+        self.output_production(t, production_message=
+            'function_definition -> declaration_specifiers declarator declaration_list compound_statement')
+
+        raise Exception('We may want to enforce that these types of functions be invalid. '
+                        'int foo(a, b) int a, b; { ... }')
+
+    def p_function_definition_4(self, t):
+        """
+        function_definition : declarator enter_function_scope declaration_list compound_statement leave_scope
+        """
+        self.output_production(t, production_message='function_definition -> declarator declaration_list compound_statement')
+
+        raise Exception('We may want to enforce that these types of functions be invalid. '
+                        'int foo(a, b) int a, b; { ... }')
 
     #
     # declaration:
@@ -245,42 +231,44 @@ class JSTParser(object):
         t[0] = []
         for init_declarator_tuple in t[2]:
             init_declarator, lineno, lexpos = init_declarator_tuple
-            identifier = init_declarator['declarator']['identifier']
-            array_dims = init_declarator['declarator']['array_dims']
-            function_symbol = init_declarator['declarator']['function_symbol']
+            symbol = init_declarator['declarator']
             initializer = init_declarator['initializer']
+            decl_ast = None
 
-            if function_symbol is None:
-                symbol = VariableSymbol(identifier=identifier, lineno=lineno)
-                symbol.type = t[1]
-                symbol.array_dims = array_dims
-
+            if isinstance(symbol, VariableSymbol):
+                symbol.decl_type = t[1]
                 result, _ = self.compiler_state.symbol_table.insert(symbol)
+
                 if result is Scope.INSERT_REDECL:
-                    tup = self.compiler_state.get_line_and_col(lineno, lexpos)
+                    tup = self.compiler_state.get_line_col_source(lineno, lexpos)
                     raise CompileError('Variable is being redeclared.', tup[0], tup[1], tup[2])
                 elif result is Scope.INSERT_SHADOWED:
-                    tup = self.compiler_state.get_line_and_col(lineno, lexpos)
+                    tup = self.compiler_state.get_line_col_source(lineno, lexpos)
                     warning = str(CompileError('Variable is being shadowed.', tup[0], tup[1], tup[2]))
                     print(warning, 'Still need a way to output warnings.')
 
                 if len(symbol.array_dims) == 0:
-                    decl_ast = Declaration(ID(symbol.identifier), None, None, None, symbol.type,
-                                           initializer, TypeCheck.get_bit_size(symbol.type))
+                    decl_ast = Declaration(ID(symbol.identifier), None, None, None, symbol.decl_type,
+                                           initializer, TypeCheck.get_bit_size(symbol.decl_type))
                 else:
-                    decl_ast = ArrayDeclaration(ID(symbol.identifier), symbol.array_dims, None, symbol.type)
-            else:
-                function_symbol.type = t[1]
+                    decl_ast = ArrayDeclaration(ID(symbol.identifier), symbol.array_dims, None, symbol.decl_type)
 
-                result, _ = self.compiler_state.symbol_table.insert(function_symbol)
+            elif isinstance(symbol, FunctionSymbol):
+                if initializer:
+                    tup = self.compiler_state.get_line_col_source(lineno, lexpos)
+                    raise CompileError('Functions cannot have initializers.', tup[0], tup[1], tup[2])
+
+                symbol.decl_type = t[1]
+                result, _ = self.compiler_state.symbol_table.insert(symbol)
                 if result is Scope.INSERT_REDECL:
-                    tup = self.compiler_state.get_line_and_col(lineno, lexpos)
+                    tup = self.compiler_state.get_line_col_source(lineno, lexpos)
                     raise CompileError('Function is being redeclared.', tup[0], tup[1], tup[2])
 
-                decl_ast = FunctionDeclaration(ParameterList(function_symbol.named_parameters),
-                                               function_symbol.type, function_symbol.identifier)
+                decl_ast = FunctionDeclaration(ParameterList(symbol.named_parameters),
+                                               symbol.decl_type, symbol.identifier)
 
-            t[0].append(decl_ast)
+            if decl_ast:
+                t[0].append(decl_ast)
 
     def p_declaration_2(self, t):
         """declaration : declaration_specifiers SEMI"""
@@ -301,7 +289,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='declaration_list -> declaration_list declaration')
 
-        t[1]['ast_node'].declaration_list.extend(t[2]['ast_node'])
+        t[1].declaration_list.extend(t[2])
         t[0] = t[1]
 
     #
@@ -317,7 +305,7 @@ class JSTParser(object):
             t[2].add_storage_class(t[1])
             t[0] = t[2]
         except Exception as ex:
-            result = self.compiler_state.get_line_and_col(t.lineno(1), t.lexpos(1))
+            result = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
             raise CompileError(str(ex), result[0], result[1], result[2])
 
     def p_declaration_specifiers_2(self, t):
@@ -330,7 +318,7 @@ class JSTParser(object):
             t[2].add_type_specifier(t[1])
             t[0] = t[2]
         except Exception as ex:
-            result = self.compiler_state.get_line_and_col(t.lineno(1), t.lexpos(1))
+            result = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
             raise CompileError(str(ex), result[0], result[1], result[2])
 
     def p_declaration_specifiers_3(self, t):
@@ -343,7 +331,7 @@ class JSTParser(object):
             t[2].add_type_qualifier(t[1])
             t[0] = t[2]
         except Exception as ex:
-            result = self.compiler_state.get_line_and_col(t.lineno(1), t.lexpos(1))
+            result = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
             raise CompileError(str(ex), result[0], result[1], result[2])
 
     def p_declaration_specifiers_4(self, t):
@@ -614,7 +602,9 @@ class JSTParser(object):
         t[0] = {"declarator": t[1], "initializer": None}
 
     def p_init_declarator_2(self, t):
-        """init_declarator : declarator EQUALS initializer"""
+        """
+        init_declarator : declarator EQUALS initializer
+        """
         self.output_production(t, production_message='init_declarator -> declarator EQUALS initializer')
 
         t[0] = {"declarator": t[1], "initializer": t[3]}
@@ -760,15 +750,15 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='direct_declarator -> identifier')
 
-        t[0] = {'identifier': t[1], 'array_dims': [], 'function_symbol': None}
+        result = self.compiler_state.get_line_col(t, 1)
+        t[0] = VariableSymbol(t[1], result[0], result[1])
 
     def p_direct_declarator_2(self, t):
         """
         direct_declarator : LPAREN declarator RPAREN
         """
         self.output_production(t, production_message='direct_declarator -> LPAREN declarator RPAREN')
-
-        raise Exception('Not implemented yet. ' + str(t[2]))
+        raise NotImplemented(str(t[2]))
 
     def p_direct_declarator_3(self, t):
         """
@@ -778,25 +768,21 @@ class JSTParser(object):
             'direct_declarator -> direct_declarator LBRACKET constant_expression_option RBRACKET')
 
         if t[3] is None:
-            result = self.compiler_state.get_line_and_col(t.lineno(3), t.lexpos(3))
+            result = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
             # 'result[1] - 1' is a fix to get the pointer to align correctly
             raise CompileError('Value required for array dimension.', result[0], result[1] - 1, result[2])
         if t[3].type is not Constant.INTEGER:
-            result = self.compiler_state.get_line_and_col(t.lineno(3), t.lexpos(3))
+            result = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
             raise CompileError('Array dimension must be an integral type.', result[0], result[1], result[2])
 
-        if t[1]['function_symbol']:
-            result = self.compiler_state.get_line_and_col(t.lineno(3), t.lexpos(3))
+        if isinstance(t[1], VariableSymbol):
+            t[1].add_array_dimension(t[3].value)
+            t[0] = t[1]
+        elif isinstance(t[1], FunctionSymbol):
+            result = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
             raise CompileError('Functions cannot have array dimensions.', result[0], result[1], result[2])
-
-        if 'identifier' in t[1] and 'array_dims' in t[1]:
-            t[1]['array_dims'].append(t[3].value)
         else:
-            result = self.compiler_state.get_line_and_col(t.lineno(3), t.lexpos(3))
-            raise CompileError('Array dimension cannot be declared without an identifier.',
-                               result[0], result[1], result[2])
-
-        t[0] = t[1]
+            raise Exception('Unknown type ' + str(type(t[1])))
 
     def p_direct_declarator_4(self, t):
         """
@@ -805,34 +791,14 @@ class JSTParser(object):
         self.output_production(t, production_message=
             'direct_declarator -> direct_declarator LPAREN parameter_type_list RPAREN')
 
-        lineno = t.lineno(1)
+        if len(t[1].array_dims):
+            result = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError('Function cannot be declared with array dimensions.', result[0], result[1], result[2])
 
-        print(t[3])
-
-        function_symbol, _ = self.compiler_state.symbol_table.find(t[1])
-        if function_symbol:  # a prototype has been given
-            if function_symbol.finalized:
-                error_message = 'Redeclaration of function {} is not allowed.'.format(t[1])
-                raise CompileError(message=error_message, line_num=lineno, token_col=0,
-                                           source_line=self.compiler_state.source_code[lineno])
-
-            if function_symbol.parameter_types_match(t[3]):  # the prototype was given, and now the definition
-                function_symbol.add_named_parameters(t[3])
-                function_symbol.finalized = True
-            else:
-                error_message = \
-                    'Function definition does not match signature for function "{}"'.format(function_symbol.identifier)
-                raise CompileError(message=error_message, line_num=lineno, token_col=0,
-                                       source_line=self.compiler_state.source_code[lineno])
-        else:  #
-            function_symbol = FunctionSymbol(identifier=t[1], lineno=lineno)
-            function_symbol.set_signature(parameters=t[3])
-            function_symbol.add_named_parameters(t[3])
-            result, _ = self.compiler_state.symbol_table.insert(function_symbol)
-
-        t[0] = {"ast_node": None, "symbol": function_symbol}
-
-
+        # TODO The parameter should probably be the ParameterList AST node
+        function_symbol = FunctionSymbol(t[1].identifier, t[1].lineno, t[1].column)
+        function_symbol.set_named_parameters(t[3])
+        t[0] = function_symbol
 
     def p_direct_declarator_5(self, t):
         """
@@ -840,8 +806,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message=
             'direct_declarator -> direct_declarator LPAREN identifier_list RPAREN')
-
-        raise Exception('Not implemented yet. Looks like the production for a function call.')
+        raise NotImplemented('Looks like the production for a function call.')
 
     def p_direct_declarator_6(self, t):
         """
@@ -849,44 +814,14 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='direct_declarator -> direct_declarator LPAREN RPAREN')
 
-        if len(t[1]['array_dims']):
-            result = self.compiler_state.get_line_and_col(t.lineno(1), t.lexpos(1))
+        if len(t[1].array_dims):
+            result = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
             raise CompileError('Function cannot be declared with array dimensions.', result[0], result[1], result[2])
 
-        function_symbol = FunctionSymbol(identifier=t[1]['identifier'], lineno=t.lineno(1))
-        function_symbol.set_signature(parameters=[])
-        function_symbol.add_named_parameters([])
-        t[1]['function_symbol'] = function_symbol
-
-        t[0] = t[1]
-
-        # # TODO: merge this code into a function with the code for the production for functions with parameters
-        # lineno = t.lineno(1)
-        #
-        # function_symbol, _ = self.compiler_state.symbol_table.find(t[1])
-        # if function_symbol:  # a prototype has been given
-        #     if function_symbol.finalized:
-        #         error_message = 'Redeclaration of function {} is not allowed.'.format(t[1])
-        #         raise CompileError(message=error_message, line_num=lineno, token_col=0,
-        #                                    source_line=self.compiler_state.source_code[lineno])
-        #
-        #     # TODO Should probably check params to make sure it's not being re-declared
-        #     function_symbol.finalized = True
-        #
-        #     # if function_symbol.parameter_types_match(t[3]):  # the prototype was given, and now the definition
-        #     #     function_symbol.add_named_parameters(t[3])
-        #     #     function_symbol.finalized = True
-        #     # else:
-        #     #     error_message = 'Function definition does not match signature.'
-        #     #     raise CompileError(message=error_message, line_num=lineno, token_col=0,
-        #     #                            source_line=self.compiler_state.source_code[lineno])
-        # else:
-        #     function_symbol = FunctionSymbol(identifier=t[1]['identifier'], lineno=lineno)
-        #     function_symbol.set_signature(parameters=[])
-        #     function_symbol.add_named_parameters([])
-        #     result, _ = self.compiler_state.symbol_table.insert(function_symbol)
-        #
-        # t[0] = {"ast_node": None, "symbol": function_symbol}
+        # TODO The parameter should probably be the ParameterList AST node
+        function_symbol = FunctionSymbol(t[1].identifier, t[1].lineno, t[1].column)
+        function_symbol.set_named_parameters([])
+        t[0] = function_symbol
 
     #
     # pointer:
@@ -934,10 +869,12 @@ class JSTParser(object):
     def p_type_qualifier_list_1(self, t):
         """type_qualifier_list : type_qualifier"""
         self.output_production(t, production_message='type_qualifier_list -> type_qualifier')
+        raise NotImplemented()
 
     def p_type_qualifier_list_2(self, t):
         """type_qualifier_list : type_qualifier_list type_qualifier"""
         self.output_production(t, production_message='type_qualifier_list -> type_qualifier_list type_qualifier')
+        raise NotImplemented()
 
     #
     # parameter-type-list:
@@ -951,8 +888,7 @@ class JSTParser(object):
     def p_parameter_type_list_2(self, t):
         """parameter_type_list : parameter_list COMMA ELLIPSIS"""
         self.output_production(t, production_message='parameter_type_list -> parameter_list COMMA ELLIPSIS')
-
-        t[0] = t[1] + ['...']
+        raise Exception('Ellipsis is not supported')
 
     #
     # parameter-list:
@@ -961,8 +897,7 @@ class JSTParser(object):
         """parameter_list : parameter_declaration"""
         self.output_production(t, production_message='parameter_list -> parameter_declaration')
 
-        # listify the parameter declaration so that it can easily join with the parameter list
-        t[0] = [t[1]] if t[1] else []
+        t[0] = [t[1]]
 
     def p_parameter_list_2(self, t):
         """parameter_list : parameter_list COMMA parameter_declaration"""
@@ -977,39 +912,41 @@ class JSTParser(object):
         """parameter_declaration : declaration_specifiers declarator"""
         self.output_production(t, production_message='parameter_declaration -> declaration_specifiers declarator')
 
-        parameter_declaration = None
-
-        if isinstance(t[2], Symbol):
-            parameter_declaration = t[2]
-        elif isinstance(t[2], dict):
-            parameter_declaration = Symbol(identifier=t[2]['identifier'])   # Leaving off here
+        if isinstance(t[2], VariableSymbol):
+            t[2].decl_type = t[1]
+            t[0] = t[2]
         else:
-            raise Exception("Debug: expected Symbol or str")
-
-        parameter_declaration.type = t[1]
-
-        t[0] = parameter_declaration
+            tup = self.compiler_state.get_line_col_source(t.lineno(2), t.lexpos(2))
+            raise CompileError('Declarator can only be a variable.', tup[0], tup[1], tup[2])
 
     def p_parameter_declaration_2(self, t):
-        """parameter_declaration : declaration_specifiers abstract_declarator_option"""
-        self.output_production(t, production_message='parameter_declaration -> declaration_specifiers abstract_declarator_option')
+        """parameter_declaration : declaration_specifiers abstract_declarator"""
+        self.output_production(t, production_message='parameter_declaration -> declaration_specifiers abstract_declarator')
 
         # Note: abstract_declarator is things like pointers and array dims
+        # parameter_declaration = Symbol(identifier='')  # Symbol can hold all of the necessary info, might not go into the
+        #                                                # table
+        #
+        # parameter_declaration.type = t[1]
+        # abstract_declarator = t[2]
+        # if abstract_declarator:
+        #     if abstract_declarator.get('pointer_modifiers', None):
+        #         parameter_declaration.add_pointer_level(abstract_declarator['pointer_modifiers'])
+        #     if abstract_declarator.get('array_dims', None):
+        #         # clean up when we have time
+        #         for dim in abstract_declarator['array_dims']:
+        #             parameter_declaration.add_array_dimension(dim)
+        #
+        # t[0] = parameter_declaration
+        raise Exception('Needs fixing')
 
-        parameter_declaration = Symbol(identifier='')  # Symbol can hold all of the necessary info, might not go into the
-                                                       # table
+    def p_parameter_declaration_3(self, t):
+        """parameter_declaration : declaration_specifiers"""
+        self.output_production(t, production_message='parameter_declaration -> declaration_specifiers')
 
-        parameter_declaration.type = t[1]
-        abstract_declarator = t[2]
-        if abstract_declarator:
-            if abstract_declarator.get('pointer_modifiers', None):
-                parameter_declaration.add_pointer_level(abstract_declarator['pointer_modifiers'])
-            if abstract_declarator.get('array_dims', None):
-                # clean up when we have time
-                for dim in abstract_declarator['array_dims']:
-                    parameter_declaration.add_array_dimension(dim)
-
-        t[0] = parameter_declaration
+        tup = self.compiler_state.get_line_col(t, 1)
+        t[0] = VariableSymbol('', tup[0], tup[1])
+        t[0].decl_type = t[1]
 
     #
     # identifier-list:
@@ -1018,7 +955,7 @@ class JSTParser(object):
         """identifier_list : identifier"""
         self.output_production(t, production_message='identifier_list -> identifier')
 
-        t[0] = [t[1]]  # this begins the list parameter in the production below
+        t[0] = [t[1]]
 
     def p_identifier_list_2(self, t):
         """identifier_list : identifier_list COMMA identifier"""
@@ -1063,21 +1000,15 @@ class JSTParser(object):
     #
     # type-name:
     #
-    def p_type_name(self, t):
-        """type_name : specifier_qualifier_list abstract_declarator_option"""
-        self.output_production(t, production_message='type_name -> specifier_qualifier_list abstract_declarator_option')
+    def p_type_name_1(self, t):
+        """type_name : specifier_qualifier_list abstract_declarator"""
+        self.output_production(t, production_message='type_name -> specifier_qualifier_list abstract_declarator')
+        raise NotImplemented()
 
-    def p_abstract_declarator_option_1(self, t):
-        """abstract_declarator_option : empty"""
-        self.output_production(t, production_message='abstract_declarator_option -> empty')
-
-        t[0] = None
-
-    def p_abstract_declarator_option_2(self, t):
-        """abstract_declarator_option : abstract_declarator"""
-        self.output_production(t, production_message='abstract_declarator_option -> abstract_declarator')
-
-        t[0] = t[1]
+    def p_type_name_2(self, t):
+        """type_name : specifier_qualifier_list"""
+        self.output_production(t, production_message='type_name -> specifier_qualifier_list')
+        raise NotImplemented()
 
     #
     # abstract-declarator:
@@ -1123,12 +1054,14 @@ class JSTParser(object):
         t[1]['array_dims'] += [t[3].value if t[3] else Symbol.EMPTY_ARRAY_DIM]
 
         t[0] = t[1]
+        raise Exception('TODO Fix')
 
     def p_direct_abstract_declarator_3(self, t):
         """direct_abstract_declarator : LBRACKET constant_expression_option RBRACKET"""
         self.output_production(t, production_message='direct_abstract_declarator -> LBRACKET constant_expression_option RBRACKET')
 
         t[0] = {'array_dims': [t[1].value if t[2] else Symbol.EMPTY_ARRAY_DIM]}
+        raise Exception('TODO Fix')
 
     def p_direct_abstract_declarator_4(self, t):
         """direct_abstract_declarator : direct_abstract_declarator LPAREN parameter_type_list_option RPAREN"""
@@ -1470,7 +1403,7 @@ class JSTParser(object):
         # Make sure left side is modifiable
         if isinstance(t[1], Constant) or \
                 (isinstance(t[1], SymbolNode) and t[1].symbol.immutable):
-            result = self.compiler_state.get_line_and_col(t.lineno(1), t.lineno(1))
+            result = self.compiler_state.get_line_col_source(t.lineno(1), t.lineno(1))
             raise CompileError('Constants cannot be reassigned.', result[0], result[1], result[2])
 
         # TODO This function is going to be big. It will:
@@ -1800,7 +1733,7 @@ class JSTParser(object):
 
         symbol, _ = self.compiler_state.symbol_table.find(t[1])
         if symbol is None:
-            result = self.compiler_state.get_line_and_col(t.lineno(1), t.lexpos(1))
+            result = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
             raise CompileError('Use of variable before declaration.', result[0], result[1], result[2])
         else:
             t[0] = SymbolNode(symbol)
@@ -1852,7 +1785,7 @@ class JSTParser(object):
     #
     def p_argument_expression_list_assignment_expression(self, t):
         """
-        argument_expression_list :  assignment_expression
+        argument_expression_list : assignment_expression
         """
         self.output_production(t, production_message='argument_expression_list ->  assignment_expression')
 
@@ -1917,7 +1850,7 @@ class JSTParser(object):
         """
         self.prod_logger.info('Entering scope {}'.format(len(self.compiler_state.symbol_table.table)))
 
-        function_symbol = t[-1]['function_symbol']
+        function_symbol = t[-1]
         self.compiler_state.symbol_table.push()
 
         for named_parameter in function_symbol.named_parameters:
