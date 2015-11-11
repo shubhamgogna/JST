@@ -781,6 +781,9 @@ class TypeDeclaration(BaseAstNode):
 
         self.type_specifiers.append(specifier)
 
+    def to_type_str(self):
+        return ' '.join(self.type_specifiers)
+
     def __str__(self):
         storage_class_str = ' '.join(self.storage_classes) + ' ' if self.storage_classes else ''
         qualifier_str = ' '.join(self.type_qualifiers) + ' ' if self.type_qualifiers else ''

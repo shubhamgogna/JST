@@ -25,6 +25,7 @@ from symbol_table.scope import Scope
 from symbol_table.symbol import Symbol, FunctionSymbol, VariableSymbol
 from ticket_counting.ticket_counters import UUID_TICKETS
 from utils.compile_time_utils import TypeCheck
+from utils.assignment_util import AssignmentUtil
 from scanning.clexer import JSTLexer
 
 
@@ -1391,23 +1392,12 @@ class JSTParser(object):
         self.output_production(t, production_message=
             'assignment_expression -> unary_expression assignment_operator assignment_expression')
 
-        # Make sure left side is modifiable
-        if isinstance(t[1], Constant) or \
-                (isinstance(t[1], SymbolNode) and t[1].symbol.immutable):
-            result = self.compiler_state.get_line_col_source(t.lineno(1), t.lineno(1))
-            raise CompileError('Constants cannot be reassigned.', result[0], result[1], result[2])
-
-        # TODO This function is going to be big. It will:
-        # TODO Verify same type
-        # TODO Verify all the dimensions of an array are being accessed
-        if isinstance(t[1], SymbolNode) and isinstance(t[3], Constant):
-            # TODO verify that constant can be assigned to symbol (validate types)
-            pass
-        elif isinstance(t[1], SymbolNode) and isinstance(t[3], SymbolNode):
-            # TODO verify that symbol can be assigned to symbol (validate types)
-            pass
-
-        t[0] = Assignment(t[2], t[1], t[3])
+        error_token, message = AssignmentUtil.can_assign(t[1], t[3])
+        if error_token is None:
+            t[0] = Assignment(t[2], t[1], t[3])
+        else:
+            tup = self.compiler_state.get_line_col_source(t.lineno(error_token), t.lexpos(error_token))
+            raise CompileError(message, tup[0], tup[1], tup[2])
 
     #
     # assignment_operator:
@@ -1429,7 +1419,6 @@ class JSTParser(object):
         self.output_production(t, production_message='assignment_operator -> {}'.format(t[1]))
 
         t[0] = t[1]
-
 
     #
     # constant-expression
@@ -1659,12 +1648,11 @@ class JSTParser(object):
         self.output_production(t, production_message='postfix_expression -> postfix_expression LPAREN RPAREN')
 
         # find_result = self.compiler_state.symbol_table.find(t[1])
+        # TODO Still needs to be cleaned up
         if isinstance(t[1], SymbolNode):
             function_symbol = t[1].symbol
             if function_symbol.arguments_match_parameter_types([]):
-                # t[0] = ast.FunctionCall(          )
-                t[0] = {'ast_node': FunctionCall(ID(function_symbol.identifier), EmptyStatement())}
-                # pass
+                t[0] = FunctionCall(ID(function_symbol.identifier), EmptyStatement())
             else:
                 error_message = 'Arguments do not match parameter types in call to {}'\
                     .format(function_symbol.identifier)
@@ -1676,18 +1664,19 @@ class JSTParser(object):
             raise CompileError(error_message, t.lineno(1), 0,
                                    source_line=self.compiler_state.source_code[t.lineno(1)])
 
-
     def p_postfix_expression_to_struct_member_access(self, t):
         """
         postfix_expression : postfix_expression PERIOD identifier
         """
         self.output_production(t, production_message='postfix_expression -> postfix_expression PERIOD identifier')
+        raise NotImplemented()
 
     def p_postfix_expression_to_struct_member_dereference(self, t):
         """
         postfix_expression : postfix_expression ARROW identifier
         """
         self.output_production(t, production_message='postfix_expression -> postfix_expression ARROW identifier')
+        raise NotImplemented()
 
     def p_postfix_expression_to_post_increment(self, t):
         """
@@ -1696,7 +1685,6 @@ class JSTParser(object):
         self.output_production(t, production_message='postfix_expression -> postfix_expression PLUSPLUS')
 
         t[0] = UnaryOperator(t[2], t[1])
-
 
     def p_postfix_expression_to_post_decrement(self, t):
         """
@@ -1804,7 +1792,7 @@ class JSTParser(object):
         """constant : FCONST"""
         self.output_production(t, production_message='constant -> FCONST {}'.format(t[1]))
 
-        t[0] = Constant(float(t[1]), 'float')
+        t[0] = Constant(Constant.FLOAT, float(t[1]))
 
         # result = self.compiler_state.get_line_col(t, 1)
         # t[0] = VariableSymbol('?', result[0], result[1])
@@ -1817,7 +1805,7 @@ class JSTParser(object):
         """constant : CCONST"""
         self.output_production(t, production_message='constant -> CCONST ({})'.format(t[1]))
 
-        t[0] = Constant(t[1], Constant.INTEGER)
+        t[0] = Constant(Constant.INTEGER, t[1])
 
         # result = self.compiler_state.get_line_col(t, 1)
         # t[0] = VariableSymbol('?', result[0], result[1])
@@ -1852,7 +1840,6 @@ class JSTParser(object):
         enter_function_scope : empty
         """
         self.prod_logger.info('Entering scope {}'.format(len(self.compiler_state.symbol_table.table)))
-        print('Entering func', str(len(self.compiler_state.symbol_table.table)))
 
         function_symbol = t[-1]
         self.compiler_state.symbol_table.push()
@@ -1866,7 +1853,6 @@ class JSTParser(object):
         enter_scope : empty
         """
         self.prod_logger.info('Entering scope {}'.format(len(self.compiler_state.symbol_table.table)))
-        print('Entering', str(len(self.compiler_state.symbol_table.table)))
 
         self.compiler_state.symbol_table.push()
 
@@ -1883,7 +1869,7 @@ class JSTParser(object):
         leave_scope : empty
         """
         self.prod_logger.info('Leaving scope {}'.format(len(self.compiler_state.symbol_table.table) - 1))
-        print('Leaving', str(len(self.compiler_state.symbol_table.table) - 1))
+
         if self.compiler_state.clone_symbol_table_on_next_scope_exit:
             self.prod_logger.info('Cloning the symbol table')
             self.compiler_state.cloned_tables.append(self.compiler_state.symbol_table.clone())

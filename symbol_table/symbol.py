@@ -52,13 +52,23 @@ class VariableSymbol(Symbol):
     def to_abstract_str(self):
         pointer_str = '*' * len(self.pointer_modifiers)
         decl_str = str(self.decl_type) if self.decl_type else 'void'
-        type_str = '{}{}'.format(decl_str, pointer_str)
 
         array_str = ''
         for dim in self.array_dims:
             array_str += '[{}]'.format(dim if dim else '')
 
-        return '{}{}'.format(type_str, array_str)
+        return '{}{}{}'.format(decl_str, pointer_str, array_str)
+
+    # TODO I just threw this together. I should go back and fix it. - Shubham
+    def to_type_str(self):
+        pointer_str = '*' * len(self.pointer_modifiers)
+        decl_str = self.decl_type.to_type_str() if self.decl_type else 'void'
+
+        array_str = ''
+        for dim in self.array_dims:
+            array_str += '[{}]'.format(dim if dim else '')
+
+        return '{}{}{}'.format(decl_str, pointer_str, array_str)
 
     def __str__(self):
         if self.identifier == '':  # a case like when the symbol is part of a function signature
@@ -97,6 +107,8 @@ class FunctionSymbol(Symbol):
         self.named_parameters = parameter_type_list
 
     def arguments_match_parameter_types(self, argument_list):
+        if len(argument_list) is 0 and len(self.named_parameters) is 0:
+            return True
         raise NotImplemented('Needs to be fixed, updated, w/e - Shubham')
         # for signature_symbol, argument in itertools.zip_longest(self.signature, argument_list):
         #     arg_type_str = ''
