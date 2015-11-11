@@ -770,18 +770,12 @@ class TypeDeclaration(BaseAstNode):
         if specifier == 'unsigned' or specifier == 'signed':
             if self.type_sign is not None:
                 raise Exception('Multiple signed/unsigned specifiers not allowed.')
-            if self.type_specifiers.count('float') != 0 or self.type_specifiers.count('double') != 0:
-                raise Exception('Floating point types cannot be signed or unsigned.')
+            else:
+                self.type_sign = specifier
+        else:
+            self.type_specifiers.insert(0, specifier)
 
-        if len(self.type_specifiers) >= 2:
-            raise Exception('More than two type specifiers not allowed.')
-        elif len(self.type_specifiers) == 1:
-            if specifier != 'long':
-                raise Exception('\'{}\' cannot be used with the existing type.'.format(specifier))
-
-        self.type_specifiers.append(specifier)
-
-    def to_type_str(self):
+    def get_type_str(self):
         return ' '.join(self.type_specifiers)
 
     def __str__(self):

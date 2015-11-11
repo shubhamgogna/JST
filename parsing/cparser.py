@@ -34,6 +34,9 @@ from scanning.clexer import JSTLexer
 # This class is responsible for working in tandem with the Lexer to parse the given C program input and then
 # constructing the Abstract Syntax Tree that corresponds to the program. Compile time checking is done by this class.
 #
+from utils.type_decl_util import TypeDeclarationUtil
+
+
 class JSTParser(object):
 
     # IMPORTANT: Tokens must be imported from the JSTLexer so PLY can build the table
@@ -187,6 +190,11 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='function_definition -> declaration_specifiers declarator compound_statement')
 
+        is_type_valid, message = TypeDeclarationUtil.is_valid(t[1])
+        if not is_type_valid:
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError(message, tup[0], tup[1], tup[2])
+
         symbol = t[2]
         symbol.decl_type = t[1]
         symbol.finalized = True
@@ -226,6 +234,11 @@ class JSTParser(object):
         declaration : declaration_specifiers init_declarator_list SEMI
         """
         self.output_production(t, production_message='declaration -> declaration_specifiers init_declarator_list SEMI')
+
+        is_type_valid, message = TypeDeclarationUtil.is_valid(t[1])
+        if not is_type_valid:
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError(message, tup[0], tup[1], tup[2])
 
         t[0] = []
         for init_declarator_tuple in t[2]:
@@ -272,6 +285,7 @@ class JSTParser(object):
     def p_declaration_2(self, t):
         """declaration : declaration_specifiers SEMI"""
         self.output_production(t, production_message='declaration -> declaration_specifiers SEMI')
+        raise Exception('Unknown usage')
 
     #
     # declaration-list:
@@ -304,8 +318,8 @@ class JSTParser(object):
             t[2].add_storage_class(t[1])
             t[0] = t[2]
         except Exception as ex:
-            result = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
-            raise CompileError(str(ex), result[0], result[1], result[2])
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError(str(ex), tup[0], tup[1], tup[2])
 
     def p_declaration_specifiers_2(self, t):
         """
@@ -317,8 +331,8 @@ class JSTParser(object):
             t[2].add_type_specifier(t[1])
             t[0] = t[2]
         except Exception as ex:
-            result = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
-            raise CompileError(str(ex), result[0], result[1], result[2])
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError(str(ex), tup[0], tup[1], tup[2])
 
     def p_declaration_specifiers_3(self, t):
         """
@@ -330,8 +344,8 @@ class JSTParser(object):
             t[2].add_type_qualifier(t[1])
             t[0] = t[2]
         except Exception as ex:
-            result = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
-            raise CompileError(str(ex), result[0], result[1], result[2])
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError(str(ex), tup[0], tup[1], tup[2])
 
     def p_declaration_specifiers_4(self, t):
         """
@@ -913,6 +927,11 @@ class JSTParser(object):
         """parameter_declaration : declaration_specifiers declarator"""
         self.output_production(t, production_message='parameter_declaration -> declaration_specifiers declarator')
 
+        is_type_valid, message = TypeDeclarationUtil.is_valid(t[1])
+        if not is_type_valid:
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError(message, tup[0], tup[1], tup[2])
+
         if isinstance(t[2], VariableSymbol):
             t[2].decl_type = t[1]
             t[0] = t[2]
@@ -944,6 +963,11 @@ class JSTParser(object):
     def p_parameter_declaration_3(self, t):
         """parameter_declaration : declaration_specifiers"""
         self.output_production(t, production_message='parameter_declaration -> declaration_specifiers')
+
+        is_type_valid, message = TypeDeclarationUtil.is_valid(t[1])
+        if not is_type_valid:
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError(message, tup[0], tup[1], tup[2])
 
         tup = self.compiler_state.get_line_col(t, 1)
         t[0] = VariableSymbol('', tup[0], tup[1])

@@ -60,9 +60,9 @@ class VariableSymbol(Symbol):
         return '{}{}{}'.format(decl_str, pointer_str, array_str)
 
     # TODO I just threw this together. I should go back and fix it. - Shubham
-    def to_type_str(self):
+    def get_type_str(self):
         pointer_str = '*' * len(self.pointer_modifiers)
-        decl_str = self.decl_type.to_type_str() if self.decl_type else 'void'
+        decl_str = self.decl_type.get_type_str() if self.decl_type else 'void'
 
         array_str = ''
         for dim in self.array_dims:

@@ -28,10 +28,10 @@ class AssignmentUtil(object):
             return 1, 'Assignment operators are invalid for functions.'
 
         if isinstance(left, SymbolNode) and isinstance(left.symbol, VariableSymbol):
-            left_type = left.symbol.to_type_str()
+            left_type = left.symbol.get_type_str()
 
             if isinstance(right, SymbolNode) and isinstance(right.symbol, VariableSymbol):
-                right_type = right.symbol.to_type_str()
+                right_type = right.symbol.get_type_str()
 
                 if left_type == right_type:
                     return None, ''
