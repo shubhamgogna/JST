@@ -84,7 +84,7 @@ class CompilerState:
         self.insert_mode = True
 
         # for debugging purposes
-        self.clone_symbol_table_on_scope_exit = False
+        self.clone_symbol_table_on_next_scope_exit = False
         self.cloned_tables = []
 
         # Create JSTLexer and the lexer object

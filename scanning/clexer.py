@@ -225,23 +225,7 @@ class JSTLexer(object):
     def t_CLONE_SYMBOL_TABLE(self, t):
         r'!!C'
 
-        # TODO Useless since everything is commented out?
-        self.compiler_state.clone_symbol_table_on_scope_exit = True
-
-        # # print message saying table will be cloned and print original table
-        # self.st_logger.symbol_table('!!C encountered. Table is clonning.')
-        # self.st_logger.symbol_table("Original Table")
-        # self.st_logger.symbol_table(str(self.compiler_state.symbol_table))
-        # self.st_logger.symbol_table('\n')
-        #
-        # # clone table and print cloned table
-        # cloned = self.compiler_state.symbol_table.clone()
-        # self.st_logger.symbol_table("Cloned Table")
-        # self.st_logger.symbol_table(str(cloned))
-        # self.st_logger.symbol_table('\n')
-        #
-        # # add cloned to list of cloned
-        # self.compiler_state.cloned_tables.append(cloned)
+        self.compiler_state.clone_symbol_table_on_next_scope_exit = True
 
     # Define actions to be used for ID's
     # @param self The object pointer.

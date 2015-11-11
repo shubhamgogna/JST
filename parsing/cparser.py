@@ -25,7 +25,6 @@ from symbol_table.scope import Scope
 from symbol_table.symbol import Symbol, FunctionSymbol, VariableSymbol
 from ticket_counting.ticket_counters import UUID_TICKETS
 from utils.compile_time_utils import TypeCheck
-from utils.primitive_types import Type
 from scanning.clexer import JSTLexer
 
 
@@ -180,7 +179,6 @@ class JSTParser(object):
 
         ast_params = ParameterList([SymbolNode(symbol) for symbol in symbol.named_parameters])
         t[0] = FunctionDefinition(symbol.decl_type, symbol.identifier, ast_params, t[3])
-        print(symbol)
 
     def p_function_definition_2(self, t):
         """
@@ -726,12 +724,11 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='declarator -> pointer direct_declarator')
 
-        # the direct_declarator might come up as a string/identifier in the case of function parameters
-        declarator = Symbol(identifier=t[2]) if isinstance(t[2], str) else t[2]
-        declarator.add_pointer_level(t[1])
-        self.compiler_state.symbol_table.insert(declarator)
-
-        t[0] = declarator
+        if isinstance(t[2], VariableSymbol):
+            t[2].add_pointer_level(t[1])
+            t[0] = t[2]
+        else:
+            raise Exception('Not currently supported')
 
     def p_declarator_2(self, t):
         """
@@ -767,10 +764,13 @@ class JSTParser(object):
         self.output_production(t, production_message=
             'direct_declarator -> direct_declarator LBRACKET constant_expression_option RBRACKET')
 
+        # TODO To support string initialization, this check needs to be moved to the declaration
+        # TODO production where it can check dimensions of the initializer and compare/set
         if t[3] is None:
             result = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
             # 'result[1] - 1' is a fix to get the pointer to align correctly
             raise CompileError('Value required for array dimension.', result[0], result[1] - 1, result[2])
+
         if t[3].type is not Constant.INTEGER:
             result = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
             raise CompileError('Array dimension must be an integral type.', result[0], result[1], result[2])
@@ -1240,7 +1240,8 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='statement_list -> statement_list statement')
 
-        t[0] = t[1].append(t[2])
+        t[1].append(t[2])
+        t[0] = t[1]
 
     #
     # selection-statement
@@ -1251,9 +1252,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='selection_statement -> IF LPAREN expression RPAREN statement')
 
-        node = If(conditional=t[3]['ast_node'], if_true=t[5]['ast_node'], if_false=EmptyStatement())
-
-        t[0] = {'ast_node': node}
+        t[0] = If(conditional=t[3], if_true=t[5], if_false=EmptyStatement())
 
     def p_selection_statement_2(self, t):
         """
@@ -1262,9 +1261,7 @@ class JSTParser(object):
         self.output_production(t,
             production_message='selection_statement -> IF LPAREN expression RPAREN statement ELSE statement')
 
-        node = If(conditional=t[3]['ast_node'], if_true=t[5]['ast_node'], if_false=t[7]['ast_node'])
-
-        t[0] = {'ast_node': node}
+        t[0] = If(conditional=t[3], if_true=t[5], if_false=t[7])
 
     def p_selection_statement_3(self, t):
         """
@@ -1281,11 +1278,11 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='iteration_statement -> WHILE LPAREN expression RPAREN statement')
 
-        t[0] = {'ast_node': IterationNode(True,
-                                          EmptyStatement(),
-                                          t[3]['ast_node'] if t[3] else EmptyStatement(),
-                                          EmptyStatement(),
-                                          t[5]['ast_node'] if t[5] else EmptyStatement())}
+        t[0] = IterationNode(True,
+                             EmptyStatement(),
+                             t[3] if t[3] else EmptyStatement(),
+                             EmptyStatement(),
+                             t[5] if t[5] else EmptyStatement())
 
     def p_iteration_statement_2(self, t):
         """
@@ -1295,16 +1292,11 @@ class JSTParser(object):
             'iteration_statement -> FOR LPAREN expression_option SEMI expression_option SEMI expression_option RPAREN '
             'statement')
 
-        print('FOR', t[3])
-        print('FOR', t[5])
-        print('FOR', t[7])
-        print('FOR', t[9])
-
-        t[0] = {'ast_node': IterationNode(True,
-                                          t[3]['ast_node'] if t[3] else EmptyStatement(),
-                                          t[5]['ast_node'] if t[5] else EmptyStatement(),
-                                          t[7]['ast_node'] if t[7] else EmptyStatement(),
-                                          t[9]['ast_node'] if t[9] else EmptyStatement())}
+        t[0] = IterationNode(True,
+                             t[3] if t[3] else EmptyStatement(),
+                             t[5] if t[5] else EmptyStatement(),
+                             t[7] if t[7] else EmptyStatement(),
+                             t[9] if t[9] else EmptyStatement())
 
     def p_iteration_statement_3(self, t):
         """
@@ -1312,11 +1304,11 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='iteration_statement -> DO statement WHILE LPAREN expression RPAREN SEMI')
 
-        t[0] = {'ast_node': IterationNode(False,
-                                          EmptyStatement(),
-                                          t[5]['ast_node'] if t[5] else EmptyStatement(),
-                                          EmptyStatement(),
-                                          t[2]['ast_node'] if t[2] else EmptyStatement())}
+        t[0] = IterationNode(False,
+                             EmptyStatement(),
+                             t[5] if t[5] else EmptyStatement(),
+                             EmptyStatement(),
+                             t[2] if t[2] else EmptyStatement())
 
     #
     # jump_statement:
@@ -1345,8 +1337,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='jump_statement -> RETURN expression_option SEMI')
 
-        node = Return(expression=t[2]['ast_node'] if t[2] else EmptyStatement())
-        t[0] = {'ast_node': node}
+        t[0] = Return(expression=t[2] if t[2] else EmptyStatement())
 
     #
     # Expression Option
@@ -1493,17 +1484,11 @@ class JSTParser(object):
         self.output_production(t, production_message=
             'binary_expression -> binary_expression {} binary_expression'.format(t[2]))
 
-        if type(t[1]) is dict and type(t[3]) is dict:
-            left_operand = t[1].get('ast_node', None)
-            right_operand = t[3].get('ast_node', None)
-
-            if JSTParser.is_a_constant(left_operand) and JSTParser.is_a_constant(right_operand):
-                t[0] = {'ast_node': JSTParser.perform_binary_operation(left_operand, t[2], right_operand)}
-            else:
-                t[0] = {'ast_node': BinaryOperator(t[2], left_operand, right_operand)}
+        if type(t[1]) is Constant and type(t[3]) is Constant:
+            t[0] = JSTParser.perform_binary_operation(t[1], t[2], t[3])
         else:
             # not constant expression, so need binary operator node
-            t[0] = {'ast_node': BinaryOperator(t[2], t[1], t[3])}
+            t[0] = BinaryOperator(t[2], t[1], t[3])
 
     def p_binary_expression_to_cast_expression(self, t):
         """
@@ -1547,9 +1532,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='unary_expression -> PLUSPLUS unary_expression')
 
-        t[0] = {'ast_node': UnaryOperator(operator=t[1], expression=t[2]['ast_node'])}
-
-        print(t[0]['ast_node'])
+        t[0] = UnaryOperator(t[1], t[2])
 
     def p_unary_expression_3(self, t):
         """
@@ -1557,7 +1540,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='unary_expression -> MINUSMINUS unary_expression')
 
-        t[0] = {'ast_node': UnaryOperator(t[1], t[2])}
+        t[0] = UnaryOperator(t[1], t[2])
 
     def p_unary_expression_4(self, t):
         """
@@ -1572,12 +1555,14 @@ class JSTParser(object):
         unary_expression : SIZEOF unary_expression
         """
         self.output_production(t, production_message='unary_expression -> SIZEOF unary_expression')
+        raise NotImplemented()
 
     def p_unary_expression_6(self, t):
         """
         unary_expression : SIZEOF LPAREN type_name RPAREN
         """
         self.output_production(t, production_message='unary_expression -> SIZEOF LPAREN type_name RPAREN')
+        raise NotImplemented()
 
     #
     # unary_operator
@@ -1632,10 +1617,8 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='postfix_expression -> postfix_expression LBRACKET expression RBRACKET')
 
-        # For array stuffs:
-
-        t[0] = {"ast_node": ArrayReference(t[1]['ast_node'], t[3]['ast_node'])}
-
+        # For array stuff:
+        t[0] = ArrayReference(t[1], t[3])
 
     def p_postfix_expression_to_parameterized_function_call(self, t):
         """
@@ -1643,9 +1626,9 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='postfix_expression -> postfix_expression LPAREN argument_expression_list RPAREN')
 
-        if isinstance(t[1]['ast_node'], SymbolNode):
+        if isinstance(t[1], SymbolNode):
             # function_symbol, _ = self.compiler_state.symbol_table.find(t[1])
-            function_symbol = t[1]['ast_node'].symbol
+            function_symbol = t[1].symbol
 
             if function_symbol:
 
@@ -1676,8 +1659,8 @@ class JSTParser(object):
         self.output_production(t, production_message='postfix_expression -> postfix_expression LPAREN RPAREN')
 
         # find_result = self.compiler_state.symbol_table.find(t[1])
-        if isinstance(t[1]['ast_node'], SymbolNode):
-            function_symbol = t[1]['ast_node'].symbol
+        if isinstance(t[1], SymbolNode):
+            function_symbol = t[1].symbol
             if function_symbol.arguments_match_parameter_types([]):
                 # t[0] = ast.FunctionCall(          )
                 t[0] = {'ast_node': FunctionCall(ID(function_symbol.identifier), EmptyStatement())}
@@ -1712,7 +1695,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='postfix_expression -> postfix_expression PLUSPLUS')
 
-        t[0] = {'ast_node': UnaryOperator(operator=t[2], expression=t[1]['ast_node']) }
+        t[0] = UnaryOperator(t[2], t[1])
 
 
     def p_postfix_expression_to_post_decrement(self, t):
@@ -1720,7 +1703,8 @@ class JSTParser(object):
         postfix_expression : postfix_expression MINUSMINUS
         """
         self.output_production(t, production_message='postfix_expression -> postfix_expression MINUSMINUS')
-        t[0] = {'ast_node': UnaryOperator(t[2],t[1])}
+
+        t[0] = UnaryOperator(t[2], t[1])
 
     #
     # primary-expression:
@@ -1789,7 +1773,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='argument_expression_list ->  assignment_expression')
 
-        t[0] = [t[1]] if t[1] else []
+        t[0] = [t[1]]
 
     def p_argument_expression_list_list_comma_expression(self, t):
         """
@@ -1797,8 +1781,6 @@ class JSTParser(object):
         """
         self.output_production(t, production_message=
             'argument_expression_list -> argument_expression_list COMMA assignment_expression')
-
-        print(t[1], t[3])
 
         t[0] = t[1] + [t[3]]
 
@@ -1811,17 +1793,38 @@ class JSTParser(object):
 
         t[0] = Constant(Constant.INTEGER, t[1], uuid=UUID_TICKETS.get())
 
+        # result = self.compiler_state.get_line_col(t, 1)
+        # t[0] = VariableSymbol('?', result[0], result[1])
+        # t[0].decl_type = TypeDeclaration()
+        # t[0].decl_type.add_type_specifier('int')
+        # t[0].decl_type.add_type_qualifier('const')
+        # t[0].value = t[1]
+
     def p_constant_float(self, t):
         """constant : FCONST"""
         self.output_production(t, production_message='constant -> FCONST {}'.format(t[1]))
 
         t[0] = Constant(float(t[1]), 'float')
 
+        # result = self.compiler_state.get_line_col(t, 1)
+        # t[0] = VariableSymbol('?', result[0], result[1])
+        # t[0].decl_type = TypeDeclaration()
+        # t[0].decl_type.add_type_specifier('float')
+        # t[0].decl_type.add_type_qualifier('const')
+        # t[0].value = t[1]
+
     def p_constant_char(self, t):
         """constant : CCONST"""
         self.output_production(t, production_message='constant -> CCONST ({})'.format(t[1]))
 
         t[0] = Constant(t[1], Constant.INTEGER)
+
+        # result = self.compiler_state.get_line_col(t, 1)
+        # t[0] = VariableSymbol('?', result[0], result[1])
+        # t[0].decl_type = TypeDeclaration()
+        # t[0].decl_type.add_type_specifier('char')
+        # t[0].decl_type.add_type_qualifier('const')
+        # t[0].value = t[1]
 
     #
     # identifier:
@@ -1849,6 +1852,7 @@ class JSTParser(object):
         enter_function_scope : empty
         """
         self.prod_logger.info('Entering scope {}'.format(len(self.compiler_state.symbol_table.table)))
+        print('Entering func', str(len(self.compiler_state.symbol_table.table)))
 
         function_symbol = t[-1]
         self.compiler_state.symbol_table.push()
@@ -1857,18 +1861,14 @@ class JSTParser(object):
             # TODO: may need to turn these into symbols
             self.compiler_state.symbol_table.insert(named_parameter)
 
-        self.compiler_state.function_scope_entered = True
-
     def p_enter_scope(self, t):
         """
         enter_scope : empty
         """
         self.prod_logger.info('Entering scope {}'.format(len(self.compiler_state.symbol_table.table)))
+        print('Entering', str(len(self.compiler_state.symbol_table.table)))
 
-        if not self.compiler_state.function_scope_entered:
-            self.compiler_state.symbol_table.push()
-        else:
-            self.compiler_state.function_scope_entered = False
+        self.compiler_state.symbol_table.push()
 
     def p_insert_mode(self, t):
         """
@@ -1883,11 +1883,11 @@ class JSTParser(object):
         leave_scope : empty
         """
         self.prod_logger.info('Leaving scope {}'.format(len(self.compiler_state.symbol_table.table) - 1))
-
-        if self.compiler_state.clone_symbol_table_on_scope_exit:
-            self.prod_logger.info('cloning the symbol table')
+        print('Leaving', str(len(self.compiler_state.symbol_table.table) - 1))
+        if self.compiler_state.clone_symbol_table_on_next_scope_exit:
+            self.prod_logger.info('Cloning the symbol table')
             self.compiler_state.cloned_tables.append(self.compiler_state.symbol_table.clone())
-            self.compiler_state.clone_symbol_table_on_scope_exit = False
+            self.compiler_state.clone_symbol_table_on_next_scope_exit = False
 
         self.compiler_state.symbol_table.pop()
 
@@ -1986,7 +1986,7 @@ class JSTParser(object):
             raise Exception('Improper operator provided: ' + operator)
 
         val_type = Constant.INTEGER if isinstance(result, int) else Constant.FLOAT
-        return Constant(result,val_type)
+        return Constant(val_type, result)
 
     # Performs compile-time operations to evaluate unary (one-operand) constant expressions.
     # Called by production handling methods.
