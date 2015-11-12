@@ -18,15 +18,14 @@
 # operations for parsing the ANSI C grammar.
 ###############################################################################
 
-from ast.ast_nodes import *
 import compiler
 from exceptions.compile_error import CompileError
 from symbol_table.scope import Scope
-from symbol_table.symbol import Symbol, FunctionSymbol, VariableSymbol
-from ticket_counting.ticket_counters import UUID_TICKETS
+from symbol_table.symbol import Symbol, VariableSymbol, FunctionSymbol
 from utils.compile_time_utils import TypeCheck
 from utils.assignment_util import AssignmentUtil
 from scanning.clexer import JSTLexer
+from ast.ast_nodes import *
 
 
 # Parser Class
@@ -130,17 +129,15 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='translation_unit -> external_declaration')
 
-        t[0] = [t[1]]
+        t[0] = t[1]
 
     def p_translation_unit_2(self, t):
         """
         translation_unit : translation_unit external_declaration
         """
-        self.output_production(t, production_message='translation_unit_2 -> translation_unit external_declaration')
+        self.output_production(t, production_message='translation_unit -> translation_unit external_declaration')
 
-        if t[2] is not None:
-            t[1].append(t[2])
-
+        t[1].extend(t[2])
         t[0] = t[1]
 
     #
@@ -152,7 +149,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='external_declaration -> function_definition')
 
-        t[0] = t[1]
+        t[0] = [t[1]]
 
     def p_external_declaration_2(self, t):
         """
@@ -160,7 +157,8 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='external_declaration -> declaration')
 
-        t[0] = DeclarationList(t[1])
+        t[0] = []
+        t[0].extend(t[1])
 
     #
     # function-definition
@@ -260,10 +258,10 @@ class JSTParser(object):
                     print(warning, 'Still need a way to output warnings.')
 
                 if len(symbol.array_dims) == 0:
-                    decl_ast = Declaration(ID(symbol.identifier), None, None, None, symbol.decl_type,
+                    decl_ast = Declaration(symbol.identifier, None, None, None, symbol.decl_type,
                                            initializer, TypeCheck.get_bit_size(symbol.decl_type))
                 else:
-                    decl_ast = ArrayDeclaration(ID(symbol.identifier), symbol.array_dims, None, symbol.decl_type)
+                    decl_ast = ArrayDeclaration(symbol.identifier, symbol.array_dims, None, symbol.decl_type)
 
             elif isinstance(symbol, FunctionSymbol):
                 if initializer:
@@ -294,7 +292,8 @@ class JSTParser(object):
         """declaration_list : declaration"""
         self.output_production(t, production_message='declaration_list -> declaration')
 
-        t[0] = DeclarationList(t[1])
+        t[0] = []
+        t[0].extend(t[1])
 
     def p_declaration_list_2(self, t):
         """
@@ -302,7 +301,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='declaration_list -> declaration_list declaration')
 
-        t[1].declaration_list.extend(t[2])
+        t[1].extend(t[2])
         t[0] = t[1]
 
     #
@@ -1246,7 +1245,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='compound_statement -> LBRACE RBRACE')
 
-        t[0] = EmptyStatement()
+        t[0] = None
 
     #
     # statement-list:
@@ -1277,7 +1276,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='selection_statement -> IF LPAREN expression RPAREN statement')
 
-        t[0] = If(conditional=t[3], if_true=t[5], if_false=EmptyStatement())
+        t[0] = If(conditional=t[3], if_true=t[5], if_false=None)
 
     def p_selection_statement_2(self, t):
         """
@@ -1303,11 +1302,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='iteration_statement -> WHILE LPAREN expression RPAREN statement')
 
-        t[0] = IterationNode(True,
-                             EmptyStatement(),
-                             t[3] if t[3] else EmptyStatement(),
-                             EmptyStatement(),
-                             t[5] if t[5] else EmptyStatement())
+        t[0] = IterationNode(True, None, t[3], None, t[5])
 
     def p_iteration_statement_2(self, t):
         """
@@ -1317,11 +1312,7 @@ class JSTParser(object):
             'iteration_statement -> FOR LPAREN expression_option SEMI expression_option SEMI expression_option RPAREN '
             'statement')
 
-        t[0] = IterationNode(True,
-                             t[3] if t[3] else EmptyStatement(),
-                             t[5] if t[5] else EmptyStatement(),
-                             t[7] if t[7] else EmptyStatement(),
-                             t[9] if t[9] else EmptyStatement())
+        t[0] = IterationNode(True, t[3], t[5], t[7], t[9])
 
     def p_iteration_statement_3(self, t):
         """
@@ -1329,11 +1320,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='iteration_statement -> DO statement WHILE LPAREN expression RPAREN SEMI')
 
-        t[0] = IterationNode(False,
-                             EmptyStatement(),
-                             t[5] if t[5] else EmptyStatement(),
-                             EmptyStatement(),
-                             t[2] if t[2] else EmptyStatement())
+        t[0] = IterationNode(False, None, t[5], None, t[2])
 
     #
     # jump_statement:
@@ -1362,7 +1349,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='jump_statement -> RETURN expression_option SEMI')
 
-        t[0] = Return(expression=t[2] if t[2] else EmptyStatement())
+        t[0] = Return(expression=t[2] if t[2] else None)
 
     #
     # Expression Option
@@ -1397,6 +1384,7 @@ class JSTParser(object):
         expression : expression COMMA assignment_expression
         """
         self.output_production(t, production_message='expression -> expression COMMA assignment_expression')
+        raise NotImplemented('Build a (list of Expression) here')
 
     #
     # assigment_expression:
@@ -1631,6 +1619,7 @@ class JSTParser(object):
         self.output_production(t, production_message='postfix_expression -> postfix_expression LBRACKET expression RBRACKET')
 
         # For array stuff:
+        # TODO Verify that a symbol node is being passed up?
         t[0] = ArrayReference(t[1], t[3])
 
     def p_postfix_expression_to_parameterized_function_call(self, t):
@@ -1644,7 +1633,7 @@ class JSTParser(object):
             matched, message = function_symbol.arguments_match_parameter_types(t[3])
 
             if matched:
-                t[0] = FunctionCall(ID(function_symbol.identifier), ParameterList(t[3]))
+                t[0] = FunctionCall(function_symbol.identifier, ParameterList(t[3]))
             else:
                 tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
                 raise CompileError(message, tup[0], tup[1], tup[2])
@@ -1660,7 +1649,7 @@ class JSTParser(object):
             matched, message = function_symbol.arguments_match_parameter_types(t[3])
 
             if matched:
-                t[0] = FunctionCall(ID(function_symbol.identifier), EmptyStatement())
+                t[0] = FunctionCall(function_symbol.identifier, None)
             else:
                 tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
                 raise CompileError(message, tup[0], tup[1], tup[2])
@@ -1670,14 +1659,14 @@ class JSTParser(object):
         postfix_expression : postfix_expression PERIOD identifier
         """
         self.output_production(t, production_message='postfix_expression -> postfix_expression PERIOD identifier')
-        raise NotImplemented()
+        raise NotImplemented('Used for structs, unions')
 
     def p_postfix_expression_to_struct_member_dereference(self, t):
         """
         postfix_expression : postfix_expression ARROW identifier
         """
         self.output_production(t, production_message='postfix_expression -> postfix_expression ARROW identifier')
-        raise NotImplemented()
+        raise NotImplemented('Used to dereference pointers and access member')
 
     def p_postfix_expression_to_post_increment(self, t):
         """
@@ -1685,6 +1674,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='postfix_expression -> postfix_expression PLUSPLUS')
 
+        # TODO This should have another node or a flag that says the increment occurs AFTER
         t[0] = UnaryOperator(t[2], t[1])
 
     def p_postfix_expression_to_post_decrement(self, t):
@@ -1693,6 +1683,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='postfix_expression -> postfix_expression MINUSMINUS')
 
+        # TODO This should have another node or a flag that says the decrement occurs AFTER
         t[0] = UnaryOperator(t[2], t[1])
 
     #
@@ -1760,7 +1751,7 @@ class JSTParser(object):
         """
         argument_expression_list : assignment_expression
         """
-        self.output_production(t, production_message='argument_expression_list ->  assignment_expression')
+        self.output_production(t, production_message='argument_expression_list -> assignment_expression')
 
         t[0] = [t[1]]
 
@@ -1819,7 +1810,9 @@ class JSTParser(object):
     # identifier:
     #
     def p_identifier(self, t):
-        """identifier : ID"""
+        """
+        identifier : ID
+        """
         self.output_production(t, production_message='identifier -> ID ({})'.format(t[1]))
 
         t[0] = t[1]

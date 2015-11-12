@@ -56,6 +56,6 @@ class AssignmentUtil(object):
                 return None, 'TODO'
 
             else:
-                return 3, 'Unknown type of right-hand side.'
+                return 3, 'Unknown node on right-hand side. ({})'.format(type(right))
 
-        return 1, 'Unknown type of left-hand side.'
+        return 1, 'Unknown node on left-hand side. ({})'.format(type(left))

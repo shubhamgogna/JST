@@ -21,18 +21,13 @@ class BaseAstNode:
     # @param line_range A tuple of start line and end line for where this node applies
     # @param uuid A unique identifier number from a TicketCounter
     #
-    def __init__(self, line_range=None, uuid=None, **kwargs):
-        # initialize the line_range
-        self.line_range = line_range
-
-        # initialize the uuid
-        # Note: Since we have multiple ticket counters, we need to pass them in as a param.
+    def __init__(self, uuid=None, **kwargs):
+        # Initialize the uuid
         self.uuid = uuid if uuid else UUID_TICKETS.get()
 
     # Define str function to concisely summarize a node with its uuid, name/type, and relevant info
     def __str__(self):
         return '{}_{}'.format(self.uuid, type(self).__name__)
-
 
     def name(self, arg=None):
         extra = '_' + str(arg) if arg else ''
@@ -40,25 +35,24 @@ class BaseAstNode:
 
         return name_str
 
-    #Define function for converting to 3ac
+    # Define function for converting to 3ac
     def to_3ac(self, include_source=False):
-        #TODO: something like: self.3ac = '\n'.join([child.to_3ac() for child in self.children])
+        # TODO: something like: self.3ac = '\n'.join([child.to_3ac() for child in self.children])
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
     # TODO: Probably we will be able to remove the visit functionality since it should be encapsulated by 3ac
     # Define visit function for the iteration protocol
     def visit(self, node):
-        #TODO: Copied from pyCparser's visit node.... may need to fix
+        # TODO: Copied from pyCparser's visit node.... may need to fix
         method = 'visit_' + node.__class__.__name__
         visitor = getattr(self, method, self.generic_visit)
         return visitor(node)
 
     # Define generic visit function to call if no explicit visitor function exists for a node.
     def generic_visit(self, node):
-        #TODO: Copied from pyCparser's visit node.... may need to fix
+        # TODO: Copied from pyCparser's visit node.... may need to fix
         for c_name, c in node.children():
             self.visit(c)
-
 
     # Define method for getting a graphViz ready string
     def to_graph_viz_str(self):
@@ -86,11 +80,13 @@ class BaseAstNode:
     def children(self):
         return tuple([])
 
+
 ##
 # This type of node handles all loops: for, while, and do...while.
 ##
 class IterationNode(BaseAstNode):
-    def __init__(self, is_pre_test_loop, initialization_expression, stop_condition_expression, increment_expression, body_statments=None, **kwargs):
+    def __init__(self, is_pre_test_loop, initialization_expression, stop_condition_expression, increment_expression,
+                 body_statments=None, **kwargs):
         super(IterationNode, self).__init__(**kwargs)
 
         self.is_pre_test_loop = is_pre_test_loop
@@ -98,28 +94,33 @@ class IterationNode(BaseAstNode):
         self.initialization_expression = initialization_expression
         self.stop_condition_expression = stop_condition_expression
         self.increment_expression = increment_expression
-
-        self.body_statments = body_statments if body_statments else []
+        self.body_statements = body_statments
 
     @property
     def children(self):
         children = []
-        children.append(self.initialization_expression)
-        children.append(self.stop_condition_expression)
-        children.append(self.increment_expression)
-        children.append(self.body_statments)
+        if self.initialization_expression:
+            children.append(self.initialization_expression)
+        if self.stop_condition_expression:
+            children.append(self.stop_condition_expression)
+        if self.increment_expression:
+            children.append(self.increment_expression)
+        if self.body_statements:
+            children.append(self.body_statements)
         return tuple(children)
 
-    def to_3ac(self, a_dummy_parameter, include_source=False):
+    def to_3ac(self, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
+
+# TODO (Shubham) What does this do? Is it just for visualization? It can probably be removed if so.
 class ArrayDimLister(BaseAstNode):
     def __init__(self, dimensions, **kwargs):
         super(ArrayDimLister, self).__init__(**kwargs)
 
         self.dimensions = dimensions
 
-    def name(self):
+    def name(self, arg=None):
         return super(ArrayDimLister, self).name(arg='_'.join(str(dimension) for dimension in self.dimensions))
 
     @property
@@ -130,9 +131,12 @@ class ArrayDimLister(BaseAstNode):
     def to_3ac(self, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
+
 ##
 # This is a nested declaration of an array with the given type
 ##
+# TODO (Shubham) Is this node here so we can handle array 3AC differently? We can remove it and merge with Declaration,
+# but I'm not sure if that is or isn't a good idea.
 class ArrayDeclaration(BaseAstNode):
     def __init__(self, identifier, dim, dim_qualifiers, type_declaration, **kwargs):
         super(ArrayDeclaration, self).__init__(**kwargs)
@@ -145,19 +149,22 @@ class ArrayDeclaration(BaseAstNode):
 
         self.array_dim_dummy = ArrayDimLister(self.dim)
 
+    def name(self, arg=None):
+        return super(ArrayDeclaration, self).name(arg=self.identifier)
+
     @property
     def children(self):
         children = []
         children.append(self.type_declaration)
-        children.append(self.identifier)
         children.append(self.array_dim_dummy)
         return tuple(children)
 
     def to_3ac(self, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
+
 ##
-# REVISIT ME - Might need to swtich attrs to children depending on how we handle arrays
+# REVISIT ME - Might need to switch attrs to children depending on how we handle arrays
 ##
 class ArrayReference(BaseAstNode):
     def __init__(self, array_symbol, subscript, **kwargs):
@@ -165,8 +172,6 @@ class ArrayReference(BaseAstNode):
 
         self.array_symbol = array_symbol
         self.subscript = subscript
-
-
 
     @property
     def children(self):
@@ -179,16 +184,16 @@ class ArrayReference(BaseAstNode):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
 
+# TODO (Shubham) Note to self: The return type of the assignment is the type of the left hand side.
 class Assignment(BaseAstNode):
     def __init__(self, operator, lvalue, rvalue, **kwargs):
         super(Assignment, self).__init__(**kwargs)
 
         self.operator = operator
-
         self.lvalue = lvalue
         self.rvalue = rvalue
 
-    def name(self):
+    def name(self, arg=None):
         return super(Assignment, self).name(arg=OperatorUtils.operator_to_name(self.operator))
 
     @property
@@ -202,16 +207,16 @@ class Assignment(BaseAstNode):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
 
+# TODO (Shubham) The return type here might need to be explicitly stated unlike assignment
 class BinaryOperator(BaseAstNode):
     def __init__(self, operator, lvalue, rvalue, **kwargs):
         super(BinaryOperator, self).__init__(**kwargs)
 
         self.operator = operator
-
         self.lvalue = lvalue
         self.rvalue = rvalue
 
-    def name(self):
+    def name(self, arg=None):
         return super(BinaryOperator, self).name(arg=OperatorUtils.operator_to_name(self.operator))
 
     @property
@@ -232,15 +237,12 @@ class Break(BaseAstNode):
     def __init__(self, **kwargs):
         super(Break, self).__init__(**kwargs)
 
-
-
-
     @property
     def children(self):
         children = []
         return tuple(children)
 
-    def to_3ac(self, break_to_label, include_source=False):
+    def to_3ac(self, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
 
@@ -248,9 +250,7 @@ class Case(BaseAstNode):
     def __init__(self, expression, statement_list=None, **kwargs):
         super(Case, self).__init__(**kwargs)
 
-
         self.expression = expression
-
         self.statement_list = statement_list if statement_list else []
 
     @property
@@ -264,14 +264,13 @@ class Case(BaseAstNode):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
 
+# TODO (Shubham) This might be an important node for implicit conversions. I'm not clear on how it fits in yet.
 class Cast(BaseAstNode):
     def __init__(self, to_type, expression, **kwargs):
         super(Cast, self).__init__(**kwargs)
 
-
         self.to_type = to_type
         self.expression = expression
-
 
     @property
     def children(self):
@@ -289,15 +288,15 @@ class CompoundStatement(BaseAstNode):
         super(CompoundStatement, self).__init__(**kwargs)
 
         self.declaration_list = declaration_list
-        self.statement_list = statement_list if statement_list else []
-
+        self.statement_list = statement_list
 
     @property
     def children(self):
         children = []
         if self.declaration_list is not None:
-            children.append(self.declaration_list)
-        children.extend(self.statement_list)
+            children.extend(self.declaration_list)
+        if self.statement_list is not None:
+            children.extend(self.statement_list)
         return tuple(children)
 
     def to_3ac(self, include_source=False):
@@ -352,30 +351,15 @@ class Declaration(BaseAstNode):
         self.initialization_value = initialization_value
         self.bitsize = bitsize
 
+    def name(self, arg=None):
+        return super(Declaration, self).name(arg=self.identifier)
 
     @property
     def children(self):
         children = []
         children.append(self.type_)
-        children.append(self.identifier)
         if self.initialization_value is not None:
             children.append(self.initialization_value)
-        return tuple(children)
-
-    def to_3ac(self, include_source=False):
-        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
-
-
-class DeclarationList(BaseAstNode):
-    def __init__(self, declaration_list=None, **kwargs):
-        super(DeclarationList, self).__init__(**kwargs)
-
-        self.declaration_list = declaration_list if declaration_list else []
-
-    @property
-    def children(self):
-        children = []
-        children.extend(self.declaration_list)
         return tuple(children)
 
     def to_3ac(self, include_source=False):
@@ -385,8 +369,6 @@ class DeclarationList(BaseAstNode):
 class Default(BaseAstNode):
     def __init__(self, statement_list=None, **kwargs):
         super(Default, self).__init__(**kwargs)
-
-
 
         self.statement_list = statement_list if statement_list else []
 
@@ -400,44 +382,12 @@ class Default(BaseAstNode):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
 
-class EmptyStatement(BaseAstNode):
-    def __init__(self, **kwargs):
-        super(EmptyStatement, self).__init__(**kwargs)
-
-    @property
-    def children(self):
-        children = []
-        return tuple(children)
-
-    def to_3ac(self, include_source=False):
-        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
-
-
-class ExpressionList(BaseAstNode):
-    def __init__(self, expressions=None, **kwargs):
-        super(ExpressionList, self).__init__(**kwargs)
-
-
-
-        self.expressions = expressions if expressions else []
-
-    @property
-    def children(self):
-        children = []
-        children.extend(self.expressions)
-        return tuple(children)
-
-    def to_3ac(self, include_source=False):
-        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
-
-
 ##
 # This is the top of the AST
 ##
 class FileAST(BaseAstNode):
     def __init__(self, external_declarations=None, **kwargs):
         super(FileAST, self).__init__(**kwargs)
-
 
         self.external_declarations = external_declarations if external_declarations else []
 
@@ -450,8 +400,6 @@ class FileAST(BaseAstNode):
     def to_3ac(self, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
-
-
     def to_graph_viz_str(self):
         return 'digraph {\n' + super(FileAST, self).to_graph_viz_str() + '}'
 
@@ -463,14 +411,14 @@ class FunctionCall(BaseAstNode):
         self.identifier = identifier
         self.arguments = arguments
 
-    def name(self):
+    def name(self, arg=None):
         return super(FunctionCall, self).name(arg=self.identifier)
 
     @property
     def children(self):
         children = []
-        children.append(self.identifier)
-        children.append(self.arguments)
+        if self.arguments:
+            children.append(self.arguments)
         return tuple(children)
 
     def to_3ac(self, include_source=False):
@@ -485,7 +433,7 @@ class FunctionDeclaration(BaseAstNode):
         self.arguments = arguments
         self.type = type
 
-    def name(self):
+    def name(self, arg=None):
         return super(FunctionDeclaration, self).name(arg=self.identifier)
 
     @property
@@ -500,23 +448,24 @@ class FunctionDeclaration(BaseAstNode):
 
 
 class FunctionDefinition(BaseAstNode):
-    def __init__(self, type, identifier, param_declarations, body, **kwargs):
+    def __init__(self, type_, identifier, param_declarations, body, **kwargs):
         super(FunctionDefinition, self).__init__(**kwargs)
 
-        self.type = type
+        self.type = type_
         self.identifier = identifier
         self.body = body
         self.param_declarations = param_declarations if param_declarations else ParameterList([])
 
-    def name(self):
+    def name(self, arg=None):
         return super(FunctionDefinition, self).name(arg=self.identifier)
 
     @property
     def children(self):
         children = []
         children.append(self.type)
-        children.append(self.body)
         children.append(self.param_declarations)
+        if self.body:
+            children.append(self.body)
         return tuple(children)
 
     def to_3ac(self, include_source=False):
@@ -529,8 +478,6 @@ class Goto(BaseAstNode):
 
         self.name = name
 
-
-
     @property
     def children(self):
         children = []
@@ -540,31 +487,12 @@ class Goto(BaseAstNode):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
 
-class ID(BaseAstNode):
-    def __init__(self, identifier, **kwargs):
-        super(ID, self).__init__(**kwargs)
-
-        self.identifier = identifier
-
-    def name(self):
-        return super(ID, self).name(arg=self.identifier)
-
-    @property
-    def children(self):
-        children = []
-        return tuple(children)
-
-    def to_3ac(self, include_source=False):
-        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
-
-
+# TODO (Shubham) What would this be used for? Possibly removable
 class IdentifierType(BaseAstNode):
     def __init__(self, names, **kwargs):
         super(IdentifierType, self).__init__(**kwargs)
 
         self.names = names
-
-
 
     @property
     def children(self):
@@ -579,18 +507,18 @@ class If(BaseAstNode):
     def __init__(self, conditional, if_true, if_false, **kwargs):
         super(If, self).__init__(**kwargs)
 
-
         self.conditional = conditional
         self.if_true = if_true
         self.if_false = if_false
-
 
     @property
     def children(self):
         children = []
         children.append(self.conditional)
-        children.append(self.if_true)
-        children.append(self.if_false)
+        if self.if_true:
+            children.append(self.if_true)
+        if self.if_false:
+            children.append(self.if_false)
         return tuple(children)
 
     def to_3ac(self, include_source=False):
@@ -600,8 +528,6 @@ class If(BaseAstNode):
 class InitializerList(BaseAstNode):
     def __init__(self, initializers=None, **kwargs):
         super(InitializerList, self).__init__(**kwargs)
-
-
 
         self.initializers = initializers if initializers else []
 
@@ -620,10 +546,9 @@ class Label(BaseAstNode):
         super(Label, self).__init__(**kwargs)
 
         self.label_name = label_name
-
         self.body_statement = body_statement
 
-    def name(self):
+    def name(self, arg=None):
         return super(Label, self).name(arg=self.label_name)
 
     @property
@@ -639,8 +564,6 @@ class Label(BaseAstNode):
 class ParameterList(BaseAstNode):
     def __init__(self, parameters=None, **kwargs):
         super(ParameterList, self).__init__(**kwargs)
-
-
 
         self.parameters = parameters if parameters else []
 
@@ -678,14 +601,13 @@ class Return(BaseAstNode):
     def __init__(self, expression, **kwargs):
         super(Return, self).__init__(**kwargs)
 
-
         self.expression = expression
-
 
     @property
     def children(self):
         children = []
-        children.append(self.expression)
+        if self.expression:
+            children.append(self.expression)
         return tuple(children)
 
     def to_3ac(self, include_source=False):
@@ -696,10 +618,8 @@ class Switch(BaseAstNode):
     def __init__(self, conditional, body_statement, **kwargs):
         super(Switch, self).__init__(**kwargs)
 
-
         self.conditional = conditional
         self.body_statement = body_statement
-
 
     @property
     def children(self):
@@ -711,15 +631,37 @@ class Switch(BaseAstNode):
     def to_3ac(self, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
+
+class SymbolNode(BaseAstNode):
+    def __init__(self, symbol, **kwargs):
+        super(SymbolNode, self).__init__(**kwargs)
+
+        if symbol:
+            self.symbol = symbol
+            self.identifier = symbol.identifier
+        else:
+            raise ValueError('SymbolNode cannot have a \'None\' symbol.')
+
+    def name(self, arg=None):
+        return super(SymbolNode, self).name(arg=self.identifier)
+
+    @property
+    def children(self):
+        children = []
+        children.append(self.symbol.decl_type)
+        return tuple(children)
+
+    def to_3ac(self, include_source=False):
+        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+
+
 class TernaryOperator(BaseAstNode):
     def __init__(self, conditional, if_true_expression, if_false_expression, **kwargs):
         super(TernaryOperator, self).__init__(**kwargs)
 
-
         self.conditional = conditional
         self.if_true_expression = if_true_expression
         self.if_false_expression = if_false_expression
-
 
     @property
     def children(self):
@@ -804,33 +746,13 @@ class UnaryOperator(BaseAstNode):
 
         self.expression = expression
 
-    def name(self):
+    def name(self, arg=None):
         return super(UnaryOperator, self).name(arg=OperatorUtils.operator_to_name(self.operator))
 
     @property
     def children(self):
         children = []
         children.append(self.expression)
-        return tuple(children)
-
-    def to_3ac(self, include_source=False):
-        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
-
-
-class SymbolNode(BaseAstNode):
-    def __init__(self, symbol, **kwargs):
-        super(SymbolNode, self).__init__(**kwargs)
-
-        if symbol:
-            self.symbol = symbol
-            self.id_node = ID(symbol.identifier)
-        else:
-            raise ValueError('SymbolNode cannot have a None symbol.')
-
-    @property
-    def children(self):
-        children = []
-        children.append(self.id_node)
         return tuple(children)
 
     def to_3ac(self, include_source=False):
