@@ -18,8 +18,32 @@ from ast.ast_nodes import Constant, SymbolNode, FunctionCall, BinaryOperator
 
 
 class AssignmentUtil(object):
+    integral_types = {
+        'char': 8,
+        'short': 16,
+        'short int': 16,
+        'int': 16,
+        'long': 32,
+        'long int': 32,
+        'long long': 64,
+        'long long int': 64
+    }
+
+    floating_types = {
+        'float': 32,
+        'double': 64,
+        'long double': 80  # Depends on platform
+    }
+
     @staticmethod
     def can_assign(left, right):
+        # This is a workaround that allows this function to be used to check function parameters
+        # It will likely go away eventually
+        if isinstance(left, (VariableSymbol, FunctionSymbol)):
+            left = SymbolNode(left)
+        if isinstance(right, (VariableSymbol, FunctionSymbol)):
+            right = SymbolNode(right)
+
         if isinstance(left, Constant) or (isinstance(left, SymbolNode) and left.symbol.immutable):
             print(left.symbol.decl_type)
             return 1, 'Constants cannot be reassigned.'
@@ -28,34 +52,67 @@ class AssignmentUtil(object):
             return 1, 'Assignment operators are invalid for functions.'
 
         if isinstance(left, SymbolNode) and isinstance(left.symbol, VariableSymbol):
-            left_type = left.symbol.get_type_str()
+            left_type = left.symbol.get_type_tuple()
 
             if isinstance(right, SymbolNode) and isinstance(right.symbol, VariableSymbol):
-                right_type = right.symbol.get_type_str()
+                right_type = right.symbol.get_type_tuple()
 
-                if left_type == right_type:
-                    return None, ''
-                # TODO Implicit conversion
+                # VariableSymbol
+                # 0 = signed/unsigned/None, 1 = type declaration, 2 = array dims, 3 = pointers
+                if left_type[2] == right_type[2] and left_type[3] == right_type[3]:
+
+                    if left_type[0] == right_type[0] and left_type[1] == right_type[1]:
+                        return None, ''
+                    elif AssignmentUtil.can_cast_implicit(left_type[1], right_type[1]):
+                        return None, ''
                 else:
-                    return 3, 'Right type ({}) does not match left type ({}).'.format(right_type, left_type)
+                    return 3, 'Right type ({}) does not match left type ({}).'.format(
+                        ' '.join(right_type).strip(), ' '.join(left_type).strip())
 
             elif isinstance(right, Constant):
 
-                if left_type == right.type:
+                # VariableSymbol
+                # 0 = signed/unsigned/None, 1 = type declaration, 2 = array dims, 3 = pointers
+                # Constant
+                # 0 = signed/unsigned/None, 1 = type declaration
+                if left_type[0] == right.type[0] and left_type[1] == right.type[1]:
                     return None, ''
-                # TODO Implicit conversion
+                elif AssignmentUtil.can_cast_implicit(left_type[1], right.type[1]):
+                    return None, ''
                 else:
-                    return 3, 'Right type ({}) does not match left type ({}).'.format(right.type, left_type)
+                    return 3, 'Right type ({}) does not match left type ({}).'.format(
+                        ' '.join(right.type).strip(), ' '.join(left_type).strip())
 
             elif isinstance(right, FunctionCall):
-                # TODO Figure out how to get return type info from function call
-                return None, 'TODO'
+                right_type = right.function_symbol.get_type_tuple()
+
+                # VariableSymbol
+                # 0 = signed/unsigned/None, 1 = type declaration, 2 = array dims, 3 = pointers
+                # FunctionSymbol
+                # 0 = signed/unsigned/None, 1 = type declaration
+                if left_type[0] == right_type[0] and left_type[1] == right_type[1]:
+                    return None, ''
+                elif AssignmentUtil.can_cast_implicit(left_type[1], right_type[1]):
+                    return None, ''
+                else:
+                    return 3, 'Right type ({}) does not match left type ({}).'.format(
+                        ' '.join(right_type).strip(), ' '.join(left_type).strip())
 
             elif isinstance(right, BinaryOperator):
                 # TODO Figure out how to get return type info from function call
-                return None, 'TODO'
+                return 3, 'TODO: BinaryOperator in AssignmentUtil'
 
+            # TODO Array references
             else:
                 return 3, 'Unknown node on right-hand side. ({})'.format(type(right))
 
         return 1, 'Unknown node on left-hand side. ({})'.format(type(left))
+
+    @staticmethod
+    def can_cast_implicit(left_type, right_type):
+        if left_type in AssignmentUtil.integral_types and right_type in AssignmentUtil.integral_types:
+            return AssignmentUtil.integral_types[left_type] > AssignmentUtil.integral_types[right_type]
+        elif left_type in AssignmentUtil.floating_types and right_type in AssignmentUtil.floating_types:
+            return AssignmentUtil.floating_types[left_type] > AssignmentUtil.floating_types[right_type]
+
+        return False

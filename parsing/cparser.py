@@ -1633,7 +1633,7 @@ class JSTParser(object):
             matched, message = function_symbol.arguments_match_parameter_types(t[3])
 
             if matched:
-                t[0] = FunctionCall(function_symbol.identifier, ParameterList(t[3]))
+                t[0] = FunctionCall(function_symbol, ParameterList(t[3]))
             else:
                 tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
                 raise CompileError(message, tup[0], tup[1], tup[2])
@@ -1646,10 +1646,10 @@ class JSTParser(object):
 
         if isinstance(t[1], SymbolNode) and isinstance(t[1].symbol, FunctionSymbol):
             function_symbol = t[1].symbol
-            matched, message = function_symbol.arguments_match_parameter_types(t[3])
+            matched, message = function_symbol.arguments_match_parameter_types([])
 
             if matched:
-                t[0] = FunctionCall(function_symbol.identifier, None)
+                t[0] = FunctionCall(function_symbol, None)
             else:
                 tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
                 raise CompileError(message, tup[0], tup[1], tup[2])

@@ -304,8 +304,8 @@ class CompoundStatement(BaseAstNode):
 
 
 class Constant(BaseAstNode):
-    INTEGER = 'int'
-    FLOAT = 'float'
+    INTEGER = ('signed', 'int')
+    FLOAT = ('', 'float')
 
     def __init__(self, type_, value, **kwargs):
         super(Constant, self).__init__(**kwargs)
@@ -405,18 +405,20 @@ class FileAST(BaseAstNode):
 
 
 class FunctionCall(BaseAstNode):
-    def __init__(self, identifier, arguments, **kwargs):
+    def __init__(self, function_symbol, arguments, **kwargs):
         super(FunctionCall, self).__init__(**kwargs)
 
-        self.identifier = identifier
+        self.function_symbol = function_symbol
+        self.symbol_node = SymbolNode(self.function_symbol)
         self.arguments = arguments
 
     def name(self, arg=None):
-        return super(FunctionCall, self).name(arg=self.identifier)
+        return super(FunctionCall, self).name(arg=self.function_symbol.identifier)
 
     @property
     def children(self):
         children = []
+        children.append(self.symbol_node)
         if self.arguments:
             children.append(self.arguments)
         return tuple(children)
@@ -718,7 +720,7 @@ class TypeDeclaration(BaseAstNode):
             self.type_specifiers.insert(0, specifier)
 
     def get_type_str(self):
-        return ' '.join(self.type_specifiers)
+        return (self.type_sign + ' ' if self.type_sign else '') + ' '.join(self.type_specifiers)
 
     def __str__(self):
         storage_class_str = ' '.join(self.storage_classes) + ' ' if self.storage_classes else ''

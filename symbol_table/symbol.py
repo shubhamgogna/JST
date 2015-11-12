@@ -15,6 +15,7 @@
 
 import copy
 import itertools
+import utils
 from ast.ast_nodes import SymbolNode, Constant, BinaryOperator
 
 
@@ -61,15 +62,14 @@ class VariableSymbol(Symbol):
         return '{}{}{}'.format(decl_str, pointer_str, array_str)
 
     # TODO I just threw this together. I should go back and fix it. - Shubham
-    def get_type_str(self):
+    def get_type_tuple(self):
         pointer_str = '*' * len(self.pointer_modifiers)
-        decl_str = self.decl_type.get_type_str() if self.decl_type else 'void'
-
         array_str = ''
+
         for dim in self.array_dims:
             array_str += '[{}]'.format(dim if dim else '')
 
-        return '{}{}{}'.format(decl_str, pointer_str, array_str)
+        return self.decl_type.type_sign, ' '.join(self.decl_type.type_specifiers), pointer_str, array_str
 
     def __str__(self):
         if self.identifier == '':  # a case like when the symbol is part of a function signature
@@ -90,6 +90,7 @@ class VariableSymbol(Symbol):
 
 
 class FunctionSymbol(Symbol):
+
     def __init__(self, identifier, lineno, column):
         super(FunctionSymbol, self).__init__(identifier, lineno, column)
         # Defines what parameters this function takes
@@ -115,24 +116,16 @@ class FunctionSymbol(Symbol):
             return True, None
 
         for parameter, argument in itertools.zip_longest(self.named_parameters, argument_list):
-            parameter_type_str = parameter.get_type_str()
 
-            if isinstance(argument, SymbolNode):
-                argument_type_str = argument.symbol.get_type_str()
-            elif isinstance(argument, Constant):
-                argument_type_str = argument.type
-            elif isinstance(argument, BinaryOperator):
-                # TODO Figure out how to get return type from BinaryOperator
-                argument_type_str = 'TODO, look at arguments_match_parameter_types'
-            else:
-                raise Exception('Unknown parameter node type ({}).'.format(str(type(argument))))
-
-            # TODO: make sure that we can match types that are different but still compatible (Ex: char and int)
-            if parameter_type_str != argument_type_str:
-                return False, 'Argument type ({}) do not match parameter type ({}) for function call.'\
-                    .format(argument_type_str, parameter_type_str)
+            error_side, message = utils.assignment_util.AssignmentUtil.can_assign(parameter, argument)
+            if error_side is not None:
+                raise Exception(message)
 
         return True, None
+
+    # TODO I just threw this together. I should go back and fix it. - Shubham
+    def get_type_tuple(self):
+        return self.decl_type.type_sign, ' '.join(self.decl_type.type_specifiers)
 
     def __str__(self):
         decl_str = str(self.decl_type) if self.decl_type else 'void'
