@@ -304,8 +304,8 @@ class CompoundStatement(BaseAstNode):
 
 
 class Constant(BaseAstNode):
-    INTEGER = ('signed', 'int')
-    FLOAT = ('', 'float')
+    INTEGER = ('signed', 'int', '', '')
+    FLOAT = ('', 'float', '', '')
 
     def __init__(self, type_, value, **kwargs):
         super(Constant, self).__init__(**kwargs)

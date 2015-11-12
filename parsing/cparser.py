@@ -1404,7 +1404,14 @@ class JSTParser(object):
         self.output_production(t, production_message=
             'assignment_expression -> unary_expression assignment_operator assignment_expression')
 
-        error_token, message = AssignmentUtil.can_assign(t[1], t[3])
+        if isinstance(t[1], SymbolNode):
+            if isinstance(t[3], SymbolNode):
+                error_token, message = AssignmentUtil.can_assign(t[1].symbol, t[3].symbol)
+            else:
+                error_token, message = AssignmentUtil.can_assign(t[1].symbol, t[3])
+        else:
+            error_token, message = AssignmentUtil.can_assign(t[1], t[3])
+
         if error_token is None:
             t[0] = Assignment(t[2], t[1], t[3])
         else:

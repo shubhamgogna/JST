@@ -125,7 +125,7 @@ class FunctionSymbol(Symbol):
 
     # TODO I just threw this together. I should go back and fix it. - Shubham
     def get_type_tuple(self):
-        return self.decl_type.type_sign, ' '.join(self.decl_type.type_specifiers)
+        return self.decl_type.type_sign, ' '.join(self.decl_type.type_specifiers), '', ''
 
     def __str__(self):
         decl_str = str(self.decl_type) if self.decl_type else 'void'
