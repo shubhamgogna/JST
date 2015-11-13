@@ -27,5 +27,5 @@ class CompileError(Exception):
             pointer_to_error += '-'
         pointer_to_error += '^'
 
-        return "{} on Line {}, Column {}\n{}\n{}".\
+        return "{}\nLine {}, Column {}\n{}\n{}".\
             format(self.message, self.line_num, self.token_col, self.source_line, pointer_to_error)

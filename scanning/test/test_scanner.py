@@ -16,7 +16,7 @@
 import unittest
 import itertools
 from compiler.compiler_state import CompilerState
-from scanning.clexer import Lexer
+from scanning.clexer import JSTLexer
 
 
 class TestLexer(unittest.TestCase):
@@ -25,16 +25,15 @@ class TestLexer(unittest.TestCase):
     SIMPLE_MAIN_END_TOKEN_TYPES = ['RETURN', 'ICONST', 'SEMI', 'RBRACE']
     SIMPLE_MAIN_TOKEN_TYPES = SIMPLE_MAIN_START_TOKEN_TYPES + SIMPLE_MAIN_END_TOKEN_TYPES
 
-
     DECLARE_INT_TOKEN_TYPES = ['INT', 'ID', 'EQUALS', 'ICONST', 'SEMI']
     DECLARE_CHAR_TOKEN_TYPES = ['CHAR', 'ID', 'EQUALS', 'CCONST', 'SEMI']
-    DELCARE_FLOAT_TOKEN_TYPES = ['FLOAT', 'ID', 'EQUALS', 'FCONST', 'SEMI' ]
+    DECLARE_FLOAT_TOKEN_TYPES = ['FLOAT', 'ID', 'EQUALS', 'FCONST', 'SEMI']
 
     TEST_VAR_TOKEN_TYPES = SIMPLE_MAIN_START_TOKEN_TYPES + DECLARE_INT_TOKEN_TYPES + SIMPLE_MAIN_END_TOKEN_TYPES
     TEST_ILLEGAL_TOKEN_TYPES = SIMPLE_MAIN_START_TOKEN_TYPES + DECLARE_INT_TOKEN_TYPES + ['CHAR', 'EQUALS', 'CCONST', 'SEMI'] + SIMPLE_MAIN_END_TOKEN_TYPES
     TEST_GLOBAL_TOKEN_TYPES = ['CONST', 'INT', 'ID', 'EQUALS', 'ICONST', 'SEMI'] + SIMPLE_MAIN_TOKEN_TYPES
     TEST_ARRAY_TOKEN_TYPES = SIMPLE_MAIN_START_TOKEN_TYPES + ['INT', 'ID', 'LBRACKET', 'ICONST',  'RBRACKET', 'SEMI'] + SIMPLE_MAIN_END_TOKEN_TYPES
-    TEST_CONST_TOKEN_TYPES = SIMPLE_MAIN_START_TOKEN_TYPES + DECLARE_INT_TOKEN_TYPES + DELCARE_FLOAT_TOKEN_TYPES + DECLARE_CHAR_TOKEN_TYPES + ['ID','LPAREN','SCONST','RPAREN','SEMI'] + SIMPLE_MAIN_END_TOKEN_TYPES
+    TEST_CONST_TOKEN_TYPES = SIMPLE_MAIN_START_TOKEN_TYPES + DECLARE_INT_TOKEN_TYPES + DECLARE_FLOAT_TOKEN_TYPES + DECLARE_CHAR_TOKEN_TYPES + ['ID','LPAREN','SCONST','RPAREN','SEMI'] + SIMPLE_MAIN_END_TOKEN_TYPES
     TEST_FUNCTION_TOKEN_TYPES = ['INT', 'ID', 'LPAREN', 'CHAR', 'ID', 'RPAREN', 'SEMI'] + SIMPLE_MAIN_START_TOKEN_TYPES + ['ID', 'LPAREN', 'CCONST', 'RPAREN', 'SEMI'] + SIMPLE_MAIN_END_TOKEN_TYPES + ['INT', 'ID', 'LPAREN', 'CHAR', 'ID', 'RPAREN', 'LBRACE', 'RETURN', 'ID', 'PLUS', 'ID', 'SEMI', 'RBRACE']
     TEST_BANGBANGS_TOKEN_TYPES = ['INT', 'ID', 'LPAREN', 'CHAR', 'ID', 'RPAREN', 'SEMI'] + SIMPLE_MAIN_START_TOKEN_TYPES + ['ID', 'LPAREN', 'CCONST', 'RPAREN', 'SEMI'] + SIMPLE_MAIN_END_TOKEN_TYPES + ['INT', 'ID', 'LPAREN', 'CHAR', 'ID', 'RPAREN', 'LBRACE', 'RETURN', 'ID', 'PLUS', 'ID', 'SEMI', 'RBRACE']
     TEST_STRUCT_TOKEN_TYPES = ['STRUCT', 'ID', 'LBRACE', 'CHAR', 'ID', 'SEMI', 'CHAR', 'ID', 'SEMI', 'CHAR', 'ID', 'SEMI', 'RBRACE', 'SEMI'] + SIMPLE_MAIN_TOKEN_TYPES
@@ -49,7 +48,7 @@ class TestLexer(unittest.TestCase):
 
     def setUp(self):
         self.compiler_state = CompilerState()
-        self.lexer = Lexer(compiler_state=self.compiler_state)
+        self.lexer = JSTLexer(compiler_state=self.compiler_state)
 
     def tearDown(self):
         self.lexer = None
@@ -338,17 +337,17 @@ class TestLexer(unittest.TestCase):
 
 
     def test_int_verify_no_overflow(self):
-        self.assertFalse(Lexer.string_to_int_fails("4"), "4 should be acceptable")
+        self.assertFalse(JSTLexer.string_to_int_fails("4"), "4 should be acceptable")
 
     def test_int_verify_overflow(self):
-        self.assertTrue(Lexer.string_to_int_fails("9999999999999999999999999999999999999999"),
+        self.assertTrue(JSTLexer.string_to_int_fails("9999999999999999999999999999999999999999"),
                         "That should should overflow")
 
     def test_float_acceptable(self):
-        self.assertFalse(Lexer.string_to_float_fails('1.123'), "1.123 is an acceptable float")
+        self.assertFalse(JSTLexer.string_to_float_fails('1.123'), "1.123 is an acceptable float")
 
     def test_float_unacceptable(self):
-        self.assertTrue(Lexer.string_to_float_fails('1.8E+308'), "'1.8E+308' is too big")
+        self.assertTrue(JSTLexer.string_to_float_fails('1.8E+308'), "'1.8E+308' is too big")
 
     def compare_token_output(self, data, expected_token_types):
         self.lexer.input(data)
