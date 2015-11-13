@@ -113,15 +113,15 @@ class IterationNode(BaseAstNode):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
 
-# TODO (Shubham) What does this do? Is it just for visualization? It can probably be removed if so.
-class ArrayDimLister(BaseAstNode):
+# TODO (Shubham) If this is just for visualization, it can probably be removed.
+class ArrayDims(BaseAstNode):
     def __init__(self, dimensions, **kwargs):
-        super(ArrayDimLister, self).__init__(**kwargs)
+        super(ArrayDims, self).__init__(**kwargs)
 
         self.dimensions = dimensions
 
     def name(self, arg=None):
-        return super(ArrayDimLister, self).name(arg='_'.join(str(dimension) for dimension in self.dimensions))
+        return super(ArrayDims, self).name(arg='_'.join(str(dimension) for dimension in self.dimensions))
 
     @property
     def children(self):
@@ -135,27 +135,25 @@ class ArrayDimLister(BaseAstNode):
 ##
 # This is a nested declaration of an array with the given type
 ##
-# TODO (Shubham) Is this node here so we can handle array 3AC differently? We can remove it and merge with Declaration,
-# but I'm not sure if that is or isn't a good idea.
 class ArrayDeclaration(BaseAstNode):
-    def __init__(self, identifier, dim, dim_qualifiers, type_declaration, **kwargs):
+    def __init__(self, identifier, dim, dim_qualifiers, type_, **kwargs):
         super(ArrayDeclaration, self).__init__(**kwargs)
 
         self.dim = dim
         self.dim_qualifiers = dim_qualifiers
 
         self.identifier = identifier
-        self.type_declaration = type_declaration
+        self.type = type_
 
-        self.array_dim_dummy = ArrayDimLister(self.dim)
+        self.array_dim_dummy = ArrayDims(self.dim)
 
     def name(self, arg=None):
-        return super(ArrayDeclaration, self).name(arg=self.identifier)
+        arg = self.type.name_arg() + '_' + self.identifier
+        return super(ArrayDeclaration, self).name(arg)
 
     @property
     def children(self):
         children = []
-        children.append(self.type_declaration)
         children.append(self.array_dim_dummy)
         return tuple(children)
 
@@ -208,7 +206,7 @@ class Assignment(BaseAstNode):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
 
-# TODO (Shubham) The return type here might need to be explicitly stated unlike assignment
+# TODO (Shubham) The return type needs to be explicitly stated here.
 class BinaryOperator(BaseAstNode):
     def __init__(self, operator, lvalue, rvalue, **kwargs):
         super(BinaryOperator, self).__init__(**kwargs)
@@ -265,7 +263,7 @@ class Case(BaseAstNode):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
 
-# TODO (Shubham) This might be an important node for implicit conversions. I'm not clear on how it fits in yet.
+# TODO (Shubham) This looks like it's for explicit conversions.
 class Cast(BaseAstNode):
     def __init__(self, to_type, expression, **kwargs):
         super(Cast, self).__init__(**kwargs)
@@ -326,17 +324,17 @@ class Declaration(BaseAstNode):
         self.storage = storage
         self.funcspec = funcspec
 
-        self.type_ = type_
+        self.type = type_
         self.initialization_value = initialization_value
         self.bitsize = bitsize
 
     def name(self, arg=None):
-        return super(Declaration, self).name(arg=self.identifier)
+        arg = self.type.name_arg() + '_' + self.identifier
+        return super(Declaration, self).name(arg)
 
     @property
     def children(self):
         children = []
-        children.append(self.type_)
         if self.initialization_value is not None:
             children.append(self.initialization_value)
         return tuple(children)
@@ -412,12 +410,12 @@ class FunctionDeclaration(BaseAstNode):
         self.type = type_
 
     def name(self, arg=None):
-        return super(FunctionDeclaration, self).name(arg=self.identifier)
+        arg = self.type.name_arg() + '_' + self.identifier
+        return super(FunctionDeclaration, self).name(arg)
 
     @property
     def children(self):
         children = []
-        children.append(self.type)
         children.extend(self.arguments)
         return tuple(children)
 
@@ -435,12 +433,12 @@ class FunctionDefinition(BaseAstNode):
         self.arguments = arguments if arguments else []
 
     def name(self, arg=None):
-        return super(FunctionDefinition, self).name(arg=self.identifier)
+        arg = self.type.name_arg() + '_' + self.identifier
+        return super(FunctionDefinition, self).name(arg)
 
     @property
     def children(self):
         children = []
-        children.append(self.type)
         children.extend(self.arguments)
         if self.body:
             children.append(self.body)
@@ -600,17 +598,16 @@ class SymbolNode(BaseAstNode):
 
         if symbol:
             self.symbol = symbol
-            self.identifier = symbol.identifier
         else:
             raise ValueError('SymbolNode cannot have a \'None\' symbol.')
 
     def name(self, arg=None):
-        return super(SymbolNode, self).name(arg=self.identifier)
+        arg = self.symbol.decl_type.name_arg() + '_' + self.symbol.identifier
+        return super(SymbolNode, self).name(arg)
 
     @property
     def children(self):
         children = []
-        children.append(self.symbol.decl_type)
         return tuple(children)
 
     def to_3ac(self, include_source=False):
@@ -654,13 +651,15 @@ class TypeDeclaration(BaseAstNode):
         # None = sign not applicable
         self.type_sign = None
 
-    def name(self, **kwargs):
+    def name(self, arg=None):
+        return super(TypeDeclaration, self).name(arg=self.name_arg())
+
+    def name_arg(self):
         joined = [self.type_sign if self.type_sign else '',
                   '_'.join(self.storage_classes),
                   '_'.join(self.type_qualifiers),
                   '_'.join(self.type_specifiers)]
-        joined = [i for i in joined if i is not '']
-        return super(TypeDeclaration, self).name(arg='_'.join(joined))
+        return '_'.join([i for i in joined if i is not ''])
 
     def add_storage_class(self, storage_class_specifier):
         if storage_class_specifier in self.storage_classes:
