@@ -313,6 +313,10 @@ class Constant(BaseAstNode):
         self.type = type
         self.value = value
 
+    @property
+    def immutable(self):
+        return True
+
     def name(self):
         return super(Constant, self).name(arg=self.value)
 

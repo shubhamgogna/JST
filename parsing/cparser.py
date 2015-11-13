@@ -1714,8 +1714,6 @@ class Parser(object):
 
         t[0] = {'ast_node': UnaryOperator(operator=t[1], expression=t[2]['ast_node'])}
 
-        print('\n\n\n\nasdfasdfasdfasdf')
-        print(t[0]['ast_node'])
 
     def p_unary_expression_3(self, t):
         """
