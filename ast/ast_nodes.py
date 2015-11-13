@@ -384,11 +384,11 @@ class FileAST(BaseAstNode):
 
 
 class FunctionCall(BaseAstNode):
-    def __init__(self, function_symbol, arguments, **kwargs):
+    def __init__(self, function_symbol, arguments=None, **kwargs):
         super(FunctionCall, self).__init__(**kwargs)
 
         self.function_symbol = function_symbol
-        self.arguments = arguments
+        self.arguments = arguments if arguments else []
 
     def name(self, arg=None):
         return super(FunctionCall, self).name(arg=self.function_symbol.identifier)
@@ -396,8 +396,7 @@ class FunctionCall(BaseAstNode):
     @property
     def children(self):
         children = []
-        if self.arguments:
-            children.append(self.arguments)
+        children.extend(self.arguments)
         return tuple(children)
 
     def to_3ac(self, include_source=False):
@@ -405,12 +404,12 @@ class FunctionCall(BaseAstNode):
 
 
 class FunctionDeclaration(BaseAstNode):
-    def __init__(self, arguments, type, identifier, **kwargs):
+    def __init__(self, type_, identifier, arguments=None, **kwargs):
         super(FunctionDeclaration, self).__init__(**kwargs)
 
         self.identifier = identifier
-        self.arguments = arguments
-        self.type = type
+        self.arguments = arguments if arguments else []
+        self.type = type_
 
     def name(self, arg=None):
         return super(FunctionDeclaration, self).name(arg=self.identifier)
@@ -418,8 +417,8 @@ class FunctionDeclaration(BaseAstNode):
     @property
     def children(self):
         children = []
-        children.append(self.arguments)
         children.append(self.type)
+        children.extend(self.arguments)
         return tuple(children)
 
     def to_3ac(self, include_source=False):
@@ -427,13 +426,13 @@ class FunctionDeclaration(BaseAstNode):
 
 
 class FunctionDefinition(BaseAstNode):
-    def __init__(self, type_, identifier, param_declarations, body, **kwargs):
+    def __init__(self, type_, identifier, arguments, body, **kwargs):
         super(FunctionDefinition, self).__init__(**kwargs)
 
         self.type = type_
         self.identifier = identifier
         self.body = body
-        self.param_declarations = param_declarations if param_declarations else ParameterList([])
+        self.arguments = arguments if arguments else []
 
     def name(self, arg=None):
         return super(FunctionDefinition, self).name(arg=self.identifier)
@@ -442,7 +441,7 @@ class FunctionDefinition(BaseAstNode):
     def children(self):
         children = []
         children.append(self.type)
-        children.append(self.param_declarations)
+        children.extend(self.arguments)
         if self.body:
             children.append(self.body)
         return tuple(children)
@@ -534,22 +533,6 @@ class Label(BaseAstNode):
     def children(self):
         children = []
         children.append(self.body_statement)
-        return tuple(children)
-
-    def to_3ac(self, include_source=False):
-        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
-
-
-class ParameterList(BaseAstNode):
-    def __init__(self, parameters=None, **kwargs):
-        super(ParameterList, self).__init__(**kwargs)
-
-        self.parameters = parameters if parameters else []
-
-    @property
-    def children(self):
-        children = []
-        children.extend(self.parameters)
         return tuple(children)
 
     def to_3ac(self, include_source=False):
@@ -743,12 +726,28 @@ class UnaryOperator(BaseAstNode):
 
 
 class Constant(BaseAstNode):
+    CHAR = TypeDeclaration()
+    CHAR.type_sign = 'signed'
+    CHAR.add_type_specifier('char')
+
     INTEGER = TypeDeclaration()
     INTEGER.type_sign = 'signed'
     INTEGER.add_type_specifier('int')
 
+    LONG = TypeDeclaration()
+    LONG.type_sign = 'signed'
+    LONG.add_type_specifier('long')
+
+    LONG_LONG = TypeDeclaration()
+    LONG_LONG.type_sign = 'signed'
+    LONG_LONG.add_type_specifier('long')
+    LONG_LONG.add_type_specifier('long')
+
     FLOAT = TypeDeclaration()
     FLOAT.add_type_specifier('float')
+
+    DOUBLE = TypeDeclaration()
+    DOUBLE.add_type_specifier('double')
 
     def __init__(self, type_, value, **kwargs):
         super(Constant, self).__init__(**kwargs)

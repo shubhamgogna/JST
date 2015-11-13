@@ -179,8 +179,8 @@ class JSTParser(object):
             tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
             raise CompileError('Reimplementation of function not allowed.', tup[0], tup[1], tup[2])
 
-        ast_params = ParameterList([SymbolNode(symbol) for symbol in symbol.named_parameters])
-        t[0] = FunctionDefinition(symbol.decl_type, symbol.identifier, ast_params, t[3])
+        arguments = [SymbolNode(symbol) for symbol in symbol.named_parameters]
+        t[0] = FunctionDefinition(symbol.decl_type, symbol.identifier, arguments, t[3])
 
     def p_function_definition_2(self, t):
         """
@@ -202,8 +202,8 @@ class JSTParser(object):
             tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
             raise CompileError('Reimplementation of function not allowed.', tup[0], tup[1], tup[2])
 
-        ast_params = ParameterList([SymbolNode(symbol) for symbol in symbol.named_parameters])
-        t[0] = FunctionDefinition(symbol.decl_type, symbol.identifier, ast_params, t[4])
+        arguments = [SymbolNode(symbol) for symbol in symbol.named_parameters]
+        t[0] = FunctionDefinition(symbol.decl_type, symbol.identifier, arguments, t[4])
 
     def p_function_definition_3(self, t):
         """
@@ -274,8 +274,8 @@ class JSTParser(object):
                     tup = self.compiler_state.get_line_col_source(lineno, lexpos)
                     raise CompileError('Function is being redeclared.', tup[0], tup[1], tup[2])
 
-                decl_ast = FunctionDeclaration(ParameterList([SymbolNode(sym) for sym in symbol.named_parameters]),
-                                               symbol.decl_type, symbol.identifier)
+                decl_ast = FunctionDeclaration(symbol.decl_type, symbol.identifier,
+                                               [SymbolNode(sym) for sym in symbol.named_parameters])
 
             if decl_ast:
                 t[0].append(decl_ast)
@@ -809,7 +809,6 @@ class JSTParser(object):
             result = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
             raise CompileError('Function cannot be declared with array dimensions.', result[0], result[1], result[2])
 
-        # TODO The parameter should probably be the ParameterList AST node
         function_symbol = FunctionSymbol(t[1].identifier, t[1].lineno, t[1].column)
         function_symbol.set_named_parameters(t[3])
         t[0] = function_symbol
@@ -832,7 +831,6 @@ class JSTParser(object):
             result = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
             raise CompileError('Function cannot be declared with array dimensions.', result[0], result[1], result[2])
 
-        # TODO The parameter should probably be the ParameterList AST node
         function_symbol = FunctionSymbol(t[1].identifier, t[1].lineno, t[1].column)
         function_symbol.set_named_parameters([])
         t[0] = function_symbol
@@ -1674,7 +1672,7 @@ class JSTParser(object):
             matched, message = function_symbol.arguments_match_parameter_types(t[3])
 
             if matched:
-                t[0] = FunctionCall(function_symbol, ParameterList(t[3]))
+                t[0] = FunctionCall(function_symbol, t[3])
             else:
                 tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
                 raise CompileError(message, tup[0], tup[1], tup[2])
