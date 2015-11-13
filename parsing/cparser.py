@@ -785,7 +785,7 @@ class JSTParser(object):
             # 'result[1] - 1' is a fix to get the pointer to align correctly
             raise CompileError('Value required for array dimension.', result[0], result[1] - 1, result[2])
 
-        if t[3].type is not Constant.INTEGER:
+        if not Constant.is_integral_type(t[3]):
             result = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
             raise CompileError('Array dimension must be an integral type.', result[0], result[1], result[2])
 
@@ -1807,43 +1807,38 @@ class JSTParser(object):
     # constant:
     #
     def p_constant_int(self, t):
-        """constant : ICONST"""
+        """
+        constant : ICONST
+        """
         self.output_production(t, production_message='constant -> ICONST {}'.format(t[1]))
 
-        t[0] = Constant(Constant.INTEGER, t[1], uuid=UUID_TICKETS.get())
+        if t[1][1] is 'CHAR':
+            t[0] = Constant(Constant.CHAR, t[1][0], uuid=UUID_TICKETS.get())
 
-        # result = self.compiler_state.get_line_col(t, 1)
-        # t[0] = VariableSymbol('?', result[0], result[1])
-        # t[0].decl_type = TypeDeclaration()
-        # t[0].decl_type.add_type_specifier('int')
-        # t[0].decl_type.add_type_qualifier('const')
-        # t[0].value = t[1]
+        elif t[1][1] is 'INT':
+            t[0] = Constant(Constant.INTEGER, t[1][0], uuid=UUID_TICKETS.get())
+
+        elif t[1][1] is 'LONG':
+            t[0] = Constant(Constant.LONG, t[1][0], uuid=UUID_TICKETS.get())
+
+        elif t[1][1] is 'LONG_LONG':
+            t[0] = Constant(Constant.LONG_LONG, t[1][0], uuid=UUID_TICKETS.get())
 
     def p_constant_float(self, t):
-        """constant : FCONST"""
+        """
+        constant : FCONST
+        """
         self.output_production(t, production_message='constant -> FCONST {}'.format(t[1]))
 
         t[0] = Constant(Constant.FLOAT, float(t[1]))
 
-        # result = self.compiler_state.get_line_col(t, 1)
-        # t[0] = VariableSymbol('?', result[0], result[1])
-        # t[0].decl_type = TypeDeclaration()
-        # t[0].decl_type.add_type_specifier('float')
-        # t[0].decl_type.add_type_qualifier('const')
-        # t[0].value = t[1]
-
     def p_constant_char(self, t):
-        """constant : CCONST"""
+        """
+        constant : CCONST
+        """
         self.output_production(t, production_message='constant -> CCONST ({})'.format(t[1]))
 
-        t[0] = Constant(Constant.INTEGER, t[1])
-
-        # result = self.compiler_state.get_line_col(t, 1)
-        # t[0] = VariableSymbol('?', result[0], result[1])
-        # t[0].decl_type = TypeDeclaration()
-        # t[0].decl_type.add_type_specifier('char')
-        # t[0].decl_type.add_type_qualifier('const')
-        # t[0].value = t[1]
+        t[0] = Constant(Constant.CHAR, t[1])
 
     #
     # identifier:

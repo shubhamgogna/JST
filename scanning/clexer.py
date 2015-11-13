@@ -269,6 +269,16 @@ class JSTLexer(object):
 
         t.value = int(t.value)
         self.token_logger.token(str(t))
+
+        if 127 >= t.value >= -127:
+            t.value = (t.value, 'CHAR')
+        elif 32767 >= t.value >= -32767:
+            t.value = (t.value, 'INT')
+        elif 2147483647 >= t.value >= -2147483647:
+            t.value = (t.value, 'LONG')
+        elif 9223372036854775807 >= t.value >= -9223372036854775807:
+            t.value = (t.value, 'LONG_LONG')
+
         return t
 
     # Character constant 'c' or L'c'

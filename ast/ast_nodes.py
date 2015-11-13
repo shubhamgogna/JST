@@ -755,7 +755,14 @@ class Constant(BaseAstNode):
         self.value = value
 
     def name(self, **kwargs):
-        return super(Constant, self).name(arg=self.value)
+        return super(Constant, self).name(arg=str(self.value))
+
+    @staticmethod
+    def is_integral_type(source):
+        return source.type is Constant.CHAR or \
+            source.type is Constant.INTEGER or \
+            source.type is Constant.LONG or \
+            source.type is Constant.LONG_LONG
 
     @property
     def children(self):
