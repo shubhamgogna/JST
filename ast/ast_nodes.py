@@ -167,24 +167,25 @@ class ArrayDeclaration(BaseAstNode):
 # REVISIT ME - Might need to switch attrs to children depending on how we handle arrays
 ##
 class ArrayReference(BaseAstNode):
-    def __init__(self, array_symbol, subscript, **kwargs):
+    def __init__(self, symbol, subscripts=None, **kwargs):
         super(ArrayReference, self).__init__(**kwargs)
 
-        self.array_symbol = array_symbol
-        self.subscript = subscript
+        self.symbol = symbol
+        self.subscripts = subscripts if subscripts else []
+
+    def name(self, arg=None):
+        return super(ArrayReference, self).name(arg=self.symbol.identifier)
 
     @property
     def children(self):
         children = []
-        children.append(self.array_symbol)
-        children.append(self.subscript)
+        children.extend(self.subscripts)
         return tuple(children)
 
     def to_3ac(self, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
 
-# TODO (Shubham) Note to self: The return type of the assignment is the type of the left hand side.
 class Assignment(BaseAstNode):
     def __init__(self, operator, lvalue, rvalue, **kwargs):
         super(Assignment, self).__init__(**kwargs)
@@ -303,28 +304,6 @@ class CompoundStatement(BaseAstNode):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
 
-class Constant(BaseAstNode):
-    INTEGER = ('signed', 'int', '', '')
-    FLOAT = ('', 'float', '', '')
-
-    def __init__(self, type_, value, **kwargs):
-        super(Constant, self).__init__(**kwargs)
-
-        self.type = type_
-        self.value = value
-
-    def name(self, **kwargs):
-        return super(Constant, self).name(arg=self.value)
-
-    @property
-    def children(self):
-        children = []
-        return tuple(children)
-
-    def to_3ac(self, include_source=False):
-        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
-
-
 class Continue(BaseAstNode):
     def __init__(self, **kwargs):
         super(Continue, self).__init__(**kwargs)
@@ -409,7 +388,6 @@ class FunctionCall(BaseAstNode):
         super(FunctionCall, self).__init__(**kwargs)
 
         self.function_symbol = function_symbol
-        self.symbol_node = SymbolNode(self.function_symbol)
         self.arguments = arguments
 
     def name(self, arg=None):
@@ -418,7 +396,6 @@ class FunctionCall(BaseAstNode):
     @property
     def children(self):
         children = []
-        children.append(self.symbol_node)
         if self.arguments:
             children.append(self.arguments)
         return tuple(children)
@@ -722,6 +699,10 @@ class TypeDeclaration(BaseAstNode):
     def get_type_str(self):
         return (self.type_sign + ' ' if self.type_sign else '') + ' '.join(self.type_specifiers)
 
+    @property
+    def is_const(self):
+        return 'const' in self.type_qualifiers
+
     def __str__(self):
         storage_class_str = ' '.join(self.storage_classes) + ' ' if self.storage_classes else ''
         qualifier_str = ' '.join(self.type_qualifiers) + ' ' if self.type_qualifiers else ''
@@ -755,6 +736,32 @@ class UnaryOperator(BaseAstNode):
     def children(self):
         children = []
         children.append(self.expression)
+        return tuple(children)
+
+    def to_3ac(self, include_source=False):
+        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+
+
+class Constant(BaseAstNode):
+    INTEGER = TypeDeclaration()
+    INTEGER.type_sign = 'signed'
+    INTEGER.add_type_specifier('int')
+
+    FLOAT = TypeDeclaration()
+    FLOAT.add_type_specifier('float')
+
+    def __init__(self, type_, value, **kwargs):
+        super(Constant, self).__init__(**kwargs)
+
+        self.type = type_
+        self.value = value
+
+    def name(self, **kwargs):
+        return super(Constant, self).name(arg=self.value)
+
+    @property
+    def children(self):
+        children = []
         return tuple(children)
 
     def to_3ac(self, include_source=False):

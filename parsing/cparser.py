@@ -274,7 +274,7 @@ class JSTParser(object):
                     tup = self.compiler_state.get_line_col_source(lineno, lexpos)
                     raise CompileError('Function is being redeclared.', tup[0], tup[1], tup[2])
 
-                decl_ast = FunctionDeclaration(ParameterList(symbol.named_parameters),
+                decl_ast = FunctionDeclaration(ParameterList([SymbolNode(sym) for sym in symbol.named_parameters]),
                                                symbol.decl_type, symbol.identifier)
 
             if decl_ast:
@@ -1404,14 +1404,21 @@ class JSTParser(object):
         self.output_production(t, production_message=
             'assignment_expression -> unary_expression assignment_operator assignment_expression')
 
-        if isinstance(t[1], SymbolNode):
-            if isinstance(t[3], SymbolNode):
-                error_token, message = AssignmentUtil.can_assign(t[1].symbol, t[3].symbol)
-            else:
-                error_token, message = AssignmentUtil.can_assign(t[1].symbol, t[3])
-        else:
-            error_token, message = AssignmentUtil.can_assign(t[1], t[3])
+        if isinstance(t[1], SymbolNode) and isinstance(t[1].symbol, FunctionSymbol):
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError('The assignment operator cannot be applied to functions.', tup[0], tup[1], tup[2])
 
+        if isinstance(t[1], ArrayReference) and len(t[1].symbol.array_dims) != len(t[1].subscripts):
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError('Symbol has {} dimensions, but only {} were provided.'.
+                               format(len(t[1].symbol.array_dims), len(t[1].subscripts)), tup[0], tup[1], tup[2])
+
+        if isinstance(t[3], ArrayReference) and len(t[3].symbol.array_dims) != len(t[3].subscripts):
+            tup = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
+            raise CompileError('Symbol has {} dimensions, but only {} were provided.'.
+                               format(len(t[3].symbol.array_dims), len(t[3].subscripts)), tup[0], tup[1], tup[2])
+
+        error_token, message = AssignmentUtil.can_assign(t[1], t[3])
         if error_token is None:
             t[0] = Assignment(t[2], t[1], t[3])
         else:
@@ -1467,6 +1474,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message=
             'conditional_expression -> binary_expression CONDOP expression COLON conditional_expression')
+        raise NotImplemented('Ternary operator')
 
     def p_binary_expression_to_implementation(self, t):
         """
@@ -1522,6 +1530,7 @@ class JSTParser(object):
         cast_expression : LPAREN type_name RPAREN cast_expression
         """
         self.output_production(t, production_message='cast_expression -> LPAREN type_name RPAREN cast_expression')
+        raise NotImplemented('Type casting')
 
     #
     # unary_expression:
@@ -1626,8 +1635,33 @@ class JSTParser(object):
         self.output_production(t, production_message='postfix_expression -> postfix_expression LBRACKET expression RBRACKET')
 
         # For array stuff:
-        # TODO Verify that a symbol node is being passed up?
-        t[0] = ArrayReference(t[1], t[3])
+        # TODO Expression t[3] can be multiple values. GCC takes the value of the last expression.
+        # TODO t[3] is an integral type
+
+        tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+        if isinstance(t[1], SymbolNode):
+
+            if isinstance(t[1].symbol, FunctionSymbol):
+                raise CompileError('Functions cannot be accessed like arrays.', tup[0], tup[1], tup[2])
+
+            if isinstance(t[1].symbol, VariableSymbol):
+
+                if len(t[1].symbol.array_dims) > 0:
+                    t[0] = ArrayReference(t[1].symbol, [t[3]])
+                else:
+                    raise CompileError('Symbol is not an array.', tup[0], tup[1], tup[2])
+
+        elif isinstance(t[1], ArrayReference):
+
+            if len(t[1].subscripts) < len(t[1].symbol.array_dims):
+                t[1].subscripts.append(t[3])
+                t[0] = t[1]
+            else:
+                raise CompileError('Symbol only has {} dimensions.'.format(len(t[1].symbol.array_dims)),
+                                   tup[0], tup[1], tup[2])
+
+        else:
+            raise CompileError('Unknown postfix expression {}'.format(type(t[1])), tup[0], tup[1], tup[2])
 
     def p_postfix_expression_to_parameterized_function_call(self, t):
         """

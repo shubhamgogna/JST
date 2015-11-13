@@ -117,7 +117,11 @@ class FunctionSymbol(Symbol):
 
         for parameter, argument in itertools.zip_longest(self.named_parameters, argument_list):
 
-            error_side, message = utils.assignment_util.AssignmentUtil.can_assign(parameter, argument)
+            if isinstance(argument, SymbolNode):
+                error_side, message = utils.assignment_util.AssignmentUtil.can_assign(parameter, argument.symbol)
+            else:
+                error_side, message = utils.assignment_util.AssignmentUtil.can_assign(parameter, argument)
+
             if error_side is not None:
                 raise Exception(message)
 
