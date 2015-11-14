@@ -18,84 +18,54 @@
 # operations for parsing the ANSI C grammar.
 ###############################################################################
 
-import ast
+import compiler
+from exceptions.compile_error import CompileError
+from symbol_table.scope import Scope
+from symbol_table.symbol import Symbol, VariableSymbol, FunctionSymbol
+from utils.compile_time_utils import TypeCheck
+from utils.assignment_util import AssignmentUtil
+from scanning.clexer import JSTLexer
 from ast.ast_nodes import *
 
 
-from exceptions.compile_error import CompileError
-
-import ply.yacc as yacc
-from symbol_table.symbol import Symbol, FunctionSymbol, VariableSymbol
-
-
-## Parser Class
+# Parser Class
 #
 # This class is responsible for working in tandem with the Lexer to parse the given C program input and then
 # constructing the Abstract Syntax Tree that corresponds to the program. Compile time checking is done by this class.
 #
-from ticket_counting.ticket_counters import UUID_TICKETS
-from utils.compile_time_utils import TypeCheck
-from utils.primitive_types import Type
+from utils.type_decl_util import TypeDeclarationUtil
 
 
-class Parser(object):
-    ## The constructor for a new Parser object.
+class JSTParser(object):
+
+    # IMPORTANT: Tokens must be imported from the JSTLexer so PLY can build the table
+    tokens = JSTLexer.tokens
+
+    # The constructor for a new Parser object.
     #
     # @param self The object pointer.
     # @param compiler_state The object shared between the Parser and Lexer for maintaining the state of the compiler.
-    # @param lexer The lexer the parser will use to tokenize the input program. Defaults to None. If the value is
-    #              None, the Parser will create its own Lexer.
-    # @param print_productions A boolean flag indicating if the productions should be written as they are encountered.
-    #                          Defaults to False.
-    # @param print_source A boolean flag indicating if the source code for each production should be written as they
-    #                     are encountered. Defaults to False.
-    # @param print_info A boolean flag indicating if any logging tagged as INFO should be written. Defaults to False.
-    # @param prod_file_name The name of the file any output should be written to. Defaults to sys.stdout.
-    # @param kwargs  Any keywork arguments for the PLY.yacc object.
     #
-    # Outputs:
-    #   A constructed instance of a Parser
+    # Outputs: A constructed instance of a JSTParser.
     #
-    # Purpose:
-    #   The constructor initializes the object to be ready to do its job with the desired outputs labeled.
-    #
-    def __init__(self, compiler_state, lexer, **kwargs):
-        if lexer is None:
-            raise ValueError('No Lexer passed to Parser')
+    # Purpose: The constructor initializes the object to be ready to do its job with the desired outputs labeled.
+    def __init__(self, compiler_state):
+        if compiler_state is None or not isinstance(compiler_state, compiler.compiler_state.CompilerState):
+            raise ValueError('The passed compiler_state is not valid.')
 
         self.compiler_state = compiler_state
-        self.lexer = lexer
-        self.tokens = lexer.tokens
-        self.parser = yacc.yacc(module=self, start='program')
         self.prod_logger = self.compiler_state.get_parser_logger()
 
-    ## A method to do any cleanup that can't be handled by typical garbage collection.
+    # A method to do any cleanup that can't be handled by typical garbage collection.
     #
     # @param self The object pointer.
     #
-    # Output:
-    #   None
+    # Output: None
     #
     # Called by method responsible for completing the use of the parser cleanly.
     # TODO: implement __exit__ method?
-    #
     def teardown(self):
         self.prod_logger.finalize()
-
-    ## Completes the action of parsing the given program and producing an AST.
-    #
-    # @param self The object pointer.
-    # @param data The raw string that constitutes the given program.
-    #
-    # Output:
-    #   An AST.
-    #
-    # Called by a program that supplies a program to parse.
-    #
-    def parse(self, data):
-        self.compiler_state.source_code = data.split('\n')
-
-        return self.parser.parse(input=data, lexer=self.lexer, tracking=True)
 
     ## Operator precedences used by ply.yacc to correctly order productions that may be otherwise ambiguous.
     #
@@ -132,20 +102,14 @@ class Parser(object):
     # p_error
     #
     def p_error(self, t):
-        print('--- ERROR ---')
-        print('Last token: {}'.format(self.lexer.last_token))
-        print('Last production attempted: {}'.format(t))
-        print('Compilatiion unable to continue.')
-
-        self.prod_logger.implement_me("p_error")
-        # raise NotImplemented("p_error")
-
+        result = self.compiler_state.get_line_col_source(t.lineno, t.lexpos)
+        raise CompileError('Parse failure.', result[0], result[1], result[2])
 
     def p_program(self, t):
         """
-        program : translation_unit_opt leave_scope
+        program : enter_scope translation_unit_opt leave_scope
         """
-        t[0] = t[1]
+        t[0] = t[2]
 
     #
     # translation-unit:
@@ -164,17 +128,16 @@ class Parser(object):
         translation_unit : external_declaration
         """
         self.output_production(t, production_message='translation_unit -> external_declaration')
-        t[0] = [t[1]['ast_node']]
+
+        t[0] = t[1]
 
     def p_translation_unit_2(self, t):
         """
         translation_unit : translation_unit external_declaration
         """
-        self.output_production(t, production_message='translation_unit_2 -> translation_unit external_declaration')
+        self.output_production(t, production_message='translation_unit -> translation_unit external_declaration')
 
-        if t[2] is not None:
-            t[1].append(t[2]['ast_node'])
-
+        t[1].extend(t[2])
         t[0] = t[1]
 
     #
@@ -186,7 +149,7 @@ class Parser(object):
         """
         self.output_production(t, production_message='external_declaration -> function_definition')
 
-        t[0] = t[1]
+        t[0] = [t[1]]
 
     def p_external_declaration_2(self, t):
         """
@@ -194,80 +157,72 @@ class Parser(object):
         """
         self.output_production(t, production_message='external_declaration -> declaration')
 
-        t[0] = {'ast_node': DeclarationList(t[1]['ast_node'])}
+        t[0] = []
+        t[0].extend(t[1])
 
     #
     # function-definition
     #
     def p_function_definition_1(self, t):
         """
-        function_definition : declaration_specifiers declarator enter_function_scope declaration_list compound_statement
+        function_definition : declarator enter_function_scope compound_statement leave_scope
+        """
+        self.output_production(t, production_message='function_definition -> declarator compound_statement')
+
+        symbol = t[1]
+        symbol.decl_type = TypeDeclaration()
+        symbol.decl_type.add_type_specifier('int')
+        symbol.finalized = True
+
+        result, existing = self.compiler_state.symbol_table.insert(symbol)
+        if result is Scope.INSERT_REDECL and existing[0].finalized:
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError('Reimplementation of function not allowed.', tup[0], tup[1], tup[2])
+
+        arguments = [SymbolNode(symbol) for symbol in symbol.named_parameters]
+        t[0] = FunctionDefinition(symbol.decl_type, symbol.identifier, arguments, t[3])
+
+    def p_function_definition_2(self, t):
+        """
+        function_definition : declaration_specifiers declarator enter_function_scope compound_statement leave_scope
+        """
+        self.output_production(t, production_message='function_definition -> declaration_specifiers declarator compound_statement')
+
+        is_type_valid, message = TypeDeclarationUtil.is_valid(t[1])
+        if not is_type_valid:
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError(message, tup[0], tup[1], tup[2])
+
+        symbol = t[2]
+        symbol.decl_type = t[1]
+        symbol.finalized = True
+
+        result, existing = self.compiler_state.symbol_table.insert(symbol)
+        if result is Scope.INSERT_REDECL and existing[0].finalized:
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError('Reimplementation of function not allowed.', tup[0], tup[1], tup[2])
+
+        arguments = [SymbolNode(symbol) for symbol in symbol.named_parameters]
+        t[0] = FunctionDefinition(symbol.decl_type, symbol.identifier, arguments, t[4])
+
+    def p_function_definition_3(self, t):
+        """
+        function_definition : declaration_specifiers declarator enter_function_scope declaration_list compound_statement leave_scope
         """
         self.output_production(t, production_message=
             'function_definition -> declaration_specifiers declarator declaration_list compound_statement')
 
-        function_symbol = t[2].get('symbol', None)
-        if function_symbol:
-            function_symbol.type = t[1]
-        else:
-            raise Exception('Debug check: Expected a function_symbol...')
-
-        declaration = FunctionDeclaration(arguments=function_symbol.named_parameters, type=None, identifier=function_symbol.identifier)
-        node = FunctionDefinition(declarations=declaration,
-                                  param_declarations=function_symbol.named_parameters,
-                                  body=t[5].get('ast_node', EmptyStatement()))
-
-        t[0] = {'ast_node': node}
-
-    def p_function_definition_2(self, t):
-        """function_definition : declarator enter_function_scope declaration_list compound_statement"""
-        self.output_production(t, production_message='function_definition -> declarator declaration_list compound_statement')
-
-        declarator = t[1]
-        td = TypeDeclaration()
-        td.add_type_specifier(Type.INT)
-        declarator.type = td
-
-        declaration = FunctionDeclaration(declarator.named_parameters, type=declarator.type, uuid=UUID_TICKETS.get())
-        node = FunctionDefinition(declarations=declaration, param_declarations=declarator.named_parameters, body=t[3].get('ast_node', EmptyStatement))
-
-        t[0] = {'ast_node': node}
-
-    def p_function_definition_3(self, t):
-        """
-        function_definition : declarator enter_function_scope compound_statement
-        """
-        self.output_production(t, production_message='function_definition -> declarator declaration_list compound_statement')
-
-        declarator = t[1]
-        node = FunctionDefinition(declarations=declarator, param_declarations=declarator.named_parameters, body=t[3]['ast_node'])
-        t[0] = {'ast_node': node}
+        raise Exception('We may want to enforce that these types of functions be invalid. '
+                        'int foo(a, b) int a, b; { ... }')
 
     def p_function_definition_4(self, t):
         """
-        function_definition : declaration_specifiers declarator enter_function_scope compound_statement
+        function_definition : declarator enter_function_scope declaration_list compound_statement leave_scope
         """
-        self.output_production(t, production_message='function_definition -> declaration_specifiers declarator compound_statement')
+        self.output_production(t, production_message='function_definition -> declarator declaration_list compound_statement')
 
-        function_symbol = t[2].get('symbol', None)
-        if function_symbol:
-            function_symbol.type = t[1]
-        else:
-            raise Exception('Debug check: Expected a function_symbol...')
-
-        ast_node_args = {"lines": (t.lineno(1), t.linespan(4)[1])}
-
-        # print('\n\n\n\n')
-        print(t[4], type(t[4]))
-
-        ast_params = ParameterList([SymbolNode(symbol) for symbol in function_symbol.named_parameters])
-        declaration = FunctionDeclaration(ast_params, type=function_symbol.type, identifier=function_symbol.identifier)
-        node = FunctionDefinition(declarations=declaration,
-                                               param_declarations=ast_params,
-                                               body=t[4].get('ast_node', EmptyStatement()))
-
-        t[0] = {'ast_node': node}
-
+        raise Exception('We may want to enforce that these types of functions be invalid. '
+                        'int foo(a, b) int a, b; { ... }')
 
     #
     # declaration:
@@ -278,41 +233,57 @@ class Parser(object):
         """
         self.output_production(t, production_message='declaration -> declaration_specifiers init_declarator_list SEMI')
 
-        init_declarator_list = t[2]
-        declaration_specifiers = t[1]
-
-        print(type(init_declarator_list))
-        print(init_declarator_list)
+        is_type_valid, message = TypeDeclarationUtil.is_valid(t[1])
+        if not is_type_valid:
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError(message, tup[0], tup[1], tup[2])
 
         t[0] = []
-        for init_declarator in init_declarator_list:
-            symbol = None
-            declarator = init_declarator['declarator']
-            if isinstance(declarator, str):
-                symbol, _ = self.compiler_state.symbol_table.find(init_declarator['declarator'])
-                if not symbol:
-                    symbol = Symbol(identifier=init_declarator['declarator'])
-                    self.compiler_state.symbol_table.insert(symbol)
-            elif isinstance(declarator, dict) and declarator.get('symbol', None):
-                symbol = declarator['symbol']
-            else:
-                symbol = declarator
+        for init_declarator_tuple in t[2]:
+            init_declarator, lineno, lexpos = init_declarator_tuple
+            symbol = init_declarator['declarator']
+            initializer = init_declarator['initializer']
+            decl_ast = None
 
-            symbol.type = declaration_specifiers
+            if isinstance(symbol, VariableSymbol):
+                symbol.decl_type = t[1]
+                result, _ = self.compiler_state.symbol_table.insert(symbol)
 
-            if len(symbol.array_dims) == 0:
-                # Type information is stored in symbol.type
-                # Bitsize has to be calculated from type, so see note directly above
-                init_ast = init_declarator['initializer']['ast_node'] if init_declarator['initializer'] else None
-                t[0].append(Declaration(ID(symbol.identifier), None, None, None, symbol.type, init_ast, TypeCheck.get_bit_size(symbol.type)))
-            else:
-                t[0].append(ArrayDeclaration(ID(symbol.identifier), symbol.array_dims, None, symbol.type))
+                if result is Scope.INSERT_REDECL:
+                    tup = self.compiler_state.get_line_col_source(lineno, lexpos)
+                    raise CompileError('Variable is being redeclared.', tup[0], tup[1], tup[2])
+                elif result is Scope.INSERT_SHADOWED:
+                    tup = self.compiler_state.get_line_col_source(lineno, lexpos)
+                    warning = str(CompileError('Variable is being shadowed.', tup[0], tup[1], tup[2]))
+                    print(warning, 'Still need a way to output warnings.')
 
-        t[0] = {'ast_node': t[0]}
+                if len(symbol.array_dims) == 0:
+                    decl_ast = Declaration(symbol.identifier, None, None, None, symbol.decl_type,
+                                           initializer, TypeCheck.get_bit_size(symbol.decl_type))
+                else:
+                    decl_ast = ArrayDeclaration(symbol.identifier, symbol.array_dims, None, symbol.decl_type)
+
+            elif isinstance(symbol, FunctionSymbol):
+                if initializer:
+                    tup = self.compiler_state.get_line_col_source(lineno, lexpos)
+                    raise CompileError('Functions cannot have initializers.', tup[0], tup[1], tup[2])
+
+                symbol.decl_type = t[1]
+                result, _ = self.compiler_state.symbol_table.insert(symbol)
+                if result is Scope.INSERT_REDECL:
+                    tup = self.compiler_state.get_line_col_source(lineno, lexpos)
+                    raise CompileError('Function is being redeclared.', tup[0], tup[1], tup[2])
+
+                decl_ast = FunctionDeclaration(symbol.decl_type, symbol.identifier,
+                                               [SymbolNode(sym) for sym in symbol.named_parameters])
+
+            if decl_ast:
+                t[0].append(decl_ast)
 
     def p_declaration_2(self, t):
         """declaration : declaration_specifiers SEMI"""
         self.output_production(t, production_message='declaration -> declaration_specifiers SEMI')
+        raise Exception('Unknown usage')
 
     #
     # declaration-list:
@@ -321,7 +292,8 @@ class Parser(object):
         """declaration_list : declaration"""
         self.output_production(t, production_message='declaration_list -> declaration')
 
-        t[0] = {'ast_node': DeclarationList(t[1]['ast_node'])}
+        t[0] = []
+        t[0].extend(t[1])
 
     def p_declaration_list_2(self, t):
         """
@@ -329,7 +301,7 @@ class Parser(object):
         """
         self.output_production(t, production_message='declaration_list -> declaration_list declaration')
 
-        t[1]['ast_node'].declaration_list.extend(t[2]['ast_node'])
+        t[1].extend(t[2])
         t[0] = t[1]
 
     #
@@ -341,8 +313,12 @@ class Parser(object):
         """
         self.output_production(t, production_message='declaration_specifiers -> storage_class_specifier declaration_specifiers')
 
-        t[2].add_storage_class(t[1])
-        t[0] = t[2]
+        try:
+            t[2].add_storage_class(t[1])
+            t[0] = t[2]
+        except Exception as ex:
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError(str(ex), tup[0], tup[1], tup[2])
 
     def p_declaration_specifiers_2(self, t):
         """
@@ -350,8 +326,12 @@ class Parser(object):
         """
         self.output_production(t, production_message='declaration_specifiers -> type_specifier declaration_specifiers')
 
-        t[2].add_type_specifier(t[1])
-        t[0] = t[2]
+        try:
+            t[2].add_type_specifier(t[1])
+            t[0] = t[2]
+        except Exception as ex:
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError(str(ex), tup[0], tup[1], tup[2])
 
     def p_declaration_specifiers_3(self, t):
         """
@@ -359,8 +339,12 @@ class Parser(object):
         """
         self.output_production(t, production_message='declaration_specifiers -> type_qualifier declaration_specifiers')
 
-        t[2].add_qualifier(t[1])
-        t[0] = t[2]
+        try:
+            t[2].add_type_qualifier(t[1])
+            t[0] = t[2]
+        except Exception as ex:
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError(str(ex), tup[0], tup[1], tup[2])
 
     def p_declaration_specifiers_4(self, t):
         """
@@ -387,7 +371,7 @@ class Parser(object):
         self.output_production(t, production_message='declaration_specifiers -> type_qualifier')
 
         t[0] = TypeDeclaration()
-        t[0].add_qualifier(t[1])
+        t[0].add_type_qualifier(t[1])
 
     #
     # storage-class-specifier
@@ -606,7 +590,8 @@ class Parser(object):
         """
         self.output_production(t, production_message='init_declarator_list -> init_declarator')
 
-        t[0] = [t[1]]
+        # Create a list with a tuple of (string identifier, lineno, and lexpos)
+        t[0] = [(t[1], t.lineno(1), t.lexpos(1))]
 
     def p_init_declarator_list_2(self, t):
         """
@@ -615,7 +600,7 @@ class Parser(object):
         self.output_production(t, production_message='init_declarator_list -> init_declarator_list COMMA init_declarator')
 
         # Concat the new init_declarator to the existing list
-        t[0] = t[1] + [t[3]]
+        t[0] = t[1] + [(t[3], t.lineno(3), t.lexpos(3))]
 
     #
     # init-declarator
@@ -629,7 +614,9 @@ class Parser(object):
         t[0] = {"declarator": t[1], "initializer": None}
 
     def p_init_declarator_2(self, t):
-        """init_declarator : declarator EQUALS initializer"""
+        """
+        init_declarator : declarator EQUALS initializer
+        """
         self.output_production(t, production_message='init_declarator -> declarator EQUALS initializer')
 
         t[0] = {"declarator": t[1], "initializer": t[3]}
@@ -751,12 +738,11 @@ class Parser(object):
         """
         self.output_production(t, production_message='declarator -> pointer direct_declarator')
 
-        # the direct_declarator might come up as a string/identifier in the case of function parameters
-        declarator = Symbol(identifier=t[2]) if isinstance(t[2], str) else t[2]
-        declarator.add_pointer_level(t[1])
-        self.compiler_state.symbol_table.insert(declarator)
-
-        t[0] = declarator
+        if isinstance(t[2], VariableSymbol):
+            t[2].add_pointer_level(t[1])
+            t[0] = t[2]
+        else:
+            raise Exception('Not currently supported')
 
     def p_declarator_2(self, t):
         """
@@ -775,26 +761,15 @@ class Parser(object):
         """
         self.output_production(t, production_message='direct_declarator -> identifier')
 
-
-        # print(type(t[1]))
-        # print(t[1])
-        # variable_symbol, _ =  self.compiler_state.symbol_table.find(t[1])
-        # if variable_symbol:  # variable already declared
-        #     raise CompileError('Error: redeclaration of {}'.format(t[1]), t.lineno(1), 0, self.compiler_state.source_code[t.lineno(1)])
-        # else:
-        #     variable_symbol = VariableSymbol(identifier=t[1], lineno=t.lineno(1))
-        #     insert_status, shadow_list = self.compiler_state.symbol_table.insert(variable_symbol)
-        # #     # TODO: do the checking better for the success and the shadowing, etc.
-
-        t[0] = t[1]
+        result = self.compiler_state.get_line_col(t, 1)
+        t[0] = VariableSymbol(t[1], result[0], result[1])
 
     def p_direct_declarator_2(self, t):
         """
         direct_declarator : LPAREN declarator RPAREN
         """
         self.output_production(t, production_message='direct_declarator -> LPAREN declarator RPAREN')
-
-        t[0] = t[2]
+        raise NotImplemented(str(t[2]))
 
     def p_direct_declarator_3(self, t):
         """
@@ -803,45 +778,25 @@ class Parser(object):
         self.output_production(t, production_message=
             'direct_declarator -> direct_declarator LBRACKET constant_expression_option RBRACKET')
 
-        symbol = None
-        if isinstance(t[1], str):
-            symbol, _ = self.compiler_state.symbol_table.find(t[1])
+        # TODO To support string initialization, this check needs to be moved to the declaration
+        # TODO production where it can check dimensions of the initializer and compare/set
+        if t[3] is None:
+            result = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
+            # 'result[1] - 1' is a fix to get the pointer to align correctly
+            raise CompileError('Value required for array dimension.', result[0], result[1] - 1, result[2])
 
-            if not symbol:
-                symbol = VariableSymbol(identifier=t[1], lineno=t.lineno(1))
-                self.compiler_state.symbol_table.insert(symbol)
+        if not Constant.is_integral_type(t[3]):
+            result = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
+            raise CompileError('Array dimension must be an integral type.', result[0], result[1], result[2])
 
+        if isinstance(t[1], VariableSymbol):
+            t[1].add_array_dimension(t[3].value)
+            t[0] = t[1]
+        elif isinstance(t[1], FunctionSymbol):
+            result = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
+            raise CompileError('Functions cannot have array dimensions.', result[0], result[1], result[2])
         else:
-            symbol, _ = self.compiler_state.symbol_table.find(t[1])
-
-            if not symbol:
-                raise Exception('Debug: One would think that there would be a symbol table entry for {}'.format(t[1]))
-
-        # Use the commented out code once we are officially ready to do compile-time constant expression evaluation
-        if t[3].get('constant', None):
-             if t[3]['constant'].type == Constant.INTEGER:
-                 symbol.add_array_dimension(t[3]['constant'].value)
-             else:
-                 raise Exception(
-                     'Only integral types may be used to specify array dimensions ({} given)'.format(t[3].type))
-            # if issubclass(type(t[3]), ConstantValue) and t[3].type == 'int' or type(t[3]) is int:
-            #     dimension = t[3].value if type(t[3]) is ConstantValue else t[3]
-            #     symbol.add_array_dimension(dimension)  # TODO validate?
-            # elif t[3]['constant'] is None:
-            #     symbol.add_array_dimension(Symbol.EMPTY_ARRAY_DIM)
-            # else:
-            #     raise Exception(
-            #         'Only integral types may be used to specify array dimensions ({} given)'.format(t[3].type))
-
-
-            # debugging stuff for array ast stuff.......
-            # print('\n\n\n')
-            # print(type(t[3]['ast_node'].value))
-
-        # else:
-        #     symbol.add_array_dimension(Symbol.EMPTY_ARRAY_DIM)
-
-        t[0] = t[1]
+            raise Exception('Unknown type ' + str(type(t[1])))
 
     def p_direct_declarator_4(self, t):
         """
@@ -850,34 +805,13 @@ class Parser(object):
         self.output_production(t, production_message=
             'direct_declarator -> direct_declarator LPAREN parameter_type_list RPAREN')
 
-        lineno = t.lineno(1)
+        if len(t[1].array_dims):
+            result = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError('Function cannot be declared with array dimensions.', result[0], result[1], result[2])
 
-        print(t[3])
-
-        function_symbol, _ = self.compiler_state.symbol_table.find(t[1])
-        if function_symbol:  # a prototype has been given
-            if function_symbol.finalized:
-                error_message = 'Redeclaration of function {} is not allowed.'.format(t[1])
-                raise CompileError(message=error_message, line_num=lineno, token_col=0,
-                                           source_line=self.compiler_state.source_code[lineno])
-
-            if function_symbol.parameter_types_match(t[3]):  # the prototype was given, and now the definition
-                function_symbol.add_named_parameters(t[3])
-                function_symbol.finalized = True
-            else:
-                error_message = \
-                    'Function definition does not match signature for function "{}"'.format(function_symbol.identifier)
-                raise CompileError(message=error_message, line_num=lineno, token_col=0,
-                                       source_line=self.compiler_state.source_code[lineno])
-        else:  #
-            function_symbol = FunctionSymbol(identifier=t[1], lineno=lineno)
-            function_symbol.set_signature(parameters=t[3])
-            function_symbol.add_named_parameters(t[3])
-            result, _ = self.compiler_state.symbol_table.insert(function_symbol)
-
-        t[0] = {"ast_node": None, "symbol": function_symbol}
-
-
+        function_symbol = FunctionSymbol(t[1].identifier, t[1].lineno, t[1].column)
+        function_symbol.set_named_parameters(t[3])
+        t[0] = function_symbol
 
     def p_direct_declarator_5(self, t):
         """
@@ -885,6 +819,7 @@ class Parser(object):
         """
         self.output_production(t, production_message=
             'direct_declarator -> direct_declarator LPAREN identifier_list RPAREN')
+        raise NotImplemented('Looks like the production for a function call.')
 
     def p_direct_declarator_6(self, t):
         """
@@ -892,34 +827,13 @@ class Parser(object):
         """
         self.output_production(t, production_message='direct_declarator -> direct_declarator LPAREN RPAREN')
 
+        if len(t[1].array_dims):
+            result = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError('Function cannot be declared with array dimensions.', result[0], result[1], result[2])
 
-        # TODO: merge this code into a function with the code for the production for functions with parameters
-        lineno = t.lineno(1)
-
-        function_symbol, _ = self.compiler_state.symbol_table.find(t[1])
-        if function_symbol:  # a prototype has been given
-            if function_symbol.finalized:
-                error_message = 'Redeclaration of function {} is not allowed.'.format(t[1])
-                raise CompileError(message=error_message, line_num=lineno, token_col=0,
-                                           source_line=self.compiler_state.source_code[lineno])
-
-            # TODO Should probably check params to make sure it's not being re-declared
-            function_symbol.finalized = True
-
-            # if function_symbol.parameter_types_match(t[3]):  # the prototype was given, and now the definition
-            #     function_symbol.add_named_parameters(t[3])
-            #     function_symbol.finalized = True
-            # else:
-            #     error_message = 'Function definition does not match signature.'
-            #     raise CompileError(message=error_message, line_num=lineno, token_col=0,
-            #                            source_line=self.compiler_state.source_code[lineno])
-        else:
-            function_symbol = FunctionSymbol(identifier=t[1], lineno=lineno)
-            function_symbol.set_signature(parameters=[])
-            function_symbol.add_named_parameters([])
-            result, _ = self.compiler_state.symbol_table.insert(function_symbol)
-
-        t[0] = {"ast_node": None, "symbol": function_symbol}
+        function_symbol = FunctionSymbol(t[1].identifier, t[1].lineno, t[1].column)
+        function_symbol.set_named_parameters([])
+        t[0] = function_symbol
 
     #
     # pointer:
@@ -967,10 +881,12 @@ class Parser(object):
     def p_type_qualifier_list_1(self, t):
         """type_qualifier_list : type_qualifier"""
         self.output_production(t, production_message='type_qualifier_list -> type_qualifier')
+        raise NotImplemented()
 
     def p_type_qualifier_list_2(self, t):
         """type_qualifier_list : type_qualifier_list type_qualifier"""
         self.output_production(t, production_message='type_qualifier_list -> type_qualifier_list type_qualifier')
+        raise NotImplemented()
 
     #
     # parameter-type-list:
@@ -984,8 +900,7 @@ class Parser(object):
     def p_parameter_type_list_2(self, t):
         """parameter_type_list : parameter_list COMMA ELLIPSIS"""
         self.output_production(t, production_message='parameter_type_list -> parameter_list COMMA ELLIPSIS')
-
-        t[0] = t[1] + ['...']
+        raise Exception('Ellipsis is not supported')
 
     #
     # parameter-list:
@@ -994,8 +909,7 @@ class Parser(object):
         """parameter_list : parameter_declaration"""
         self.output_production(t, production_message='parameter_list -> parameter_declaration')
 
-        # listify the parameter declaration so that it can easily join with the parameter list
-        t[0] = [t[1]] if t[1] else []
+        t[0] = [t[1]]
 
     def p_parameter_list_2(self, t):
         """parameter_list : parameter_list COMMA parameter_declaration"""
@@ -1010,39 +924,51 @@ class Parser(object):
         """parameter_declaration : declaration_specifiers declarator"""
         self.output_production(t, production_message='parameter_declaration -> declaration_specifiers declarator')
 
-        parameter_declaration = None
+        is_type_valid, message = TypeDeclarationUtil.is_valid(t[1])
+        if not is_type_valid:
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError(message, tup[0], tup[1], tup[2])
 
-        if isinstance(t[2], Symbol):
-            parameter_declaration = t[2]
-        elif isinstance(t[2], str):
-            parameter_declaration = Symbol(identifier=t[2])
+        if isinstance(t[2], VariableSymbol):
+            t[2].decl_type = t[1]
+            t[0] = t[2]
         else:
-            raise Exception("Debug: expected Symbol or str")
-
-        parameter_declaration.type = t[1]
-
-        t[0] = parameter_declaration
+            tup = self.compiler_state.get_line_col_source(t.lineno(2), t.lexpos(2))
+            raise CompileError('Declarator can only be a variable.', tup[0], tup[1], tup[2])
 
     def p_parameter_declaration_2(self, t):
-        """parameter_declaration : declaration_specifiers abstract_declarator_option"""
-        self.output_production(t, production_message='parameter_declaration -> declaration_specifiers abstract_declarator_option')
+        """parameter_declaration : declaration_specifiers abstract_declarator"""
+        self.output_production(t, production_message='parameter_declaration -> declaration_specifiers abstract_declarator')
 
         # Note: abstract_declarator is things like pointers and array dims
+        # parameter_declaration = Symbol(identifier='')  # Symbol can hold all of the necessary info, might not go into the
+        #                                                # table
+        #
+        # parameter_declaration.type = t[1]
+        # abstract_declarator = t[2]
+        # if abstract_declarator:
+        #     if abstract_declarator.get('pointer_modifiers', None):
+        #         parameter_declaration.add_pointer_level(abstract_declarator['pointer_modifiers'])
+        #     if abstract_declarator.get('array_dims', None):
+        #         # clean up when we have time
+        #         for dim in abstract_declarator['array_dims']:
+        #             parameter_declaration.add_array_dimension(dim)
+        #
+        # t[0] = parameter_declaration
+        raise Exception('Needs fixing')
 
-        parameter_declaration = Symbol(identifier='')  # Symbol can hold all of the necessary info, might not go into the
-                                                       # table
+    def p_parameter_declaration_3(self, t):
+        """parameter_declaration : declaration_specifiers"""
+        self.output_production(t, production_message='parameter_declaration -> declaration_specifiers')
 
-        parameter_declaration.type = t[1]
-        abstract_declarator = t[2]
-        if abstract_declarator:
-            if abstract_declarator.get('pointer_modifiers', None):
-                parameter_declaration.add_pointer_level(abstract_declarator['pointer_modifiers'])
-            if abstract_declarator.get('array_dims', None):
-                # clean up when we have time
-                for dim in abstract_declarator['array_dims']:
-                    parameter_declaration.add_array_dimension(dim)
+        is_type_valid, message = TypeDeclarationUtil.is_valid(t[1])
+        if not is_type_valid:
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError(message, tup[0], tup[1], tup[2])
 
-        t[0] = parameter_declaration
+        tup = self.compiler_state.get_line_col(t, 1)
+        t[0] = VariableSymbol('', tup[0], tup[1])
+        t[0].decl_type = t[1]
 
     #
     # identifier-list:
@@ -1051,7 +977,7 @@ class Parser(object):
         """identifier_list : identifier"""
         self.output_production(t, production_message='identifier_list -> identifier')
 
-        t[0] = [t[1]]  # this begins the list parameter in the production below
+        t[0] = [t[1]]
 
     def p_identifier_list_2(self, t):
         """identifier_list : identifier_list COMMA identifier"""
@@ -1068,16 +994,18 @@ class Parser(object):
         """
         self.output_production(t, production_message='initializer -> assignment_expression')
 
-        node = t[1] if isinstance(t[1], Constant) else t[1]['ast_node']
-
-        t[0] = {'ast_node': node}
+        t[0] = t[1]
 
     def p_initializer_2(self, t):
-        """initializer : LBRACE initializer_list RBRACE"""
+        """
+        initializer : LBRACE initializer_list RBRACE
+        """
         self.output_production(t, production_message='initializer -> LBRACE initializer_list RBRACE')
 
     def p_initializer_3(self, t):
-        """initializer : LBRACE initializer_list COMMA RBRACE"""
+        """
+        initializer : LBRACE initializer_list COMMA RBRACE
+        """
         self.output_production(t, production_message='initializer -> LBRACE initializer_list COMMA RBRACE')
 
     #
@@ -1094,21 +1022,15 @@ class Parser(object):
     #
     # type-name:
     #
-    def p_type_name(self, t):
-        """type_name : specifier_qualifier_list abstract_declarator_option"""
-        self.output_production(t, production_message='type_name -> specifier_qualifier_list abstract_declarator_option')
+    def p_type_name_1(self, t):
+        """type_name : specifier_qualifier_list abstract_declarator"""
+        self.output_production(t, production_message='type_name -> specifier_qualifier_list abstract_declarator')
+        raise NotImplemented()
 
-    def p_abstract_declarator_option_1(self, t):
-        """abstract_declarator_option : empty"""
-        self.output_production(t, production_message='abstract_declarator_option -> empty')
-
-        t[0] = None
-
-    def p_abstract_declarator_option_2(self, t):
-        """abstract_declarator_option : abstract_declarator"""
-        self.output_production(t, production_message='abstract_declarator_option -> abstract_declarator')
-
-        t[0] = t[1]
+    def p_type_name_2(self, t):
+        """type_name : specifier_qualifier_list"""
+        self.output_production(t, production_message='type_name -> specifier_qualifier_list')
+        raise NotImplemented()
 
     #
     # abstract-declarator:
@@ -1154,12 +1076,14 @@ class Parser(object):
         t[1]['array_dims'] += [t[3].value if t[3] else Symbol.EMPTY_ARRAY_DIM]
 
         t[0] = t[1]
+        raise Exception('TODO Fix')
 
     def p_direct_abstract_declarator_3(self, t):
         """direct_abstract_declarator : LBRACKET constant_expression_option RBRACKET"""
         self.output_production(t, production_message='direct_abstract_declarator -> LBRACKET constant_expression_option RBRACKET')
 
         t[0] = {'array_dims': [t[1].value if t[2] else Symbol.EMPTY_ARRAY_DIM]}
+        raise Exception('TODO Fix')
 
     def p_direct_abstract_declarator_4(self, t):
         """direct_abstract_declarator : direct_abstract_declarator LPAREN parameter_type_list_option RPAREN"""
@@ -1183,7 +1107,7 @@ class Parser(object):
         """constant_expression_option : empty"""
         self.output_production(t, production_message='constant_expression_option -> empty')
 
-        t[0] = {'constant': None}
+        t[0] = None
 
     def p_constant_expression_option_to_constant_expression(self, t):
         """constant_expression_option : constant_expression"""
@@ -1221,9 +1145,6 @@ class Parser(object):
         self.output_production(t, production_message='statement -> expression_statment')
 
         t[0] = t[1]
-
-
-
 
     def p_statement_to_compound_statement(self, t):
         """
@@ -1298,37 +1219,7 @@ class Parser(object):
         """
         self.output_production(t, production_message='compound_statement -> LBRACE declaration_list statement_list RBRACE')
 
-        # test is t[6] got simple assignments and array accesses:
-        # for item in t[6]['ast_node']:
-        #     print(item.lvalue)
-        #     print(item.op)
-        #     print(item.rvalue)
-
-        # test t[6] got array assignments:
-        # print(t[6]['ast_node'])
-        # print('\n\n\n')
-        # print(t[6]['ast_node'])
-        # # print(t[6]['ast_node'].lvalue['ast_node'].array_name)
-        # print(t[6]['ast_node'].lvalue['ast_node'].subscript)
-        # print(t[6]['ast_node'].op)
-        # print(t[6]['ast_node'].rvalue)
-
-        # t[6] is statement_list so need to pass this up.... we don't have a node to hold this
-        #       so as of now it will just be whatever node has been passed up.
-        # t[4] is declaration_list so will probably need to pass this up too....
-
-        # presumably, a compound_list is just a list of AST Nodes
-        # declaration_list is a node type, statement_list is a list of nodes
-        print('declaration', t[4])
-        print(t[6])
-
-        node = CompoundStatement(declaration_list=(t[4].get('ast_node', None) if t[4] else None), statement_list=t[6].get('ast_node', []))
-
-        t[0] = {'ast_node': node}
-
-
-
-
+        t[0] = CompoundStatement(declaration_list=t[4], statement_list=t[6])
 
     def p_compound_statement_2(self, t):
         """
@@ -1336,8 +1227,7 @@ class Parser(object):
         """
         self.output_production(t, production_message='compound_statement -> LBRACE statement_list RBRACE')
 
-        node = CompoundStatement(statement_list=t[4].get('ast_node', []))
-        t[0] = {'ast_node': node}
+        t[0] = CompoundStatement(statement_list=t[4])
 
     def p_compound_statement_3(self, t):
         """
@@ -1345,8 +1235,7 @@ class Parser(object):
         """
         self.output_production(t, production_message='compound_statement -> LBRACE declaration_list RBRACE')
 
-        node = CompoundStatement(declaration_list=t[4].get('ast_node', []))
-        t[0] = {'ast_node': node}
+        t[0] = CompoundStatement(declaration_list=t[4])
 
     def p_compound_statement_4(self, t):
         """
@@ -1354,8 +1243,7 @@ class Parser(object):
         """
         self.output_production(t, production_message='compound_statement -> LBRACE RBRACE')
 
-        # optimize away?
-        t[0] = {'ast_node': EmptyStatement()}
+        t[0] = None
 
     #
     # statement-list:
@@ -1366,7 +1254,7 @@ class Parser(object):
         """
         self.output_production(t, production_message='statement_list -> statement')
 
-        t[0] = {'ast_node': [ t[1]['ast_node'] ] }
+        t[0] = [t[1]]
 
     def p_statement_list_2(self, t):
         """
@@ -1374,10 +1262,8 @@ class Parser(object):
         """
         self.output_production(t, production_message='statement_list -> statement_list statement')
 
-        # set t[0] as t[1] combined with t[2]
-        t[1]['ast_node'].append(t[2]['ast_node'])
-        t[0] = {'ast_node': t[1]['ast_node'] }
-
+        t[1].append(t[2])
+        t[0] = t[1]
 
     #
     # selection-statement
@@ -1388,9 +1274,7 @@ class Parser(object):
         """
         self.output_production(t, production_message='selection_statement -> IF LPAREN expression RPAREN statement')
 
-        node = If(conditional=t[3]['ast_node'], if_true=t[5]['ast_node'], if_false=EmptyStatement())
-
-        t[0] = {'ast_node': node}
+        t[0] = If(conditional=t[3], if_true=t[5], if_false=None)
 
     def p_selection_statement_2(self, t):
         """
@@ -1399,9 +1283,7 @@ class Parser(object):
         self.output_production(t,
             production_message='selection_statement -> IF LPAREN expression RPAREN statement ELSE statement')
 
-        node = If(conditional=t[3]['ast_node'], if_true=t[5]['ast_node'], if_false=t[7]['ast_node'])
-
-        t[0] = {'ast_node': node}
+        t[0] = If(conditional=t[3], if_true=t[5], if_false=t[7])
 
     def p_selection_statement_3(self, t):
         """
@@ -1418,11 +1300,7 @@ class Parser(object):
         """
         self.output_production(t, production_message='iteration_statement -> WHILE LPAREN expression RPAREN statement')
 
-        t[0] = {'ast_node': IterationNode(True,
-                                          EmptyStatement(),
-                                          t[3]['ast_node'] if t[3] else EmptyStatement(),
-                                          EmptyStatement(),
-                                          t[5]['ast_node'] if t[5] else EmptyStatement())}
+        t[0] = IterationNode(True, None, t[3], None, t[5])
 
     def p_iteration_statement_2(self, t):
         """
@@ -1432,16 +1310,7 @@ class Parser(object):
             'iteration_statement -> FOR LPAREN expression_option SEMI expression_option SEMI expression_option RPAREN '
             'statement')
 
-        print('FOR', t[3])
-        print('FOR', t[5])
-        print('FOR', t[7])
-        print('FOR', t[9])
-
-        t[0] = {'ast_node': IterationNode(True,
-                                          t[3]['ast_node'] if t[3] else EmptyStatement(),
-                                          t[5]['ast_node'] if t[5] else EmptyStatement(),
-                                          t[7]['ast_node'] if t[7] else EmptyStatement(),
-                                          t[9]['ast_node'] if t[9] else EmptyStatement())}
+        t[0] = IterationNode(True, t[3], t[5], t[7], t[9])
 
     def p_iteration_statement_3(self, t):
         """
@@ -1449,11 +1318,7 @@ class Parser(object):
         """
         self.output_production(t, production_message='iteration_statement -> DO statement WHILE LPAREN expression RPAREN SEMI')
 
-        t[0] = {'ast_node': IterationNode(False,
-                                          EmptyStatement(),
-                                          t[5]['ast_node'] if t[5] else EmptyStatement(),
-                                          EmptyStatement(),
-                                          t[2]['ast_node'] if t[2] else EmptyStatement())}
+        t[0] = IterationNode(False, None, t[5], None, t[2])
 
     #
     # jump_statement:
@@ -1482,8 +1347,7 @@ class Parser(object):
         """
         self.output_production(t, production_message='jump_statement -> RETURN expression_option SEMI')
 
-        node = Return(expression=t[2]['ast_node'] if t[2] else EmptyStatement())
-        t[0] = {'ast_node': node}
+        t[0] = Return(expression=t[2] if t[2] else None)
 
     #
     # Expression Option
@@ -1518,6 +1382,7 @@ class Parser(object):
         expression : expression COMMA assignment_expression
         """
         self.output_production(t, production_message='expression -> expression COMMA assignment_expression')
+        raise NotImplemented('Build a (list of Expression) here')
 
     #
     # assigment_expression:
@@ -1537,51 +1402,26 @@ class Parser(object):
         self.output_production(t, production_message=
             'assignment_expression -> unary_expression assignment_operator assignment_expression')
 
-        # for simple assign, will be symbol so do checks on it
-        if isinstance(t[1], Symbol) and isinstance(t[3], Symbol):
-            symbol = t[1]
-            if symbol.immutable:
-                message = 'Unable to modify immutable symbol {} (via {})'.format(symbol.identifier, t[2])
-                lineno = t.lineno(1)
-                column = 0
-                source_line = self.compiler_state.source_code[lineno - 1]
-                raise CompileError(message, lineno, column, source_line)
-            else:
-                t[0] = {'ast_node': Assignment(t[2], SymbolNode(t[1]), SymbolNode(t[3]))}
+        if isinstance(t[1], SymbolNode) and isinstance(t[1].symbol, FunctionSymbol):
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError('The assignment operator cannot be applied to functions.', tup[0], tup[1], tup[2])
 
-        elif isinstance(t[1], Symbol) and t[3]['ast_node']:
-            t[0] = {'ast_node': Assignment(t[2], SymbolNode(t[1]), t[3]['ast_node'])}
-        elif t[1]['ast_node'] and isinstance(t[3], Symbol):
-            t[0] = {'ast_node': Assignment(t[2], t[1]['ast_node'], SymbolNode(t[3]))}
-        elif t[1]['ast_node'] and t[1]['ast_node']:
+        if isinstance(t[1], ArrayReference) and len(t[1].symbol.array_dims) != len(t[1].subscripts):
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError('Symbol has {} dimensions, but only {} were provided.'.
+                               format(len(t[1].symbol.array_dims), len(t[1].subscripts)), tup[0], tup[1], tup[2])
 
+        if isinstance(t[3], ArrayReference) and len(t[3].symbol.array_dims) != len(t[3].subscripts):
+            tup = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
+            raise CompileError('Symbol has {} dimensions, but only {} were provided.'.
+                               format(len(t[3].symbol.array_dims), len(t[3].subscripts)), tup[0], tup[1], tup[2])
 
-            # TODO: clean up this gross hackpatch
-            rhs = t[3]
-            if not isinstance(t[3], Constant):
-                rhs = t[3]['ast_node']
-
-
-            t[0] = {'ast_node': Assignment(t[2], t[1]['ast_node'], rhs)}
-
-
-
-        # # for simple assign to variable: t[3] is symbol. so only pass id
-        # if type(t[3]) is Symbol:
-        #     # symbol_id = t[3].identifier
-        #     t[0] = {'ast_node': Assignment(t[2], t[1], SymbolNode(t[3]))}
-        #
-        # # for simple assign to const: t[3] is a constant node
-        # # for array references: t[3] is arrayRef node
-        # elif t[3]['ast_node']:
-        #     print('\n > ', t[1])
-        #     t[0] = {'ast_node': Assignment(t[2], t[1], t[3]['ast_node'])}
-
-        # print('\n\n\n\n')
-        # print(type(t[0]['ast_node'].lvalue['ast_node'].array_name['ast_node'].array_name))
-        # print('\n\n')
-        # print(type(t[0]['ast_node'].lvalue['ast_node'].subscript['ast_node'].subscript['ast_node']))
-
+        error_token, message = AssignmentUtil.can_assign(t[1], t[3])
+        if error_token is None:
+            t[0] = Assignment(t[2], t[1], t[3])
+        else:
+            tup = self.compiler_state.get_line_col_source(t.lineno(error_token), t.lexpos(error_token))
+            raise CompileError(message, tup[0], tup[1], tup[2])
 
     #
     # assignment_operator:
@@ -1603,7 +1443,6 @@ class Parser(object):
         self.output_production(t, production_message='assignment_operator -> {}'.format(t[1]))
 
         t[0] = t[1]
-
 
     #
     # constant-expression
@@ -1633,6 +1472,7 @@ class Parser(object):
         """
         self.output_production(t, production_message=
             'conditional_expression -> binary_expression CONDOP expression COLON conditional_expression')
+        raise NotImplemented('Ternary operator')
 
     def p_binary_expression_to_implementation(self, t):
         """
@@ -1658,17 +1498,11 @@ class Parser(object):
         self.output_production(t, production_message=
             'binary_expression -> binary_expression {} binary_expression'.format(t[2]))
 
-        if type(t[1]) is dict and type(t[3]) is dict:
-            left_operand = t[1].get('ast_node', None)
-            right_operand = t[3].get('ast_node', None)
-
-            if Parser.is_a_constant(left_operand) and Parser.is_a_constant(right_operand):
-                t[0] = {'ast_node': Parser.perform_binary_operation(left_operand, t[2], right_operand)}
-            else:
-                t[0] = {'ast_node': BinaryOperator(t[2], left_operand, right_operand)}
+        if type(t[1]) is Constant and type(t[3]) is Constant:
+            t[0] = JSTParser.perform_binary_operation(t[1], t[2], t[3])
         else:
             # not constant expression, so need binary operator node
-            t[0] = {'ast_node': BinaryOperator(t[2], t[1], t[3])}
+            t[0] = BinaryOperator(t[2], t[1], t[3])
 
     def p_binary_expression_to_cast_expression(self, t):
         """
@@ -1694,6 +1528,7 @@ class Parser(object):
         cast_expression : LPAREN type_name RPAREN cast_expression
         """
         self.output_production(t, production_message='cast_expression -> LPAREN type_name RPAREN cast_expression')
+        raise NotImplemented('Type casting')
 
     #
     # unary_expression:
@@ -1712,8 +1547,7 @@ class Parser(object):
         """
         self.output_production(t, production_message='unary_expression -> PLUSPLUS unary_expression')
 
-        t[0] = {'ast_node': UnaryOperator(operator=t[1], expression=t[2]['ast_node'])}
-
+        t[0] = UnaryOperator(t[1], t[2])
 
     def p_unary_expression_3(self, t):
         """
@@ -1721,8 +1555,7 @@ class Parser(object):
         """
         self.output_production(t, production_message='unary_expression -> MINUSMINUS unary_expression')
 
-        t[0] = {'ast_node': UnaryOperator(t[1], t[2])}
-
+        t[0] = UnaryOperator(t[1], t[2])
 
     def p_unary_expression_4(self, t):
         """
@@ -1737,12 +1570,14 @@ class Parser(object):
         unary_expression : SIZEOF unary_expression
         """
         self.output_production(t, production_message='unary_expression -> SIZEOF unary_expression')
+        raise NotImplemented()
 
     def p_unary_expression_6(self, t):
         """
         unary_expression : SIZEOF LPAREN type_name RPAREN
         """
         self.output_production(t, production_message='unary_expression -> SIZEOF LPAREN type_name RPAREN')
+        raise NotImplemented()
 
     #
     # unary_operator
@@ -1797,10 +1632,34 @@ class Parser(object):
         """
         self.output_production(t, production_message='postfix_expression -> postfix_expression LBRACKET expression RBRACKET')
 
-        # For array stuffs:
+        # For array stuff:
+        # TODO Expression t[3] can be multiple values. GCC takes the value of the last expression.
+        # TODO t[3] is an integral type
 
-        t[0] = {"ast_node": ArrayReference(t[1]['ast_node'], t[3]['ast_node'])}
+        tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+        if isinstance(t[1], SymbolNode):
 
+            if isinstance(t[1].symbol, FunctionSymbol):
+                raise CompileError('Functions cannot be accessed like arrays.', tup[0], tup[1], tup[2])
+
+            if isinstance(t[1].symbol, VariableSymbol):
+
+                if len(t[1].symbol.array_dims) > 0:
+                    t[0] = ArrayReference(t[1].symbol, [t[3]])
+                else:
+                    raise CompileError('Symbol is not an array.', tup[0], tup[1], tup[2])
+
+        elif isinstance(t[1], ArrayReference):
+
+            if len(t[1].subscripts) < len(t[1].symbol.array_dims):
+                t[1].subscripts.append(t[3])
+                t[0] = t[1]
+            else:
+                raise CompileError('Symbol only has {} dimensions.'.format(len(t[1].symbol.array_dims)),
+                                   tup[0], tup[1], tup[2])
+
+        else:
+            raise CompileError('Unknown postfix expression {}'.format(type(t[1])), tup[0], tup[1], tup[2])
 
     def p_postfix_expression_to_parameterized_function_call(self, t):
         """
@@ -1808,31 +1667,15 @@ class Parser(object):
         """
         self.output_production(t, production_message='postfix_expression -> postfix_expression LPAREN argument_expression_list RPAREN')
 
-        if isinstance(t[1]['ast_node'], SymbolNode):
-            # function_symbol, _ = self.compiler_state.symbol_table.find(t[1])
-            function_symbol = t[1]['ast_node'].symbol
+        if isinstance(t[1], SymbolNode) and isinstance(t[1].symbol, FunctionSymbol):
+            function_symbol = t[1].symbol
+            matched, message = function_symbol.arguments_match_parameter_types(t[3])
 
-            if function_symbol:
-
-                if function_symbol.arguments_match_parameter_types(t[3]):
-
-
-                    # create AST node
-
-                    pass
-                else:
-                    error_message = 'Argument types do not match parameter types for function call'
-                    lineno = t.lineno(1)
-                    source_line = self.compiler_state.source_code[lineno - 1]
-                    raise CompileError(error_message, lineno, 0, source_line)
-        elif isinstance(t[1], FunctionSymbol):
-            # create AST node
-            pass
-        else:
-            print(t[1])
-            raise Exception('Debug: We should be getting an identifier here')
-
-        # t[0] = ast.FunctionCall()
+            if matched:
+                t[0] = FunctionCall(function_symbol, t[3])
+            else:
+                tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+                raise CompileError(message, tup[0], tup[1], tup[2])
 
     def p_postfix_expression_to_function_call(self, t):
         """
@@ -1840,36 +1683,29 @@ class Parser(object):
         """
         self.output_production(t, production_message='postfix_expression -> postfix_expression LPAREN RPAREN')
 
-        # find_result = self.compiler_state.symbol_table.find(t[1])
-        if isinstance(t[1]['ast_node'], SymbolNode):
-            function_symbol = t[1]['ast_node'].symbol
-            if function_symbol.arguments_match_parameter_types([]):
-                # t[0] = ast.FunctionCall(          )
-                t[0] = {'ast_node': FunctionCall(ID(function_symbol.identifier), EmptyStatement())}
-                # pass
-            else:
-                error_message = 'Arguments do not match parameter types in call to {}'\
-                    .format(function_symbol.identifier)
-                raise CompileError(error_message, t.lineno(1), 0,
-                                       source_line=self.compiler_state.source_code[t.lineno(1)])
-        else:
-            error_message = "Call to undeclared function '{}'"\
-                    .format(t[1])
-            raise CompileError(error_message, t.lineno(1), 0,
-                                   source_line=self.compiler_state.source_code[t.lineno(1)])
+        if isinstance(t[1], SymbolNode) and isinstance(t[1].symbol, FunctionSymbol):
+            function_symbol = t[1].symbol
+            matched, message = function_symbol.arguments_match_parameter_types([])
 
+            if matched:
+                t[0] = FunctionCall(function_symbol, None)
+            else:
+                tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+                raise CompileError(message, tup[0], tup[1], tup[2])
 
     def p_postfix_expression_to_struct_member_access(self, t):
         """
         postfix_expression : postfix_expression PERIOD identifier
         """
         self.output_production(t, production_message='postfix_expression -> postfix_expression PERIOD identifier')
+        raise NotImplemented('Used for structs, unions')
 
     def p_postfix_expression_to_struct_member_dereference(self, t):
         """
         postfix_expression : postfix_expression ARROW identifier
         """
         self.output_production(t, production_message='postfix_expression -> postfix_expression ARROW identifier')
+        raise NotImplemented('Used to dereference pointers and access member')
 
     def p_postfix_expression_to_post_increment(self, t):
         """
@@ -1877,15 +1713,17 @@ class Parser(object):
         """
         self.output_production(t, production_message='postfix_expression -> postfix_expression PLUSPLUS')
 
-        t[0] = {'ast_node': UnaryOperator(operator=t[2], expression=t[1]['ast_node']) }
-
+        # TODO This should have another node or a flag that says the increment occurs AFTER
+        t[0] = UnaryOperator(t[2], t[1])
 
     def p_postfix_expression_to_post_decrement(self, t):
         """
         postfix_expression : postfix_expression MINUSMINUS
         """
         self.output_production(t, production_message='postfix_expression -> postfix_expression MINUSMINUS')
-        t[0] = {'ast_node': UnaryOperator(t[2],t[1]) }
+
+        # TODO This should have another node or a flag that says the decrement occurs AFTER
+        t[0] = UnaryOperator(t[2], t[1])
 
     #
     # primary-expression:
@@ -1897,11 +1735,11 @@ class Parser(object):
         self.output_production(t, production_message='primary_expression -> identifier')
 
         symbol, _ = self.compiler_state.symbol_table.find(t[1])
-        if not symbol:
-            symbol = Symbol(t[1])
-            self.compiler_state.symbol_table.insert(symbol)
-
-        t[0] = {'ast_node': SymbolNode(symbol)}
+        if symbol is None:
+            result = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError('Use of variable before declaration.', result[0], result[1], result[2])
+        else:
+            t[0] = SymbolNode(symbol)
 
     def p_primary_expression_constant(self, t):
         """
@@ -1937,7 +1775,8 @@ class Parser(object):
         t[0] = t[1][:-1] + t[2][1:]
 
     def p_primary_expression_parenthesized(self, t):
-        """primary_expression : LPAREN expression RPAREN
+        """
+        primary_expression : LPAREN expression RPAREN
         """
         self.output_production(t, production_message='primary_expression -> LPAREN expression RPAREN')
 
@@ -1949,11 +1788,11 @@ class Parser(object):
     #
     def p_argument_expression_list_assignment_expression(self, t):
         """
-        argument_expression_list :  assignment_expression
+        argument_expression_list : assignment_expression
         """
-        self.output_production(t, production_message='argument_expression_list ->  assignment_expression')
+        self.output_production(t, production_message='argument_expression_list -> assignment_expression')
 
-        t[0] = [t[1]] if t[1] else []
+        t[0] = [t[1]]
 
     def p_argument_expression_list_list_comma_expression(self, t):
         """
@@ -1961,8 +1800,6 @@ class Parser(object):
         """
         self.output_production(t, production_message=
             'argument_expression_list -> argument_expression_list COMMA assignment_expression')
-
-        print(t[1], t[3])
 
         t[0] = t[1] + [t[3]]
 
@@ -1975,10 +1812,17 @@ class Parser(object):
         """
         self.output_production(t, production_message='constant -> ICONST {}'.format(t[1]))
 
-        # this was backwards,  type was value and value was type
-        node = Constant(Constant.INTEGER, int(t[1]), uuid=UUID_TICKETS.get())
+        if t[1][1] is 'CHAR':
+            t[0] = Constant(Constant.CHAR, t[1][0], uuid=UUID_TICKETS.get())
 
-        t[0] = {'constant': node, 'ast_node': node}
+        elif t[1][1] is 'INT':
+            t[0] = Constant(Constant.INTEGER, t[1][0], uuid=UUID_TICKETS.get())
+
+        elif t[1][1] is 'LONG':
+            t[0] = Constant(Constant.LONG, t[1][0], uuid=UUID_TICKETS.get())
+
+        elif t[1][1] is 'LONG_LONG':
+            t[0] = Constant(Constant.LONG_LONG, t[1][0], uuid=UUID_TICKETS.get())
 
     def p_constant_float(self, t):
         """
@@ -1986,7 +1830,7 @@ class Parser(object):
         """
         self.output_production(t, production_message='constant -> FCONST {}'.format(t[1]))
 
-        t[0] = Constant(float(t[1]), 'float')
+        t[0] = Constant(Constant.FLOAT, float(t[1]))
 
     def p_constant_char(self, t):
         """
@@ -1994,17 +1838,17 @@ class Parser(object):
         """
         self.output_production(t, production_message='constant -> CCONST ({})'.format(t[1]))
 
-        t[0] = Constant(t[1], Constant.INTEGER)
+        t[0] = Constant(Constant.CHAR, t[1])
 
     #
     # identifier:
     #
     def p_identifier(self, t):
-        """identifier : ID
+        """
+        identifier : ID
         """
         self.output_production(t, production_message='identifier -> ID ({})'.format(t[1]))
 
-        # the scanner passes a symbol reference to the parser
         t[0] = t[1]
 
     #
@@ -2025,14 +1869,12 @@ class Parser(object):
         """
         self.prod_logger.info('Entering scope {}'.format(len(self.compiler_state.symbol_table.table)))
 
-        function_symbol = t[-1]['symbol']
+        function_symbol = t[-1]
         self.compiler_state.symbol_table.push()
+
         for named_parameter in function_symbol.named_parameters:
-            self.compiler_state.symbol_table.insert(named_parameter)  # TODO: may need to turn these into symbols
-
-        self.compiler_state.function_scope_entered = True
-
-        # TODO: grab the parameters from the function's declaration and push them into the new scope
+            # TODO: may need to turn these into symbols
+            self.compiler_state.symbol_table.insert(named_parameter)
 
     def p_enter_scope(self, t):
         """
@@ -2040,10 +1882,7 @@ class Parser(object):
         """
         self.prod_logger.info('Entering scope {}'.format(len(self.compiler_state.symbol_table.table)))
 
-        if not self.compiler_state.function_scope_entered:
-            self.compiler_state.symbol_table.push()
-        else:
-            self.compiler_state.function_scope_entered = False
+        self.compiler_state.symbol_table.push()
 
     def p_insert_mode(self, t):
         """
@@ -2059,10 +1898,10 @@ class Parser(object):
         """
         self.prod_logger.info('Leaving scope {}'.format(len(self.compiler_state.symbol_table.table) - 1))
 
-        if self.compiler_state.clone_symbol_table_on_scope_exit:
-            self.prod_logger.info('cloning the symbol table')
+        if self.compiler_state.clone_symbol_table_on_next_scope_exit:
+            self.prod_logger.info('Cloning the symbol table')
             self.compiler_state.cloned_tables.append(self.compiler_state.symbol_table.clone())
-            self.compiler_state.clone_symbol_table_on_scope_exit = False
+            self.compiler_state.clone_symbol_table_on_next_scope_exit = False
 
         self.compiler_state.symbol_table.pop()
 
@@ -2091,7 +1930,7 @@ class Parser(object):
 
         line = t.lineno(1)
         if 0 <= line - 1 < len(self.compiler_state.source_code):
-            self.prod_logger.source(self.compiler_state.source_code[line - 1], line=line)
+            self.prod_logger.source(self.compiler_state.source_lines[line - 1], line=line)
         self.prod_logger.production(production_message)
 
     # Determines if an object is usable in evaluating a compile-time constant expressions.
@@ -2161,7 +2000,7 @@ class Parser(object):
             raise Exception('Improper operator provided: ' + operator)
 
         val_type = Constant.INTEGER if isinstance(result, int) else Constant.FLOAT
-        return Constant(result,val_type)
+        return Constant(val_type, result)
 
     # Performs compile-time operations to evaluate unary (one-operand) constant expressions.
     # Called by production handling methods.

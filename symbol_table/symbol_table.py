@@ -20,7 +20,7 @@ from symbol_table.symbol import Symbol
 class SymbolTable(object):
     # Initializes the symbol table
     def __init__(self):
-        self.table = [Scope()]
+        self.table = []
 
     # Pushes a scope onto the table.
     # 'scope' Scope to push. Leave as default to push empty Scope.

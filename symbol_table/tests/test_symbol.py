@@ -54,7 +54,7 @@ class TestSymbol(unittest.TestCase):
 
 
         parameters = [parameter_1, parameter_2]
-        symbol.add_named_parameters(parameters)
+        symbol.set_named_parameters(parameters)
 
         s = str(symbol)
 

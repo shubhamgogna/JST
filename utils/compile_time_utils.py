@@ -4,14 +4,15 @@
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # JST is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+# along with JST.  If not, see <http://www.gnu.org/licenses/>.
+
 from utils.primitive_types import Type
 
 
@@ -34,7 +35,6 @@ class TypeCheck(object):
     def get_bit_size(type):
         # TODO implement me!
         return 4
-
 
 
 class ArrayDimensionCheck(object):
@@ -66,7 +66,7 @@ class OperatorUtils(object):
             return 'BITNOT'
         elif operator == '&' or operator == '&=':
             return 'BITAND'
-        elif operator == '|'  or operator == '|=':
+        elif operator == '|' or operator == '|=':
             return 'BITOR'
         elif operator == '!':
             return 'NOT'
@@ -97,4 +97,4 @@ class OperatorUtils(object):
         elif operator == '=':
             return 'ASSIGN'
         else:
-            raise Exception("Unkown operator can't be identified: {}".format(operator))
+            raise Exception("Unknown operator can't be identified: {}".format(operator))
