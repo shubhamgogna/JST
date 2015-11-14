@@ -16,6 +16,7 @@
 import unittest
 import itertools
 from compiler.compiler_state import CompilerState
+from ply import lex
 from scanning.clexer import JSTLexer
 
 
@@ -48,7 +49,8 @@ class TestLexer(unittest.TestCase):
 
     def setUp(self):
         self.compiler_state = CompilerState()
-        self.lexer = JSTLexer(compiler_state=self.compiler_state)
+        lexer = JSTLexer(self.compiler_state)
+        self.scanner = lex.lex(module=lexer)
 
     def tearDown(self):
         self.lexer = None
@@ -300,40 +302,41 @@ class TestLexer(unittest.TestCase):
         self.compare_token_output(data, expected_token_types=TestLexer.TEST_FPTR_TOKEN_TYPES)
 
 
-
-    def test_clone(self):
-        data = """
-            int do_stuff(char c);
-
-            int main() {
-
-              int x = 1;
-              int y = 2;
-
-              do_stuff('f');
-
-              return 0;
-            }
-
-            int do_stuff(char c) {
-                !!C
-                return c + c;
-             }
-        """
-        self.lexer.lexer.input(data)
-        while True:
-            tok = self.lexer.lexer.token()
-            if not tok:
-#                print(self.lexer.lexer.compiler_state.symbol_table)
-
-                break
-
-        # data =  self.lexer.lexdata
-        # for i in data:
-            # if data == '!!S':
-            #     print(self.compiler_state.symbol_table)
-            # if data == '!!C':
-            #     print("BLADDDDDD")
+# Not sure what this is testing...
+#
+#     def test_clone(self):
+#         data = """
+#             int do_stuff(char c);
+#
+#             int main() {
+#
+#               int x = 1;
+#               int y = 2;
+#
+#               do_stuff('f');
+#
+#               return 0;
+#             }
+#
+#             int do_stuff(char c) {
+#                 !!C
+#                 return c + c;
+#              }
+#         """
+#         self.lexer.lexer.input(data)
+#         while True:
+#             tok = self.lexer.lexer.token()
+#             if not tok:
+# #                print(self.lexer.lexer.compiler_state.symbol_table)
+#
+#                 break
+#
+#         # data =  self.lexer.lexdata
+#         # for i in data:
+#             # if data == '!!S':
+#             #     print(self.compiler_state.symbol_table)
+#             # if data == '!!C':
+#             #     print("BLADDDDDD")
 
 
     def test_int_verify_no_overflow(self):
@@ -350,9 +353,12 @@ class TestLexer(unittest.TestCase):
         self.assertTrue(JSTLexer.string_to_float_fails('1.8E+308'), "'1.8E+308' is too big")
 
     def compare_token_output(self, data, expected_token_types):
-        self.lexer.input(data)
+        self.source_code = data
+        self.source_lines = data.split('\n')
 
-        for given, expected in itertools.zip_longest(self.lexer.lexer, expected_token_types):
+        self.scanner.input(data)
+
+        for given, expected in itertools.zip_longest(self.scanner, expected_token_types):
             self.assertEqual(given.type, expected)
 
 if __name__ == '__main__':

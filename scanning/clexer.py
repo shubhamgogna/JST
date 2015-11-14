@@ -59,8 +59,9 @@ class JSTLexer(object):
     def t_NEWLINE(self, token):
         r'\n+'
 
-        source_line = self.compiler_state.source_lines[token.lexer.lineno - 1]
-        self.token_logger.source(source_line)
+        if self.compiler_state.source_lines and token.lexer.lineno - 1 < len(self.compiler_state.source_lines):
+            source_line = self.compiler_state.source_lines[token.lexer.lineno - 1]
+            self.token_logger.source(source_line)
         token.lexer.lineno += len(token.value)
 
     # Define reserved words
