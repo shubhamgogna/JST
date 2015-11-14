@@ -13,49 +13,53 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
 
+#
+DUP = 'DUP'
+
 # Math Operations
+# TODO: create versions for both int and floating point?
 ADD = 'ADD'
-# SUB
-# MUL
-# DIV
-# MOD
-# NEG
-#
-# # Logical Operations
-# NOT
-# EQ
-# NE
-# GT
-# GE
-# LT
-# LE
-#
-# # Assignment
-# ASSIGN
-#
+SUB = 'SUB'
+MUL = 'MUL'
+DIV = 'DIV'
+MOD = 'MOD'
+NEG = 'NEG'
+
+# Logical Operations
+NOT = 'NOT'
+EQ = 'EQ'
+NE = 'NE'
+GT = 'GT'
+GE = 'GE'
+LT = 'LT'
+LE = 'LE'
+
+# Assignment
+ASSIGN = 'ASSIGN'
+
 # # Control Flow
 LABEL = 'LABEL'
-# BR
-# BREQ
-# BRGT
-# BRLT
-# BRGE
-# BRLE
-# BRNE
-# HALT
-#
-# # Procedure/Function Call
-# ARGS
-# REFOUT
-# VALOUT
-# CALL
-# PROCENTRY
-# ENDPROC
-# RETURN
-#
-# # Miscellaneous
-# BOUND
-# ADDR
-# GLOBAL
-# STRING
+BR = 'BR'
+BREQ = 'BREQ'
+BRGT = 'BRGT'
+BRLT = 'BRLT'
+BRGE = 'BRGE'
+BRLE = 'BRLE'
+BRNE = 'BRNE'
+HALT = 'HALT'
+
+# Procedure/Function Call
+ARGS = 'ARGS'
+REFOUT = 'REFOUT'
+VALOUT = 'VALOUT'
+CALL = 'CALL'
+PROCENTRY = 'PROCENTRY'
+ENDPROC = 'ENDPROC'
+RETURN = 'RETURN'
+
+# Miscellaneous
+BOUND = 'BOUND'
+ADDR = 'ADDR'
+GLOBAL = 'GLOBAL'
+STRING = 'STRING'
 COMMENT = 'COMMENT'
