@@ -94,6 +94,22 @@ class Goto(BaseAstNode):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
 
+# TODO (Shubham) What would this be used for? Possibly removable
+class IdentifierType(BaseAstNode):
+    def __init__(self, names, **kwargs):
+        super(IdentifierType, self).__init__(**kwargs)
+
+        self.names = names
+
+    @property
+    def children(self):
+        children = []
+        return tuple(children)
+
+    def to_3ac(self, include_source=False):
+        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+
+
 class Switch(BaseAstNode):
     def __init__(self, conditional, body_statement, **kwargs):
         super(Switch, self).__init__(**kwargs)

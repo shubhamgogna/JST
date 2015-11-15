@@ -52,8 +52,8 @@ def get_bit_size(declaration):
         raise Exception('Invalid or unknown type ({}).'.format(type_str))
 
 
-def is_integral_type(type_declaration_str):
-    return type_declaration_str.get_type_str() in INTEGRAL_TYPES
+def is_integral_type(type_declaration):
+    return type_declaration.get_type_str() in INTEGRAL_TYPES
 
 def is_floating_type(declaration):
     return declaration.get_type_str() in FLOATING_POINT_TYPES
