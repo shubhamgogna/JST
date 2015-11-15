@@ -29,7 +29,7 @@ class TestSymbol(unittest.TestCase):
         type = TypeDeclaration()
         type.add_type_specifier('int')
         symbol = Symbol(identifier='my_variable')
-        symbol.type = type
+        symbol.type_declaration = type
 
         s = str(symbol)
 
@@ -40,17 +40,17 @@ class TestSymbol(unittest.TestCase):
         type = TypeDeclaration()
         type.add_type_specifier('int')
         symbol = FunctionSymbol(identifier='my_function', lineno=0)
-        symbol.type = type
+        symbol.type_declaration = type
 
         parameter_1 = Symbol(identifier='parameter_1')
         p_1_type = TypeDeclaration()
         p_1_type.add_type_specifier('int')
-        parameter_1.type = p_1_type
+        parameter_1.type_declaration = p_1_type
 
         parameter_2 = Symbol(identifier='parameter_2')
         p_2_type = TypeDeclaration()
         p_2_type.add_type_specifier('char')
-        parameter_2.type = p_2_type
+        parameter_2.type_declaration = p_2_type
 
 
         parameters = [parameter_1, parameter_2]

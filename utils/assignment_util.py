@@ -44,8 +44,8 @@ class AssignmentUtil(object):
     # @return Tuple (bad_token_num, error_message)
     @staticmethod
     def can_assign(param_left, param_right):
-        left = AssignmentUtil.get_type_decl(param_left)
-        right = AssignmentUtil.get_type_decl(param_right)
+        left = AssignmentUtil.get_type_declaration(param_left)
+        right = AssignmentUtil.get_type_declaration(param_right)
         print(left, right)
 
         if not left:
@@ -68,30 +68,35 @@ class AssignmentUtil(object):
                 (right.type_sign + ' ' if right.type_sign else '') + right_specifiers)
 
     @staticmethod
-    def get_type_decl(source):
+    def get_type_declaration(source):
         if isinstance(source, TypeDeclaration):
             return source
 
         if isinstance(source, Constant):
-            return source.type
+            return source.type_declaration
 
         if isinstance(source, (VariableSymbol, FunctionSymbol)):
-            return source.decl_type
+            return source.type_declaration
 
         if isinstance(source, SymbolNode):
-            return AssignmentUtil.get_type_decl(source.symbol)
+            return AssignmentUtil.get_type_declaration(source.symbol)
 
         if isinstance(source, Assignment):
-            return AssignmentUtil.get_type_decl(source.lvalue)
+            return AssignmentUtil.get_type_declaration(source.lvalue)
 
         if isinstance(source, FunctionCall):
-            return AssignmentUtil.get_type_decl(source.function_symbol)
+            return AssignmentUtil.get_type_declaration(source.function_symbol)
 
         if isinstance(source, ArrayReference):
-            return AssignmentUtil.get_type_decl(source.symbol)
+            return AssignmentUtil.get_type_declaration(source.symbol)
 
         if isinstance(source, BinaryOperator):
-            raise NotImplemented('Checking BinaryOperator is not supported yet in AssignmentUtil')
+            resulting_type, _ = source.get_resulting_type()
+            type_declaration = TypeDeclaration()
+            specifiers = resulting_type.split(' ')
+            for specifier in specifiers:
+                type_declaration.add_type_specifier(specifier)
+            return type_declaration
 
         return None
 

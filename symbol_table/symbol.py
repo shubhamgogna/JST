@@ -16,7 +16,7 @@
 import copy
 import itertools
 import utils
-from ast.ast_nodes import SymbolNode, Constant, BinaryOperator
+from ast.ast_nodes import SymbolNode
 
 
 class Symbol(object):
@@ -26,7 +26,7 @@ class Symbol(object):
         self.column = column
 
         # type(decl_type) is TypeDeclaration
-        self.decl_type = None
+        self.type_declaration = None
         self.finalized = False
 
     def clone(self):
@@ -42,7 +42,7 @@ class VariableSymbol(Symbol):
 
     @property
     def immutable(self):
-        return 'const' in self.decl_type.type_qualifiers
+        return 'const' in self.type_declaration.type_qualifiers
 
     def add_pointer_level(self, pointer_declarations):
         self.pointer_modifiers.extend(pointer_declarations)
@@ -53,7 +53,7 @@ class VariableSymbol(Symbol):
     # Basically the same as __str__ but doesn't include the identifier
     def to_abstract_str(self):
         pointer_str = '*' * len(self.pointer_modifiers)
-        decl_str = str(self.decl_type) if self.decl_type else 'void'
+        decl_str = str(self.type_declaration) if self.type_declaration else 'void'
 
         array_str = ''
         for dim in self.array_dims:
@@ -69,14 +69,14 @@ class VariableSymbol(Symbol):
         for dim in self.array_dims:
             array_str += '[{}]'.format(dim if dim else '')
 
-        return self.decl_type.type_sign, ' '.join(self.decl_type.type_specifiers), pointer_str, array_str
+        return self.type_declaration.type_sign, ' '.join(self.type_declaration.type_specifiers), pointer_str, array_str
 
     def __str__(self):
         if self.identifier == '':  # a case like when the symbol is part of a function signature
             self_str = self.to_abstract_str()
         else:
             pointer_str = len(self.pointer_modifiers) * '*' if len(self.pointer_modifiers) > 0 else ''
-            type_str = '{}{}'.format(self.decl_type if self.decl_type else 'void', pointer_str)
+            type_str = '{}{}'.format(self.type_declaration if self.type_declaration else 'void', pointer_str)
             array_str = ''
             for dim in self.array_dims:
                 array_str += '[{}]'.format(dim if dim else '')
@@ -129,10 +129,10 @@ class FunctionSymbol(Symbol):
 
     # TODO I just threw this together. I should go back and fix it. - Shubham
     def get_type_tuple(self):
-        return self.decl_type.type_sign, ' '.join(self.decl_type.type_specifiers), '', ''
+        return self.type_declaration.type_sign, ' '.join(self.type_declaration.type_specifiers), '', ''
 
     def __str__(self):
-        decl_str = str(self.decl_type) if self.decl_type else 'void'
+        decl_str = str(self.type_declaration) if self.type_declaration else 'void'
         args_as_strings = ''
 
         if self.named_parameters:

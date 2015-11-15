@@ -22,7 +22,6 @@ import compiler
 from exceptions.compile_error import CompileError
 from symbol_table.scope import Scope
 from symbol_table.symbol import Symbol, VariableSymbol, FunctionSymbol
-from utils.compile_time_utils import TypeCheck
 from utils.assignment_util import AssignmentUtil
 from scanning.clexer import JSTLexer
 from ast.ast_nodes import *
@@ -33,7 +32,8 @@ from ast.ast_nodes import *
 # This class is responsible for working in tandem with the Lexer to parse the given C program input and then
 # constructing the Abstract Syntax Tree that corresponds to the program. Compile time checking is done by this class.
 #
-from utils.type_decl_util import TypeDeclarationUtil
+
+import utils.type_utils
 
 
 class JSTParser(object):
@@ -170,8 +170,8 @@ class JSTParser(object):
         self.output_production(t, production_message='function_definition -> declarator compound_statement')
 
         symbol = t[1]
-        symbol.decl_type = TypeDeclaration()
-        symbol.decl_type.add_type_specifier('int')
+        symbol.type_declaration = TypeDeclaration()
+        symbol.type_declaration.add_type_specifier('int')
         symbol.finalized = True
 
         result, existing = self.compiler_state.symbol_table.insert(symbol)
@@ -180,7 +180,7 @@ class JSTParser(object):
             raise CompileError('Reimplementation of function not allowed.', tup[0], tup[1], tup[2])
 
         arguments = [SymbolNode(symbol) for symbol in symbol.named_parameters]
-        t[0] = FunctionDefinition(symbol.decl_type, symbol.identifier, arguments, t[3])
+        t[0] = FunctionDefinition(symbol.type_declaration, symbol.identifier, arguments, t[3])
 
     def p_function_definition_2(self, t):
         """
@@ -188,13 +188,13 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='function_definition -> declaration_specifiers declarator compound_statement')
 
-        is_type_valid, message = TypeDeclarationUtil.is_valid(t[1])
+        is_type_valid, message = type_utils.is_valid_type(t[1])
         if not is_type_valid:
             tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
             raise CompileError(message, tup[0], tup[1], tup[2])
 
         symbol = t[2]
-        symbol.decl_type = t[1]
+        symbol.type_declaration = t[1]
         symbol.finalized = True
 
         result, existing = self.compiler_state.symbol_table.insert(symbol)
@@ -203,7 +203,7 @@ class JSTParser(object):
             raise CompileError('Reimplementation of function not allowed.', tup[0], tup[1], tup[2])
 
         arguments = [SymbolNode(symbol) for symbol in symbol.named_parameters]
-        t[0] = FunctionDefinition(symbol.decl_type, symbol.identifier, arguments, t[4])
+        t[0] = FunctionDefinition(symbol.type_declaration, symbol.identifier, arguments, t[4])
 
     def p_function_definition_3(self, t):
         """
@@ -233,7 +233,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='declaration -> declaration_specifiers init_declarator_list SEMI')
 
-        is_type_valid, message = TypeDeclarationUtil.is_valid(t[1])
+        is_type_valid, message = type_utils.is_valid_type(t[1])
         if not is_type_valid:
             tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
             raise CompileError(message, tup[0], tup[1], tup[2])
@@ -246,7 +246,7 @@ class JSTParser(object):
             decl_ast = None
 
             if isinstance(symbol, VariableSymbol):
-                symbol.decl_type = t[1]
+                symbol.type_declaration = t[1]
                 result, _ = self.compiler_state.symbol_table.insert(symbol)
 
                 if result is Scope.INSERT_REDECL:
@@ -258,23 +258,23 @@ class JSTParser(object):
                     print(warning, 'Still need a way to output warnings.')
 
                 if len(symbol.array_dims) == 0:
-                    decl_ast = Declaration(symbol.identifier, None, None, None, symbol.decl_type,
-                                           initializer, TypeCheck.get_bit_size(symbol.decl_type))
+                    decl_ast = Declaration(symbol.identifier, None, None, None, symbol.type_declaration,
+                                           initializer)
                 else:
-                    decl_ast = ArrayDeclaration(symbol.identifier, symbol.array_dims, None, symbol.decl_type)
+                    decl_ast = ArrayDeclaration(symbol.identifier, symbol.array_dims, None, symbol.type_declaration)
 
             elif isinstance(symbol, FunctionSymbol):
                 if initializer:
                     tup = self.compiler_state.get_line_col_source(lineno, lexpos)
                     raise CompileError('Functions cannot have initializers.', tup[0], tup[1], tup[2])
 
-                symbol.decl_type = t[1]
+                symbol.type_declaration = t[1]
                 result, _ = self.compiler_state.symbol_table.insert(symbol)
                 if result is Scope.INSERT_REDECL:
                     tup = self.compiler_state.get_line_col_source(lineno, lexpos)
                     raise CompileError('Function is being redeclared.', tup[0], tup[1], tup[2])
 
-                decl_ast = FunctionDeclaration(symbol.decl_type, symbol.identifier,
+                decl_ast = FunctionDeclaration(symbol.type_declaration, symbol.identifier,
                                                [SymbolNode(sym) for sym in symbol.named_parameters])
 
             if decl_ast:
@@ -924,13 +924,13 @@ class JSTParser(object):
         """parameter_declaration : declaration_specifiers declarator"""
         self.output_production(t, production_message='parameter_declaration -> declaration_specifiers declarator')
 
-        is_type_valid, message = TypeDeclarationUtil.is_valid(t[1])
+        is_type_valid, message = type_utils.is_valid_type(t[1])
         if not is_type_valid:
             tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
             raise CompileError(message, tup[0], tup[1], tup[2])
 
         if isinstance(t[2], VariableSymbol):
-            t[2].decl_type = t[1]
+            t[2].type_declaration = t[1]
             t[0] = t[2]
         else:
             tup = self.compiler_state.get_line_col_source(t.lineno(2), t.lexpos(2))
@@ -961,14 +961,14 @@ class JSTParser(object):
         """parameter_declaration : declaration_specifiers"""
         self.output_production(t, production_message='parameter_declaration -> declaration_specifiers')
 
-        is_type_valid, message = TypeDeclarationUtil.is_valid(t[1])
+        is_type_valid, message = type_utils.is_valid_type(t[1])
         if not is_type_valid:
             tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
             raise CompileError(message, tup[0], tup[1], tup[2])
 
         tup = self.compiler_state.get_line_col(t, 1)
         t[0] = VariableSymbol('', tup[0], tup[1])
-        t[0].decl_type = t[1]
+        t[0].type_declaration = t[1]
 
     #
     # identifier-list:
@@ -1416,6 +1416,8 @@ class JSTParser(object):
             raise CompileError('Symbol has {} dimensions, but only {} were provided.'.
                                format(len(t[3].symbol.array_dims), len(t[3].subscripts)), tup[0], tup[1], tup[2])
 
+        print('debug:', t[1], t[3])
+
         error_token, message = AssignmentUtil.can_assign(t[1], t[3])
         if error_token is None:
             t[0] = Assignment(t[2], t[1], t[3])
@@ -1472,8 +1474,12 @@ class JSTParser(object):
         """
         self.output_production(t, production_message=
             'conditional_expression -> binary_expression CONDOP expression COLON conditional_expression')
-        raise NotImplemented('Ternary operator')
 
+        # raise NotImplemented('Ternary operator')
+
+    #
+    # binary-expression
+    #
     def p_binary_expression_to_implementation(self, t):
         """
         binary_expression : binary_expression TIMES binary_expression
@@ -1498,6 +1504,7 @@ class JSTParser(object):
         self.output_production(t, production_message=
             'binary_expression -> binary_expression {} binary_expression'.format(t[2]))
 
+        # TODO: only do this if we are working with ints
         if type(t[1]) is Constant and type(t[3]) is Constant:
             t[0] = JSTParser.perform_binary_operation(t[1], t[2], t[3])
         else:
@@ -1533,7 +1540,7 @@ class JSTParser(object):
     #
     # unary_expression:
     #
-    def p_unary_expression_1(self, t):
+    def p_unary_expression_to_postfix_expression(self, t):
         """
         unary_expression : postfix_expression
         """
@@ -1541,7 +1548,7 @@ class JSTParser(object):
 
         t[0] = t[1]
 
-    def p_unary_expression_2(self, t):
+    def p_unary_expression_pre_plus_plus(self, t):
         """
         unary_expression : PLUSPLUS unary_expression
         """
@@ -1549,7 +1556,7 @@ class JSTParser(object):
 
         t[0] = UnaryOperator(t[1], t[2])
 
-    def p_unary_expression_3(self, t):
+    def p_unary_expression_pre_minus_minus(self, t):
         """
         unary_expression : MINUSMINUS unary_expression
         """
@@ -1557,7 +1564,7 @@ class JSTParser(object):
 
         t[0] = UnaryOperator(t[1], t[2])
 
-    def p_unary_expression_4(self, t):
+    def p_unary_expression_to_unary_operator_and_cast(self, t):
         """
         unary_expression : unary_operator cast_expression
         """
@@ -1565,14 +1572,14 @@ class JSTParser(object):
 
         t[0] = t[2]  # TODO: handle appropriately with AST nodes
 
-    def p_unary_expression_5(self, t):
+    def p_unary_expression_sizeof(self, t):
         """
         unary_expression : SIZEOF unary_expression
         """
         self.output_production(t, production_message='unary_expression -> SIZEOF unary_expression')
         raise NotImplemented()
 
-    def p_unary_expression_6(self, t):
+    def p_unary_expression_sizeof_parenthesized(self, t):
         """
         unary_expression : SIZEOF LPAREN type_name RPAREN
         """
@@ -1813,16 +1820,16 @@ class JSTParser(object):
         self.output_production(t, production_message='constant -> ICONST {}'.format(t[1]))
 
         if t[1][1] is 'CHAR':
-            t[0] = Constant(Constant.CHAR, t[1][0], uuid=UUID_TICKETS.get())
+            t[0] = Constant(Constant.CHAR, t[1][0])
 
         elif t[1][1] is 'INT':
-            t[0] = Constant(Constant.INTEGER, t[1][0], uuid=UUID_TICKETS.get())
+            t[0] = Constant(Constant.INTEGER, t[1][0])
 
         elif t[1][1] is 'LONG':
-            t[0] = Constant(Constant.LONG, t[1][0], uuid=UUID_TICKETS.get())
+            t[0] = Constant(Constant.LONG, t[1][0])
 
         elif t[1][1] is 'LONG_LONG':
-            t[0] = Constant(Constant.LONG_LONG, t[1][0], uuid=UUID_TICKETS.get())
+            t[0] = Constant(Constant.LONG_LONG, t[1][0])
 
     def p_constant_float(self, t):
         """
@@ -2012,9 +2019,7 @@ class JSTParser(object):
     @staticmethod
     def perform_unary_operation(operator: str, operand: Constant):
         value = operand.value if type(operand) is Constant else operand
-        if operator == '+':
-            raise Exception('No idea when this is used.')
-        elif operator == '-':
+        if operator == '-':
             return -value
         elif operator == '~':
             return ~value
