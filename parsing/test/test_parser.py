@@ -439,13 +439,15 @@ class TestParser(unittest.TestCase):
         self.check_correct_element(symbol_table_clone, 'literal_string', 0, 'char* literal_string')
 
     def test_bubble_sort(self):
+        # TODO: this test is failing because we are not handling pointers as though they were arrays and vice versa
+        # TODO: perhaps we should change our test case? Maybe this is why Fred said pointers were hard...
+
         data = """
             void print( int* list, int size);
             void bubbleSort(int* list, int size);
 
             int main() {
                int list[10];
-               //int* list = (int*) malloc(10);
                int i;
                //srand(time(NULL));
 
@@ -469,7 +471,7 @@ class TestParser(unittest.TestCase):
             }
 
             void bubbleSort(int* list, int size) {
-               int i,j;
+               int i, j;
                int temp;
                int swapped;
 

@@ -17,6 +17,8 @@
 #
 # TODO: WARNING: NOTHING HAS BEEN DONE HERE TO HANDLE POINTER TYPES, WHICH WE MAY WANT TO DO.
 #
+import re
+
 
 VOID = 'void'
 CHAR = 'char'
@@ -188,21 +190,27 @@ class Type(object):
     DOUBLE = 'double'
 
 
-class TypeCheck(object):
+@staticmethod
+def type_specifier_is_acceptable(type_specifiers):
+    '''
+    This method is currently unused; it has been placed on hold in favor of the simpler "look the type up in an
+    enumeration of all valid types" approach to validation.
+    '''
+    if type_specifiers.count(Type.LONG) > 2:
+        raise Exception('Type "long long long" is too long for jstcc')
 
-    @staticmethod
-    def type_specifier_is_acceptable(type_specifiers):
-        '''
-        This method is currently unused; it has been placed on hold in favor of the simpler "look the type up in an
-        enumeration of all valid types" approach to validation.
-        '''
-        if type_specifiers.count(Type.LONG) > 2:
-            raise Exception('Type "long long long" is too long for jstcc')
+    if (Type.SIGNED in type_specifiers or Type.UNSIGNED in type_specifiers) and (
+            Type.FLOAT in type_specifiers or Type.DOUBLE in type_specifiers):
+        raise Exception(
+            'Floating point types are implicitly signed, declaring them to be signed or unsigned is silly.')
 
-        if (Type.SIGNED in type_specifiers or Type.UNSIGNED in type_specifiers) and (
-                Type.FLOAT in type_specifiers or Type.DOUBLE in type_specifiers):
-            raise Exception(
-                'Floating point types are implicitly signed, declaring them to be signed or unsigned is silly.')
+    if (type_specifiers.count(Type.FLOAT) + type_specifiers.count(Type.DOUBLE)) > 1:
+        raise Exception('Floating point specifiers can only be used once in a declaration.')
 
-        if (type_specifiers.count(Type.FLOAT) + type_specifiers.count(Type.DOUBLE)) > 1:
-            raise Exception('Floating point specifiers can only be used once in a declaration.')
+
+def is_pointer_type(item):
+    """
+    This method is a band-aid of sorts, since we didn't really design well for pointers. Anyone should feel free to
+    put some work into this aspect project.
+    """
+    pass

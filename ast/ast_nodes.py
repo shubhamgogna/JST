@@ -10,25 +10,6 @@ from utils.type_utils import Type
 from utils import operator_utils
 
 
-# TODO (Shubham) If this is just for visualization, it can probably be removed.
-class ArrayDims(BaseAstNode):
-    def __init__(self, dimensions, **kwargs):
-        super(ArrayDims, self).__init__(**kwargs)
-
-        self.dimensions = dimensions
-
-    def name(self, arg=None):
-        return super(ArrayDims, self).name(arg='_'.join(str(dimension) for dimension in self.dimensions))
-
-    @property
-    def children(self):
-        children = []
-        return tuple(children)
-
-    def to_3ac(self, include_source=False):
-        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
-
-
 ##
 # This is a nested declaration of an array with the given type
 ##
@@ -48,16 +29,15 @@ class ArrayDeclaration(BaseAstNode):
         self.identifier = identifier
         self.type = type_
 
-        self.array_dim_dummy = ArrayDims(self.dim)
-
     def name(self, arg=None):
+        raise NotImplementedError('Add the array dimensions and the Symbol to the array declaration node.')
+        ']['.join(self)
         arg = self.type.name_arg() + '_' + self.identifier
         return super(ArrayDeclaration, self).name(arg)
 
     @property
     def children(self):
         children = []
-        children.append(self.array_dim_dummy)
         return tuple(children)
 
     def to_3ac(self, include_source=False):
@@ -283,6 +263,11 @@ class FileAST(BaseAstNode):
 
 
 class FunctionCall(BaseAstNode):
+    """
+    Requires: An rvalue for each parameter that this node will then take appropriate actions to cast and copy into the
+              activation frame.
+    Output:   No output per se, but take care to store return value in the MIPS designated return value register.
+    """
     def __init__(self, function_symbol, arguments=None, **kwargs):
         super(FunctionCall, self).__init__(**kwargs)
 
@@ -303,6 +288,10 @@ class FunctionCall(BaseAstNode):
 
 
 class FunctionDeclaration(BaseAstNode):
+    """
+    Requires: The symbol information of the declaration.
+    Output:   Nothing direct
+    """
     def __init__(self, type_, identifier, arguments=None, **kwargs):
         super(FunctionDeclaration, self).__init__(**kwargs)
 
@@ -325,6 +314,11 @@ class FunctionDeclaration(BaseAstNode):
 
 
 class FunctionDefinition(BaseAstNode):
+    """
+    Requires: Information about its params and declarations so that it can build its activation frame appropriately
+    Output:   Nothing other than the 3AC
+    """
+
     def __init__(self, type_, identifier, arguments, body, **kwargs):
         super(FunctionDefinition, self).__init__(**kwargs)
 
@@ -482,9 +476,9 @@ class PointerDeclaration(BaseAstNode):
 class Return(BaseAstNode):
     """
     Requires: An appropriately initialized register containing information on where to jump to at the return of the
-              function.
-    Output:   An rvalue register containing the result of the associated expression. If the expression is empty, then
-              the register should contain the value 0 (zero).
+              function; an rvalue register containing the result of the associated expression. If the expression is
+              empty, then the register should contain the value 0 (zero).
+    Output:   None, per se, but it needs to store that rvalue in the designated MIPS return register.
     """
     def __init__(self, expression, **kwargs):
         super(Return, self).__init__(**kwargs)

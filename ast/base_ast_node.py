@@ -39,7 +39,7 @@ class BaseAstNode:
 
     def name(self, arg=None):
         extra = '_' + str(arg) if arg else ''
-        name_str = '{}{}_{}'.format(type(self).__name__, extra, self.uuid)
+        name_str = '"{}{}\\n{}"'.format(type(self).__name__, extra, self.uuid)
 
         return name_str
 

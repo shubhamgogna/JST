@@ -782,7 +782,7 @@ class JSTParser(object):
         # TODO production where it can check dimensions of the initializer and compare/set
         if t[3] is None:
             result = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
-            # 'result[1] - 1' is a fix to get the pointer to align correctly
+            # 'result[1] - 1' is a fix to get the column indicator to align correctly
             raise CompileError('Value required for array dimension.', result[0], result[1] - 1, result[2])
 
         if not Constant.is_integral_type(t[3]):
@@ -1645,13 +1645,14 @@ class JSTParser(object):
         if isinstance(t[1], SymbolNode):
 
             print('is it a symbol node?', t[1], type(t[1]))
+            print(t[1].symbol.pointer_modifiers)
 
             if isinstance(t[1].symbol, FunctionSymbol):
                 raise CompileError('Functions cannot be accessed like arrays.', tup[0], tup[1], tup[2])
 
             if isinstance(t[1].symbol, VariableSymbol):
 
-                if len(t[1].symbol.array_dims) > 0:
+                if len(t[1].symbol.array_dims) > 0 or len(t[1].symbol.pointer_modifiers) > 0:
                     t[0] = ArrayReference(t[1].symbol, [t[3]])
                 else:
                     raise CompileError('Symbol is not an array.', tup[0], tup[1], tup[2])
