@@ -15,13 +15,53 @@
 
 import unittest
 
-class TestTypeUtils(unittest.TestCase):
+from utils import type_utils
 
+
+class TestTypeUtils(unittest.TestCase):
     def setUp(self):
         pass
 
     def tearDown(self):
         pass
 
+    def test_is_integral_type(self):
+        self.assertTrue(type_utils.is_integral_type('char'))
+        self.assertTrue(type_utils.is_integral_type('short'))
+        self.assertTrue(type_utils.is_integral_type('int'))
+        self.assertTrue(type_utils.is_integral_type('long'))
+        self.assertTrue(type_utils.is_integral_type('long long'))
+
+        self.assertFalse(type_utils.is_integral_type('void'))
+        self.assertFalse(type_utils.is_integral_type('float'))
+        self.assertFalse(type_utils.is_integral_type('double'))
+
+        self.assertFalse(type_utils.is_integral_type('long char'))
+        self.assertFalse(type_utils.is_integral_type('short long'))
+
+    def test_is_floating_point_type(self):
+        self.assertTrue(type_utils.is_floating_point_type('float'))
+        self.assertTrue(type_utils.is_floating_point_type('double'))
+
+        self.assertFalse(type_utils.is_floating_point_type('char'))
+        self.assertFalse(type_utils.is_floating_point_type('short'))
+        self.assertFalse(type_utils.is_floating_point_type('int'))
+        self.assertFalse(type_utils.is_floating_point_type('long'))
+        self.assertFalse(type_utils.is_floating_point_type('long long'))
+
+        self.assertFalse(type_utils.is_floating_point_type('void'))
+
+        self.assertFalse(type_utils.is_floating_point_type('long char'))
+        self.assertFalse(type_utils.is_floating_point_type('short double'))
+
     def test_get_promoted_type(self):
-        pass
+        self.assertEqual((type_utils.INT, type_utils.CAST_UP),
+                         type_utils.get_promoted_type(type_utils.CHAR, type_utils.INT))
+        self.assertEqual((type_utils.INT, type_utils.CAST_UP),
+                         type_utils.get_promoted_type(type_utils.INT, type_utils.CHAR))
+        self.assertEqual((type_utils.FLOAT, type_utils.CAST_UP),
+                         type_utils.get_promoted_type(type_utils.INT, type_utils.FLOAT))
+        self.assertEqual((type_utils.UNSIGNED_CHAR, type_utils.CAST_UP),
+                         type_utils.get_promoted_type(type_utils.CHAR, type_utils.UNSIGNED_CHAR))
+        self.assertEqual((type_utils.LONG, type_utils.CAST_UNAFFECTED),
+                         type_utils.get_promoted_type(type_utils.LONG, type_utils.LONG))

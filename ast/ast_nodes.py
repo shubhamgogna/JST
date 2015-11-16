@@ -547,8 +547,8 @@ class TypeDeclaration(BaseAstNode):
     absorbed by the Symbol this contributes to.
     """
 
-    FLOAT_TYPES = {Type.FLOAT, Type.DOUBLE}
-    INT_TYPES = {Type.CHAR, Type.SHORT, Type.INT, Type.LONG, Type.SIGNED, Type.UNSIGNED}
+    FLOAT_TYPES = {type_utils.FLOAT, type_utils.DOUBLE}
+    INT_TYPES = {type_utils.CHAR, type_utils.SHORT, type_utils.INT, type_utils.LONG, type_utils.SIGNED, type_utils.UNSIGNED}
 
     def __init__(self, **kwargs):
         # Call the parent constructor

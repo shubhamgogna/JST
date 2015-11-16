@@ -1416,8 +1416,6 @@ class JSTParser(object):
             raise CompileError('Symbol has {} dimensions, but only {} were provided.'.
                                format(len(t[3].symbol.array_dims), len(t[3].subscripts)), tup[0], tup[1], tup[2])
 
-        print('debug:', t[1], t[3])
-
         error_token, message = AssignmentUtil.can_assign(t[1], t[3])
         if error_token is None:
             t[0] = Assignment(t[2], t[1], t[3])
@@ -1645,6 +1643,8 @@ class JSTParser(object):
 
         tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
         if isinstance(t[1], SymbolNode):
+
+            print('is it a symbol node?', t[1], type(t[1]))
 
             if isinstance(t[1].symbol, FunctionSymbol):
                 raise CompileError('Functions cannot be accessed like arrays.', tup[0], tup[1], tup[2])
@@ -1950,6 +1950,12 @@ class JSTParser(object):
     def is_a_constant(item):
         valid_types = (Constant, int, float)
         return isinstance(item, valid_types)
+
+
+    @staticmethod
+    def compile_time_evaluable(item):
+        return item.immutable and type_utils.is_integral_type(item.type)
+
 
     # Performs compile-time operations to evaluate binary (two-operand) constant expressions.
     # Called by production handling methods.

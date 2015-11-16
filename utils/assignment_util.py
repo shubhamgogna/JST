@@ -46,7 +46,6 @@ class AssignmentUtil(object):
     def can_assign(param_left, param_right):
         left = AssignmentUtil.get_type_declaration(param_left)
         right = AssignmentUtil.get_type_declaration(param_right)
-        print(left, right)
 
         if not left:
             return 1, 'Unknown type {}. Failed to check if assignment is valid.'.format(type(left))

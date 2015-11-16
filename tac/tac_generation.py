@@ -47,14 +47,28 @@ class TacInstruction(object):
         if self.instruction == instructions.COMMENT:
             ret = '# ' + self.dest
         elif self.instruction == instructions.LABEL:
-            ret =  self.dest + ':'
+            ret = self.dest + ':'
         else:
             ret = '{:<15}, {:<15}, {:<15}, {:<15}'.format(self.instruction,
-                                                           self.dest if self.dest is not TacInstruction.NULL else '-',
-                                                           self.src1 if self.src1 is not TacInstruction.NULL else '-',
-                                                           self.src2 if self.src2 is not TacInstruction.NULL else '-')
+                                                          self.dest if self.dest is not TacInstruction.NULL else '-',
+                                                          self.src1 if self.src1 is not TacInstruction.NULL else '-',
+                                                          self.src2 if self.src2 is not TacInstruction.NULL else '-')
 
         return ret + '\n'
+
+    @classmethod
+    def from_str(cls, tac_str):
+        # TODO: consider improving so that the special case instructions can work too, instead of the standard format
+        # TODO: ones
+
+        parts = tac_str.split(',')
+
+        return cls(instruction=parts[0].trim(),
+                   dest=parts[1].trim() if parts[1] != '-' else TacInstruction.NULL,
+                   src1=parts[2].trim() if parts[2] != '-' else TacInstruction.NULL,
+                   src2=parts[3].trim() if parts[3] != '-' else TacInstruction.NULL)
+
+
 #
 # THE ALMIGHTY DUP
 #
@@ -70,6 +84,7 @@ def DUP(clone, original):
         allocation scheme later.
     """
     return TacInstruction(instructions.DUP, clone, original)
+
 
 #
 # MATH
@@ -87,6 +102,7 @@ def ADD(sum, augend, addend):
     """
     return TacInstruction(instructions.ADD, sum, augend, addend)
 
+
 def SUB(difference, minuend, subtrahend):
     """
     args:
@@ -98,6 +114,7 @@ def SUB(difference, minuend, subtrahend):
         Performs basic addition.
     """
     return TacInstruction(instructions.SUB, difference, minuend, subtrahend)
+
 
 def MUL(product, multiplicand, multiplier):
     """
@@ -111,6 +128,7 @@ def MUL(product, multiplicand, multiplier):
     """
     return TacInstruction(instructions.MUL, product, multiplicand, multiplier)
 
+
 def DIV(quotient, dividend, divisor):
     """
     args:
@@ -122,6 +140,7 @@ def DIV(quotient, dividend, divisor):
         Performs basic addition.
     """
     return TacInstruction(instructions.SUB, quotient, dividend, divisor)
+
 
 def MOD(remainder, dividend, divisor):
     """
@@ -135,6 +154,7 @@ def MOD(remainder, dividend, divisor):
     """
     return TacInstruction(instructions.MOD, remainder, dividend, divisor)
 
+
 def NEG(result, operand):
     """
     args:
@@ -146,6 +166,7 @@ def NEG(result, operand):
         Performs basic addition.
     """
     return TacInstruction(instructions.NEG, result, operand)
+
 
 #
 # LOGICAL
@@ -163,6 +184,7 @@ def NOT(result, operand):
     """
     return TacInstruction(instructions.NOT, result, operand)
 
+
 def EQ(result, left_operand, right_operand):
     """
     args:
@@ -174,6 +196,7 @@ def EQ(result, left_operand, right_operand):
         Performs basic addition.
     """
     return TacInstruction(instructions.EQ, result, left_operand, right_operand)
+
 
 def NE(result, left_operand, right_operand):
     """
@@ -187,6 +210,7 @@ def NE(result, left_operand, right_operand):
     """
     return TacInstruction(instructions.NE, result, left_operand, right_operand)
 
+
 def GT(result, left_operand, right_operand):
     """
     args:
@@ -198,6 +222,7 @@ def GT(result, left_operand, right_operand):
         Performs basic addition.
     """
     return TacInstruction(instructions.GT, result, left_operand, right_operand)
+
 
 def GE(result, left_operand, right_operand):
     """
@@ -211,6 +236,7 @@ def GE(result, left_operand, right_operand):
     """
     return TacInstruction(instructions.GE, result, left_operand, right_operand)
 
+
 def LT(result, left_operand, right_operand):
     """
     args:
@@ -223,6 +249,7 @@ def LT(result, left_operand, right_operand):
     """
     return TacInstruction(instructions.LT, result, left_operand, right_operand)
 
+
 def LE(result, left_operand, right_operand):
     """
     args:
@@ -234,6 +261,7 @@ def LE(result, left_operand, right_operand):
         Performs basic addition.
     """
     return TacInstruction(instructions.LE, result, left_operand, right_operand)
+
 
 #
 # ASSIGNMENT
@@ -251,6 +279,7 @@ def ASSIGN(result, lvalue, rvalue):
     """
     return TacInstruction(instructions.ASSIGN, result, lvalue, rvalue)
 
+
 #
 # PROGRAM FLOW
 #
@@ -267,6 +296,7 @@ def LABEL(label_name):
     """
     return TacInstruction(instructions.LABEL, label_name)
 
+
 def BR(label_name):
     """
     args:
@@ -278,6 +308,7 @@ def BR(label_name):
         Performs basic addition.
     """
     return TacInstruction(instructions.BR, label_name)
+
 
 def BREQ(label_name, left_operand, right_operand):
     """
@@ -291,6 +322,7 @@ def BREQ(label_name, left_operand, right_operand):
     """
     return TacInstruction(instructions.BREQ, label_name, left_operand, right_operand)
 
+
 def BRNE(label_name, left_operand, right_operand):
     """
     args:
@@ -302,6 +334,7 @@ def BRNE(label_name, left_operand, right_operand):
         Performs basic addition.
     """
     return TacInstruction(instructions.BRNE, label_name, left_operand, right_operand)
+
 
 def BRLT(label_name, left_operand, right_operand):
     """
@@ -315,6 +348,7 @@ def BRLT(label_name, left_operand, right_operand):
     """
     return TacInstruction(instructions.BRLT, label_name, left_operand, right_operand)
 
+
 def BRLE(label_name, left_operand, right_operand):
     """
     args:
@@ -326,6 +360,7 @@ def BRLE(label_name, left_operand, right_operand):
         Performs basic addition.
     """
     return TacInstruction(instructions.BRLE, label_name, left_operand, right_operand)
+
 
 def BRGT(label_name, left_operand, right_operand):
     """
@@ -339,6 +374,7 @@ def BRGT(label_name, left_operand, right_operand):
     """
     return TacInstruction(instructions.BRGT, label_name, left_operand, right_operand)
 
+
 def BRGE(label_name, left_operand, right_operand):
     """
     args:
@@ -351,6 +387,7 @@ def BRGE(label_name, left_operand, right_operand):
     """
     return TacInstruction(instructions.BRGE, label_name, left_operand, right_operand)
 
+
 def HALT():
     """
     args:
@@ -362,6 +399,7 @@ def HALT():
         Performs basic addition.
     """
     return TacInstruction(instructions.HALT)
+
 
 #
 # PROCEDURE/FUNCTION
@@ -379,6 +417,7 @@ def ARGS(argc):
     """
     return TacInstruction(instructions.ARGS, argc)
 
+
 def REFOUT(arg):
     """
     args:
@@ -390,6 +429,7 @@ def REFOUT(arg):
         Performs basic addition.
     """
     return TacInstruction(instructions.REFOUT, arg)
+
 
 def VALOUT(arg):
     """
@@ -403,6 +443,7 @@ def VALOUT(arg):
     """
     return TacInstruction(instructions.VALOUT, arg)
 
+
 def CALL(function_name):
     """
     args:
@@ -414,6 +455,7 @@ def CALL(function_name):
         Performs basic addition.
     """
     return TacInstruction(instructions.CALL, function_name)
+
 
 def PROCENTRY(op1, op2, op3):
     """
@@ -427,6 +469,7 @@ def PROCENTRY(op1, op2, op3):
     """
     return TacInstruction(instructions.PROCENTRY, op1, op2, op3)
 
+
 def ENDPROC():
     """
     args:
@@ -439,6 +482,7 @@ def ENDPROC():
     """
     return TacInstruction(instructions.ENDPROC)
 
+
 def RETURN():
     """
     args:
@@ -450,6 +494,7 @@ def RETURN():
         Performs basic addition.
     """
     return TacInstruction(instructions.RETURN)
+
 
 #
 # MISCELLANEOUS
@@ -467,6 +512,7 @@ def BOUND(test, lower, upper):
     """
     return TacInstruction(instructions.BOUND, test, lower, upper)
 
+
 def ADDR(target):
     """
     args:
@@ -478,6 +524,7 @@ def ADDR(target):
         Performs basic addition.
     """
     return TacInstruction(instructions.ADDR, target)
+
 
 def GLOBAL(target, mem_size):
     """
@@ -491,6 +538,7 @@ def GLOBAL(target, mem_size):
     """
     return TacInstruction(instructions.GLOBAL, target, mem_size)
 
+
 def STRING(data, label):
     """
     args:
@@ -502,6 +550,7 @@ def STRING(data, label):
         Performs basic addition.
     """
     return TacInstruction(instructions.STRING, data, label)
+
 
 def COMMENT(text):
     """

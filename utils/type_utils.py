@@ -13,14 +13,102 @@
 # You should have received a copy of the GNU General Public License
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
+
+#
+# TODO: WARNING: NOTHING HAS BEEN DONE HERE TO HANDLE POINTER TYPES, WHICH WE MAY WANT TO DO.
+#
+
+VOID = 'void'
+CHAR = 'char'
+SIGNED_CHAR = 'signed char'
+UNSIGNED_CHAR = 'unsigned char'
+SHORT = 'short'
+SHORT_INT = 'short int'
+SIGNED_SHORT = 'signed short'
+SIGNED_SHORT_INT = 'signed short int'
+UNSIGNED_SHORT = 'unsigned short'
+UNSIGNED_SHORT_INT = 'unsigned short int'
+INT = 'int'
+SIGNED = 'signed'
+SIGNED_INT = 'signed int'
+UNSIGNED = 'unsigned'
+UNSIGNED_INT = 'unsigned int'
+LONG = 'long'
+LONG_INT = 'long int'
+SIGNED_LONG = 'signed long'
+SIGNED_LONG_INT = 'signed long int'
+UNSIGNED_LONG = 'unsigned long'
+UNSIGNED_LONG_INT = 'unsigned long int'
+LONG_LONG = 'long long'
+LONG_LONG_INT = 'long long int'
+SIGNED_LONG_LONG = 'signed long long'
+SIGNED_LONG_LONG_INT = 'signed long long int'
+UNSIGNED_LONG_LONG = 'unsigned long long'
+UNSIGNED_LONG_LONG_INT = 'unsigned long long int'
+FLOAT = 'float'
+DOUBLE = 'double'
+LONG_DOUBLE = 'long double'
+
+
 VALID_PRIMITIVE_TYPES = {'void': 0, 'char': 8, 'short': 16, 'short int': 16, 'int': 16, 'long': 16, 'long int': 32,
     'long long': 64, 'long long int': 64, 'float': 32, 'double': 64, 'long double': 80  # Depends on platform
     }
 
-INTEGRAL_TYPES = ('char', 'short', 'short int', 'int', 'long', 'long int', 'long long', 'long long int')
 
-FLOATING_POINT_TYPES = ('float', 'double', 'long double'  # Depends on platform
-                        )
+class TypeAttributes(object):
+    def __init__(self, rank, bit_size, signed=True, integral=True, floating_point=False):
+        self.rank = rank
+        self.bit_size = bit_size
+        self.signed = signed
+        self.integral = integral
+        self.floating_point = floating_point
+
+        if floating_point:
+            self.signed = False
+            self.integral = False
+
+
+# Note: if two items share the same rank, they are essentially the same type anyway.
+# Note: there is a gap in the rankings in case int needs to move down
+TYPE_ATTRIBUTES = {
+    VOID:                    TypeAttributes(rank=0, bit_size=0, signed=False, integral=False, floating_point=False),
+    CHAR:                    TypeAttributes(rank=1, bit_size=8),
+    SIGNED_CHAR:             TypeAttributes(rank=1, bit_size=8),
+    UNSIGNED_CHAR:           TypeAttributes(rank=2, bit_size=8, signed=False),
+    SHORT:                   TypeAttributes(rank=3, bit_size=16),
+    SHORT_INT:               TypeAttributes(rank=3, bit_size=16),
+    SIGNED_SHORT:            TypeAttributes(rank=3, bit_size=16),
+    SIGNED_SHORT_INT:        TypeAttributes(rank=3, bit_size=16),
+    UNSIGNED_SHORT:          TypeAttributes(rank=4, bit_size=16, signed=False),
+    UNSIGNED_SHORT_INT:      TypeAttributes(rank=4, bit_size=16, signed=False),
+    INT:                     TypeAttributes(rank=7, bit_size=32),
+    SIGNED:                  TypeAttributes(rank=7, bit_size=32),
+    SIGNED_INT:              TypeAttributes(rank=7, bit_size=32),
+    UNSIGNED:                TypeAttributes(rank=8, bit_size=32, signed=False),
+    UNSIGNED_INT:            TypeAttributes(rank=8, bit_size=32, signed=False),
+    LONG:                    TypeAttributes(rank=7, bit_size=32),
+    LONG_INT:                TypeAttributes(rank=7, bit_size=32),
+    SIGNED_LONG:             TypeAttributes(rank=7, bit_size=32),
+    SIGNED_LONG_INT:         TypeAttributes(rank=7, bit_size=32),
+    UNSIGNED_LONG:           TypeAttributes(rank=8, bit_size=32, signed=False),
+    UNSIGNED_LONG_INT:       TypeAttributes(rank=8, bit_size=32, signed=False),
+    LONG_LONG:               TypeAttributes(rank=9, bit_size=64),
+    LONG_LONG_INT:           TypeAttributes(rank=9, bit_size=64),
+    SIGNED_LONG_LONG:        TypeAttributes(rank=9, bit_size=64),
+    SIGNED_LONG_LONG_INT:    TypeAttributes(rank=9, bit_size=64),
+    UNSIGNED_LONG_LONG:      TypeAttributes(rank=10, bit_size=64, signed=False),
+    UNSIGNED_LONG_LONG_INT:  TypeAttributes(rank=10, bit_size=64, signed=False),
+    FLOAT:                   TypeAttributes(rank=11, bit_size=32, floating_point=True),
+    DOUBLE:                  TypeAttributes(rank=12, bit_size=64, floating_point=True),
+    LONG_DOUBLE:             TypeAttributes(rank=13, bit_size=80, floating_point=True)
+}
+
+
+INTEGRAL_TYPES = tuple(filter(
+    lambda t: t is not None, [key if value.integral else None for key, value in TYPE_ATTRIBUTES.items()]))
+
+FLOATING_POINT_TYPES = tuple(filter(
+    lambda t: t is not None, [key if value.floating_point else None for key, value in TYPE_ATTRIBUTES.items()]))
 
 CAST_UP = "CAST_RESULT_UP"
 CAST_DOWN = 'CAST_RESULT_DOWN'
@@ -43,30 +131,32 @@ def is_valid_type(declaration):
         return False, 'Invalid or unknown type ({}).'.format(type_str)
 
 
-def get_bit_size(declaration):
-    type_str = declaration.get_type_str()
+def get_bit_size(type_specifier_str):
 
-    if type_str in VALID_PRIMITIVE_TYPES:
-        return VALID_PRIMITIVE_TYPES[type_str]
+    type_attribute = TYPE_ATTRIBUTES.get(type_specifier_str, None)
+
+    if type_attribute:
+        return type_attribute.bit_size
     else:
-        raise Exception('Invalid or unknown type ({}).'.format(type_str))
+        raise Exception('Invalid or unknown type ({}).'.format(type_specifier_str))
 
 
-def is_integral_type(type_declaration):
-    return type_declaration.get_type_str() in INTEGRAL_TYPES
+def is_integral_type(type_specifier_str:str):
+    return type_specifier_str in INTEGRAL_TYPES
 
-def is_floating_type(declaration):
-    return declaration.get_type_str() in FLOATING_POINT_TYPES
+
+def is_floating_point_type(type_specifier_str):
+    return type_specifier_str in FLOATING_POINT_TYPES
 
 
 def get_promoted_type(one_type, other_type):
     if one_type == other_type:
         return one_type, CAST_UNAFFECTED
     elif is_integral_type(one_type) and is_integral_type(other_type) or \
-         is_floating_type(one_type) and is_floating_type(other_type):
+         is_floating_point_type(one_type) and is_floating_point_type(other_type):
 
-        return one_type if VALID_PRIMITIVE_TYPES[one_type] > VALID_PRIMITIVE_TYPES[other_type] else other_type, CAST_UP
-    elif is_floating_type(one_type):
+        return one_type if TYPE_ATTRIBUTES[one_type].rank > TYPE_ATTRIBUTES[other_type].rank else other_type, CAST_UP
+    elif is_floating_point_type(one_type):
         return one_type, CAST_UP
     else:
         return other_type, CAST_UP
