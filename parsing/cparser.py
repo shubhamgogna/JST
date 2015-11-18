@@ -21,7 +21,7 @@
 import compiler
 from exceptions.compile_error import CompileError
 from symbol_table.scope import Scope
-from symbol_table.symbol import Symbol, VariableSymbol, FunctionSymbol
+from symbol_table.symbol import Symbol, VariableSymbol, FunctionSymbol, TypeDeclaration
 from utils.assignment_util import AssignmentUtil
 from scanning.clexer import JSTLexer
 from ast.ast_nodes import *
@@ -170,9 +170,12 @@ class JSTParser(object):
         self.output_production(t, production_message='function_definition -> declarator compound_statement')
 
         symbol = t[1]
-        symbol.type_declaration = TypeDeclaration()
-        symbol.type_declaration.add_type_specifier('int')
-        symbol.finalized = True
+        function_symbol = FunctionSymbol.from_variable_symbol(symbol)
+
+        type_declaration = TypeDeclaration()
+        type_declaration.add_type_specifier('int')
+        function_symbol.add_type_declaration(type_declaration)
+        function_symbol.finalized = True
 
         result, existing = self.compiler_state.symbol_table.insert(symbol)
         if result is Scope.INSERT_REDECL and existing[0].finalized:
@@ -180,7 +183,7 @@ class JSTParser(object):
             raise CompileError('Reimplementation of function not allowed.', tup[0], tup[1], tup[2])
 
         arguments = [SymbolNode(symbol) for symbol in symbol.named_parameters]
-        t[0] = FunctionDefinition(symbol.type_declaration, symbol.identifier, arguments, t[3])
+        t[0] = FunctionDefinition(function_symbol, function_symbol.identifier, arguments, t[3])
 
     def p_function_definition_2(self, t):
         """
@@ -193,17 +196,17 @@ class JSTParser(object):
             tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
             raise CompileError(message, tup[0], tup[1], tup[2])
 
-        symbol = t[2]
-        symbol.type_declaration = t[1]
-        symbol.finalized = True
+        function_symbol = FunctionSymbol.from_variable_symbol(t[2]) if isinstance(t[2], VariableSymbol) else t[2]
+        function_symbol.add_return_type_declaration(t[1])
+        function_symbol.finalized = True
 
-        result, existing = self.compiler_state.symbol_table.insert(symbol)
+        result, existing = self.compiler_state.symbol_table.insert(function_symbol)
         if result is Scope.INSERT_REDECL and existing[0].finalized:
             tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
             raise CompileError('Reimplementation of function not allowed.', tup[0], tup[1], tup[2])
 
-        arguments = [SymbolNode(symbol) for symbol in symbol.named_parameters]
-        t[0] = FunctionDefinition(symbol.type_declaration, symbol.identifier, arguments, t[4])
+        arguments = [SymbolNode(symbol) for symbol in function_symbol.named_parameters]
+        t[0] = FunctionDefinition(function_symbol, function_symbol.identifier, arguments, t[4])
 
     def p_function_definition_3(self, t):
         """
@@ -246,7 +249,7 @@ class JSTParser(object):
             decl_ast = None
 
             if isinstance(symbol, VariableSymbol):
-                symbol.type_declaration = t[1]
+                symbol.add_type_declaration(type_declaration=t[1])
                 result, _ = self.compiler_state.symbol_table.insert(symbol)
 
                 if result is Scope.INSERT_REDECL:
@@ -258,23 +261,22 @@ class JSTParser(object):
                     print(warning, 'Still need a way to output warnings.')
 
                 if len(symbol.array_dims) == 0:
-                    decl_ast = Declaration(symbol.identifier, None, None, None, symbol.type_declaration,
-                                           initializer)
+                    decl_ast = Declaration(symbol, initializer)
                 else:
-                    decl_ast = ArrayDeclaration(symbol.identifier, symbol.array_dims, None, symbol.type_declaration)
+                    decl_ast = ArrayDeclaration(symbol, symbol.array_dims, None)
 
             elif isinstance(symbol, FunctionSymbol):
                 if initializer:
                     tup = self.compiler_state.get_line_col_source(lineno, lexpos)
                     raise CompileError('Functions cannot have initializers.', tup[0], tup[1], tup[2])
 
-                symbol.type_declaration = t[1]
+                symbol.add_return_type_declaration(t[1])
                 result, _ = self.compiler_state.symbol_table.insert(symbol)
                 if result is Scope.INSERT_REDECL:
                     tup = self.compiler_state.get_line_col_source(lineno, lexpos)
                     raise CompileError('Function is being redeclared.', tup[0], tup[1], tup[2])
 
-                decl_ast = FunctionDeclaration(symbol.type_declaration, symbol.identifier,
+                decl_ast = FunctionDeclaration(symbol,
                                                [SymbolNode(sym) for sym in symbol.named_parameters])
 
             if decl_ast:
@@ -930,7 +932,7 @@ class JSTParser(object):
             raise CompileError(message, tup[0], tup[1], tup[2])
 
         if isinstance(t[2], VariableSymbol):
-            t[2].type_declaration = t[1]
+            t[2].add_type_declaration(t[1])
             t[0] = t[2]
         else:
             tup = self.compiler_state.get_line_col_source(t.lineno(2), t.lexpos(2))
@@ -967,8 +969,9 @@ class JSTParser(object):
             raise CompileError(message, tup[0], tup[1], tup[2])
 
         tup = self.compiler_state.get_line_col(t, 1)
-        t[0] = VariableSymbol('', tup[0], tup[1])
-        t[0].type_declaration = t[1]
+        symbol = VariableSymbol('', tup[0], tup[1])
+        symbol.add_type_declaration(t[1])
+        t[0] = symbol
 
     #
     # identifier-list:
@@ -1415,6 +1418,9 @@ class JSTParser(object):
             tup = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
             raise CompileError('Symbol has {} dimensions, but only {} were provided.'.
                                format(len(t[3].symbol.array_dims), len(t[3].subscripts)), tup[0], tup[1], tup[2])
+
+        print(t[1], type(t[1]))
+        print(t[3], type(t[3]))
 
         error_token, message = AssignmentUtil.can_assign(t[1], t[3])
         if error_token is None:
@@ -1955,7 +1961,7 @@ class JSTParser(object):
 
     @staticmethod
     def compile_time_evaluable(item):
-        return item.immutable and type_utils.is_integral_type(item.type)
+        return item.immutable and type_utils.is_integral_type(item.get_resulting_type())
 
 
     # Performs compile-time operations to evaluate binary (two-operand) constant expressions.

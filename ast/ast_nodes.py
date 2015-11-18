@@ -6,7 +6,6 @@
 
 from ast.base_ast_node import BaseAstNode
 from utils import type_utils
-from utils.type_utils import Type
 from utils import operator_utils
 
 
@@ -20,19 +19,18 @@ class ArrayDeclaration(BaseAstNode):
               thing should be recorded somewhere.
     """
 
-    def __init__(self, identifier, dim, dim_qualifiers, type_, **kwargs):
+    def __init__(self, symbol, dimensions, dim_qualifiers, **kwargs):
         super(ArrayDeclaration, self).__init__(**kwargs)
 
-        self.dim = dim
+        self.dimensions = dimensions
         self.dim_qualifiers = dim_qualifiers
 
-        self.identifier = identifier
-        self.type = type_
+        self.symbol = symbol
 
     def name(self, arg=None):
-        raise NotImplementedError('Add the array dimensions and the Symbol to the array declaration node.')
-        ']['.join(self)
-        arg = self.type.name_arg() + '_' + self.identifier
+        # raise NotImplementedError('Add the array dimensions and the Symbol to the array declaration node.')
+        array_dims = '[' + ']['.join([str(dimension) for dimension in self.dimensions]) + ']'
+        arg = self.symbol.type_str() + array_dims + ' ' + self.symbol.identifier
         return super(ArrayDeclaration, self).name(arg)
 
     @property
@@ -67,7 +65,13 @@ class ArrayReference(BaseAstNode):
         """
         For interface compliance with the other expression nodes.
         """
-        return self.symbol.type_declaration.get_type_str()
+        type_str = self.symbol.get_type_str()
+        first_open_bracket = type_str.index('[')
+        return type_str[:first_open_bracket]
+
+    @property
+    def immutable(self):
+        return self.symbol.immutable
 
     def name(self, arg=None):
         return super(ArrayReference, self).name(arg=self.symbol.identifier)
@@ -130,7 +134,9 @@ class BinaryOperator(BaseAstNode):
         lvalue_type = self.lvalue.get_resulting_type()
         rvalue_type = self.rvalue.get_resulting_type()
 
-        return type_utils.get_promoted_type(lvalue_type, rvalue_type)
+        resulting_type, cast_result = type_utils.get_promoted_type(lvalue_type, rvalue_type)
+
+        return resulting_type
 
     def name(self, arg=None):
         return super(BinaryOperator, self).name(arg=operator_utils.operator_to_name(self.operator))
@@ -205,22 +211,22 @@ class Declaration(BaseAstNode):
     Output:   Probably no direct output in the form of temporary registers, but the memory assigned for the
               thing should be recorded somewhere.
     """
-    def __init__(self, identifier, qualifiers, storage, funcspec, type_, initialization_value, **kwargs):
+    def __init__(self, symbol, identifier, qualifiers=None, storage=None, funcspec=None, initialization_value=None, **kwargs):
         super(Declaration, self).__init__(**kwargs)
 
-        self.identifier = identifier
-        self.qualifiers = qualifiers
-        self.storage = storage
+        self.symbol = symbol
+        self.identifier = symbol.identifier
+        self.qualifiers = symbol.type_qualifiers
+        self.storage = symbol.storage_classes
         self.funcspec = funcspec
 
-        self.type = type_
         self.initialization_value = initialization_value
 
     def sizeof(self):
-        return self.type.sizeof()
+        return type_utils.type_size_in_bytes(self.symbol.type_str())
 
     def name(self, arg=None):
-        arg = self.type.name_arg() + '_' + self.identifier
+        arg = self.symbol.type_str() + ' ' + self.identifier
         return super(Declaration, self).name(arg)
 
     @property
@@ -266,13 +272,17 @@ class FunctionCall(BaseAstNode):
     """
     Requires: An rvalue for each parameter that this node will then take appropriate actions to cast and copy into the
               activation frame.
-    Output:   No output per se, but take care to store return value in the MIPS designated return value register.
+    Output:   An rvalue in a temporary register. Take care to copy the value from the value that is stored in the MIPS
+              designated return value register.
     """
     def __init__(self, function_symbol, arguments=None, **kwargs):
         super(FunctionCall, self).__init__(**kwargs)
 
         self.function_symbol = function_symbol
         self.arguments = arguments if arguments else []
+
+    def get_resulting_type(self):
+        return self.function_symbol.get_resulting_type()
 
     def name(self, arg=None):
         return super(FunctionCall, self).name(arg=self.function_symbol.identifier)
@@ -292,15 +302,16 @@ class FunctionDeclaration(BaseAstNode):
     Requires: The symbol information of the declaration.
     Output:   Nothing direct
     """
-    def __init__(self, type_, identifier, arguments=None, **kwargs):
+    def __init__(self, function_symbol, arguments=None, **kwargs):
         super(FunctionDeclaration, self).__init__(**kwargs)
 
-        self.identifier = identifier
+        self.function_symbol = function_symbol
+
+        self.identifier = function_symbol.identifier
         self.arguments = arguments if arguments else []
-        self.type = type_
 
     def name(self, arg=None):
-        arg = self.type.name_arg() + '_' + self.identifier
+        arg = self.function_symbol.get_resulting_type() + ' ' + self.identifier
         return super(FunctionDeclaration, self).name(arg)
 
     @property
@@ -319,16 +330,16 @@ class FunctionDefinition(BaseAstNode):
     Output:   Nothing other than the 3AC
     """
 
-    def __init__(self, type_, identifier, arguments, body, **kwargs):
+    def __init__(self, function_symbol, identifier, arguments, body, **kwargs):
         super(FunctionDefinition, self).__init__(**kwargs)
 
-        self.type = type_
+        self.function_symbol = function_symbol
         self.identifier = identifier
         self.body = body
         self.arguments = arguments if arguments else []
 
     def name(self, arg=None):
-        arg = self.type.name_arg() + '_' + self.identifier
+        arg = self.function_symbol.get_resulting_type() + ' ' + self.identifier
         return super(FunctionDefinition, self).name(arg)
 
     @property
@@ -520,88 +531,15 @@ class SymbolNode(BaseAstNode):
         """
         For interface compliance with the other expression nodes.
         """
-        return self.symbol.type_declaration.get_type_str()
+        return self.symbol.get_type_str()
 
     def name(self, arg=None):
-        arg = self.symbol.type_declaration.name_arg() + '_' + self.symbol.identifier
+        arg = self.symbol.get_type_str() + '_' + self.symbol.identifier
         return super(SymbolNode, self).name(arg)
 
     @property
-    def children(self):
-        children = []
-        return tuple(children)
-
-    def to_3ac(self, include_source=False):
-        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
-
-
-class TypeDeclaration(BaseAstNode):
-    """
-    Not sure if this should remain an AST node, but rather an info collection class that gets disassembled and
-    absorbed by the Symbol this contributes to.
-    """
-
-    FLOAT_TYPES = {type_utils.FLOAT, type_utils.DOUBLE}
-    INT_TYPES = {type_utils.CHAR, type_utils.SHORT, type_utils.INT, type_utils.LONG, type_utils.SIGNED, type_utils.UNSIGNED}
-
-    def __init__(self, **kwargs):
-        # Call the parent constructor
-        super(TypeDeclaration, self).__init__(**kwargs)
-        # In GCC, storage classes are idempotent (but there can only be one of each)
-        self.storage_classes = set()
-        # In GCC, qualifiers are idempotent
-        self.type_qualifiers = set()
-        # List allows for things like 'long long' and 'long double'
-        self.type_specifiers = []
-        # Indicated if the type is signed/unsigned
-        # None = sign not applicable
-        self.type_sign = None
-
-    def name(self, arg=None):
-        return super(TypeDeclaration, self).name(arg=self.name_arg())
-
-    def name_arg(self):
-        joined = [self.type_sign if self.type_sign else '',
-                  '_'.join(self.storage_classes),
-                  '_'.join(self.type_qualifiers),
-                  '_'.join(self.type_specifiers)]
-        return '_'.join([i for i in joined if i is not ''])
-
-    def add_storage_class(self, storage_class_specifier):
-        if storage_class_specifier in self.storage_classes:
-            raise Exception('Duplication of storage class specifier "{}".'.format(storage_class_specifier))
-        self.storage_classes.add(storage_class_specifier)
-
-    def add_type_qualifier(self, type_qualifier):
-        self.type_qualifiers.add(type_qualifier)
-
-    def add_type_specifier(self, specifier):
-        if specifier == 'unsigned' or specifier == 'signed':
-            if self.type_sign is not None:
-                raise Exception('Multiple signed/unsigned specifiers not allowed.')
-            else:
-                self.type_sign = specifier
-        else:
-            self.type_specifiers.insert(0, specifier)
-
-    def get_type_str(self):
-        return (self.type_sign + ' ' if self.type_sign else '') + ' '.join(self.type_specifiers)
-
-    def sizeof(self):
-        return type_utils.get_bit_size(self) / 4  # divide by 4 for bytes
-
-    @property
-    def is_const(self):
-        return 'const' in self.type_qualifiers
-
-    def __str__(self):
-        storage_class_str = ' '.join(self.storage_classes) + ' ' if self.storage_classes else ''
-        qualifier_str = ' '.join(self.type_qualifiers) + ' ' if self.type_qualifiers else ''
-        specifier_str = ' '.join(self.type_specifiers) if self.type_specifiers else 'UNKNOWN'
-        return '{}{}{}'.format(storage_class_str, qualifier_str, specifier_str)
-
-    def __repr__(self):
-        return self.name() + ': ' + str(self)
+    def immutable(self):
+        return self.symbol.immutable
 
     @property
     def children(self):
@@ -645,28 +583,17 @@ class Constant(BaseAstNode):
     Requires: The value of the constant/constant expression as received from the parser.
     Output:   An rvalue register containing the value of the constant.
     """
-    CHAR = TypeDeclaration()
-    CHAR.type_sign = 'signed'
-    CHAR.add_type_specifier('char')
+    CHAR = 'char'
 
-    INTEGER = TypeDeclaration()
-    INTEGER.type_sign = 'signed'
-    INTEGER.add_type_specifier('int')
+    INTEGER = 'int'
 
-    LONG = TypeDeclaration()
-    LONG.type_sign = 'signed'
-    LONG.add_type_specifier('long')
+    LONG = 'long'
 
-    LONG_LONG = TypeDeclaration()
-    LONG_LONG.type_sign = 'signed'
-    LONG_LONG.add_type_specifier('long')
-    LONG_LONG.add_type_specifier('long')
+    LONG_LONG = 'long long'
 
-    FLOAT = TypeDeclaration()
-    FLOAT.add_type_specifier('float')
+    FLOAT = 'float'
 
-    DOUBLE = TypeDeclaration()
-    DOUBLE.add_type_specifier('double')
+    DOUBLE = 'double'
 
     def __init__(self, type_, value, **kwargs):
         super(Constant, self).__init__(**kwargs)
@@ -678,7 +605,7 @@ class Constant(BaseAstNode):
         """
         For interface compliance with the other expression types.
         """
-        return self.type_declaration.get_type_str()
+        return self.type_declaration
 
     def name(self, **kwargs):
         return super(Constant, self).name(arg=str(self.value))

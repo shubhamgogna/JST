@@ -19,7 +19,7 @@
 #
 import re
 
-
+# Valid Types
 VOID = 'void'
 CHAR = 'char'
 SIGNED_CHAR = 'signed char'
@@ -51,6 +51,9 @@ FLOAT = 'float'
 DOUBLE = 'double'
 LONG_DOUBLE = 'long double'
 
+# Type Qualifiers
+CONST = 'const'
+VOLATILE = 'volatile'
 
 VALID_PRIMITIVE_TYPES = {'void': 0, 'char': 8, 'short': 16, 'short int': 16, 'int': 16, 'long': 16, 'long int': 32,
     'long long': 64, 'long long int': 64, 'float': 32, 'double': 64, 'long double': 80  # Depends on platform
@@ -72,7 +75,7 @@ class TypeAttributes(object):
 
 # Note: if two items share the same rank, they are essentially the same type anyway.
 # Note: there is a gap in the rankings in case int needs to move down
-TYPE_ATTRIBUTES = {
+PRIMITIVE_TYPE_DEFINITIONS = {
     VOID:                    TypeAttributes(rank=0, bit_size=0, signed=False, integral=False, floating_point=False),
     CHAR:                    TypeAttributes(rank=1, bit_size=8),
     SIGNED_CHAR:             TypeAttributes(rank=1, bit_size=8),
@@ -107,10 +110,10 @@ TYPE_ATTRIBUTES = {
 
 
 INTEGRAL_TYPES = tuple(filter(
-    lambda t: t is not None, [key if value.integral else None for key, value in TYPE_ATTRIBUTES.items()]))
+    lambda t: t is not None, [key if value.integral else None for key, value in PRIMITIVE_TYPE_DEFINITIONS.items()]))
 
 FLOATING_POINT_TYPES = tuple(filter(
-    lambda t: t is not None, [key if value.floating_point else None for key, value in TYPE_ATTRIBUTES.items()]))
+    lambda t: t is not None, [key if value.floating_point else None for key, value in PRIMITIVE_TYPE_DEFINITIONS.items()]))
 
 CAST_UP = "CAST_RESULT_UP"
 CAST_DOWN = 'CAST_RESULT_DOWN'
@@ -135,12 +138,16 @@ def is_valid_type(declaration):
 
 def get_bit_size(type_specifier_str):
 
-    type_attribute = TYPE_ATTRIBUTES.get(type_specifier_str, None)
+    type_attribute = PRIMITIVE_TYPE_DEFINITIONS.get(type_specifier_str, None)
 
     if type_attribute:
         return type_attribute.bit_size
     else:
         raise Exception('Invalid or unknown type ({}).'.format(type_specifier_str))
+
+
+def is_primitive_type(type_specifier_str):
+    return type_specifier_str in PRIMITIVE_TYPE_DEFINITIONS.keys()
 
 
 def is_integral_type(type_specifier_str:str):
@@ -151,13 +158,17 @@ def is_floating_point_type(type_specifier_str):
     return type_specifier_str in FLOATING_POINT_TYPES
 
 
+def is_pointer_type(type_specifier_str):
+    return type_specifier_str.endswith('*')
+
+
 def get_promoted_type(one_type, other_type):
     if one_type == other_type:
         return one_type, CAST_UNAFFECTED
     elif is_integral_type(one_type) and is_integral_type(other_type) or \
          is_floating_point_type(one_type) and is_floating_point_type(other_type):
 
-        return one_type if TYPE_ATTRIBUTES[one_type].rank > TYPE_ATTRIBUTES[other_type].rank else other_type, CAST_UP
+        return one_type if PRIMITIVE_TYPE_DEFINITIONS[one_type].rank > PRIMITIVE_TYPE_DEFINITIONS[other_type].rank else other_type, CAST_UP
     elif is_floating_point_type(one_type):
         return one_type, CAST_UP
     else:
@@ -175,42 +186,8 @@ def cast_as_required_type(required_type, given_type):
         # sure about floats)
         return CAST_DOWN
 
+def type_size_in_bits(type_str):
+    return PRIMITIVE_TYPE_DEFINITIONS[type_str].bit_size
 
-class Type(object):
-    """
-    Not really used in earnest, still lingering in a few places in the code.
-    """
-    CHAR = 'char'
-    SHORT = 'short'
-    INT = 'int'
-    LONG = 'long'
-    SIGNED = 'signed'
-    UNSIGNED = 'unsigned'
-    FLOAT = 'float'
-    DOUBLE = 'double'
-
-
-@staticmethod
-def type_specifier_is_acceptable(type_specifiers):
-    '''
-    This method is currently unused; it has been placed on hold in favor of the simpler "look the type up in an
-    enumeration of all valid types" approach to validation.
-    '''
-    if type_specifiers.count(Type.LONG) > 2:
-        raise Exception('Type "long long long" is too long for jstcc')
-
-    if (Type.SIGNED in type_specifiers or Type.UNSIGNED in type_specifiers) and (
-            Type.FLOAT in type_specifiers or Type.DOUBLE in type_specifiers):
-        raise Exception(
-            'Floating point types are implicitly signed, declaring them to be signed or unsigned is silly.')
-
-    if (type_specifiers.count(Type.FLOAT) + type_specifiers.count(Type.DOUBLE)) > 1:
-        raise Exception('Floating point specifiers can only be used once in a declaration.')
-
-
-def is_pointer_type(item):
-    """
-    This method is a band-aid of sorts, since we didn't really design well for pointers. Anyone should feel free to
-    put some work into this aspect project.
-    """
-    pass
+def type_size_in_bytes(type_str):
+    return type_size_in_bits(type_str) / 4

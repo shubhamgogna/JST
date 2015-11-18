@@ -17,6 +17,7 @@ import copy
 import itertools
 import utils
 from ast.ast_nodes import SymbolNode
+from utils import type_utils
 
 
 class Symbol(object):
@@ -25,8 +26,6 @@ class Symbol(object):
         self.lineno = lineno
         self.column = column
 
-        # type(decl_type) is TypeDeclaration
-        self.type_declaration = None
         self.finalized = False
 
     def clone(self):
@@ -40,15 +39,43 @@ class VariableSymbol(Symbol):
         self.array_dims = []
         self.pointer_modifiers = []
 
+        self.storage_classes = set()
+        # In GCC, qualifiers are idempotent
+        self.type_qualifiers = set()
+        # List allows for things like 'long long' and 'long double'
+        self.type_specifiers = ''
+
+    def finalize(self):
+        # TODO:
+        # check the type specifiers for correctness
+        # check the pointers for correctness
+        # check the array dims for correctness
+        # allocate the memory space
+        self.finalized = True
+
     @property
     def immutable(self):
-        return 'const' in self.type_declaration.type_qualifiers
+        return type_utils.CONST in self.type_qualifiers
+
+    def get_type_str(self):
+        pointer_str = '*' * len(self.pointer_modifiers) if self.pointer_modifiers else ''
+        array_str = '[' + ']['.join([str(d) for d in self.array_dims]) + ']' if self.array_dims else ''
+
+        return '{}{}{}'.format(self.type_specifiers, pointer_str, array_str)
+
+    def add_type_declaration(self, type_declaration):
+        self.storage_classes = type_declaration.storage_classes
+        self.type_qualifiers = type_declaration.type_qualifiers
+        self.type_specifiers = ' '.join(type_declaration.type_specifiers)
 
     def add_pointer_level(self, pointer_declarations):
         self.pointer_modifiers.extend(pointer_declarations)
 
     def add_array_dimension(self, dimension):
         self.array_dims.append(dimension)
+
+    def get_resulting_type(self):
+        return self.get_type_str()
 
     # Basically the same as __str__ but doesn't include the identifier
     def to_abstract_str(self):
@@ -71,12 +98,22 @@ class VariableSymbol(Symbol):
 
         return self.type_declaration.type_sign, ' '.join(self.type_declaration.type_specifiers), pointer_str, array_str
 
+    def type_str(self):
+        array_suffix = '[' + ']['.join([str(dimension) for dimension in self.array_dims]) + ']' if len(self.array_dims) > 0 else ''
+        return '{}{}{}'.format(self.type_specifiers, '*' * len(self.pointer_modifiers), array_suffix)
+
     def __str__(self):
         if self.identifier == '':  # a case like when the symbol is part of a function signature
             self_str = self.to_abstract_str()
         else:
             pointer_str = len(self.pointer_modifiers) * '*' if len(self.pointer_modifiers) > 0 else ''
-            type_str = '{}{}'.format(self.type_declaration if self.type_declaration else 'void', pointer_str)
+
+            storage_class_str = ' '.join(self.storage_classes) + ' ' if self.storage_classes else ''
+            qualifier_str = ' '.join(self.type_qualifiers) + ' ' if self.type_qualifiers else ''
+            specifier_str = self.type_specifiers
+            base_type_str = '{}{}{}'.format(storage_class_str, qualifier_str, specifier_str)
+
+            type_str = '{}{}'.format(base_type_str, pointer_str)
             array_str = ''
             for dim in self.array_dims:
                 array_str += '[{}]'.format(dim if dim else '')
@@ -97,11 +134,23 @@ class FunctionSymbol(Symbol):
         # It is a list of VariableSymbols that may or may not have identifiers
         self.named_parameters = []
 
+        self.return_type_pointer_modifiers = []
+        self.return_type_specifiers = ''
+
+    @classmethod
+    def from_variable_symbol(cls, variable_symbol):
+        if not isinstance(variable_symbol, VariableSymbol):
+            raise Exception("Can't construct a FunctionSymbol from something that isn't a VariableSymbol")
+        return FunctionSymbol(variable_symbol.identifier, variable_symbol.lineno, variable_symbol.column)
+
     def parameter_types_match(self, parameter_type_list):
         for signature_symbol, parameter_symbol in itertools.zip_longest(self.named_parameters, parameter_type_list):
             if signature_symbol.to_abstract_str() != parameter_symbol.to_abstract_str():
                 return False
         return True
+
+    def add_return_type_declaration(self, type_declaration):
+        self.return_type_specifiers = ' '.join(type_declaration.type_specifiers)
 
     def set_named_parameters(self, parameter_type_list):
         if self.finalized:
@@ -127,12 +176,15 @@ class FunctionSymbol(Symbol):
 
         return True, None
 
+    def get_resulting_type(self):
+        return self.return_type_specifiers
+
     # TODO I just threw this together. I should go back and fix it. - Shubham
     def get_type_tuple(self):
         return self.type_declaration.type_sign, ' '.join(self.type_declaration.type_specifiers), '', ''
 
     def __str__(self):
-        decl_str = str(self.type_declaration) if self.type_declaration else 'void'
+        decl_str = str(self.return_type_specifiers) if self.return_type_specifiers != '' else 'void'
         args_as_strings = ''
 
         if self.named_parameters:
@@ -142,3 +194,73 @@ class FunctionSymbol(Symbol):
 
     def __repr__(self):
         return str(self)
+
+
+class TypeDeclaration():
+    """
+    Not sure if this should remain an AST node, but rather an info collection class that gets disassembled and
+    absorbed by the Symbol this contributes to.
+    """
+
+    def __init__(self, **kwargs):
+        # In GCC, storage classes are idempotent (but there can only be one of each)
+        self.storage_classes = set()
+        # In GCC, qualifiers are idempotent
+        self.type_qualifiers = set()
+        # List allows for things like 'long long' and 'long double'
+        self.type_specifiers = []
+        # Indicated if the type is signed/unsigned
+        # None = sign not applicable
+        self.type_sign = None
+
+
+    def name_arg(self):
+        joined = [self.type_sign if self.type_sign else '',
+                  '_'.join(self.storage_classes),
+                  '_'.join(self.type_qualifiers),
+                  '_'.join(self.type_specifiers)]
+        return '_'.join([i for i in joined if i is not ''])
+
+    def add_storage_class(self, storage_class_specifier):
+        if storage_class_specifier in self.storage_classes:
+            raise Exception('Duplication of storage class specifier "{}".'.format(storage_class_specifier))
+        self.storage_classes.add(storage_class_specifier)
+
+    def add_type_qualifier(self, type_qualifier):
+        self.type_qualifiers.add(type_qualifier)
+
+    def add_type_specifier(self, specifier):
+        if specifier == 'unsigned' or specifier == 'signed':
+            if self.type_sign is not None:
+                raise Exception('Multiple signed/unsigned specifiers not allowed.')
+            else:
+                self.type_sign = specifier
+        else:
+            self.type_specifiers.insert(0, specifier)
+
+    def get_type_str(self):
+        return (self.type_sign + ' ' if self.type_sign else '') + ' '.join(self.type_specifiers)
+
+    def sizeof(self):
+        return type_utils.get_bit_size(self) / 4  # divide by 4 for bytes
+
+    @property
+    def immutable(self):
+        return 'const' in self.type_qualifiers
+
+    def __str__(self):
+        storage_class_str = ' '.join(self.storage_classes) + ' ' if self.storage_classes else ''
+        qualifier_str = ' '.join(self.type_qualifiers) + ' ' if self.type_qualifiers else ''
+        specifier_str = ' '.join(self.type_specifiers) if self.type_specifiers else 'UNKNOWN'
+        return '{}{}{}'.format(storage_class_str, qualifier_str, specifier_str)
+
+    def __repr__(self):
+        return self.name() + ': ' + str(self)
+
+    @property
+    def children(self):
+        children = []
+        return tuple(children)
+
+    def to_3ac(self, include_source=False):
+        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))

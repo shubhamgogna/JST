@@ -14,8 +14,7 @@
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
-from ast.ast_nodes import TypeDeclaration
-from symbol_table.symbol import Symbol, FunctionSymbol
+from symbol_table.symbol import Symbol, FunctionSymbol, TypeDeclaration
 
 
 class TestSymbol(unittest.TestCase):

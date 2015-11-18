@@ -96,6 +96,17 @@ class TestAst(unittest.TestCase):
         ast = self.compiler_state.parse(data)
         print(ast.to_graph_viz_str())
 
+        solution = 'digraph {\n' \
+                   '\t"FileAST\\n00012" -> {"FunctionDefinition: signed_int_main\\n00011"};\n' \
+                   '\t"FunctionDefinition: signed_int_main\\n00011" -> {"CompoundStatement\\n00010"};\n' \
+                   '\t"CompoundStatement\\n00010" -> {"ArrayDeclaration: signed_int[5] i\\n00009"};\n' \
+                   '\t"ArrayDeclaration: signed_int[5] i\\n00009" -> {};\n' \
+                   '}'
+
+
+        self.maxDiff = None
+        self.assertEqual(solution, ast.to_graph_viz_str())
+
     def test_2d_array_declaration(self):
         data = """
             int main()
@@ -338,6 +349,8 @@ class TestAst(unittest.TestCase):
         print(ast.to_graph_viz_str())
 
     def test_function_parameters(self):
+        # TODO: this one fails because we don't have the concept of a "dereference expression/operation", although
+        # TODO: we aren't super worried about pointers for now.
         data = """
             int do_stuff(int* ret, int x)
             {

@@ -32,7 +32,7 @@ class CompilerState:
                  print_tokens=False, print_source_scanner=True,
                  scanner_logfile='log_scanner_tokens.txt',
                  print_productions=False, print_source_parser=False, print_info=False,
-                 parser_logfile='log_parser_productions.txt',
+                 parser_logfile=sys.stdout,
                  **kwargs):
 
         # Initialize variables

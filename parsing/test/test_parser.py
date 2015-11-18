@@ -18,6 +18,7 @@ import unittest
 from compiler.compiler_state import CompilerState
 from exceptions.compile_error import CompileError
 from loggers.logger import Logger
+from symbol_table.symbol import FunctionSymbol
 
 
 class TestParser(unittest.TestCase):
@@ -333,6 +334,7 @@ class TestParser(unittest.TestCase):
         self.check_correct_element(symbol_table_clone, 'some_other_element', 2, 'int some_other_element')
 
     def test_declare_function(self):
+        self.enable_parser_debugging()
         data = """
             int do_stuff(char c);
             !!C
@@ -344,6 +346,13 @@ class TestParser(unittest.TestCase):
         """
         self.compiler_state.parse(data)
         symbol_table_clone = self.compiler_state.cloned_tables[0]
+
+        result, _ = symbol_table_clone.find('do_stuff')
+        print(result, type(result))
+        assert(isinstance(result, FunctionSymbol))
+        p = result.named_parameters[0]
+        print(p, type(p))
+        print(p.type_specifiers)
 
         self.check_correct_element(symbol_table_clone, 'do_stuff', 0, 'int do_stuff(char c)')
 
