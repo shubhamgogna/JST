@@ -25,6 +25,29 @@ DIV = 'DIV'
 MOD = 'MOD'
 NEG = 'NEG'
 
+ADDI = 'ADDI'
+SUBI = 'SUBI'
+MULI = 'MULI'
+DIVI = 'DIVI'
+
+ADDU = 'ADDU'
+SUBU = 'SUBU'
+MULU = 'MULU'
+DIVU = 'DIVU'
+MODU = 'MODU'
+NEGU = 'NEGU'
+
+ADDIU = 'ADDIU'
+SUBIU = 'SUBIU'
+MULIU = 'MULIU'
+DIVIU = 'DIVIU'
+
+ADDS = 'ADDS'
+SUBS = 'SUBS'
+MULS = 'MULS'
+DIVS = 'DIVS'
+NEGS = 'NEGS'
+
 # Logical Operations
 NOT = 'NOT'
 EQ = 'EQ'

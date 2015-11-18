@@ -68,11 +68,9 @@ class TacInstruction(object):
                    src1=parts[2].trim() if parts[2] != '-' else TacInstruction.NULL,
                    src2=parts[3].trim() if parts[3] != '-' else TacInstruction.NULL)
 
-
 #
 # THE ALMIGHTY DUP
 #
-
 def DUP(clone, original):
     """
     args:
@@ -85,11 +83,9 @@ def DUP(clone, original):
     """
     return TacInstruction(instructions.DUP, clone, original)
 
-
 #
 # MATH
 #
-
 def ADD(sum, augend, addend):
     """
     args:
@@ -139,7 +135,7 @@ def DIV(quotient, dividend, divisor):
     function:
         Performs basic addition.
     """
-    return TacInstruction(instructions.SUB, quotient, dividend, divisor)
+    return TacInstruction(instructions.DIV, quotient, dividend, divisor)
 
 
 def MOD(remainder, dividend, divisor):
@@ -167,6 +163,252 @@ def NEG(result, operand):
     """
     return TacInstruction(instructions.NEG, result, operand)
 
+
+def ADDI(sum, augend, addend):
+    """
+    args:
+        sum: the register where the addition result is stored.
+        augend: the left operand of the addition.
+        addend: the right operand of the addition.
+
+    function:
+        Performs basic addition.
+    """
+    return TacInstruction(instructions.ADDI, sum, augend, addend)
+
+
+def SUBI(difference, minuend, subtrahend):
+    """
+    args:
+        sum: the register where the addition result is stored.
+        augend: the left operand of the addition.
+        addend: the right operand of the addition.
+
+    function:
+        Performs basic addition.
+    """
+    return TacInstruction(instructions.SUBI, difference, minuend, subtrahend)
+
+
+def MULI(product, multiplicand, multiplier):
+    """
+    args:
+        sum: the register where the addition result is stored.
+        augend: the left operand of the addition.
+        addend: the right operand of the addition.
+
+    function:
+        Performs basic addition.
+    """
+    return TacInstruction(instructions.MULI, product, multiplicand, multiplier)
+
+
+def DIVI(quotient, dividend, divisor):
+    """
+    args:
+        sum: the register where the addition result is stored.
+        augend: the left operand of the addition.
+        addend: the right operand of the addition.
+
+    function:
+        Performs basic addition.
+    """
+    return TacInstruction(instructions.DIVI, quotient, dividend, divisor)
+
+
+def ADDU(sum, augend, addend):
+    """
+    args:
+        sum: the register where the addition result is stored.
+        augend: the left operand of the addition.
+        addend: the right operand of the addition.
+
+    function:
+        Performs basic addition.
+    """
+    return TacInstruction(instructions.ADDU, sum, augend, addend)
+
+
+def SUBU(difference, minuend, subtrahend):
+    """
+    args:
+        sum: the register where the addition result is stored.
+        augend: the left operand of the addition.
+        addend: the right operand of the addition.
+
+    function:
+        Performs basic addition.
+    """
+    return TacInstruction(instructions.SUBU, difference, minuend, subtrahend)
+
+
+def MULU(product, multiplicand, multiplier):
+    """
+    args:
+        sum: the register where the addition result is stored.
+        augend: the left operand of the addition.
+        addend: the right operand of the addition.
+
+    function:
+        Performs basic addition.
+    """
+    return TacInstruction(instructions.MULU, product, multiplicand, multiplier)
+
+
+def DIVU(quotient, dividend, divisor):
+    """
+    args:
+        sum: the register where the addition result is stored.
+        augend: the left operand of the addition.
+        addend: the right operand of the addition.
+
+    function:
+        Performs basic addition.
+    """
+    return TacInstruction(instructions.DIVU, quotient, dividend, divisor)
+
+
+def MODU(remainder, dividend, divisor):
+    """
+    args:
+        sum: the register where the addition result is stored.
+        augend: the left operand of the addition.
+        addend: the right operand of the addition.
+
+    function:
+        Performs basic addition.
+    """
+    return TacInstruction(instructions.MODU, remainder, dividend, divisor)
+
+
+def NEGU(result, operand):
+    """
+    args:
+        sum: the register where the addition result is stored.
+        augend: the left operand of the addition.
+        addend: the right operand of the addition.
+
+    function:
+        Performs basic addition.
+    """
+    return TacInstruction(instructions.NEGU, result, operand)
+
+
+def ADDIU(sum, augend, addend):
+    """
+    args:
+        sum: the register where the addition result is stored.
+        augend: the left operand of the addition.
+        addend: the right operand of the addition.
+
+    function:
+        Performs basic addition.
+    """
+    return TacInstruction(instructions.ADDIU, sum, augend, addend)
+
+
+def SUBIU(difference, minuend, subtrahend):
+    """
+    args:
+        sum: the register where the addition result is stored.
+        augend: the left operand of the addition.
+        addend: the right operand of the addition.
+
+    function:
+        Performs basic addition.
+    """
+    return TacInstruction(instructions.SUBIU, difference, minuend, subtrahend)
+
+
+def MULIU(product, multiplicand, multiplier):
+    """
+    args:
+        sum: the register where the addition result is stored.
+        augend: the left operand of the addition.
+        addend: the right operand of the addition.
+
+    function:
+        Performs basic addition.
+    """
+    return TacInstruction(instructions.MULIU, product, multiplicand, multiplier)
+
+
+def DIVIU(quotient, dividend, divisor):
+    """
+    args:
+        sum: the register where the addition result is stored.
+        augend: the left operand of the addition.
+        addend: the right operand of the addition.
+
+    function:
+        Performs basic addition.
+    """
+    return TacInstruction(instructions.DIVIU, quotient, dividend, divisor)
+
+
+def ADDS(sum, augend, addend):
+    """
+    args:
+        sum: the register where the addition result is stored.
+        augend: the left operand of the addition.
+        addend: the right operand of the addition.
+
+    function:
+        Performs basic addition.
+    """
+    return TacInstruction(instructions.ADDS, sum, augend, addend)
+
+
+def SUBS(difference, minuend, subtrahend):
+    """
+    args:
+        sum: the register where the addition result is stored.
+        augend: the left operand of the addition.
+        addend: the right operand of the addition.
+
+    function:
+        Performs basic addition.
+    """
+    return TacInstruction(instructions.SUBS, difference, minuend, subtrahend)
+
+
+def MULS(product, multiplicand, multiplier):
+    """
+    args:
+        sum: the register where the addition result is stored.
+        augend: the left operand of the addition.
+        addend: the right operand of the addition.
+
+    function:
+        Performs basic addition.
+    """
+    return TacInstruction(instructions.MULS, product, multiplicand, multiplier)
+
+
+def DIVS(quotient, dividend, divisor):
+    """
+    args:
+        sum: the register where the addition result is stored.
+        augend: the left operand of the addition.
+        addend: the right operand of the addition.
+
+    function:
+        Performs basic addition.
+    """
+    return TacInstruction(instructions.DIVS, quotient, dividend, divisor)
+
+
+def NEGS(result, operand):
+    """
+    args:
+        sum: the register where the addition result is stored.
+        augend: the left operand of the addition.
+        addend: the right operand of the addition.
+
+    function:
+        Performs basic addition.
+    """
+    return TacInstruction(instructions.NEGS, result, operand)
 
 #
 # LOGICAL
