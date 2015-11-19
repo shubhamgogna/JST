@@ -1,0 +1,15 @@
+digraph {
+	"FileAST\n00012" -> {"FunctionDefinition: int main\n00011"};
+	"FunctionDefinition: int main\n00011" -> {"CompoundStatement\n00010"};
+	"CompoundStatement\n00010" -> {"Declaration: int i\n00000", "Declaration: int a\n00001", "Declaration: int b\n00002", "Assignment: ASSIGN\n00007", "Return\n00009"};
+	"Declaration: int i\n00000" -> {};
+	"Declaration: int a\n00001" -> {};
+	"Declaration: int b\n00002" -> {};
+	"Assignment: ASSIGN\n00007" -> {"SymbolNode: int_i\n00003", "BinaryOperator: PLUS\n00006"};
+	"SymbolNode: int_i\n00003" -> {};
+	"BinaryOperator: PLUS\n00006" -> {"SymbolNode: int_a\n00004", "SymbolNode: int_b\n00005"};
+	"SymbolNode: int_a\n00004" -> {};
+	"SymbolNode: int_b\n00005" -> {};
+	"Return\n00009" -> {"Constant: 0\n00008"};
+	"Constant: 0\n00008" -> {};
+}
