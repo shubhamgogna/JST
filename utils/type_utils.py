@@ -13,11 +13,9 @@
 # You should have received a copy of the GNU General Public License
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
-
 #
 # TODO: WARNING: NOTHING HAS BEEN DONE HERE TO HANDLE POINTER TYPES, WHICH WE MAY WANT TO DO.
 #
-import re
 
 # Valid Types
 VOID = 'void'
@@ -54,10 +52,6 @@ LONG_DOUBLE = 'long double'
 # Type Qualifiers
 CONST = 'const'
 VOLATILE = 'volatile'
-
-VALID_PRIMITIVE_TYPES = {'void': 0, 'char': 8, 'short': 16, 'short int': 16, 'int': 16, 'long': 16, 'long int': 32,
-    'long long': 64, 'long long int': 64, 'float': 32, 'double': 64, 'long double': 80  # Depends on platform
-    }
 
 
 class TypeAttributes(object):
@@ -115,15 +109,15 @@ INTEGRAL_TYPES = tuple(filter(
 FLOATING_POINT_TYPES = tuple(filter(
     lambda t: t is not None, [key if value.floating_point else None for key, value in PRIMITIVE_TYPE_DEFINITIONS.items()]))
 
-CAST_UP = "CAST_RESULT_UP"
-CAST_DOWN = 'CAST_RESULT_DOWN'
+CAST_RIGHT_UP = 'CAST_RESULT_UP'
+CAST_RIGHT_DOWN = 'CAST_RESULT_DOWN'
 CAST_UNAFFECTED = 'CAST_RESULT_UNAFFECTED'
 
 
 def is_valid_type(declaration):
     type_str = declaration.get_type_str()
 
-    if type_str in VALID_PRIMITIVE_TYPES:
+    if type_str in PRIMITIVE_TYPE_DEFINITIONS:
         if type_str in INTEGRAL_TYPES:
             if declaration.type_sign is None:
                 # Default is a signed value
@@ -137,7 +131,6 @@ def is_valid_type(declaration):
 
 
 def get_bit_size(type_specifier_str):
-
     type_attribute = PRIMITIVE_TYPE_DEFINITIONS.get(type_specifier_str, None)
 
     if type_attribute:
@@ -150,7 +143,7 @@ def is_primitive_type(type_specifier_str):
     return type_specifier_str in PRIMITIVE_TYPE_DEFINITIONS.keys()
 
 
-def is_integral_type(type_specifier_str:str):
+def is_integral_type(type_specifier_str):
     return type_specifier_str in INTEGRAL_TYPES
 
 
@@ -162,32 +155,53 @@ def is_pointer_type(type_specifier_str):
     return type_specifier_str.endswith('*')
 
 
-def get_promoted_type(one_type, other_type):
-    if one_type == other_type:
-        return one_type, CAST_UNAFFECTED
-    elif is_integral_type(one_type) and is_integral_type(other_type) or \
-         is_floating_point_type(one_type) and is_floating_point_type(other_type):
+def get_promoted_type(left_type, right_type):
+    if left_type == right_type:
+        return CAST_UNAFFECTED
+    elif (is_integral_type(left_type) and is_integral_type(right_type)) or \
+            (is_floating_point_type(left_type) and is_floating_point_type(right_type)):
 
-        return one_type if PRIMITIVE_TYPE_DEFINITIONS[one_type].rank > PRIMITIVE_TYPE_DEFINITIONS[other_type].rank else other_type, CAST_UP
-    elif is_floating_point_type(one_type):
-        return one_type, CAST_UP
+        if PRIMITIVE_TYPE_DEFINITIONS[left_type].rank > PRIMITIVE_TYPE_DEFINITIONS[right_type].rank:
+            return CAST_RIGHT_UP
+        else:
+            # Equal or lesser rank
+            return CAST_RIGHT_DOWN
+    elif is_floating_point_type(left_type):
+        # Floating assigned integral
+        return CAST_RIGHT_UP
     else:
-        return other_type, CAST_UP
+        # Integral assigned floating
+        return CAST_RIGHT_DOWN
+
+
+# def get_promoted_type(left_type, right_type):
+#     if one_type == other_type:
+#         return one_type, CAST_UNAFFECTED
+#     elif is_integral_type(one_type) and is_integral_type(other_type) or \
+#          is_floating_point_type(one_type) and is_floating_point_type(other_type):
+#
+#         return one_type if PRIMITIVE_TYPE_DEFINITIONS[one_type].rank > PRIMITIVE_TYPE_DEFINITIONS[other_type].rank else other_type, CAST_UP
+#     elif is_floating_point_type(one_type):
+#         return one_type, CAST_UP
+#     else:
+#         return other_type, CAST_UP
 
 
 def cast_as_required_type(required_type, given_type):
     if required_type == given_type or required_type > given_type:
         return CAST_UNAFFECTED
     elif required_type < given_type:
-        # TODO: in 3AC we will have to smash the given value down ot fit the required type
+        # TODO: in 3AC we will have to smash the given value down to fit the required type
         # example, if 256 needs to be stored as a char, return 0
         #             257     ""                          ""   1
         # the process is likely as simple as just keeping the lower bits of the given value (at least for ints, not
         # sure about floats)
         return CAST_DOWN
 
+
 def type_size_in_bits(type_str):
     return PRIMITIVE_TYPE_DEFINITIONS[type_str].bit_size
+
 
 def type_size_in_bytes(type_str):
     return type_size_in_bits(type_str) / 4

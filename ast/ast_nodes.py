@@ -149,6 +149,13 @@ class BinaryOperator(BaseAstNode):
         lvalue_type = self.lvalue.get_resulting_type()
         rvalue_type = self.rvalue.get_resulting_type()
 
+        # TODO (Shubham) We may just need to make a table according to operations
+        # For example:
+        #   Comparison operators always result in an integral type even though operands can be non-integrals
+        #   Shift operators require an int on the left (right can be downcast to an int), so they result in an 'int'
+        #   +/-/*/div operations result in a highest precision type
+        #   Mod operation always has to return an integral type
+        #   Bitwise AND, OR, and XOR require integers and have to return an integral type
         resulting_type, cast_result = type_utils.get_promoted_type(lvalue_type, rvalue_type)
 
         return resulting_type
