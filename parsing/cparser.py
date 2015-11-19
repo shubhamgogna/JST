@@ -1409,18 +1409,17 @@ class JSTParser(object):
             tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
             raise CompileError('The assignment operator cannot be applied to functions.', tup[0], tup[1], tup[2])
 
-        if isinstance(t[1], ArrayReference) and len(t[1].symbol.array_dims) != len(t[1].subscripts):
-            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
-            raise CompileError('Symbol has {} dimensions, but only {} were provided.'.
-                               format(len(t[1].symbol.array_dims), len(t[1].subscripts)), tup[0], tup[1], tup[2])
+        if isinstance(t[1], ArrayReference):
+            valid, message = t[1].check_subscripts()
+            if not valid:
+                tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+                raise CompileError(message, tup[0], tup[1], tup[2])
 
-        if isinstance(t[3], ArrayReference) and len(t[3].symbol.array_dims) != len(t[3].subscripts):
-            tup = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
-            raise CompileError('Symbol has {} dimensions, but only {} were provided.'.
-                               format(len(t[3].symbol.array_dims), len(t[3].subscripts)), tup[0], tup[1], tup[2])
-
-        print(t[1], type(t[1]))
-        print(t[3], type(t[3]))
+        if isinstance(t[3], ArrayReference):
+            valid, message = t[3].check_subscripts()
+            if not valid:
+                tup = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
+                raise CompileError(message, tup[0], tup[1], tup[2])
 
         error_token, message = AssignmentUtil.can_assign(t[1], t[3])
         if error_token is None:

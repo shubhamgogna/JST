@@ -73,6 +73,12 @@ class ArrayReference(BaseAstNode):
     def immutable(self):
         return self.symbol.immutable
 
+    def check_subscripts(self):
+        if len(self.symbol.array_dims) != len(self.subscripts):
+            return False, 'Symbol has {} dimensions, but only {} were provided.'\
+                .format(len(self.symbol.array_dims), len(self.subscripts))
+        return True, None
+
     def name(self, arg=None):
         return super(ArrayReference, self).name(arg=self.symbol.identifier)
 
