@@ -1,8 +1,17 @@
-##
-# These classes are AUTO-GENERATED!
-# Most of the boilerplate should be written for you, so you should carefully handwrite methods
-# that are unique or need special logic for overloading.
-##
+# This file is part of JST.
+#
+# JST is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# JST is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
 from ast.base_ast_node import BaseAstNode
 from utils import type_utils
@@ -10,7 +19,7 @@ from utils import operator_utils
 
 
 ##
-# This is a nested declaration of an array with the given type
+# Node for the declaration of an array using the symbol, dimensions, and qualifiers.
 ##
 class ArrayDeclaration(BaseAstNode):
     """
@@ -43,7 +52,7 @@ class ArrayDeclaration(BaseAstNode):
 
 
 ##
-# REVISIT ME - Might need to switch attrs to children depending on how we handle arrays
+# Node for referencing an array through subscripts.
 ##
 class ArrayReference(BaseAstNode):
     """
@@ -217,14 +226,17 @@ class Declaration(BaseAstNode):
     Output:   Probably no direct output in the form of temporary registers, but the memory assigned for the
               thing should be recorded somewhere.
     """
-    def __init__(self, symbol, identifier, qualifiers=None, storage=None, funcspec=None, initialization_value=None, **kwargs):
+    def __init__(self, symbol, funcspec=None, initialization_value=None, **kwargs):
         super(Declaration, self).__init__(**kwargs)
 
         self.symbol = symbol
+
+        # TODO (Shubham) All information from identifier to funcspec seems to be unused. Remove?
         self.identifier = symbol.identifier
         self.qualifiers = symbol.type_qualifiers
         self.storage = symbol.storage_classes
         self.funcspec = funcspec
+        # TODO (Shubham) All information from identifier to funcspec seems to be unused. Remove?
 
         self.initialization_value = initialization_value
 
@@ -247,7 +259,7 @@ class Declaration(BaseAstNode):
 
 
 ##
-# This is the top of the AST
+# Root node of the AST.
 ##
 class FileAST(BaseAstNode):
     """
@@ -403,7 +415,7 @@ class InitializerList(BaseAstNode):
 
 
 ##
-# This type of node handles all loops: for, while, and do...while.
+# Node for all forms of structured iteration (for, while, and do...while).
 ##
 class IterationNode(BaseAstNode):
     """
@@ -414,7 +426,7 @@ class IterationNode(BaseAstNode):
     """
 
     def __init__(self, is_pre_test_loop, initialization_expression, stop_condition_expression, increment_expression,
-                 body_statments=None, **kwargs):
+                 body_statements=None, **kwargs):
         super(IterationNode, self).__init__(**kwargs)
 
         self.is_pre_test_loop = is_pre_test_loop
@@ -422,7 +434,7 @@ class IterationNode(BaseAstNode):
         self.initialization_expression = initialization_expression
         self.stop_condition_expression = stop_condition_expression
         self.increment_expression = increment_expression
-        self.body_statements = body_statments
+        self.body_statements = body_statements
 
     @property
     def children(self):
@@ -439,7 +451,6 @@ class IterationNode(BaseAstNode):
 
     def to_3ac(self, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
-
 
 
 class Label(BaseAstNode):

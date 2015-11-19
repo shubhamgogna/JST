@@ -13,15 +13,13 @@
 # You should have received a copy of the GNU General Public License
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
+from ticket_counting.ticket_counters import UUID_TICKETS
+
 
 # The class for the base AST node
 #
 # This class will be inherited from for other types of AST nodes. Should hold all common functionality.
 #
-
-from ticket_counting.ticket_counters import UUID_TICKETS
-
-
 class BaseAstNode:
     # Initialize node with desired info
     #
@@ -29,16 +27,17 @@ class BaseAstNode:
     # @param line_range A tuple of start line and end line for where this node applies
     # @param uuid A unique identifier number from a TicketCounter
     #
-    def __init__(self, uuid=None, **kwargs):
+    def __init__(self, uuid=None, linerange=None, **kwargs):
         # Initialize the uuid
         self.uuid = uuid if uuid else UUID_TICKETS.get()
+        self.linerange = linerange
 
     # Define str function to concisely summarize a node with its uuid, name/type, and relevant info
     def __str__(self):
         return '{}_{}'.format(self.uuid, type(self).__name__)
 
     def name(self, arg=None):
-        extra = ': ' + str(arg) if arg else ''
+        extra = ('\\n' + str(arg)) if arg else ''
         name_str = '"{}{}\\n{}"'.format(type(self).__name__, extra, self.uuid)
 
         return name_str
