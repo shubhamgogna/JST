@@ -58,6 +58,8 @@ class TestParser(unittest.TestCase):
         symbol_table_clone = self.compiler_state.cloned_tables[0]
 
         self.check_correct_element(symbol_table_clone, 'i', 2, 'int i')
+        symbol, _ = symbol_table_clone.find('i')
+        self.assertEqual(0, symbol.activation_frame_offset)
 
     def test_declare_and_assign_primitive_variable(self):
         data = """
@@ -89,6 +91,15 @@ class TestParser(unittest.TestCase):
         self.check_correct_element(symbol_table_clone, 'i', 2, 'int i')
         self.check_correct_element(symbol_table_clone, 'j', 2, 'int j')
         self.check_correct_element(symbol_table_clone, 'k', 2, 'int k')
+
+        i_symbol, _ = symbol_table_clone.find('i')
+        j_symbol, _ = symbol_table_clone.find('j')
+        k_symbol, _ = symbol_table_clone.find('k')
+
+        self.assertEqual(0, i_symbol.activation_frame_offset)
+        self.assertEqual(4, j_symbol.activation_frame_offset)
+        self.assertEqual(8, k_symbol.activation_frame_offset)
+
 
     def test_modify_primitive_variable(self):
         self.enable_parser_debugging()
@@ -397,10 +408,11 @@ class TestParser(unittest.TestCase):
         symbol_table_clone_inner = self.compiler_state.cloned_tables[0]
         symbol_table_clone_outer = self.compiler_state.cloned_tables[1]
 
-        print(symbol_table_clone_outer)
-
         self.check_correct_element(symbol_table_clone_inner, 'do_stuff', 0, 'int do_stuff(int c)')
         self.check_correct_element(symbol_table_clone_outer, 'c', 1, 'int c')
+
+        symbol, _ = symbol_table_clone_outer.find('c')
+        self.assertEqual(0, symbol.activation_frame_offset)
 
     def test_declare_string_literal_char_star(self):
         self.enable_parser_debugging()
@@ -737,6 +749,48 @@ class TestParser(unittest.TestCase):
         # print(x)
         # print(x.signature[0].pointer_modifiers)
         self.check_correct_element(symbol_table,'do_stuff', 0, 'void do_stuff(int* array)')
+
+    def test_super_memory_allocation(self):
+        data = """
+            char g_char;
+            int g_int;
+            float g_float;
+
+            void do_stuff(char a, int b) {
+                int c;
+                float d;
+
+                !!C
+                return a + b;
+            }
+
+            int main()
+            {
+                int i = do_stuff('a', 2);
+                return 0;
+            }
+            !!C
+        """
+
+        self.compiler_state.parse(data)
+
+        function_symbol_table, global_symbol_table = self.compiler_state.cloned_tables[0:2]
+
+        g_char, _ = global_symbol_table.find('g_char')
+        self.assertEqual(0x10010000, g_char.global_memory_location)
+        g_int, _ = global_symbol_table.find('g_int')
+        self.assertEqual(0x10010004, g_int.global_memory_location)
+        g_float, _ = global_symbol_table.find('g_float')
+        self.assertEqual(0x10010008, g_float.global_memory_location)
+
+        f_a, _ = function_symbol_table.find('a')
+        self.assertEqual(0, f_a.activation_frame_offset)
+        f_b, _ = function_symbol_table.find('b')
+        self.assertEqual(1, f_b.activation_frame_offset)
+        f_c, _ = function_symbol_table.find('c')
+        self.assertEqual(5, f_c.activation_frame_offset)
+        f_d, _ = function_symbol_table.find('d')
+        self.assertEqual(9, f_d.activation_frame_offset)
 
     def enable_parser_debugging(self):
         if self.debug:

@@ -117,6 +117,19 @@ class TestAst(unittest.TestCase):
         ast = self.compiler_state.parse(data)
         print(ast.to_graph_viz_str())
 
+    def test_post_plus_plus(self):
+        data = """
+            int main()
+            {
+                int i = 0;
+                int b = 0;
+                b = i++;
+                return 0;
+            }
+            """
+        ast = self.compiler_state.parse(data)
+        print(ast.to_graph_viz_str())
+
     def test_lone_if(self):
         data = """
             int main()

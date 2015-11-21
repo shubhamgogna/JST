@@ -22,7 +22,6 @@ import compiler
 from exceptions.compile_error import CompileError
 from symbol_table.scope import Scope
 from symbol_table.symbol import Symbol, VariableSymbol, FunctionSymbol, TypeDeclaration
-from utils.assignment_util import AssignmentUtil
 from scanning.clexer import JSTLexer
 from ast.ast_nodes import *
 
@@ -1421,11 +1420,11 @@ class JSTParser(object):
                 tup = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
                 raise CompileError(message, tup[0], tup[1], tup[2])
 
-        error_token, message = AssignmentUtil.can_assign(t[1], t[3])
-        if error_token is None:
+        cast_result, message = type_utils.can_assign(t[1].get_resulting_type(), t[3].get_resulting_type())
+        if cast_result != type_utils.INCOMPATIBLE_TYPES:
             t[0] = Assignment(t[2], t[1], t[3])
         else:
-            tup = self.compiler_state.get_line_col_source(t.lineno(error_token), t.lexpos(error_token))
+            tup = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
             raise CompileError(message, tup[0], tup[1], tup[2])
 
     #

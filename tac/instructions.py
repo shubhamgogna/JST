@@ -60,6 +60,9 @@ LE = 'LE'
 # Assignment
 ASSIGN = 'ASSIGN'
 
+# Logical
+# Apparently there are not logical operators in MIPS...
+
 # # Control Flow
 LABEL = 'LABEL'
 BR = 'BR'
@@ -86,3 +89,12 @@ ADDR = 'ADDR'
 GLOBAL = 'GLOBAL'
 STRING = 'STRING'
 COMMENT = 'COMMENT'
+
+# Library
+PRNTI = 'PRNTI'
+PRNTF = 'PRNTF'
+PRNTS = 'PRNTS'
+
+READI = 'READI'
+READF = 'READF'
+READS = 'READS'

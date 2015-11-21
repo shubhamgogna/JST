@@ -12,15 +12,23 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
+import math
 
 from symbol_table.scope import Scope
-from symbol_table.symbol import Symbol
+from symbol_table.symbol import Symbol, VariableSymbol
+from utils import type_utils
 
+MIPS_DATA_MEMORY_BASE = 0x10010000  # this is where MARS starts the global data memory
+                                    # we may need to watch out for memory things like .asciiz grab,
+                                    # so perhaps we should start somewhere else?
 
 class SymbolTable(object):
     # Initializes the symbol table
     def __init__(self):
         self.table = []
+
+        self.next_data_memory_location = MIPS_DATA_MEMORY_BASE
+        self.next_activation_frame_offset = 0  # this will increment by the type size
 
     # Pushes a scope onto the table.
     # 'scope' Scope to push. Leave as default to push empty Scope.
@@ -34,6 +42,9 @@ class SymbolTable(object):
 
     # Pops the top-most Scope from the table and returns it.
     def pop(self):
+        if len(self.table) == 1:  # TODO: is 1 the first scope of a function?
+            self.next_activation_frame_offset = 0
+
         return self.table.pop()
 
     # Inserts a symbol into the top-most Scope.
@@ -44,6 +55,14 @@ class SymbolTable(object):
             raise TypeError("'symbol' is not an instance of Symbol.")
         elif not self.table:
             raise Exception('Table has no scopes available to insert into. Offending symbol: {}'.format(symbol))
+
+        if isinstance(symbol, VariableSymbol):
+            if len(self.table) == 1:
+                symbol.global_memory_location = self.next_data_memory_location
+                self.next_data_memory_location += max(symbol.size_in_bytes(), (math.ceil(symbol.size_in_bytes() / 4) * 4))
+            else:
+                symbol.activation_frame_offset = self.next_activation_frame_offset
+                self.next_activation_frame_offset += symbol.size_in_bytes()
 
         shadowed_symbols = []
         for scope in self.table:

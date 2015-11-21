@@ -65,3 +65,9 @@ class TestTypeUtils(unittest.TestCase):
                          type_utils.get_promoted_type(type_utils.CHAR, type_utils.UNSIGNED_CHAR))
         self.assertEqual((type_utils.LONG, type_utils.CAST_UNAFFECTED),
                          type_utils.get_promoted_type(type_utils.LONG, type_utils.LONG))
+
+    def test_type_size_in_bytes(self):
+        self.assertEqual(1, type_utils.type_size_in_bytes('char'))
+        self.assertEqual(4, type_utils.type_size_in_bytes('int'))
+        self.assertEqual(4, type_utils.type_size_in_bytes('float'))
+        self.assertEqual(8, type_utils.type_size_in_bytes('double'))

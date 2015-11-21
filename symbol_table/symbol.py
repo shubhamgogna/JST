@@ -26,6 +26,9 @@ class Symbol(object):
         self.lineno = lineno
         self.column = column
 
+        self.global_memory_location = None
+        self.activation_frame_offset = None
+
         self.finalized = False
 
     def clone(self):
@@ -42,7 +45,6 @@ class VariableSymbol(Symbol):
         self.storage_classes = set()
         # In GCC, qualifiers are idempotent
         self.type_qualifiers = set()
-        # List allows for things like 'long long' and 'long double'
         self.type_specifiers = ''
 
     def finalize(self):
@@ -101,6 +103,16 @@ class VariableSymbol(Symbol):
     def type_str(self):
         array_suffix = '[' + ']['.join([str(dimension) for dimension in self.array_dims]) + ']' if len(self.array_dims) > 0 else ''
         return '{}{}{}'.format(self.type_specifiers, '*' * len(self.pointer_modifiers), array_suffix)
+
+    def size_in_bytes(self):
+        multiplier = 1
+        for dim in self.array_dims:
+            multiplier *= dim
+
+        if len(self.pointer_modifiers) > 0:
+            return multiplier * 8  # 8 bytes is size of pointer type in C for non-embedded systems
+        else:
+            return multiplier * type_utils.type_size_in_bytes(self.type_specifiers)
 
     def __str__(self):
         if self.identifier == '':  # a case like when the symbol is part of a function signature
@@ -167,11 +179,11 @@ class FunctionSymbol(Symbol):
         for parameter, argument in itertools.zip_longest(self.named_parameters, argument_list):
 
             if isinstance(argument, SymbolNode):
-                error_side, message = utils.assignment_util.AssignmentUtil.can_assign(parameter, argument.symbol)
+                cast_result, message = type_utils.can_assign(parameter.get_resulting_type(), argument.symbol.get_resulting_type())
             else:
-                error_side, message = utils.assignment_util.AssignmentUtil.can_assign(parameter, argument)
+                cast_result, message = type_utils.can_assign(parameter.get_resulting_type(), argument.get_resulting_type())
 
-            if error_side is not None:
+            if cast_result == type_utils.INCOMPATIBLE_TYPES:
                 raise Exception(message)
 
         return True, None

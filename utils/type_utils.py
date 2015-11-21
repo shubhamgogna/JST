@@ -109,9 +109,12 @@ INTEGRAL_TYPES = tuple(filter(
 FLOATING_POINT_TYPES = tuple(filter(
     lambda t: t is not None, [key if value.floating_point else None for key, value in PRIMITIVE_TYPE_DEFINITIONS.items()]))
 
+CAST_LEFT_UP = 'CAST_LEFT_UP'
+CAST_LEFT_DOWN = 'CAST_LEFT_DOWN'
 CAST_RIGHT_UP = 'CAST_RESULT_UP'
 CAST_RIGHT_DOWN = 'CAST_RESULT_DOWN'
 CAST_UNAFFECTED = 'CAST_RESULT_UNAFFECTED'
+INCOMPATIBLE_TYPES = 'INCOMPATIBLE_TYPES'
 
 
 def is_valid_type(declaration):
@@ -155,36 +158,29 @@ def is_pointer_type(type_specifier_str):
     return type_specifier_str.endswith('*')
 
 
+def can_assign(left_type, right_type):
+    if types_are_compatible(left_type, right_type):
+        if left_type == right_type:
+            return CAST_UNAFFECTED, None
+        elif (is_primitive_type(left_type) and is_primitive_type(right_type)):
+            if PRIMITIVE_TYPE_DEFINITIONS[left_type].rank > PRIMITIVE_TYPE_DEFINITIONS[right_type].rank:
+                return CAST_RIGHT_UP, None
+            else:
+                return CAST_RIGHT_DOWN, None
+    else:
+        return INCOMPATIBLE_TYPES, "Unable to assign type {} to variable of type {}".format(right_type, left_type)
+
+
 def get_promoted_type(left_type, right_type):
     if left_type == right_type:
-        return CAST_UNAFFECTED
-    elif (is_integral_type(left_type) and is_integral_type(right_type)) or \
-            (is_floating_point_type(left_type) and is_floating_point_type(right_type)):
-
+        return left_type, CAST_UNAFFECTED
+    elif is_primitive_type(left_type) and is_primitive_type(right_type):
         if PRIMITIVE_TYPE_DEFINITIONS[left_type].rank > PRIMITIVE_TYPE_DEFINITIONS[right_type].rank:
-            return CAST_RIGHT_UP
+            return left_type, CAST_RIGHT_UP
         else:
-            # Equal or lesser rank
-            return CAST_RIGHT_DOWN
-    elif is_floating_point_type(left_type):
-        # Floating assigned integral
-        return CAST_RIGHT_UP
+            return right_type, CAST_LEFT_UP
     else:
-        # Integral assigned floating
-        return CAST_RIGHT_DOWN
-
-
-# def get_promoted_type(left_type, right_type):
-#     if one_type == other_type:
-#         return one_type, CAST_UNAFFECTED
-#     elif is_integral_type(one_type) and is_integral_type(other_type) or \
-#          is_floating_point_type(one_type) and is_floating_point_type(other_type):
-#
-#         return one_type if PRIMITIVE_TYPE_DEFINITIONS[one_type].rank > PRIMITIVE_TYPE_DEFINITIONS[other_type].rank else other_type, CAST_UP
-#     elif is_floating_point_type(one_type):
-#         return one_type, CAST_UP
-#     else:
-#         return other_type, CAST_UP
+        return None, INCOMPATIBLE_TYPES
 
 
 def cast_as_required_type(required_type, given_type):
@@ -196,12 +192,18 @@ def cast_as_required_type(required_type, given_type):
         #             257     ""                          ""   1
         # the process is likely as simple as just keeping the lower bits of the given value (at least for ints, not
         # sure about floats)
-        return CAST_DOWN
+        return CAST_RIGHT_DOWN
 
+
+def types_are_compatible(lhs_type, rhs_type):
+    if (is_primitive_type(lhs_type) and is_primitive_type(rhs_type)):  # TODO: add the logic for pointers and complex types
+        return True
+    else:
+        return False
 
 def type_size_in_bits(type_str):
     return PRIMITIVE_TYPE_DEFINITIONS[type_str].bit_size
 
 
 def type_size_in_bytes(type_str):
-    return type_size_in_bits(type_str) / 4
+    return type_size_in_bits(type_str) / 8

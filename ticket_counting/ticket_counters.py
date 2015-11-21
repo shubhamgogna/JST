@@ -37,9 +37,9 @@ class GenericTicketCounter(object):
             self.prefix = prefix + '_'
         self.next_value = 0
 
-    def get(self):
+    def get(self, count_by=1):
         ticket = '{prefix}{value:>05}'.format(prefix=self.prefix, value=self.next_value)
-        self.next_value += 1
+        self.next_value += count_by
         return ticket
 
 UUID_TICKETS = GenericTicketCounter()
