@@ -190,10 +190,12 @@ class Cast(BaseAstNode):
     def get_resulting_type(self):
         return self.to_type
 
+    def name(self):
+        return super(Cast, self).name(self.to_type)
+
     @property
     def children(self):
         children = []
-        children.append(self.to_type)
         children.append(self.expression)
         return tuple(children)
 

@@ -225,6 +225,11 @@ class TypeDeclaration():
         # None = sign not applicable
         self.type_sign = None
 
+    def add_all_from(self, other_type_declaration):
+        # TODO: error checking?
+        self.type_specifiers.extend(other_type_declaration.type_specifiers)
+        self.type_qualifiers.update(other_type_declaration.type_qualifiers)
+        self.storage_classes.update(other_type_declaration.storage_classes)
 
     def name_arg(self):
         joined = [self.type_sign if self.type_sign else '',

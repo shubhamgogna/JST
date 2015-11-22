@@ -289,6 +289,22 @@ class TestParser(unittest.TestCase):
 
         self.check_correct_element(symbol_table_clone, 'i', 2, 'int i')
 
+    def test_cast_in_binary_expression(self):
+        self.enable_parser_debugging()
+        data = """
+            int main()
+            {
+                int i = 5;
+                float f = -4.5;
+
+                i = (int) ((float) i + f);
+
+                return 0;
+            }
+            """
+        ast = self.compiler_state.parse(data)
+        print(ast.to_graph_viz_str())
+
     def test_declare_array(self):
         self.enable_parser_debugging()
         data = """

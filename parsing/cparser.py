@@ -636,17 +636,31 @@ class JSTParser(object):
         """specifier_qualifier_list : type_specifier specifier_qualifier_list"""
         self.output_production(t, production_message='specifier_qualifier_list -> type_specifier specifier_qualifier_list')
 
+        t[2].add_all_from(t[1])
+        t[0] = t[2]
+
     def p_specifier_qualifier_list_2(self, t):
         """specifier_qualifier_list : type_specifier"""
         self.output_production(t, production_message='specifier_qualifier_list -> type_specifier')
+
+        type_declaration = TypeDeclaration()
+        type_declaration.add_type_specifier(t[1])
+        t[0] = type_declaration
 
     def p_specifier_qualifier_list_3(self, t):
         """specifier_qualifier_list : type_qualifier specifier_qualifier_list"""
         self.output_production(t, production_message='specifier_qualifier_list -> type_qualifier specifier_qualifier_list')
 
+        t[2].add_all_from(t[1])
+        t[0] = t[2]
+
     def p_specifier_qualifier_list_4(self, t):
         """specifier_qualifier_list : type_qualifier"""
         self.output_production(t, production_message='specifier_qualifier_list -> type_qualifier')
+
+        type_declaration = TypeDeclaration()
+        type_declaration.add_type_qualifier(t[1])
+        t[0] = t[1]
 
     #
     # struct-declarator-list:
@@ -1032,7 +1046,10 @@ class JSTParser(object):
     def p_type_name_2(self, t):
         """type_name : specifier_qualifier_list"""
         self.output_production(t, production_message='type_name -> specifier_qualifier_list')
-        raise NotImplemented()
+
+        t[0] = t[1].get_type_str()
+
+
 
     #
     # abstract-declarator:
@@ -1535,7 +1552,9 @@ class JSTParser(object):
         cast_expression : LPAREN type_name RPAREN cast_expression
         """
         self.output_production(t, production_message='cast_expression -> LPAREN type_name RPAREN cast_expression')
-        raise NotImplemented('Type casting')
+
+        t[0] = Cast(to_type=t[2], expression=t[4])
+
 
     #
     # unary_expression:
