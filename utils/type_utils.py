@@ -162,7 +162,7 @@ def can_assign(left_type, right_type):
     if types_are_compatible(left_type, right_type):
         if left_type == right_type:
             return CAST_UNAFFECTED, None
-        elif (is_primitive_type(left_type) and is_primitive_type(right_type)):
+        elif is_primitive_type(left_type) and is_primitive_type(right_type):
             if PRIMITIVE_TYPE_DEFINITIONS[left_type].rank > PRIMITIVE_TYPE_DEFINITIONS[right_type].rank:
                 return CAST_RIGHT_UP, None
             else:

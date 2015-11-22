@@ -1423,12 +1423,13 @@ class JSTParser(object):
 
         if t[1].immutable:
             line, column, source_code = self.compiler_state.get_line_col_source(t.lineno(2), t.lexpos(2))
-            raise CompileError("Assignment to immutable types is not allowed" , line, column, source_code)
+            raise CompileError("Assignment to immutable types is not allowed", line, column, source_code)
 
         if isinstance(t[1], SymbolNode) and isinstance(t[1].symbol, FunctionSymbol):
             tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
             raise CompileError('The assignment operator cannot be applied to functions.', tup[0], tup[1], tup[2])
 
+        # TODO (Shubham) Why are we no longer checking subscripts if the right side is also an array ref?
         if isinstance(t[1], ArrayReference):
             valid, message = t[1].check_subscripts()
             if not valid:
