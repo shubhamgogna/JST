@@ -460,6 +460,26 @@ class IterationNode(BaseAstNode):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
 
+        # Note: this outline for 3ac is based on the outline harris gave us in class.
+
+        # pull 3 tickets and store
+
+        # gen 3ac code for initialization
+
+        # dump label 1
+
+        # gen 3ac code for stop condition
+
+            # on success jump label 3
+
+            # failure, jump label 2
+
+        # gen 3ac code for body_statements
+
+        # gen 3ac code for increment_expression
+
+        # jump label 1
+
 class Label(BaseAstNode):
     """
     Requires: Only its own name.
