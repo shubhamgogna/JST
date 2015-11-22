@@ -1429,12 +1429,18 @@ class JSTParser(object):
             tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
             raise CompileError('The assignment operator cannot be applied to functions.', tup[0], tup[1], tup[2])
 
-        # TODO (Shubham) Why are we no longer checking subscripts if the right side is also an array ref?
-        if isinstance(t[1], ArrayReference):
+        if isinstance(t[1], ArrayReference):  # LEFT side
             valid, message = t[1].check_subscripts()
             if not valid:
                 tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
                 raise CompileError(message, tup[0], tup[1], tup[2])
+
+        if isinstance(t[3], ArrayReference):  # RIGHT side
+            valid, message = t[3].check_subscripts()
+            if not valid:
+                tup = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
+                raise CompileError(message, tup[0], tup[1], tup[2])
+
 
         cast_result, message = type_utils.can_assign(t[1].get_resulting_type(), t[3].get_resulting_type())
         if cast_result != type_utils.INCOMPATIBLE_TYPES:
