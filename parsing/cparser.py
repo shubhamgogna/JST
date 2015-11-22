@@ -121,6 +121,7 @@ class JSTParser(object):
         self.output_production(t, production_message='translation_unit_opt -> translation_unit')
 
         t[0] = FileAST(external_declarations=t[1] if t[1] else [])
+        t[0].to_3ac()
 
     def p_translation_unit_1(self, t):
         """

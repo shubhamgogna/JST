@@ -21,7 +21,10 @@ from ticket_counting.ticket_counters import INT_REGISTER_TICKETS
 from ticket_counting.ticket_counters import FLOAT_REGISTER_TICKETS
 from tac.tac_generation import *
 
-# setup label counter so can be accessed throughout each node
+# setup register allocation table and address table to keep track of where vars are declared so can be accessed throughout each node
+register_allocation_table = {}
+address_table = {}
+
 
 ##
 # Node for the declaration of an array using the symbol, dimensions, and qualifiers.
@@ -307,10 +310,15 @@ class Declaration(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+        # raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
+        # TODO:
         # make space in memory for variable
+        output = []
+        output.append(SUBIU('TopStack', 'TopStack', 'amount'))
+        address_table[self.identifier] = 'TopStack'
 
+        return output
 ##
 # Root node of the AST.
 ##
@@ -767,5 +775,7 @@ class Constant(BaseAstNode):
         # load constant into register and return register
         reg = INT_REGISTER_TICKETS.get()
         output.append(ADDIU(reg, self.value, 0))
+
+        register_allocation_table[reg] = self.value
 
         return {'3ac': output, 'register': reg}
