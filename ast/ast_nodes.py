@@ -143,15 +143,34 @@ class Assignment(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+        # raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+
+        output = []
 
         # get memory address of lvalue by calling to3ac on lvalue
+        left = self.lvalue.to_3ac()
+        lval = left['register']
+        # output.append(left['3ac'])
+        # no 3ac was generated for this
 
         # get memory address of rvalue by calling to3ac on rvalue
+        right = self.rvalue.to_3ac()
+        rval = right['register']
+        # output.append(right['3ac'])
+        # no 3ac was generated for this
 
-        # load rvalue into register
+        # TODO: Fix this??
+        # # load rvalue into register - does this need to happen or not?
+        # is there a 3ac command for this?
+        # value = register_allocation_table[rval]
 
+        # TODO: Fix this??
         # call 3ac instruction to load value of rval's reg to lval's memory location
+        # Note: not sure how this assign thing is supposed to be used....
+        #       right now both are registers, should the rvalue be the actual value? I don't think so but not sure
+        output.append(ASSIGN(rval, lval, rval))
+
+        return output
 
 
 # TODO (Shubham) The return type needs to be explicitly stated here.
@@ -196,10 +215,14 @@ class BinaryOperator(BaseAstNode):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
         # get memory address of lvalue by calling to3ac on lvalue
+        left = self.lvalue.to_3ac()
+        lval = left['register']
 
         # load lvalue into register
 
         # get memory address of rvalue by calling to3ac on rvalue
+        right = self.rvalue.to_3ac()
+        rval = right['register']
 
         # load rvalue into register
 
@@ -685,9 +708,15 @@ class SymbolNode(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+        # raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
         # pass back memory location of variable
+        output = []
+
+        reg = address_table[self.symbol.identifier]
+
+        return {'register': reg}
+
 
 class UnaryOperator(BaseAstNode):
     """

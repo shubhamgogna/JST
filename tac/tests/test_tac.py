@@ -55,7 +55,8 @@ class TestTac(unittest.TestCase):
         data = """
             int main()
             {
-                int i = 0;
+                int i;
+                i = 0;
                 return 0;
             }
             """
