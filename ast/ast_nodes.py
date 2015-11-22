@@ -13,6 +13,8 @@
 # You should have received a copy of the GNU General Public License
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
+import math
+
 from ast.base_ast_node import BaseAstNode
 from utils import type_utils
 from utils import operator_utils
@@ -21,9 +23,9 @@ from ticket_counting.ticket_counters import INT_REGISTER_TICKETS
 from ticket_counting.ticket_counters import FLOAT_REGISTER_TICKETS
 from tac.tac_generation import *
 
-# setup register allocation table and address table to keep track of where vars are declared so can be accessed throughout each node
+# Setup register allocation table and address table to keep track of where vars
+# are declared so can be accessed throughout each node.
 register_allocation_table = {}
-address_table = {}
 
 
 ##
@@ -59,6 +61,7 @@ class ArrayDeclaration(BaseAstNode):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
     # add array variable to memory
+
 
 ##
 # Node for referencing an array through subscripts.
@@ -305,7 +308,7 @@ class Cast(BaseAstNode):
     def get_resulting_type(self):
         return self.to_type
 
-    def name(self):
+    def name(self, arg=None):
         return super(Cast, self).name(self.to_type)
 
     @property
@@ -316,10 +319,7 @@ class Cast(BaseAstNode):
         children.append(self.expression)
         return tuple(children)
 
-
     def to_3ac(self, include_source=False):
-        # raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
-
         output = []
 
         # get correct casted value
@@ -367,20 +367,16 @@ class CompoundStatement(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        # raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
-
         output = []
 
         # gen 3ac for declaration_list
         if self.declaration_list is not None:
             for item in self.declaration_list:
                 output.extend(item.to_3ac())
-                # print(output)
 
         # gen 3ac for statement_list
         for item in self.statement_list:
             output.extend(item.to_3ac())
-            # print(output)
 
         return output
 
@@ -391,7 +387,7 @@ class Declaration(BaseAstNode):
     Output:   Probably no direct output in the form of temporary registers, but the memory assigned for the
               thing should be recorded somewhere.
     """
-    def __init__(self, symbol, funcspec=None, initialization_value=None, **kwargs):
+    def __init__(self, symbol, initialization_value=None, **kwargs):
         super(Declaration, self).__init__(**kwargs)
 
         self.symbol = symbol
@@ -412,10 +408,9 @@ class Declaration(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        byte_size = int(self.symbol.size_in_bytes())
+        # Integers and chars should take up 1 word (4 bytes)
+        byte_size = int(math.ceil(self.symbol.size_in_bytes() / 4))
         output = [SUBIU('TopStack', 'TopStack', byte_size)]
-        address_table[self.symbol.identifier] = 'TopStack'      # TODO (Shubham) Will this handle shadowing correctly?
-
         return output
 
 
@@ -839,10 +834,10 @@ class SymbolNode(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        # Pass back memory location of variable
-        reg = address_table[self.symbol.identifier]
-        # TODO (Shubham) Symbol has some values stored for address. What is the purpose of address table?
-        return {'register': 'TopStack-TODO'}
+        if self.symbol.global_memory_location:
+            return {'register': 'Global_{}'.format(self.symbol.global_memory_location)}
+        else:
+            return {'register': 'Frame_{}'.format(self.symbol.activation_frame_offset)}
 
 
 class UnaryOperator(BaseAstNode):

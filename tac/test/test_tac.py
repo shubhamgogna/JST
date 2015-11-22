@@ -50,6 +50,21 @@ class TestTac(unittest.TestCase):
         ast = self.compiler_state.parse(data)
         # print(ast.to_graph_viz_str())
 
+    def test_declarations(self):
+        data = """
+            int main()
+            {
+                char c;
+                short s;
+                int i;
+                long long l;
+
+                return 0;
+            }
+            """
+        ast = self.compiler_state.parse(data)
+        # print(ast.to_graph_viz_str())
+
     def test_simple_assignment(self):
         data = """
             int main()

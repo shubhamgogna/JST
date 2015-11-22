@@ -66,7 +66,7 @@ class SymbolTable(object):
             raise Exception('Table has no scopes available to insert into. Offending symbol: {}'.format(symbol))
 
         if isinstance(symbol, VariableSymbol):
-            required_byte_size = max(symbol.size_in_bytes(), (math.ceil(symbol.size_in_bytes() / 4) * 4))
+            required_byte_size = math.ceil(symbol.size_in_bytes() / 4) * 4
             if len(self.table) == 1:
                 symbol.global_memory_location = self.next_data_memory_location
                 self.next_data_memory_location += required_byte_size
