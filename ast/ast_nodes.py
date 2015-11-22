@@ -311,9 +311,11 @@ class Cast(BaseAstNode):
     @property
     def children(self):
         children = []
-        children.append(self.to_type)
+        # since to_type is like 'int' its an attribute, not a child
+        # children.append(self.to_type)
         children.append(self.expression)
         return tuple(children)
+
 
     def to_3ac(self, include_source=False):
         # raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
@@ -322,9 +324,9 @@ class Cast(BaseAstNode):
 
         # get correct casted value
         if self.to_type == 'int':
-            value = int(self.expression)
+            value = int(self.expression.value)
         if self.to_type == 'float':
-            value = float(self.expression)
+            value = float(self.expression.value)
         if self.to_type == 'char':
             # value = char(self.expression)
             raise(NotImplementedError('Please implement char casting in p_cast_expressoin_2'))

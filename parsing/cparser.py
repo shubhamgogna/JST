@@ -641,6 +641,9 @@ class JSTParser(object):
         """specifier_qualifier_list : type_specifier"""
         self.output_production(t, production_message='specifier_qualifier_list -> type_specifier')
 
+        #TODO: might need to change this
+        t[0] = t[1]
+
     def p_specifier_qualifier_list_3(self, t):
         """specifier_qualifier_list : type_qualifier specifier_qualifier_list"""
         self.output_production(t, production_message='specifier_qualifier_list -> type_qualifier specifier_qualifier_list')
@@ -1033,7 +1036,9 @@ class JSTParser(object):
     def p_type_name_2(self, t):
         """type_name : specifier_qualifier_list"""
         self.output_production(t, production_message='type_name -> specifier_qualifier_list')
-        raise NotImplemented()
+        # raise NotImplemented()
+        # TODO: might need to change this....
+        t[0] = t[1]
 
     #
     # abstract-declarator:
@@ -1398,6 +1403,7 @@ class JSTParser(object):
 
         t[0] = t[1]
 
+
     def p_assignment_expression_2(self, t):
         """
         assignment_expression : unary_expression assignment_operator assignment_expression
@@ -1427,6 +1433,9 @@ class JSTParser(object):
         else:
             tup = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
             raise CompileError(message, tup[0], tup[1], tup[2])
+
+        print(t[3],'\n\n\n\n\n\n\n')
+
 
     #
     # assignment_operator:
@@ -1538,7 +1547,11 @@ class JSTParser(object):
         cast_expression : LPAREN type_name RPAREN cast_expression
         """
         self.output_production(t, production_message='cast_expression -> LPAREN type_name RPAREN cast_expression')
-        raise NotImplemented('Type casting')
+        # raise NotImplemented('Type casting')
+
+        # TODO: might need to change this
+        value = t[4].value
+        t[0] = Cast(t[2],value)
 
     #
     # unary_expression:

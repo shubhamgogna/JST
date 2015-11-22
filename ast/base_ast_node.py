@@ -64,9 +64,9 @@ class BaseAstNode:
     # Define method for getting a graphViz ready string
     def to_graph_viz_str(self):
         # print(self.name())
-        for child in self.children:
-            if not isinstance(child, BaseAstNode):
-                print(self.name(), child)
+        # for child in self.children:
+        #     if not isinstance(child, BaseAstNode):
+        #         print(self.name(), child)
         #
         # for child in self.children:
         #     print(self.name(), 'child', child)
