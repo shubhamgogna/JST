@@ -48,7 +48,7 @@ class TestTac(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        print(ast.to_graph_viz_str())
+        # print(ast.to_graph_viz_str())
 
 
     def test_simple_assignment(self):
@@ -60,7 +60,7 @@ class TestTac(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        print(ast.to_graph_viz_str())
+        # print(ast.to_graph_viz_str())
 
     def test_constant_expression(self):
         data = """
@@ -72,7 +72,7 @@ class TestTac(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        print(ast.to_graph_viz_str())
+        # print(ast.to_graph_viz_str())
 
     def test_explicit_cast(self):
         data = """
@@ -83,7 +83,7 @@ class TestTac(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        print(ast.to_graph_viz_str())
+        # print(ast.to_graph_viz_str())
 
 
     def test_if_elif_else(self):
@@ -106,7 +106,7 @@ class TestTac(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        print(ast.to_graph_viz_str())
+        # print(ast.to_graph_viz_str())
 
     def test_while_loop(self):
         data = """
@@ -117,7 +117,7 @@ class TestTac(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        print(ast.to_graph_viz_str())
+        # print(ast.to_graph_viz_str())
 
     def test_array_access(self):
         data = """
@@ -129,7 +129,7 @@ class TestTac(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        print(ast.to_graph_viz_str())
+        # print(ast.to_graph_viz_str())
 
     def test_array_initializers(self):
         data = """
@@ -140,7 +140,7 @@ class TestTac(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        print(ast.to_graph_viz_str())
+        # print(ast.to_graph_viz_str())
 
     def test_function_with_param(self):
         data = """
@@ -158,7 +158,7 @@ class TestTac(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        print(ast.to_graph_viz_str())
+        # print(ast.to_graph_viz_str())
 
     def test_for_loop(self):
         data = """
@@ -173,7 +173,7 @@ class TestTac(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        print(ast.to_graph_viz_str())
+        # print(ast.to_graph_viz_str())
 
     def test_do_while_loop(self):
         data = """
@@ -184,4 +184,4 @@ class TestTac(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        print(ast.to_graph_viz_str())
+        # print(ast.to_graph_viz_str())

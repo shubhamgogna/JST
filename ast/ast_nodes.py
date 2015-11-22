@@ -16,7 +16,12 @@
 from ast.base_ast_node import BaseAstNode
 from utils import type_utils
 from utils import operator_utils
+from ticket_counting.ticket_counters import LABEL_TICKETS
+from ticket_counting.ticket_counters import INT_REGISTER_TICKETS
+from ticket_counting.ticket_counters import FLOAT_REGISTER_TICKETS
+from tac.tac_generation import *
 
+# setup label counter so can be accessed throughout each node
 
 ##
 # Node for the declaration of an array using the symbol, dimensions, and qualifiers.
@@ -250,14 +255,22 @@ class CompoundStatement(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+        # raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+
+        output = []
 
         # gen 3ac for declaration_list
+        if self.declaration_list is not None:
+            for item in self.declaration_list:
+                output.append(item.to_3ac())
+                # print(output)
 
         # gen 3ac for statement_list
+        for item in self.statement_list:
+            output.append(item.to_3ac())
+            # print(output)
 
-        # gen 3ac for return
-
+        return output
 
 class Declaration(BaseAstNode):
     """
@@ -320,9 +333,14 @@ class FileAST(BaseAstNode):
         return tuple(childrens)
 
     def to_3ac(self, include_source=False):
-        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+        # raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
         # gen 3ac for external declarations
+        output = []
+        for item in self.external_declarations:
+            output.append(item.to_3ac())
+            print(output)
+        return output
 
     def to_graph_viz_str(self):
         return 'digraph {\n' + super(FileAST, self).to_graph_viz_str() + '}'
@@ -412,15 +430,28 @@ class FunctionDefinition(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+        # raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
         # get label for function i.e. function name
+        label = LABEL_TICKETS.get()
 
         # dump label
+        label = LABEL(label)
+        output = []
+        output.append(label)
 
         # get 3ac for arguments
+        for item in self.arguments:
+            output.append(item.to_3ac())
+            # print(output)
 
         # gen 3ac for body
+        # body will always be a compound statement.
+        output.append(self.body.to_3ac())
+        # for item in self.body:
+        #     output.append(item.to_3ac())
+        #     # print(output)
+        return output
 
 
 class If(BaseAstNode):
@@ -600,9 +631,15 @@ class Return(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+        # raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
         # return value
+        output = []
+        prev_result = self.expression.to_3ac()
+        #Note: Does not currently pass back the register of the value being returned....
+        output.append(prev_result['3ac'])
+        output.append(RETURN())
+        return output
 
 
 
@@ -723,4 +760,12 @@ class Constant(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+        # raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+
+        output = []
+
+        # load constant into register and return register
+        reg = INT_REGISTER_TICKETS.get()
+        output.append(ADDIU(reg, self.value, 0))
+
+        return {'3ac': output, 'register': reg}
