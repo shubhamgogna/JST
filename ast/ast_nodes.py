@@ -50,6 +50,7 @@ class ArrayDeclaration(BaseAstNode):
     def to_3ac(self, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
+    # add array variable to memory
 
 ##
 # Node for referencing an array through subscripts.
@@ -100,6 +101,11 @@ class ArrayReference(BaseAstNode):
     def to_3ac(self, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
+        # get memory location of array
+
+        # calculate memory offset based on subscripts
+
+        # return memory location
 
 class Assignment(BaseAstNode):
     """
@@ -130,6 +136,14 @@ class Assignment(BaseAstNode):
 
     def to_3ac(self, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+
+        # get memory address of lvalue by calling to3ac on lvalue
+
+        # get memory address of rvalue by calling to3ac on rvalue
+
+        # load rvalue into register
+
+        # call 3ac instruction to load value of rval's reg to lval's memory location
 
 
 # TODO (Shubham) The return type needs to be explicitly stated here.
@@ -172,6 +186,18 @@ class BinaryOperator(BaseAstNode):
 
     def to_3ac(self, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+
+        # get memory address of lvalue by calling to3ac on lvalue
+
+        # load lvalue into register
+
+        # get memory address of rvalue by calling to3ac on rvalue
+
+        # load rvalue into register
+
+        # get temporary register
+
+        # determine operator type and call correct 3ac instruction with registers
 
 
 # TODO (Shubham) This looks like it's for explicit conversions.
@@ -616,7 +642,7 @@ class SymbolNode(BaseAstNode):
     def to_3ac(self, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
-        # make space in memory for variable
+        # pass back memory location of variable
 
 class UnaryOperator(BaseAstNode):
     """
@@ -644,6 +670,12 @@ class UnaryOperator(BaseAstNode):
 
     def to_3ac(self, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+
+        # get memory location of expression by calling to3ac function
+
+        # copy expression value to register
+
+        # determine correct operator and apply to register
 
 
 class Constant(BaseAstNode):
