@@ -226,6 +226,12 @@ class CompoundStatement(BaseAstNode):
     def to_3ac(self, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
+        # gen 3ac for declaration_list
+
+        # gen 3ac for statement_list
+
+        # gen 3ac for return
+
 
 class Declaration(BaseAstNode):
     """
@@ -264,6 +270,7 @@ class Declaration(BaseAstNode):
     def to_3ac(self, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
+        # make space in memory for variable
 
 ##
 # Root node of the AST.
@@ -288,6 +295,8 @@ class FileAST(BaseAstNode):
 
     def to_3ac(self, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+
+        # gen 3ac for external declarations
 
     def to_graph_viz_str(self):
         return 'digraph {\n' + super(FileAST, self).to_graph_viz_str() + '}'
@@ -348,6 +357,7 @@ class FunctionDeclaration(BaseAstNode):
     def to_3ac(self, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
+        # TODO: does this need any space in memory? No right?
 
 class FunctionDefinition(BaseAstNode):
     """
@@ -378,6 +388,14 @@ class FunctionDefinition(BaseAstNode):
     def to_3ac(self, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
+        # get label for function i.e. function name
+
+        # dump label
+
+        # get 3ac for arguments
+
+        # gen 3ac for body
+
 
 class If(BaseAstNode):
     """
@@ -403,6 +421,8 @@ class If(BaseAstNode):
 
     def to_3ac(self, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+
+        #
 
 
 class InitializerList(BaseAstNode):
@@ -556,6 +576,9 @@ class Return(BaseAstNode):
     def to_3ac(self, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
+        # return value
+
+
 
 class SymbolNode(BaseAstNode):
     """
@@ -593,6 +616,7 @@ class SymbolNode(BaseAstNode):
     def to_3ac(self, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
+        # make space in memory for variable
 
 class UnaryOperator(BaseAstNode):
     """
