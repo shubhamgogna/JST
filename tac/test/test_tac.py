@@ -48,7 +48,7 @@ class TestTac(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        # print(ast.to_graph_viz_str())
+        ast.to_3ac()
 
     def test_declarations(self):
         data = """
@@ -65,7 +65,7 @@ class TestTac(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        # print(ast.to_graph_viz_str())
+        ast.to_3ac()
 
     def test_simple_assignment(self):
         data = """
@@ -77,7 +77,7 @@ class TestTac(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        # print(ast.to_graph_viz_str())
+        ast.to_3ac()
 
     def test_constant_expression(self):
         data = """
@@ -89,10 +89,10 @@ class TestTac(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        # print(ast.to_graph_viz_str())
+        ast.to_3ac()
 
     def test_explicit_cast(self):
-        self.enable_debug( True)
+        self.enable_debug(True)
         data = """
             int main()
             {
@@ -102,7 +102,7 @@ class TestTac(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        print(ast.to_graph_viz_str())
+        ast.to_3ac()
 
     def test_if_else(self):
         data = """
@@ -120,8 +120,7 @@ class TestTac(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        # print(ast.to_graph_viz_str())
-
+        ast.to_3ac()
 
     def test_if_elif_else(self):
         data = """
@@ -143,7 +142,7 @@ class TestTac(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        # print(ast.to_graph_viz_str())
+        ast.to_3ac()
 
     def test_while_loop(self):
         data = """
@@ -154,7 +153,7 @@ class TestTac(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        # print(ast.to_graph_viz_str())
+        ast.to_3ac()
 
     def test_array_access(self):
         data = """
@@ -166,7 +165,7 @@ class TestTac(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        # print(ast.to_graph_viz_str())
+        ast.to_3ac()
 
     def test_array_initializers(self):
         data = """
@@ -177,7 +176,7 @@ class TestTac(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        # print(ast.to_graph_viz_str())
+        ast.to_3ac()
 
     def test_function_with_param(self):
         data = """
@@ -195,7 +194,7 @@ class TestTac(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        # print(ast.to_graph_viz_str())
+        ast.to_3ac()
 
     def test_for_loop(self):
         data = """
@@ -210,7 +209,7 @@ class TestTac(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        # print(ast.to_graph_viz_str())
+        ast.to_3ac()
 
     def test_do_while_loop(self):
         data = """
@@ -221,8 +220,7 @@ class TestTac(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        print(ast.to_graph_viz_str())
-
+        ast.to_3ac()
 
     def test_matrix_multiplication(self):
         test_program = """
@@ -262,7 +260,7 @@ class TestTac(unittest.TestCase):
             """
 
         ast = self.compiler_state.parse(test_program)
-        print(ast.to_3ac())
+        ast.to_3ac()
 
         self.fail('Implement the matrix multiplication test.')
 
@@ -295,7 +293,7 @@ class TestTac(unittest.TestCase):
             """
 
         ast = self.compiler_state.parse(test_program)
-        print(ast.to_3ac())
+        ast.to_3ac()
 
         self.fail('Implement the bubble sort test.')
 
@@ -320,6 +318,6 @@ class TestTac(unittest.TestCase):
             """
 
         ast = self.compiler_state.parse(test_program)
-        print(ast.to_3ac())
+        ast.to_3ac()
 
         self.fail('Implement the recursive factorial test.')
