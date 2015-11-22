@@ -49,6 +49,11 @@ DIVS = 'DIVS'
 NEGS = 'NEGS'
 
 # Logical Operations
+## these won't correspond directly to MIPS instructions, but it seems like good practice to have them in the 3AC for
+# decoupling the instruction from assembly
+LAND = 'LAND'
+LOR  = 'LOR'
+#
 NOT = 'NOT'
 EQ = 'EQ'
 NE = 'NE'
@@ -57,11 +62,12 @@ GE = 'GE'
 LT = 'LT'
 LE = 'LE'
 
+# Casting
+CVTSW = 'CVTSW'
+CVTWS = 'CVTWS'
+
 # Assignment
 ASSIGN = 'ASSIGN'
-
-# Logical
-# Apparently there are not logical operators in MIPS...
 
 # # Control Flow
 LABEL = 'LABEL'
