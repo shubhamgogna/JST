@@ -223,10 +223,14 @@ class BinaryOperator(BaseAstNode):
         # get memory address of lvalue by calling to3ac on lvalue
         left = self.lvalue.to_3ac()
         lval = left['register']
+        if '3ac' in left:
+            output.extend(left['3ac'])
 
         # get memory address of rvalue by calling to3ac on rvalue
         right = self.rvalue.to_3ac()
         rval = right['register']
+        if '3ac' in right:
+            output.extend(right['3ac'])
 
         # get temporary register
         # TODO: Add in checking for int or float so can pull correct ticket
@@ -510,6 +514,7 @@ class FunctionDeclaration(BaseAstNode):
 
         # TODO: does this need any space in memory? No right?
 
+
 class FunctionDefinition(BaseAstNode):
     """
     Requires: Information about its params and declarations so that it can build its activation frame appropriately
@@ -696,27 +701,53 @@ class IterationNode(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+        output = []
+        condition_check_label = LABEL_TICKETS.get()
+        condition_ok_label = LABEL_TICKETS.get()
+        loop_exit_label = LABEL_TICKETS.get()
 
-        # Note: this outline for 3ac is based on the outline harris gave us in class.
+        # Check for pre-test loop
+        if not self.is_pre_test_loop:
+            if self.body_statements:
+                output.extend(self.body_statements.to_3ac())
 
-        # pull 3 tickets and store
+        # Initialize
+        if self.initialization_expression:
+            # TODO (Shubham) What type of information do we get back from expression?
+            output.extend(self.initialization_expression.to_3ac())
 
-        # gen 3ac code for initialization
+        # Add condition check label
+        output.append(LABEL(condition_check_label))
 
-        # dump label 1
+        # Check condition
+        if self.stop_condition_expression:
+            condition_tac = self.stop_condition_expression.to_3ac()
 
-        # gen 3ac code for stop condition
+            # If condition is false
+            output.extend(condition_tac['3ac'])
+            output.append(BRNE(condition_ok_label, 0, condition_tac['register']))
+            output.append(BR(loop_exit_label))
 
-            # on success jump label 3
+        # Add condition okay label
+        output.append(LABEL(condition_ok_label))
 
-            # failure, jump label 2
+        # Add loop instructions
+        if self.body_statements:
+            output.extend(self.body_statements.to_3ac())
 
-        # gen 3ac code for body_statements
+        # Add increment expressions
+        if self.increment_expression:
+            # TODO (Shubham) What type of information do we get back from expression?
+            output.extend(self.increment_expression.to_3ac())
 
-        # gen 3ac code for increment_expression
+        # Add loop instruction
+        output.append(BR(condition_check_label))
 
-        # jump label 1
+        # Add loop exit label
+        output.append(LABEL(loop_exit_label))
+
+        return output
+
 
 class Label(BaseAstNode):
     """
