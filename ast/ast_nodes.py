@@ -224,13 +224,9 @@ class BinaryOperator(BaseAstNode):
         left = self.lvalue.to_3ac()
         lval = left['register']
 
-        # load lvalue into register  - does this need to happen or not?
-
         # get memory address of rvalue by calling to3ac on rvalue
         right = self.rvalue.to_3ac()
         rval = right['register']
-
-        # load rvalue into register - does this need to happen or not?
 
         # get temporary register
         # TODO: Add in checking for int or float so can pull correct ticket
@@ -336,10 +332,10 @@ class Cast(BaseAstNode):
         # load casted value into register and return register
         if type(value) is int:
             reg = INT_REGISTER_TICKETS.get()
-            output.append(ADDI(reg, value, 0))
+            output.append(ADDI(reg, value, '$zero'))
         if type(value) is float:
             reg = FLOAT_REGISTER_TICKETS.get()
-            output.append(ADD(reg, value, 0))
+            output.append(ADD(reg, value, '$zero'))
 
         register_allocation_table[reg] = value
 
@@ -410,12 +406,15 @@ class Declaration(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        # Single integer and char declaration should take up 1 word (4 bytes)
-        byte_size = int(math.ceil(self.symbol.size_in_bytes() / 4) * 4)
-        output = [SUBIU('StackPointer', 'StackPointer', byte_size)]
-        return output
 
+        # # Single integer and char declaration should take up 1 word (4 bytes)
+        # byte_size = int(math.ceil(self.symbol.size_in_bytes() / 4) * 4)
+        # output = [SUBIU('StackPointer', 'StackPointer', byte_size)]
+        # return output
 
+        # TODO: We are not actually producing 3ac here. It should allocation in the call function prodedure
+        #       We will need to make a call explicitly for main at some point....
+        return  []
 ##
 # Root node of the AST.
 ##
@@ -929,7 +928,7 @@ class Constant(BaseAstNode):
 
         # load constant into register and return register
         reg = INT_REGISTER_TICKETS.get()
-        output.append(ADDIU(reg, self.value, 0))
+        output.append(ADDIU(reg, self.value, '$zero'))
 
         register_allocation_table[reg] = self.value
 

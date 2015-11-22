@@ -77,6 +77,7 @@ class TestTac(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
+        print(ast.to_graph_viz_str())
         ast.to_3ac()
 
     def test_constant_expression(self):
@@ -127,17 +128,17 @@ class TestTac(unittest.TestCase):
             int main()
             {
                 int i;
-                if (i == 5)
-                {
-                    i = 6;
-                }
-                else if(i == 6)
+                if (i == 1)
                 {
                     i = 7;
                 }
+                else if(i == 2)
+                {
+                    i = 8;
+                }
                 else
                 {
-                    i = 5;
+                    i = 9;
                 }
             }
             """
