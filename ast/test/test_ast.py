@@ -214,6 +214,22 @@ class TestAst(unittest.TestCase):
         ast = self.compiler_state.parse(data)
         print(ast.to_graph_viz_str())
 
+    def test_cast_in_binary_expression(self):
+        data = """
+            int main()
+            {
+                int i = 5;
+                float f = -4.5;
+
+                i = (int) ((float) i + f);
+
+                return 0;
+            }
+            """
+        ast = self.compiler_state.parse(data)
+        print(ast.to_graph_viz_str())
+
+
     def test_array_simple_assign(self):
         data = """
             int main()

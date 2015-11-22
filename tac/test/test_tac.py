@@ -205,4 +205,105 @@ class TestTac(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        # print(ast.to_graph_viz_str())
+        print(ast.to_graph_viz_str())
+
+
+    def test_matrix_multiplication(self):
+        test_program = """
+            const int ARRAY_DIM = 2;
+
+            // hard code dimensions for simplicity
+            int matrix_multiply(int C[ARRAY_DIM][ARRAY_DIM], int A[ARRAY_DIM][ARRAY_DIM], int B[ARRAY_DIM][ARRAY_DIM]);
+
+            int main() {
+              int i, j;
+              int A[ARRAY_DIM][ARRAY_DIM], B[ARRAY_DIM][ARRAY_DIM], C[ARRAY_DIM][ARRAY_DIM];
+
+              for (i = 0; i < ARRAY_DIM; i++) {
+                for (j = 0; j < ARRAY_DIM; j++) {
+                  A[i][j] = B[i][j] = 1;
+                  C[i][j] = 0;
+                }
+              }
+
+              matrix_multiply(C, A, B);
+
+              return 0;
+            }
+
+            int matrix_multiply(int C[ARRAY_DIM][ARRAY_DIM], int A[ARRAY_DIM][ARRAY_DIM], int B[ARRAY_DIM][ARRAY_DIM]) {
+              int i, j, k;
+
+              for (i = 0; i < ARRAY_DIM; i++) {
+                for (j = 0; j < ARRAY_DIM; j++) {
+                  for (k = 0; k < ARRAY_DIM; k++) {
+                    C[i][j] += A[i][j + k] * B[i + k][j];
+                  }
+                }
+              }
+
+            }
+            """
+
+        ast = self.compiler_state.parse(test_program)
+        print(ast.to_3ac())
+
+        self.fail('Implement the matrix multiplication test.')
+
+    def test_bubble_sort(self):
+        test_program = """
+            int bubble_sort(int items[], int n_items);
+
+            int main() {
+              int items[] = {5, 1, 4, 3, 2};
+
+              bubble_sort(items, 5);
+
+              return 0;
+            }
+
+            int bubble_sort(int items[], int n_items) {
+              int i, j;
+              int temp;
+
+              for (i = 0; i < n_items; i++) {
+                for (j = i; j < n_items; j++) {
+                  if (items[i] < items[j]) {
+                    temp = items[i];
+                    items[i] = items[j];
+                    items[j] = temp;
+                  }
+                }
+              }
+            }
+            """
+
+        ast = self.compiler_state.parse(test_program)
+        print(ast.to_3ac())
+
+        self.fail('Implement the bubble sort test.')
+
+    def test_recursive_factorial(self):
+        test_program = """
+            int factorial(int x);
+
+            int main() {
+              int x = 5;
+              int result = factorial(x);
+
+              return 0;
+            }
+
+            int factorial(int x) {
+              if (x > 1) {
+                return factorial(x - 1);
+              } else {
+                return 1;
+              }
+            }
+            """
+
+        ast = self.compiler_state.parse(test_program)
+        print(ast.to_3ac())
+
+        self.fail('Implement the recursive factorial test.')

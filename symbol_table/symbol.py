@@ -15,7 +15,7 @@
 
 import copy
 import itertools
-import utils
+
 from ast.ast_nodes import SymbolNode
 from utils import type_utils
 
@@ -82,6 +82,7 @@ class VariableSymbol(Symbol):
     # Basically the same as __str__ but doesn't include the identifier
     def to_abstract_str(self):
         pointer_str = '*' * len(self.pointer_modifiers)
+        # TODO (Shubham) Fix since type_declaration is no longer a class member
         decl_str = str(self.type_declaration) if self.type_declaration else 'void'
 
         array_str = ''
@@ -89,16 +90,6 @@ class VariableSymbol(Symbol):
             array_str += '[{}]'.format(dim if dim else '')
 
         return '{}{}{}'.format(decl_str, pointer_str, array_str)
-
-    # TODO I just threw this together. I should go back and fix it. - Shubham
-    def get_type_tuple(self):
-        pointer_str = '*' * len(self.pointer_modifiers)
-        array_str = ''
-
-        for dim in self.array_dims:
-            array_str += '[{}]'.format(dim if dim else '')
-
-        return self.type_declaration.type_sign, ' '.join(self.type_declaration.type_specifiers), pointer_str, array_str
 
     def type_str(self):
         array_suffix = '[' + ']['.join([str(dimension) for dimension in self.array_dims]) + ']' if len(self.array_dims) > 0 else ''
@@ -191,10 +182,6 @@ class FunctionSymbol(Symbol):
     def get_resulting_type(self):
         return self.return_type_specifiers
 
-    # TODO I just threw this together. I should go back and fix it. - Shubham
-    def get_type_tuple(self):
-        return self.type_declaration.type_sign, ' '.join(self.type_declaration.type_specifiers), '', ''
-
     def __str__(self):
         decl_str = str(self.return_type_specifiers) if self.return_type_specifiers != '' else 'void'
         args_as_strings = ''
@@ -208,7 +195,7 @@ class FunctionSymbol(Symbol):
         return str(self)
 
 
-class TypeDeclaration():
+class TypeDeclaration(object):
     """
     Not sure if this should remain an AST node, but rather an info collection class that gets disassembled and
     absorbed by the Symbol this contributes to.
@@ -225,13 +212,18 @@ class TypeDeclaration():
         # None = sign not applicable
         self.type_sign = None
 
+    def add_all_from(self, other_type_declaration):
+        # TODO: error checking?
+        self.type_specifiers.extend(other_type_declaration.type_specifiers)
+        self.type_qualifiers.update(other_type_declaration.type_qualifiers)
+        self.storage_classes.update(other_type_declaration.storage_classes)
 
     def name_arg(self):
         joined = [self.type_sign if self.type_sign else '',
-                  '_'.join(self.storage_classes),
-                  '_'.join(self.type_qualifiers),
-                  '_'.join(self.type_specifiers)]
-        return '_'.join([i for i in joined if i is not ''])
+                  ' '.join(self.storage_classes),
+                  ' '.join(self.type_qualifiers),
+                  ' '.join(self.type_specifiers)]
+        return ' '.join([i for i in joined if i is not ''])
 
     def add_storage_class(self, storage_class_specifier):
         if storage_class_specifier in self.storage_classes:
@@ -261,18 +253,11 @@ class TypeDeclaration():
         return 'const' in self.type_qualifiers
 
     def __str__(self):
-        storage_class_str = ' '.join(self.storage_classes) + ' ' if self.storage_classes else ''
-        qualifier_str = ' '.join(self.type_qualifiers) + ' ' if self.type_qualifiers else ''
-        specifier_str = ' '.join(self.type_specifiers) if self.type_specifiers else 'UNKNOWN'
-        return '{}{}{}'.format(storage_class_str, qualifier_str, specifier_str)
+        joined = [self.type_sign if self.type_sign else '',
+                  ' '.join(self.storage_classes),
+                  ' '.join(self.type_qualifiers),
+                  ' '.join(self.type_specifiers) if self.type_specifiers else 'Unknown']
+        return ' '.join([i for i in joined if i is not ''])
 
     def __repr__(self):
-        return self.name() + ': ' + str(self)
-
-    @property
-    def children(self):
-        children = []
-        return tuple(children)
-
-    def to_3ac(self, include_source=False):
-        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+        return str(self)

@@ -55,13 +55,13 @@ class TestTypeUtils(unittest.TestCase):
         self.assertFalse(type_utils.is_floating_point_type('short double'))
 
     def test_get_promoted_type(self):
-        self.assertEqual((type_utils.INT, type_utils.CAST_UP),
+        self.assertEqual((type_utils.INT, type_utils.CAST_LEFT_UP),
                          type_utils.get_promoted_type(type_utils.CHAR, type_utils.INT))
-        self.assertEqual((type_utils.INT, type_utils.CAST_UP),
+        self.assertEqual((type_utils.INT, type_utils.CAST_RIGHT_UP),
                          type_utils.get_promoted_type(type_utils.INT, type_utils.CHAR))
-        self.assertEqual((type_utils.FLOAT, type_utils.CAST_UP),
+        self.assertEqual((type_utils.FLOAT, type_utils.CAST_LEFT_UP),
                          type_utils.get_promoted_type(type_utils.INT, type_utils.FLOAT))
-        self.assertEqual((type_utils.UNSIGNED_CHAR, type_utils.CAST_UP),
+        self.assertEqual((type_utils.UNSIGNED_CHAR, type_utils.CAST_LEFT_UP),
                          type_utils.get_promoted_type(type_utils.CHAR, type_utils.UNSIGNED_CHAR))
         self.assertEqual((type_utils.LONG, type_utils.CAST_UNAFFECTED),
                          type_utils.get_promoted_type(type_utils.LONG, type_utils.LONG))
