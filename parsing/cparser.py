@@ -1434,9 +1434,6 @@ class JSTParser(object):
             tup = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
             raise CompileError(message, tup[0], tup[1], tup[2])
 
-        print(t[3],'\n\n\n\n\n\n\n')
-
-
     #
     # assignment_operator:
     #
@@ -1550,8 +1547,7 @@ class JSTParser(object):
         # raise NotImplemented('Type casting')
 
         # TODO: might need to change this
-        value = t[4].value
-        t[0] = Cast(t[2],value)
+        t[0] = Cast(t[2],t[4])
 
     #
     # unary_expression:

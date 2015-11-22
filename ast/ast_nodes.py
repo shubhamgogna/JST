@@ -593,9 +593,62 @@ class If(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+        # raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
+        output = []
+
+        # get three labels
+        lTrue = LABEL_TICKETS.get()
+        lEnd = LABEL_TICKETS.get()
+
+        # gen 3ac for conditional
+        # print(self.conditional, '\n\n\n')
+        # result = self.conditional.to_3ac()
+        # output.append(result['3ac'])
         #
+        # # check the register that results from the conditional to see if false
+        # reg = result['register']
+        # if register_allocation_table[reg] is False:
+        #     output.append(BREQ(lFalse, False, register_allocation_table[reg]))
+
+        # get values of conditional
+        # get memory address of lvalue by calling to3ac on lvalue
+        left = self.conditional.lvalue.to_3ac()
+        lval = left['register']
+
+        # load lvalue into register  - does this need to happen or not?
+
+        # get memory address of rvalue by calling to3ac on rvalue
+        right = self.conditional.rvalue.to_3ac()
+        rval = right['register']
+
+        # # check which operator in conditional, to know which branch to take
+        # branching on true
+        if self.conditional.operator == '<':
+            output.append(BRLT(lTrue, lval, rval))
+        if self.conditional.operator == '<=':
+            output.append(BRLE(lTrue, lval, rval))
+        if self.conditional.operator == '>':
+            output.append(BRGT(lTrue, lval, rval))
+        if self.conditional.operator == '>=':
+            output.append(BRGE(lTrue, lval, rval))
+        if self.conditional.operator == '==':
+            output.append(BREQ(lTrue, lval, rval))
+        if self.conditional.operator == '!=':
+            output.append(BRNE(lTrue, lval, rval))
+
+        # if conditional is false, gen 3ac
+        output.append(self.if_false.to_3ac())
+        output.append(BR(lEnd))
+
+        # if conditional is true, dump label and gen 3ac
+        output.append(LABEL(lTrue))
+        output.append(self.if_true.to_3ac())
+
+        # dump end label
+        output.append(LABEL(lEnd))
+
+        return output
 
 
 class InitializerList(BaseAstNode):

@@ -88,6 +88,24 @@ class TestTac(unittest.TestCase):
         ast = self.compiler_state.parse(data)
         print(ast.to_graph_viz_str())
 
+    def test_if_else(self):
+        data = """
+            int main()
+            {
+                int i;
+                if (i == 5)
+                {
+                    i = 6;
+                }
+                else
+                {
+                    i = 5;
+                }
+            }
+            """
+        ast = self.compiler_state.parse(data)
+        # print(ast.to_graph_viz_str())
+
 
     def test_if_elif_else(self):
         data = """
