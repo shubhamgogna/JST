@@ -28,7 +28,6 @@ class LabelCounter(object):
     def reset():
         LabelCounter.next_value = 0
 
-
 class GenericTicketCounter(object):
     def __init__(self, prefix=''):
         if prefix == '':
@@ -45,3 +44,6 @@ class GenericTicketCounter(object):
 UUID_TICKETS = GenericTicketCounter()
 INT_REGISTER_TICKETS = GenericTicketCounter(prefix='ireg')
 FLOAT_REGISTER_TICKETS = GenericTicketCounter(prefix='freg')
+
+LABEL_TICKETS = GenericTicketCounter(prefix='label')
+

@@ -29,7 +29,7 @@ class TestTac(unittest.TestCase):
         self.compiler_state.teardown()
         self.compiler_state = None
 
-    def enable_debug(self, enable, productions=False, source=False):
+    def enable_debug(self, enable, productions=True, source=False):
         if enable:
             prod_logger = self.compiler_state.get_parser_logger()
 
@@ -48,19 +48,19 @@ class TestTac(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        print(ast.to_graph_viz_str())
-
+        # print(ast.to_graph_viz_str())
 
     def test_simple_assignment(self):
         data = """
             int main()
             {
-                int i = 0;
+                int i;
+                i = 0;
                 return 0;
             }
             """
         ast = self.compiler_state.parse(data)
-        print(ast.to_graph_viz_str())
+        # print(ast.to_graph_viz_str())
 
     def test_constant_expression(self):
         data = """
@@ -72,18 +72,38 @@ class TestTac(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        print(ast.to_graph_viz_str())
+        # print(ast.to_graph_viz_str())
 
     def test_explicit_cast(self):
+        self.enable_debug( True)
         data = """
             int main()
             {
-                int i = (int) 4.2;
+                int i;
+                i = (int) 4.2;
                 return 0;
             }
             """
         ast = self.compiler_state.parse(data)
         print(ast.to_graph_viz_str())
+
+    def test_if_else(self):
+        data = """
+            int main()
+            {
+                int i;
+                if (i == 5)
+                {
+                    i = 6;
+                }
+                else
+                {
+                    i = 5;
+                }
+            }
+            """
+        ast = self.compiler_state.parse(data)
+        # print(ast.to_graph_viz_str())
 
 
     def test_if_elif_else(self):
@@ -106,7 +126,7 @@ class TestTac(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        print(ast.to_graph_viz_str())
+        # print(ast.to_graph_viz_str())
 
     def test_while_loop(self):
         data = """
@@ -117,7 +137,7 @@ class TestTac(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        print(ast.to_graph_viz_str())
+        # print(ast.to_graph_viz_str())
 
     def test_array_access(self):
         data = """
@@ -129,7 +149,7 @@ class TestTac(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        print(ast.to_graph_viz_str())
+        # print(ast.to_graph_viz_str())
 
     def test_array_initializers(self):
         data = """
@@ -140,7 +160,7 @@ class TestTac(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        print(ast.to_graph_viz_str())
+        # print(ast.to_graph_viz_str())
 
     def test_function_with_param(self):
         data = """
@@ -158,7 +178,7 @@ class TestTac(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        print(ast.to_graph_viz_str())
+        # print(ast.to_graph_viz_str())
 
     def test_for_loop(self):
         data = """
@@ -173,7 +193,7 @@ class TestTac(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        print(ast.to_graph_viz_str())
+        # print(ast.to_graph_viz_str())
 
     def test_do_while_loop(self):
         data = """
@@ -286,4 +306,3 @@ class TestTac(unittest.TestCase):
         print(ast.to_3ac())
 
         self.fail('Implement the recursive factorial test.')
-

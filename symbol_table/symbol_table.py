@@ -16,19 +16,23 @@ import math
 
 from symbol_table.scope import Scope
 from symbol_table.symbol import Symbol, VariableSymbol
-from utils import type_utils
 
-MIPS_DATA_MEMORY_BASE = 0x10010000  # this is where MARS starts the global data memory
-                                    # we may need to watch out for memory things like .asciiz grab,
-                                    # so perhaps we should start somewhere else?
+# This is where MARS starts the global data memory
+# We may need to watch out for memory things like .asciiz grab
+# So perhaps we should start somewhere else?
+# (Shubham) If we allocate everything manually everything, we can ignore the .asciiz grab
+MIPS_DATA_MEMORY_BASE = 0x10010000
+
 
 class SymbolTable(object):
+
     # Initializes the symbol table
     def __init__(self):
         self.table = []
 
         self.next_data_memory_location = MIPS_DATA_MEMORY_BASE
-        self.next_activation_frame_offset = 0  # this will increment by the type size
+        # Increments by the type size
+        self.next_activation_frame_offset = 0
 
     # Pushes a scope onto the table.
     # 'scope' Scope to push. Leave as default to push empty Scope.
@@ -42,7 +46,8 @@ class SymbolTable(object):
 
     # Pops the top-most Scope from the table and returns it.
     def pop(self):
-        if len(self.table) == 1:  # TODO: is 1 the first scope of a function?
+        # The second scope is first scope of a function
+        if len(self.table) == 2:
             self.next_activation_frame_offset = 0
 
         return self.table.pop()
@@ -57,12 +62,13 @@ class SymbolTable(object):
             raise Exception('Table has no scopes available to insert into. Offending symbol: {}'.format(symbol))
 
         if isinstance(symbol, VariableSymbol):
+            required_byte_size = max(symbol.size_in_bytes(), (math.ceil(symbol.size_in_bytes() / 4) * 4))
             if len(self.table) == 1:
                 symbol.global_memory_location = self.next_data_memory_location
-                self.next_data_memory_location += max(symbol.size_in_bytes(), (math.ceil(symbol.size_in_bytes() / 4) * 4))
+                self.next_data_memory_location += required_byte_size
             else:
                 symbol.activation_frame_offset = self.next_activation_frame_offset
-                self.next_activation_frame_offset += symbol.size_in_bytes()
+                self.next_activation_frame_offset += required_byte_size
 
         shadowed_symbols = []
         for scope in self.table:
@@ -110,7 +116,7 @@ class SymbolTable(object):
     def find_in_top(self, name):
         return self.table[-1].find(name)
 
-    ## TODO: if we implement this
+    # TODO: if we implement this
     def find_type(self, identifier):
         pass
 

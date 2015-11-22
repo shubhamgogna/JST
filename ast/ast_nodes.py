@@ -16,6 +16,14 @@
 from ast.base_ast_node import BaseAstNode
 from utils import type_utils
 from utils import operator_utils
+from ticket_counting.ticket_counters import LABEL_TICKETS
+from ticket_counting.ticket_counters import INT_REGISTER_TICKETS
+from ticket_counting.ticket_counters import FLOAT_REGISTER_TICKETS
+from tac.tac_generation import *
+
+# setup register allocation table and address table to keep track of where vars are declared so can be accessed throughout each node
+register_allocation_table = {}
+address_table = {}
 
 
 ##
@@ -50,6 +58,7 @@ class ArrayDeclaration(BaseAstNode):
     def to_3ac(self, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
+    # add array variable to memory
 
 ##
 # Node for referencing an array through subscripts.
@@ -100,6 +109,12 @@ class ArrayReference(BaseAstNode):
     def to_3ac(self, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
+        # get memory location of array
+
+        # calculate memory offset based on subscripts
+
+        # return memory location
+
 
 class Assignment(BaseAstNode):
     """
@@ -129,7 +144,32 @@ class Assignment(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+        output = []
+
+        # get memory address of lvalue by calling to3ac on lvalue
+        left = self.lvalue.to_3ac()
+        lval = left['register']
+        if '3ac' in left:
+            output.extend(left['3ac'])
+
+        # get memory address of rvalue by calling to3ac on rvalue
+        right = self.rvalue.to_3ac()
+        rval = right['register']
+        if '3ac' in right:
+            output.extend(right['3ac'])
+
+        # TODO: Fix this??
+        # # load rvalue into register - does this need to happen or not?
+        # is there a 3ac command for this?
+        # value = register_allocation_table[rval]
+
+        # TODO: Fix this??
+        # call 3ac instruction to load value of rval's reg to lval's memory location
+        # Note: not sure how this assign thing is supposed to be used....
+        #       right now both are registers, should the rvalue be the actual value? I don't think so but not sure
+        output.append(ASSIGN(rval, lval, rval))
+
+        return output
 
 
 # TODO (Shubham) The return type needs to be explicitly stated here.
@@ -171,10 +211,85 @@ class BinaryOperator(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+        # raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+
+        output = []
+
+        # get memory address of lvalue by calling to3ac on lvalue
+        left = self.lvalue.to_3ac()
+        lval = left['register']
+
+        # load lvalue into register  - does this need to happen or not?
+
+        # get memory address of rvalue by calling to3ac on rvalue
+        right = self.rvalue.to_3ac()
+        rval = right['register']
+
+        # load rvalue into register - does this need to happen or not?
+
+        # get temporary register
+        # TODO: Add in checking for int or float so can pull correct ticket
+        reg = INT_REGISTER_TICKETS.get()
+
+        #TODO: NEED TO ADD IN OPTIONS BASED ON TYPE OF TICKET PULLED HERE
+        # determine operator type and call correct 3ac instruction with registers
+        if self.operator == '+':
+            output.append(ADD(reg, lval, rval))
+        if self.operator == '-':
+            output.append(SUB(reg, lval, rval))
+        if self.operator == '*':
+            output.append(MUL(reg, lval, rval))
+        if self.operator == '/':
+            output.append(DIV(reg, lval, rval))
+        if self.operator == '%':
+            output.append(MOD(reg, lval, rval))
+        if self.operator == '>>':
+            # output.append(   (reg, lval, rval))
+            # TODO: what function is this?
+             raise NotImplementedError('Please implement the {} binary operator to3ac method.'.format(self.operator))
+        if self.operator == '<<':
+            # output.append(   (reg, lval, rval))
+            # TODO: what function is this?
+             raise NotImplementedError('Please implement the {} binary operator to3ac method.'.format(self.operator))
+        if self.operator == '<':
+            output.append(LT(reg, lval, rval))
+        if self.operator == '<=':
+            output.append(LE(reg, lval, rval))
+        if self.operator == '>':
+            output.append(GT(reg, lval, rval))
+        if self.operator == '>=':
+            output.append(GE(reg, lval, rval))
+        if self.operator == '==':
+            output.append(EQ(reg, lval, rval))
+        if self.operator == '!=':
+            output.append(NE(reg, lval, rval))
+        if self.operator == '&':
+            # output.append(  (reg, lval, rval))
+            # TODO: what function is this?
+             raise NotImplementedError('Please implement the {} binary operator to3ac method.'.format(self.operator))
+        if self.operator == '|':
+            # output.append(   (reg, lval, rval))
+            # TODO: what function is this?
+             raise NotImplementedError('Please implement the {} binary operator to3ac method.'.format(self.operator))
+        if self.operator == '^':
+            # output.append(    (reg, lval, rval))
+            # TODO: what function is this?
+             raise NotImplementedError('Please implement the {} binary operator to3ac method.'.format(self.operator))
+        if self.operator == '&&':
+            # output.append(  (reg, lval, rval))
+            # TODO: what function is this?
+             raise NotImplementedError('Please implement the {} binary operator to3ac method.'.format(self.operator))
+        if self.operator == '||':
+            # output.append(   (reg, lval, rval))
+            # TODO: what function is this?
+             raise NotImplementedError('Please implement the {} binary operator to3ac method.'.format(self.operator))
+
+        # TODO: since don't have the value since not calculating anything, can't store it to the table yet
+        # register_allocation_table[reg] = value
+
+        return {'3ac': output, 'register': reg}
 
 
-# TODO (Shubham) This looks like it's for explicit conversions.
 class Cast(BaseAstNode):
     """
     Requires: An rvalue of the value to be casted.
@@ -196,11 +311,37 @@ class Cast(BaseAstNode):
     @property
     def children(self):
         children = []
+        # since to_type is like 'int' its an attribute, not a child
+        # children.append(self.to_type)
         children.append(self.expression)
         return tuple(children)
 
+
     def to_3ac(self, include_source=False):
-        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+        # raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+
+        output = []
+
+        # get correct casted value
+        if self.to_type == 'int':
+            value = int(self.expression.value)
+        if self.to_type == 'float':
+            value = float(self.expression.value)
+        if self.to_type == 'char':
+            # value = char(self.expression)
+            raise(NotImplementedError('Please implement char casting in p_cast_expressoin_2'))
+
+        # load casted value into register and return register
+        if type(value) is int:
+            reg = INT_REGISTER_TICKETS.get()
+            output.append(ADDI(reg, value, 0))
+        if type(value) is float:
+            reg = FLOAT_REGISTER_TICKETS.get()
+            output.append(ADD(reg, value, 0))
+
+        register_allocation_table[reg] = value
+
+        return {'3ac': output, 'register': reg}
 
 
 class CompoundStatement(BaseAstNode):
@@ -226,7 +367,22 @@ class CompoundStatement(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+        # raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+
+        output = []
+
+        # gen 3ac for declaration_list
+        if self.declaration_list is not None:
+            for item in self.declaration_list:
+                output.extend(item.to_3ac())
+                # print(output)
+
+        # gen 3ac for statement_list
+        for item in self.statement_list:
+            output.extend(item.to_3ac())
+            # print(output)
+
+        return output
 
 
 class Declaration(BaseAstNode):
@@ -239,21 +395,13 @@ class Declaration(BaseAstNode):
         super(Declaration, self).__init__(**kwargs)
 
         self.symbol = symbol
-
-        # TODO (Shubham) All information from identifier to funcspec seems to be unused. Remove?
-        self.identifier = symbol.identifier
-        self.qualifiers = symbol.type_qualifiers
-        self.storage = symbol.storage_classes
-        self.funcspec = funcspec
-        # TODO (Shubham) All information from identifier to funcspec seems to be unused. Remove?
-
         self.initialization_value = initialization_value
 
     def sizeof(self):
         return type_utils.type_size_in_bytes(self.symbol.type_str())
 
     def name(self, arg=None):
-        arg = self.symbol.type_str() + ' ' + self.identifier
+        arg = self.symbol.type_str() + ' ' + self.symbol.identifier
         return super(Declaration, self).name(arg)
 
     @property
@@ -264,7 +412,11 @@ class Declaration(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+        byte_size = int(self.symbol.size_in_bytes())
+        output = [SUBIU('TopStack', 'TopStack', byte_size)]
+        address_table[self.symbol.identifier] = 'TopStack'      # TODO (Shubham) Will this handle shadowing correctly?
+
+        return output
 
 
 ##
@@ -289,7 +441,17 @@ class FileAST(BaseAstNode):
         return tuple(childrens)
 
     def to_3ac(self, include_source=False):
-        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+        # raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+
+        # gen 3ac for external declarations
+        output = []
+        for item in self.external_declarations:
+            output.extend(item.to_3ac())
+
+        for item in output:
+            print(item)
+
+        return output
 
     def to_graph_viz_str(self):
         return 'digraph {\n' + super(FileAST, self).to_graph_viz_str() + '}'
@@ -350,6 +512,7 @@ class FunctionDeclaration(BaseAstNode):
     def to_3ac(self, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
+        # TODO: does this need any space in memory? No right?
 
 class FunctionDefinition(BaseAstNode):
     """
@@ -378,7 +541,28 @@ class FunctionDefinition(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+        # raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+
+        # get label for function i.e. function name
+        label = LABEL_TICKETS.get()
+
+        # dump label
+        label = LABEL(label)
+        output = [label]
+
+        # get 3ac for arguments
+        for item in self.arguments:
+            output.extend(item.to_3ac())
+            # print(output)
+
+        # gen 3ac for body
+        # body will always be a compound statement.
+        output.extend(self.body.to_3ac())
+        # for item in self.body:
+        #     output.append(item.to_3ac())
+        #     # print(output)
+
+        return output
 
 
 class If(BaseAstNode):
@@ -404,7 +588,62 @@ class If(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+        # raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+
+        output = []
+
+        # get three labels
+        lTrue = LABEL_TICKETS.get()
+        lEnd = LABEL_TICKETS.get()
+
+        # gen 3ac for conditional
+        # print(self.conditional, '\n\n\n')
+        # result = self.conditional.to_3ac()
+        # output.append(result['3ac'])
+        #
+        # # check the register that results from the conditional to see if false
+        # reg = result['register']
+        # if register_allocation_table[reg] is False:
+        #     output.append(BREQ(lFalse, False, register_allocation_table[reg]))
+
+        # get values of conditional
+        # get memory address of lvalue by calling to3ac on lvalue
+        left = self.conditional.lvalue.to_3ac()
+        lval = left['register']
+
+        # load lvalue into register  - does this need to happen or not?
+
+        # get memory address of rvalue by calling to3ac on rvalue
+        right = self.conditional.rvalue.to_3ac()
+        rval = right['register']
+
+        # # check which operator in conditional, to know which branch to take
+        # branching on true
+        if self.conditional.operator == '<':
+            output.append(BRLT(lTrue, lval, rval))
+        if self.conditional.operator == '<=':
+            output.append(BRLE(lTrue, lval, rval))
+        if self.conditional.operator == '>':
+            output.append(BRGT(lTrue, lval, rval))
+        if self.conditional.operator == '>=':
+            output.append(BRGE(lTrue, lval, rval))
+        if self.conditional.operator == '==':
+            output.append(BREQ(lTrue, lval, rval))
+        if self.conditional.operator == '!=':
+            output.append(BRNE(lTrue, lval, rval))
+
+        # if conditional is false, gen 3ac
+        output.extend(self.if_false.to_3ac())
+        output.append(BR(lEnd))
+
+        # if conditional is true, dump label and gen 3ac
+        output.append(LABEL(lTrue))
+        output.extend(self.if_true.to_3ac())
+
+        # dump end label
+        output.append(LABEL(lEnd))
+
+        return output
 
 
 class InitializerList(BaseAstNode):
@@ -460,7 +699,6 @@ class IterationNode(BaseAstNode):
 
     def to_3ac(self, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
-
 
         # Note: this outline for 3ac is based on the outline harris gave us in class.
 
@@ -556,7 +794,15 @@ class Return(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+        # raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+
+        # return value
+        output = []
+        prev_result = self.expression.to_3ac()
+        # Note: Does not currently pass back the register of the value being returned....
+        output.extend(prev_result['3ac'])
+        output.append(RETURN())
+        return output
 
 
 class SymbolNode(BaseAstNode):
@@ -593,7 +839,10 @@ class SymbolNode(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+        # Pass back memory location of variable
+        reg = address_table[self.symbol.identifier]
+        # TODO (Shubham) Symbol has some values stored for address. What is the purpose of address table?
+        return {'register': 'TopStack-TODO'}
 
 
 class UnaryOperator(BaseAstNode):
@@ -622,6 +871,12 @@ class UnaryOperator(BaseAstNode):
 
     def to_3ac(self, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+
+        # get memory location of expression by calling to3ac function
+
+        # copy expression value to register
+
+        # determine correct operator and apply to register
 
 
 class Constant(BaseAstNode):
@@ -669,4 +924,14 @@ class Constant(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+        # raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+
+        output = []
+
+        # load constant into register and return register
+        reg = INT_REGISTER_TICKETS.get()
+        output.append(ADDIU(reg, self.value, 0))
+
+        register_allocation_table[reg] = self.value
+
+        return {'3ac': output, 'register': reg}

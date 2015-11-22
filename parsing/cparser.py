@@ -121,6 +121,7 @@ class JSTParser(object):
         self.output_production(t, production_message='translation_unit_opt -> translation_unit')
 
         t[0] = FileAST(external_declarations=t[1] if t[1] else [])
+        t[0].to_3ac()
 
     def p_translation_unit_1(self, t):
         """
@@ -1049,8 +1050,6 @@ class JSTParser(object):
 
         t[0] = t[1].get_type_str()
 
-
-
     #
     # abstract-declarator:
     #
@@ -1414,6 +1413,7 @@ class JSTParser(object):
 
         t[0] = t[1]
 
+
     def p_assignment_expression_2(self, t):
         """
         assignment_expression : unary_expression assignment_operator assignment_expression
@@ -1554,8 +1554,9 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='cast_expression -> LPAREN type_name RPAREN cast_expression')
 
-        t[0] = Cast(to_type=t[2], expression=t[4])
-
+        # TODO: might need to change this
+        t[0] = Cast(t[2],t[4])
+        # t[0] = Cast(to_type=t[2], expression=t[4])
 
     #
     # unary_expression:
