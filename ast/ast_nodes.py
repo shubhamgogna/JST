@@ -115,6 +115,7 @@ class ArrayReference(BaseAstNode):
 
         # return memory location
 
+
 class Assignment(BaseAstNode):
     """
     Requires: An lvalue register produced by the expression of the thing being assigned to and an rvalue register
@@ -143,8 +144,6 @@ class Assignment(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        # raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
-
         output = []
 
         # get memory address of lvalue by calling to3ac on lvalue
@@ -396,21 +395,13 @@ class Declaration(BaseAstNode):
         super(Declaration, self).__init__(**kwargs)
 
         self.symbol = symbol
-
-        # TODO (Shubham) All information from identifier to funcspec seems to be unused. Remove?
-        self.identifier = symbol.identifier
-        self.qualifiers = symbol.type_qualifiers
-        self.storage = symbol.storage_classes
-        self.funcspec = funcspec
-        # TODO (Shubham) All information from identifier to funcspec seems to be unused. Remove?
-
         self.initialization_value = initialization_value
 
     def sizeof(self):
         return type_utils.type_size_in_bytes(self.symbol.type_str())
 
     def name(self, arg=None):
-        arg = self.symbol.type_str() + ' ' + self.identifier
+        arg = self.symbol.type_str() + ' ' + self.symbol.identifier
         return super(Declaration, self).name(arg)
 
     @property
@@ -421,14 +412,13 @@ class Declaration(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        # raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
-
-        # TODO:
-        # make space in memory for variable
-        output = [SUBIU('TopStack', 'TopStack', 'amount')]
-        address_table[self.identifier] = 'TopStack'
+        byte_size = int(self.symbol.size_in_bytes())
+        output = [SUBIU('TopStack', 'TopStack', byte_size)]
+        address_table[self.symbol.identifier] = 'TopStack'      # TODO (Shubham) Will this handle shadowing correctly?
 
         return output
+
+
 ##
 # Root node of the AST.
 ##
@@ -643,12 +633,12 @@ class If(BaseAstNode):
             output.append(BRNE(lTrue, lval, rval))
 
         # if conditional is false, gen 3ac
-        output.append(self.if_false.to_3ac())
+        output.extend(self.if_false.to_3ac())
         output.append(BR(lEnd))
 
         # if conditional is true, dump label and gen 3ac
         output.append(LABEL(lTrue))
-        output.append(self.if_true.to_3ac())
+        output.extend(self.if_true.to_3ac())
 
         # dump end label
         output.append(LABEL(lEnd))
@@ -709,7 +699,6 @@ class IterationNode(BaseAstNode):
 
     def to_3ac(self, include_source=False):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
-
 
         # Note: this outline for 3ac is based on the outline harris gave us in class.
 
@@ -850,14 +839,10 @@ class SymbolNode(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        # raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
-
-        # pass back memory location of variable
-        output = []
-
+        # Pass back memory location of variable
         reg = address_table[self.symbol.identifier]
-
-        return {'register': reg}
+        # TODO (Shubham) Symbol has some values stored for address. What is the purpose of address table?
+        return {'register': 'TopStack-TODO'}
 
 
 class UnaryOperator(BaseAstNode):
