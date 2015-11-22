@@ -112,13 +112,41 @@ class ArrayReference(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+        output = []
+        dim_count = len(self.symbol.array_dims)
 
-        # get memory location of array
+        if dim_count is 0:
+            raise Exception('There was an error. Subscripting a non-array symbol.')
 
-        # calculate memory offset based on subscripts
+        # Initialize offset_reg to the value of the first subscript
+        subscript_tac = self.subscripts[0].to_3ac()
+        if '3ac' in subscript_tac:
+            output.extend(subscript_tac['3ac'])
 
-        # return memory location
+        # Create a new register to hold the offset value
+        offset_reg = INT_REGISTER_TICKETS.get()
+        output.append(ADDU(offset_reg, 0, subscript_tac['register']))
+
+        # range(a,b) is (inclusive, exclusive)
+        for i in range(0, dim_count - 1):
+            output.append(MULIU(offset_reg, offset_reg, self.symbol.array_dims[i + 1]))
+
+            subscript_tac = self.subscripts[i].to_3ac()
+            if '3ac' in subscript_tac:
+                output.extend(subscript_tac['3ac'])
+
+            output.append(ADDU(offset_reg, offset_reg, subscript_tac['register']))
+
+        # Offset by symbol size
+        output.append(MULIU(offset_reg, offset_reg, type_utils.get_bit_size(self.symbol.type_specifiers) // 8))
+
+        # Add offset to symbol base address
+        if self.symbol.global_memory_location:
+            output.append(ADDIU(offset_reg, offset_reg, 'Global_{}'.format(self.symbol.global_memory_location)))
+        else:
+            output.append(ADDIU(offset_reg, offset_reg, 'Frame_{}'.format(self.symbol.activation_frame_offset)))
+
+        return {'3ac': output, 'register': offset_reg}
 
 
 class Assignment(BaseAstNode):
