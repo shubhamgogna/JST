@@ -1443,9 +1443,6 @@ class JSTParser(object):
             tup = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
             raise CompileError(message, tup[0], tup[1], tup[2])
 
-        print(t[3],'\n\n\n\n\n\n\n')
-
-
     #
     # assignment_operator:
     #
@@ -1558,8 +1555,7 @@ class JSTParser(object):
         self.output_production(t, production_message='cast_expression -> LPAREN type_name RPAREN cast_expression')
 
         # TODO: might need to change this
-        value = t[4].value
-        t[0] = Cast(t[2], value)
+        t[0] = Cast(t[2],t[4])
         # t[0] = Cast(to_type=t[2], expression=t[4])
 
     #
