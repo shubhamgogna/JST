@@ -229,16 +229,64 @@ class BinaryOperator(BaseAstNode):
         # load rvalue into register - does this need to happen or not?
 
         # get temporary register
+        # TODO: Add in checking for int or float so can pull correct ticket
         reg = INT_REGISTER_TICKETS.get()
 
-        #TODO: NEED TO ADD IN ALL OTHER POSSIBLE BINARY OPERATORS HERE
+        #TODO: NEED TO ADD IN OPTIONS BASED ON TYPE OF TICKET PULLED HERE
         # determine operator type and call correct 3ac instruction with registers
         if self.operator == '+':
             output.append(ADD(reg, lval, rval))
+        if self.operator == '-':
+            output.append(SUB(reg, lval, rval))
+        if self.operator == '*':
+            output.append(MUL(reg, lval, rval))
+        if self.operator == '/':
+            output.append(DIV(reg, lval, rval))
+        if self.operator == '%':
+            output.append(MOD(reg, lval, rval))
+        if self.operator == '>>':
+            # output.append(   (reg, lval, rval))
+            # TODO: what function is this?
+             raise NotImplementedError('Please implement the {} binary operator to3ac method.'.format(self.operator))
+        if self.operator == '<<':
+            # output.append(   (reg, lval, rval))
+            # TODO: what function is this?
+             raise NotImplementedError('Please implement the {} binary operator to3ac method.'.format(self.operator))
+        if self.operator == '<':
+            output.append(LT(reg, lval, rval))
+        if self.operator == '<=':
+            output.append(LE(reg, lval, rval))
+        if self.operator == '>':
+            output.append(GT(reg, lval, rval))
+        if self.operator == '>=':
+            output.append(GE(reg, lval, rval))
+        if self.operator == '==':
+            output.append(EQ(reg, lval, rval))
+        if self.operator == '!=':
+            output.append(NE(reg, lval, rval))
+        if self.operator == '&':
+            # output.append(  (reg, lval, rval))
+            # TODO: what function is this?
+             raise NotImplementedError('Please implement the {} binary operator to3ac method.'.format(self.operator))
+        if self.operator == '|':
+            # output.append(   (reg, lval, rval))
+            # TODO: what function is this?
+             raise NotImplementedError('Please implement the {} binary operator to3ac method.'.format(self.operator))
+        if self.operator == '^':
+            # output.append(    (reg, lval, rval))
+            # TODO: what function is this?
+             raise NotImplementedError('Please implement the {} binary operator to3ac method.'.format(self.operator))
+        if self.operator == '&&':
+            # output.append(  (reg, lval, rval))
+            # TODO: what function is this?
+             raise NotImplementedError('Please implement the {} binary operator to3ac method.'.format(self.operator))
+        if self.operator == '||':
+            # output.append(   (reg, lval, rval))
+            # TODO: what function is this?
+             raise NotImplementedError('Please implement the {} binary operator to3ac method.'.format(self.operator))
 
         # TODO: since don't have the value since not calculating anything, can't store it to the table yet
         # register_allocation_table[reg] = value
-
 
         return {'3ac': output, 'register': reg}
 
