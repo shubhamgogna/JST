@@ -101,7 +101,8 @@ class VariableSymbol(Symbol):
             multiplier *= dim
 
         if len(self.pointer_modifiers) > 0:
-            return multiplier * 8  # 8 bytes is size of pointer type in C for non-embedded systems
+            # MIPS uses 4 bytes for a word
+            return multiplier * 4
         else:
             return multiplier * type_utils.type_size_in_bytes(self.type_specifiers)
 
