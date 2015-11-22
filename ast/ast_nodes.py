@@ -58,9 +58,11 @@ class ArrayDeclaration(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
-
-    # add array variable to memory
+        # Single integer and char declaration should take up 1 word (4 bytes)
+        # Arrays need padding at the end to finish the word
+        byte_size = int(math.ceil(self.symbol.size_in_bytes() / 4) * 4)
+        output = [SUBIU('TopStack', 'TopStack', byte_size)]
+        return output
 
 
 ##
@@ -408,8 +410,8 @@ class Declaration(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        # Integers and chars should take up 1 word (4 bytes)
-        byte_size = int(math.ceil(self.symbol.size_in_bytes() / 4))
+        # Single integer and char declaration should take up 1 word (4 bytes)
+        byte_size = int(math.ceil(self.symbol.size_in_bytes() / 4) * 4)
         output = [SUBIU('TopStack', 'TopStack', byte_size)]
         return output
 

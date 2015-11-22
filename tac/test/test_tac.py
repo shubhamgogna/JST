@@ -59,6 +59,8 @@ class TestTac(unittest.TestCase):
                 int i;
                 long long l;
 
+                char arr[13];
+
                 return 0;
             }
             """
