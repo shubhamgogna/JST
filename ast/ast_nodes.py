@@ -150,14 +150,14 @@ class Assignment(BaseAstNode):
         # get memory address of lvalue by calling to3ac on lvalue
         left = self.lvalue.to_3ac()
         lval = left['register']
-        # output.append(left['3ac'])
-        # no 3ac was generated for this
+        if '3ac' in left:
+            output.append(left['3ac'])
 
         # get memory address of rvalue by calling to3ac on rvalue
         right = self.rvalue.to_3ac()
         rval = right['register']
-        # output.append(right['3ac'])
-        # no 3ac was generated for this
+        if '3ac' in right:
+            output.append(right['3ac'])
 
         # TODO: Fix this??
         # # load rvalue into register - does this need to happen or not?
@@ -212,23 +212,36 @@ class BinaryOperator(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+        # raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+
+        output = []
 
         # get memory address of lvalue by calling to3ac on lvalue
         left = self.lvalue.to_3ac()
         lval = left['register']
 
-        # load lvalue into register
+        # load lvalue into register  - does this need to happen or not?
 
         # get memory address of rvalue by calling to3ac on rvalue
         right = self.rvalue.to_3ac()
         rval = right['register']
 
-        # load rvalue into register
+        # load rvalue into register - does this need to happen or not?
 
         # get temporary register
+        reg = INT_REGISTER_TICKETS.get()
 
+        #TODO: NEED TO ADD IN ALL OTHER POSSIBLE BINARY OPERATORS HERE
         # determine operator type and call correct 3ac instruction with registers
+        if self.operator == '+':
+            output.append(ADD(reg, lval, rval))
+
+        # TODO: since don't have the value since not calculating anything, can't store it to the table yet
+        # register_allocation_table[reg] = value
+
+
+        return {'3ac': output, 'register': reg}
+
 
 
 # TODO (Shubham) This looks like it's for explicit conversions.
