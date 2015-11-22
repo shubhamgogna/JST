@@ -12,6 +12,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
+
 import math
 
 from symbol_table.scope import Scope
@@ -35,7 +36,8 @@ class SymbolTable(object):
         self.next_activation_frame_offset = 0
 
     # Pushes a scope onto the table.
-    # 'scope' Scope to push. Leave as default to push empty Scope.
+    #
+    # @param scope Scope to push. Default pushes an empty Scope.
     def push(self, scope=None):
         if scope is None:
             scope = Scope()
@@ -53,8 +55,10 @@ class SymbolTable(object):
         return self.table.pop()
 
     # Inserts a symbol into the top-most Scope.
-    # Returns a tuple of the result and a list of shadowed Symbols or
-    # re-declared Symbol.
+    #
+    # @param symbol Symbol to insert.
+    #
+    # @return Tuple of the result and a list of shadowed Symbols or re-declared Symbol.
     def insert(self, symbol):
         if not isinstance(symbol, Symbol):
             raise TypeError("'symbol' is not an instance of Symbol.")
@@ -88,8 +92,10 @@ class SymbolTable(object):
 
     # Finds a symbol in the table by searching the top-most Scope to the
     # bottom-most Scope.
-    # 'name' String identifier for the Symbol to find.
-    # Returns a tuple of the Symbol and the Scope index it was found in.
+    #
+    # @param name String identifier for the Symbol to find.
+    #
+    # @return Tuple of the Symbol and the Scope index it was found in.
     def find(self, name):
         for index, scope in enumerate(reversed(self.table)):
             result = scope.find(name)
@@ -98,33 +104,32 @@ class SymbolTable(object):
                 return result, scope_level
         return None, None
 
-    # Replaces a symbol in the table by searching the top-most Scope to
-    # the bottom-most Scope. The symbols are compared by reference (not
-    # by identifier).
-    # 'original' Original symbol in the table.
-    # 'replacement' Symbol to replace original.
-    # Returns true if replaced and false if not.
-    def replace(self, original, replacement):
-        for scope in reversed(self.table):
-            if scope.replace(original, replacement):
-                return True
-        return False
-
     # Finds a symbol in the table by searching only the top-most Scope.
-    # 'name' String identifier for the Symbol to find.
-    # Returns 'None' or the Symbol.
+    #
+    # @param name String identifier for the Symbol to find.
+    #
+    # @return 'None' or the Symbol.
     def find_in_top(self, name):
         return self.table[-1].find(name)
 
-    # TODO: if we implement this
+    # Finds a type in the table by searching the top-most Scope to the
+    # bottom-most Scope.
+    #
+    # @param name String identifier for the type to find.
+    #
+    # @return Tuple of the type and the Scope index it was found in.
     def find_type(self, identifier):
         pass
 
-    # Returns the number of Scopes in the table.
+    # Size of the table.
+    #
+    # @return Number of scopes in the table.
     def size(self):
         return len(self.table)
 
-    # Clones the current SymbolTable and returns the deep copy.
+    # Clones the current SymbolTable and returns a deep copy.
+    #
+    # @return Copy of the SymbolTable.
     def clone(self):
         result = SymbolTable()
         result.table = []
@@ -132,7 +137,7 @@ class SymbolTable(object):
             result.table.append(scope.clone())
         return result
 
-    # Converts the current SymbolTable to its String representation.
+    # @return String representation of the current SymbolTable.
     def __repr__(self):
         scopes = []
         for index, scope in enumerate(self.table):

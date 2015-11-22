@@ -26,34 +26,25 @@ class TestScope(unittest.TestCase):
         self.scope = None
 
     def test_insert(self):
-        self.assertEqual(Scope.INSERT_SUCCESS, self.scope.insert(Symbol('A')))
-        self.assertEqual(Scope.INSERT_REDECL, self.scope.insert(Symbol('A')))
-        self.assertEqual(Scope.INSERT_SUCCESS, self.scope.insert(Symbol('B')))
+        self.assertEqual(Scope.INSERT_SUCCESS, self.scope.insert(Symbol('A', 0, 0)))
+        self.assertEqual(Scope.INSERT_REDECL, self.scope.insert(Symbol('A', 0, 0)))
+        self.assertEqual(Scope.INSERT_SUCCESS, self.scope.insert(Symbol('B', 0, 0)))
 
     def test_find(self):
-        self.scope.insert(Symbol('A'))
+        self.scope.insert(Symbol('A', 0, 0))
         found = self.scope.find('A')
         self.assertTrue(found is not None)
         self.assertTrue(found.identifier is 'A')
         self.assertTrue(type(found) is Symbol)
 
-    def test_replace(self):
-        orig_symbol = Symbol('A')
-        replacement_symbol = Symbol('A')
-        self.scope.insert(orig_symbol)
-        self.scope.insert(Symbol('B'))
-        self.assertNotEqual(orig_symbol, replacement_symbol)
-        result = self.scope.replace(orig_symbol, replacement_symbol)
-        self.assertTrue(result)
-
     def test_size(self):
         self.assertEqual(0, self.scope.size())
-        self.scope.insert(Symbol('A'))
+        self.scope.insert(Symbol('A', 0, 0))
         self.assertEqual(1, self.scope.size())
 
     def test_clone(self):
-        self.scope.insert(Symbol('A'))
-        self.scope.insert(Symbol('B'))
+        self.scope.insert(Symbol('A', 0, 0))
+        self.scope.insert(Symbol('B', 0, 0))
 
         clone = self.scope.clone()
         self.assertTrue(self.scope.find('A') is not clone.find('A'))

@@ -76,12 +76,12 @@ class TestSymbol(unittest.TestCase):
         symbol = VariableSymbol('ignored', 0, 0)
         symbol.type_specifiers = 'char'
         symbol.pointer_modifiers = [PointerDeclaration()]
-        self.assertEqual(8, symbol.size_in_bytes())
+        self.assertEqual(4, symbol.size_in_bytes())
 
         symbol = VariableSymbol('ignored', 0, 0)
         symbol.type_specifiers = 'char'
         symbol.pointer_modifiers = [PointerDeclaration(), PointerDeclaration()]
-        self.assertEqual(8, symbol.size_in_bytes())
+        self.assertEqual(4, symbol.size_in_bytes())
 
         symbol = VariableSymbol('ignored', 0, 0)
         symbol.type_specifiers = 'char'
@@ -97,4 +97,4 @@ class TestSymbol(unittest.TestCase):
         symbol.type_specifiers = 'char'
         symbol.pointer_modifiers = [PointerDeclaration(), PointerDeclaration()]
         symbol.array_dims = [4]
-        self.assertEqual(32, symbol.size_in_bytes())
+        self.assertEqual(16, symbol.size_in_bytes())

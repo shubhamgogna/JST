@@ -196,10 +196,11 @@ def cast_as_required_type(required_type, given_type):
 
 
 def types_are_compatible(lhs_type, rhs_type):
-    if (is_primitive_type(lhs_type) and is_primitive_type(rhs_type)):  # TODO: add the logic for pointers and complex types
+    if is_primitive_type(lhs_type) and is_primitive_type(rhs_type):  # TODO: add the logic for pointers and complex types
         return True
     else:
         return False
+
 
 def type_size_in_bits(type_str):
     return PRIMITIVE_TYPE_DEFINITIONS[type_str].bit_size

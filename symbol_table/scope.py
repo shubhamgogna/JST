@@ -29,7 +29,8 @@ class Scope(object):
         self.map = RBTree()
 
     # Inserts a symbol into the Scope.
-    # Returns INSERT_SUCCESS or INSERT_REDECL.
+    #
+    # @return INSERT_SUCCESS or INSERT_REDECL.
     def insert(self, symbol):
         if not isinstance(symbol, Symbol):
             raise TypeError("'symbol' is not an instance of Symbol.")
@@ -41,36 +42,29 @@ class Scope(object):
             return Scope.INSERT_REDECL
 
     # Finds a symbol in the Scope.
-    # 'name' String identifier for the Symbol to find.
-    # Returns the Symbol if found or None if not found.
+    #
+    # @param name String identifier for the Symbol to find.
+    #
+    # @return Symbol if found or None if not found.
     def find(self, name):
         return self.map.get(name, None)
 
-    # Replaces one symbol with the other.
-    # 'original' Original Symbol in the map.
-    # 'replacement' Symbol to replace original.
-    # Returns true if replaced and false if not.
-    def replace(self, original, replacement):
-        if original.identifier is not replacement.identifier:
-            raise ValueError('Original and replacement do not have the same identifier.')
-        for identifier, value in self.map.items():
-            if original == value:
-                self.map[original.identifier] = replacement
-                return True
-        return False
-
-    # Returns the number of Symbols in the Scope.
+    # Size of the scope.
+    #
+    # @return Number of Symbols in the Scope.
     def size(self):
         return len(self.map)
 
-    # Clones the current Scope with a deep copy of all the Symbols.
+    # Clones the current Scope and returns a deep copy.
+    #
+    # @return Copy of the Scope.
     def clone(self):
         result = Scope()
         for identifier, value in self.map.items():
             result.map[identifier] = value.clone()
         return result
 
-    # Converts the current Scope to its String representation.
+    # @return String representation of the current Scope.
     def __repr__(self):
         symbols = []
         for key, value in self.map.items():

@@ -22,8 +22,10 @@ from symbol_table.scope import Scope
 class TestSymbolTable(unittest.TestCase):
     def setUp(self):
         self.sym = SymbolTable()
+        self.sym.push()
 
     def tearDown(self):
+        self.sym.pop()
         self.sym = None
 
     def test_push_pop_and_size(self):
@@ -35,76 +37,43 @@ class TestSymbolTable(unittest.TestCase):
         self.assertTrue(self.sym.size() == 2)
 
     def test_find_same_scope(self):
-        self.assertTrue(self.sym.insert(Symbol('A'))[0] == Scope.INSERT_SUCCESS)
+        self.assertTrue(self.sym.insert(Symbol('A', 0, 0))[0] == Scope.INSERT_SUCCESS)
         found, in_scope = self.sym.find('A')
         self.assertTrue(found is not None)
         self.assertTrue(found.identifier is 'A')
         self.assertTrue(type(found) is Symbol)
 
     def test_find_diff_scope(self):
-        self.sym.insert(Symbol('A'))
+        self.sym.insert(Symbol('A', 0, 0))
         self.sym.push()
-        self.sym.insert(Symbol('B'))
+        self.sym.insert(Symbol('B', 0, 0))
         found, in_scope = self.sym.find('A')
         self.assertTrue(found is not None)
         self.assertTrue(found.identifier is 'A')
         self.assertTrue(type(found) is Symbol)
 
     def test_find_in_top_scope(self):
-        self.sym.insert(Symbol('A'))
+        self.sym.insert(Symbol('A', 0, 0))
         found = self.sym.find_in_top('A')
         self.assertTrue(found is not None)
         self.assertTrue(found.identifier is 'A')
         self.assertTrue(type(found) is Symbol)
 
     def test_insert(self):
-        self.assertTrue(self.sym.insert(Symbol('A'))[0] == Scope.INSERT_SUCCESS)
-        self.assertTrue(self.sym.insert(Symbol('B'))[0] == Scope.INSERT_SUCCESS)
+        self.assertTrue(self.sym.insert(Symbol('A', 0, 0))[0] == Scope.INSERT_SUCCESS)
+        self.assertTrue(self.sym.insert(Symbol('B', 0, 0))[0] == Scope.INSERT_SUCCESS)
 
         self.sym.push()
-        self.assertTrue(self.sym.insert(Symbol('A'))[0] == Scope.INSERT_SHADOWED)
-        self.assertTrue(self.sym.insert(Symbol('B'))[0] == Scope.INSERT_SHADOWED)
+        self.assertTrue(self.sym.insert(Symbol('A', 0, 0))[0] == Scope.INSERT_SHADOWED)
+        self.assertTrue(self.sym.insert(Symbol('B', 0, 0))[0] == Scope.INSERT_SHADOWED)
 
-        self.assertTrue(self.sym.insert(Symbol('A'))[0] == Scope.INSERT_REDECL)
-        self.assertTrue(self.sym.insert(Symbol('B'))[0] == Scope.INSERT_REDECL)
-
-    def test_replace_same_scope(self):
-        orig_symbol = Symbol('A')
-        replacement_symbol = Symbol('A')
-        self.assertTrue(orig_symbol != replacement_symbol)
-
-        self.sym.insert(orig_symbol)
-        self.sym.insert(Symbol('B'))
-
-        result = self.sym.replace(orig_symbol, replacement_symbol)
-        self.assertTrue(result)
-
-    def test_replace_diff_scope(self):
-        orig_symbol = Symbol('A')
-        replacement_symbol = Symbol('A')
-        self.assertTrue(orig_symbol != replacement_symbol)
-
-        self.sym.insert(orig_symbol)
-        self.sym.insert(Symbol('B'))
-        self.sym.push()
-        self.sym.insert(Symbol('A'))
-
-        result = self.sym.replace(orig_symbol, replacement_symbol)
-        self.assertTrue(result)
-
-    def test_replace_not_existing(self):
-        self.sym.insert(Symbol('A'))
-        self.sym.insert(Symbol('B'))
-        self.sym.push()
-        self.sym.insert(Symbol('A'))
-
-        result = self.sym.replace(Symbol('A'), Symbol('A'))
-        self.assertFalse(result)
+        self.assertTrue(self.sym.insert(Symbol('A', 0, 0))[0] == Scope.INSERT_REDECL)
+        self.assertTrue(self.sym.insert(Symbol('B', 0, 0))[0] == Scope.INSERT_REDECL)
 
     def test_symbol_table_clone(self):
-        self.sym.insert(Symbol('A'))
+        self.sym.insert(Symbol('A', 0, 0))
         self.sym.push()
-        self.sym.insert(Symbol('B'))
+        self.sym.insert(Symbol('B', 0, 0))
 
         clone = self.sym.clone()
         self.assertTrue(self.sym.size() == clone.size())
