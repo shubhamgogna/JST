@@ -4,12 +4,12 @@
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-#  
+#
 # JST is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-#  
+#
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -30,13 +30,14 @@ class TacInstruction(object):
         __str__ is supposed to be "human readable, so this method will produce a more concise string that will fit in
         the terminal better for debugging.
         """
-        ret = ''
-        if self.instruction == instructions.COMMENT:
-            ret = '{}: {}'.format(instructions.COMMENT, self.dest)
-        else:
-            ret = '{}, {}, {}, {}'.format(self.instruction, self.dest, self.src1, self.src2)
-
-        return ret
+        # ret = ''
+        # if self.instruction == instructions.COMMENT:
+        #     ret = '{}: {}'.format(instructions.COMMENT, self.dest)
+        # else:
+        #     ret = '{}, {}, {}, {}'.format(self.instruction, self.dest, self.src1, self.src2)
+        #
+        # return ret
+        return repr(self)
 
     def __repr__(self):
         """
@@ -54,7 +55,7 @@ class TacInstruction(object):
                                                           self.src1 if self.src1 is not TacInstruction.NULL else '-',
                                                           self.src2 if self.src2 is not TacInstruction.NULL else '-')
 
-        return ret + '\n'
+        return ret
 
     @classmethod
     def from_str(cls, tac_str):

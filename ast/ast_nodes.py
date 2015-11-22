@@ -151,13 +151,13 @@ class Assignment(BaseAstNode):
         left = self.lvalue.to_3ac()
         lval = left['register']
         if '3ac' in left:
-            output.append(left['3ac'])
+            output.extend(left['3ac'])
 
         # get memory address of rvalue by calling to3ac on rvalue
         right = self.rvalue.to_3ac()
         rval = right['register']
         if '3ac' in right:
-            output.append(right['3ac'])
+            output.extend(right['3ac'])
 
         # TODO: Fix this??
         # # load rvalue into register - does this need to happen or not?
@@ -291,8 +291,6 @@ class BinaryOperator(BaseAstNode):
         return {'3ac': output, 'register': reg}
 
 
-
-# TODO (Shubham) This looks like it's for explicit conversions.
 class Cast(BaseAstNode):
     """
     Requires: An rvalue of the value to be casted.
@@ -346,6 +344,7 @@ class Cast(BaseAstNode):
 
         return {'3ac': output, 'register': reg}
 
+
 class CompoundStatement(BaseAstNode):
     """
     Requires: None.
@@ -376,15 +375,16 @@ class CompoundStatement(BaseAstNode):
         # gen 3ac for declaration_list
         if self.declaration_list is not None:
             for item in self.declaration_list:
-                output.append(item.to_3ac())
+                output.extend(item.to_3ac())
                 # print(output)
 
         # gen 3ac for statement_list
         for item in self.statement_list:
-            output.append(item.to_3ac())
+            output.extend(item.to_3ac())
             # print(output)
 
         return output
+
 
 class Declaration(BaseAstNode):
     """
@@ -425,8 +425,7 @@ class Declaration(BaseAstNode):
 
         # TODO:
         # make space in memory for variable
-        output = []
-        output.append(SUBIU('TopStack', 'TopStack', 'amount'))
+        output = [SUBIU('TopStack', 'TopStack', 'amount')]
         address_table[self.identifier] = 'TopStack'
 
         return output
@@ -457,8 +456,11 @@ class FileAST(BaseAstNode):
         # gen 3ac for external declarations
         output = []
         for item in self.external_declarations:
-            output.append(item.to_3ac())
-            print(output)
+            output.extend(item.to_3ac())
+
+        for item in output:
+            print(item)
+
         return output
 
     def to_graph_viz_str(self):
@@ -556,20 +558,20 @@ class FunctionDefinition(BaseAstNode):
 
         # dump label
         label = LABEL(label)
-        output = []
-        output.append(label)
+        output = [label]
 
         # get 3ac for arguments
         for item in self.arguments:
-            output.append(item.to_3ac())
+            output.extend(item.to_3ac())
             # print(output)
 
         # gen 3ac for body
         # body will always be a compound statement.
-        output.append(self.body.to_3ac())
+        output.extend(self.body.to_3ac())
         # for item in self.body:
         #     output.append(item.to_3ac())
         #     # print(output)
+
         return output
 
 
@@ -755,11 +757,10 @@ class Return(BaseAstNode):
         # return value
         output = []
         prev_result = self.expression.to_3ac()
-        #Note: Does not currently pass back the register of the value being returned....
-        output.append(prev_result['3ac'])
+        # Note: Does not currently pass back the register of the value being returned....
+        output.extend(prev_result['3ac'])
         output.append(RETURN())
         return output
-
 
 
 class SymbolNode(BaseAstNode):
