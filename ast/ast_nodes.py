@@ -316,8 +316,30 @@ class Cast(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+        # raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
+        output = []
+
+        # get correct casted value
+        if self.to_type == 'int':
+            value = int(self.expression)
+        if self.to_type == 'float':
+            value = float(self.expression)
+        if self.to_type == 'char':
+            # value = char(self.expression)
+            raise(NotImplementedError('Please implement char casting in p_cast_expressoin_2'))
+
+        # load casted value into register and return register
+        if type(value) is int:
+            reg = INT_REGISTER_TICKETS.get()
+            output.append(ADDI(reg, value, 0))
+        if type(value) is float:
+            reg = FLOAT_REGISTER_TICKETS.get()
+            output.append(ADD(reg, value, 0))
+
+        register_allocation_table[reg] = value
+
+        return {'3ac': output, 'register': reg}
 
 class CompoundStatement(BaseAstNode):
     """
