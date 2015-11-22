@@ -585,8 +585,6 @@ class If(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        # raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
-
         output = []
 
         # get three labels
@@ -607,12 +605,16 @@ class If(BaseAstNode):
         # get memory address of lvalue by calling to3ac on lvalue
         left = self.conditional.lvalue.to_3ac()
         lval = left['register']
+        if '3ac' in left:
+            output.extend(left['3ac'])
 
         # load lvalue into register  - does this need to happen or not?
 
         # get memory address of rvalue by calling to3ac on rvalue
         right = self.conditional.rvalue.to_3ac()
         rval = right['register']
+        if '3ac' in right:
+            output.extend(right['3ac'])
 
         # # check which operator in conditional, to know which branch to take
         # branching on true
