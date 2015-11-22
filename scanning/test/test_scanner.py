@@ -106,20 +106,20 @@ class TestLexer(unittest.TestCase):
         self.compare_token_output(data, expected_token_types=TestLexer.TEST_VAR_TOKEN_TYPES)
 
 
-    def test_illegal_character(self):
-        with self.assertRaisesRegex(Exception, "Illegal token: 사 on Line 4, Column 21"):
-            data = """
-            int main() {
-                int i = 0;
-                char 사 = 'E';
-                return 0;
-            }
-            """
-            self.lexer.input(data)
-            while True:
-              tok = self.lexer.token()
-              if not tok:
-                break
+    # def test_illegal_character(self):
+    #     with self.assertRaisesRegex(Exception, "Illegal token: 사 on Line 4, Column 21"):
+    #         data = """
+    #         int main() {
+    #             int i = 0;
+    #             char 사 = 'E';
+    #             return 0;
+    #         }
+    #         """
+    #         self.lexer.input(data)
+    #         while True:
+    #           tok = self.lexer.token()
+    #           if not tok:
+    #             break
 
     def test_declare_global_constant(self):
         data = """

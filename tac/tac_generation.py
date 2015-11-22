@@ -413,17 +413,15 @@ def NEGS(result, operand):
 #
 # LOGICAL
 #
+def LAND(result, left_operand, right_operand):
+    return TacInstruction(instructions.LAND, result, left_operand, right_operand)
+
+
+def LOR(result, left_operand, right_operand):
+    return TacInstruction(instructions.LOR, result, left_operand, right_operand)
+
 
 def NOT(result, operand):
-    """
-    args:
-        sum: the register where the addition result is stored.
-        augend: the left operand of the addition.
-        addend: the right operand of the addition.
-
-    function:
-        Performs basic addition.
-    """
     return TacInstruction(instructions.NOT, result, operand)
 
 
@@ -503,6 +501,17 @@ def LE(result, left_operand, right_operand):
         Performs basic addition.
     """
     return TacInstruction(instructions.LE, result, left_operand, right_operand)
+
+
+#
+# CASTING
+#
+def CVTWS(result, operand):
+    return TacInstruction(instructions.CVTWS, result, operand)
+
+
+def CVTSW(result, operand):
+    return TacInstruction(instructions.CVTSW, result, operand)
 
 
 #

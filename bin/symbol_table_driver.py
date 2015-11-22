@@ -14,7 +14,7 @@
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
 ###############################################################################
-# File Description: External driver for symbol table tests.
+# File Description: External driver for symbol table test.
 ###############################################################################
 
 import os

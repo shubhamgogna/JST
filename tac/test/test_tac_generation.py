@@ -25,19 +25,19 @@ class TestTacGeneration(unittest.TestCase):
         pass
 
     def test_add(self):
-        instruction = tac.add('temp_0000', 'temp_0001', 'temp_0002')
+        instruction = tac.ADD('temp_0000', 'temp_0001', 'temp_0002')
 
         self.assertEqual('ADD, temp_0000, temp_0001, temp_0002', str(instruction))
         self.assertEqual('ADD            , temp_0000      , temp_0001      , temp_0002      \n', repr(instruction))
 
     def test_comment(self):
-        instruction = tac.comment("Hi! I'm a comment")
+        instruction = tac.COMMENT("Hi! I'm a comment")
 
         self.assertEqual("COMMENT: Hi! I'm a comment", str(instruction))
         self.assertEqual("# Hi! I'm a comment\n", repr(instruction))
 
     def test_label(self):
-        instruction = tac.label('ENTER_LOOP')
+        instruction = tac.LABEL('ENTER_LOOP')
 
         self.assertEqual("LABEL, ENTER_LOOP, None, None", str(instruction))
         self.assertEqual("ENTER_LOOP:\n", repr(instruction))

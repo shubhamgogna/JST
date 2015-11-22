@@ -637,20 +637,31 @@ class JSTParser(object):
         """specifier_qualifier_list : type_specifier specifier_qualifier_list"""
         self.output_production(t, production_message='specifier_qualifier_list -> type_specifier specifier_qualifier_list')
 
+        t[2].add_all_from(t[1])
+        t[0] = t[2]
+
     def p_specifier_qualifier_list_2(self, t):
         """specifier_qualifier_list : type_specifier"""
         self.output_production(t, production_message='specifier_qualifier_list -> type_specifier')
 
-        #TODO: might need to change this
-        t[0] = t[1]
+        type_declaration = TypeDeclaration()
+        type_declaration.add_type_specifier(t[1])
+        t[0] = type_declaration
 
     def p_specifier_qualifier_list_3(self, t):
         """specifier_qualifier_list : type_qualifier specifier_qualifier_list"""
         self.output_production(t, production_message='specifier_qualifier_list -> type_qualifier specifier_qualifier_list')
 
+        t[2].add_all_from(t[1])
+        t[0] = t[2]
+
     def p_specifier_qualifier_list_4(self, t):
         """specifier_qualifier_list : type_qualifier"""
         self.output_production(t, production_message='specifier_qualifier_list -> type_qualifier')
+
+        type_declaration = TypeDeclaration()
+        type_declaration.add_type_qualifier(t[1])
+        t[0] = t[1]
 
     #
     # struct-declarator-list:
@@ -1036,9 +1047,8 @@ class JSTParser(object):
     def p_type_name_2(self, t):
         """type_name : specifier_qualifier_list"""
         self.output_production(t, production_message='type_name -> specifier_qualifier_list')
-        # raise NotImplemented()
-        # TODO: might need to change this....
-        t[0] = t[1]
+
+        t[0] = t[1].get_type_str()
 
     #
     # abstract-declarator:
@@ -1395,7 +1405,7 @@ class JSTParser(object):
     #
     # assigment_expression:
     #
-    def p_assignment_expression_1(self, t):
+    def p_assignment_expression_pass_through(self, t):
         """
         assignment_expression : conditional_expression
         """
@@ -1411,20 +1421,19 @@ class JSTParser(object):
         self.output_production(t, production_message=
             'assignment_expression -> unary_expression assignment_operator assignment_expression')
 
+        if t[1].immutable:
+            line, column, source_code = self.compiler_state.get_line_col_source(t.lineno(2), t.lexpos(2))
+            raise CompileError("Assignment to immutable types is not allowed", line, column, source_code)
+
         if isinstance(t[1], SymbolNode) and isinstance(t[1].symbol, FunctionSymbol):
             tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
             raise CompileError('The assignment operator cannot be applied to functions.', tup[0], tup[1], tup[2])
 
+        # TODO (Shubham) Why are we no longer checking subscripts if the right side is also an array ref?
         if isinstance(t[1], ArrayReference):
             valid, message = t[1].check_subscripts()
             if not valid:
                 tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
-                raise CompileError(message, tup[0], tup[1], tup[2])
-
-        if isinstance(t[3], ArrayReference):
-            valid, message = t[3].check_subscripts()
-            if not valid:
-                tup = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
                 raise CompileError(message, tup[0], tup[1], tup[2])
 
         cast_result, message = type_utils.can_assign(t[1].get_resulting_type(), t[3].get_resulting_type())
@@ -1547,11 +1556,11 @@ class JSTParser(object):
         cast_expression : LPAREN type_name RPAREN cast_expression
         """
         self.output_production(t, production_message='cast_expression -> LPAREN type_name RPAREN cast_expression')
-        # raise NotImplemented('Type casting')
 
         # TODO: might need to change this
         value = t[4].value
-        t[0] = Cast(t[2],value)
+        t[0] = Cast(t[2], value)
+        # t[0] = Cast(to_type=t[2], expression=t[4])
 
     #
     # unary_expression:
