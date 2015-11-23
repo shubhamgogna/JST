@@ -66,7 +66,7 @@ class ArrayDeclaration(BaseAstNode):
         output = [SOURCE(self.linerange[0], self.linerange[1])]
 
         if not self.initializers:
-            return output
+            return {'3ac': output}
 
         # Get a new register for the offset
         offset_reg = INT_REGISTER_TICKETS.get()
@@ -89,7 +89,7 @@ class ArrayDeclaration(BaseAstNode):
             # Move to the next word
             output.append(ADDIU(offset_reg, offset_reg, 4))
 
-        return output
+        return {'3ac': output}
 
 
 ##
@@ -217,7 +217,6 @@ class Assignment(BaseAstNode):
             output.extend(left['3ac'])
 
         # get memory address of rvalue by calling to3ac on rvalue
-        print('HERE', self.rvalue, type(self.rvalue))
         right = self.rvalue.to_3ac(get_rval=True)
         rval = right['rvalue']
         if '3ac' in right:
@@ -440,13 +439,15 @@ class CompoundStatement(BaseAstNode):
         # gen 3ac for declaration_list
         if self.declaration_list is not None:
             for item in self.declaration_list:
-                output.extend(item.to_3ac())
+                result = item.to_3ac()
+                output.extend(result['3ac'])
 
         # gen 3ac for statement_list
         for item in self.statement_list:
-            output.extend(item.to_3ac())
+            result = item.to_3ac()
+            output.extend(result['3ac'])
 
-        return output
+        return {'3ac': output}
 
 
 class Declaration(BaseAstNode):
@@ -482,7 +483,7 @@ class Declaration(BaseAstNode):
         output = [SOURCE(self.linerange[0], self.linerange[1])]
 
         if self.initializer:
-            print(self.initializer, type(self.initializer))
+            # print(self.initializer, type(self.initializer))
             item_tac = self.initializer.to_3ac(get_rval=True)
             if '3ac' in item_tac:
                 output.extend(item_tac['3ac'])
@@ -518,7 +519,7 @@ class FileAST(BaseAstNode):
         childrens.extend(self.external_declarations)
         return tuple(childrens)
 
-    def to_3ac(self, include_source=False):
+    def to_3ac(self, include_source=True):
         output = []
 
         global_data_declarations = []
@@ -529,19 +530,24 @@ class FileAST(BaseAstNode):
             else:
                 global_data_declarations.append(external_declaration)
 
-        # insert the call to main
-        output.append(CALL(self.compiler_state.main_function.identifier, self.compiler_state.main_function.activation_frame_size))
-        # if we did the argc, argv versions, that stuff would go here
-
-        output = [DATA()]
+        output.append(DATA())
         for external_declaration in global_data_declarations:
             result = external_declaration.to_3ac()
             output.extend(result['3ac'])
 
         output.append(TEXT())
+        # insert the call to main
+        output.append(CALL(self.compiler_state.main_function.identifier, self.compiler_state.main_function.activation_frame_size))
+        # if we did the argc, argv versions, that stuff would go here
+
+        output.append(LLAC(self.compiler_state.main_function.activation_frame_size))
+        output.append(BR('PROG_END'))
+
         for function_definition in function_definitions:
             result = function_definition.to_3ac()
             output.extend(result['3ac'])
+
+        output.append(LABEL('PROG_END'))
 
         counter = [0] * len(self.compiler_state.source_lines if self.compiler_state else [0])
         for item in output:
@@ -700,7 +706,8 @@ class FunctionDefinition(BaseAstNode):
 
         # gen 3ac for body
         # body will always be a compound statement.
-        _3ac.extend(self.body.to_3ac())
+        result = self.body.to_3ac()
+        _3ac.extend(result['3ac'])
         # for item in self.body:
         #     output.append(item.to_3ac())
         #     # print(output)
@@ -780,18 +787,20 @@ class If(BaseAstNode):
 
         # if conditional is false, gen 3ac
         if self.if_false:
-            output.extend(self.if_false.to_3ac())
+            result = self.if_false.to_3ac()
+            output.extend(result['3ac'])
 
         output.append(BR(lEnd))
 
         # if conditional is true, dump label and gen 3ac
         output.append(LABEL(lTrue))
-        output.extend(self.if_true.to_3ac())
+        result = self.if_true.to_3ac()
+        output.extend(result['3ac'])
 
         # dump end label
         output.append(LABEL(lEnd))
 
-        return output
+        return {'3ac': output}
 
 
 class InitializerList(BaseAstNode):
@@ -854,12 +863,14 @@ class IterationNode(BaseAstNode):
         # Check for pre-test loop
         if not self.is_pre_test_loop:
             if self.body_statements:
-                output.extend(self.body_statements.to_3ac())
+                result = self.body_statements.to_3ac()
+                output.extend(result['3ac'])
 
         # Initialize
         if self.initialization_expression:
             # TODO (Shubham) What type of information do we get back from expression?
-            output.extend(self.initialization_expression.to_3ac())
+            result = self.initialization_expression.to_3ac()
+            output.extend(result['3ac'])
 
         # Add condition check label
         output.append(LABEL(condition_check_label))
@@ -878,7 +889,8 @@ class IterationNode(BaseAstNode):
 
         # Add loop instructions
         if self.body_statements:
-            output.extend(self.body_statements.to_3ac())
+            result = self.body_statements.to_3ac()
+            output.extend(result['3ac'])
 
         # Add increment expressions
         if self.increment_expression:
@@ -979,7 +991,7 @@ class Return(BaseAstNode):
             output.extend(prev_result['3ac'])
 
         output.append(RETURN(prev_result.get('rvalue', ZERO)))
-        return output
+        return {'3ac': output}
 
 
 class SymbolNode(BaseAstNode):
