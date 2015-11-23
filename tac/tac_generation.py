@@ -16,6 +16,10 @@
 import tac.instructions as instructions
 
 
+# Special Registers
+ZERO = '$zero'
+
+
 class TacInstruction(object):
     NULL = None
 
@@ -530,6 +534,16 @@ def ASSIGN(result, lvalue, rvalue):
         Performs basic addition.
     """
     return TacInstruction(instructions.ASSIGN, result, lvalue, rvalue)
+
+
+#
+# Memory Access
+#
+def LW(result, address):
+    return TacInstruction(instructions.LW, result, address)
+
+def SW(result, address):
+    return TacInstruction(instructions.SW, result, address)
 
 
 #

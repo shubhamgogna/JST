@@ -69,6 +69,11 @@ CVTWS = 'CVTWS'
 # Assignment
 ASSIGN = 'ASSIGN'
 
+
+# Memory Accesses
+LW = 'LW'
+SW = 'SW'
+
 # # Control Flow
 LABEL = 'LABEL'
 BR = 'BR'
