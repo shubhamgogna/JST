@@ -880,11 +880,12 @@ class UnaryOperator(BaseAstNode):
     Output:   An rvalue that is either the result of the operation or the value of the symbol before the operation,
               depending on if the operator is a pre- or post- one.
     """
-    def __init__(self, operator, expression, **kwargs):
+    def __init__(self, operator, pre, expression, **kwargs):
         super(UnaryOperator, self).__init__(**kwargs)
 
         self.operator = operator
         self.expression = expression
+        self.pre = pre
 
     def get_resulting_type(self):
         return self.expression.get_resulting_type()
@@ -899,14 +900,46 @@ class UnaryOperator(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+        # raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+
+        output = []
 
         # get memory location of expression by calling to3ac function
+        result = (self.expression.to_3ac())
+        if '3ac' in result:
+            output.append(result['3ac'])
+        value_reg = result['register']
 
-        # copy expression value to register
+        # get the rvalue
+        rvalue = INT_REGISTER_TICKETS.get()
+        output.extend(LW(rvalue, value_reg))
+
+        # make 2 variables: 1 to point to the register this function returns, 1 to point to the register where the ++
+        # will happen
+        return_reg = None
+
+        # if this is a post-increment, copy the register with the current value of the register so we can return that
+        # before the plusplus happens
+        if not self.pre:
+            return_reg = INT_REGISTER_TICKETS.get()
+            output.append(ADD(return_reg, rvalue, '$zero'))
+        else:  # in the case of pre plusplus, we will be returning a register with the updated value
+            return_reg = rvalue
+
+        # add 1 into temp reg
+        reg = INT_REGISTER_TICKETS.get()
+        output.append(ADDIU(reg, 1, '$zero'))
 
         # determine correct operator and apply to register
+        if self.operator == '++':
+             output.append(ADDU(rvalue, reg, rvalue))
+        if self.operator == '--':
+             output.append(SUB(rvalue, reg, rvalue))
 
+        # store updated value
+        output.append(SW(value_reg, rvalue))
+
+        return {'3ac': output, 'rvalue': return_reg}
 
 class Constant(BaseAstNode):
     """

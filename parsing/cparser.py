@@ -1750,7 +1750,7 @@ class JSTParser(object):
         self.output_production(t, production_message='postfix_expression -> postfix_expression PLUSPLUS')
 
         # TODO This should have another node or a flag that says the increment occurs AFTER
-        t[0] = UnaryOperator(t[2], t[1])
+        t[0] = UnaryOperator(operator=t[2], pre=False, expression=t[1])
 
     def p_postfix_expression_to_post_decrement(self, t):
         """
@@ -1759,7 +1759,7 @@ class JSTParser(object):
         self.output_production(t, production_message='postfix_expression -> postfix_expression MINUSMINUS')
 
         # TODO This should have another node or a flag that says the decrement occurs AFTER
-        t[0] = UnaryOperator(t[2], t[1])
+        t[0] = UnaryOperator(operator=t[2], pre=False, expression=t[1])
 
     #
     # primary-expression:

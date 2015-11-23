@@ -77,7 +77,7 @@ class TestTac(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        print(ast.to_graph_viz_str())
+        # print(ast.to_graph_viz_str())
         ast.to_3ac()
 
     def test_constant_expression(self):
@@ -93,7 +93,7 @@ class TestTac(unittest.TestCase):
         ast.to_3ac()
 
     def test_explicit_cast(self):
-        self.enable_debug(True)
+        # self.enable_debug(True)
         data = """
             int main()
             {
@@ -217,7 +217,7 @@ class TestTac(unittest.TestCase):
             int main()
             {
                 int i;
-                do {} while (i > 10);
+                do { i = 5; } while (i > 10);
             }
             """
         ast = self.compiler_state.parse(data)
