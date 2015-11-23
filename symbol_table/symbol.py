@@ -49,6 +49,8 @@ class VariableSymbol(Symbol):
 
         self.value = None
 
+        self.is_parameter = False
+
     def finalize(self):
         # TODO:
         # check the type specifiers for correctness
@@ -98,6 +100,9 @@ class VariableSymbol(Symbol):
         return '{}{}{}'.format(self.type_specifiers, '*' * len(self.pointer_modifiers), array_suffix)
 
     def size_in_bytes(self):
+        if self.is_parameter and len(self.array_dims) > 0:
+            return 4  # pointer size
+
         multiplier = 1
         for dim in self.array_dims:
             multiplier *= dim
@@ -164,6 +169,9 @@ class FunctionSymbol(Symbol):
         if self.finalized:
             raise Exception('Attempted redefinition of function {}.'.format(self.identifier))
         self.named_parameters = parameter_type_list
+
+        for named_parameter in self.named_parameters:
+            named_parameter.is_parameter = True
 
     def arguments_match_parameter_types(self, argument_list):
         if len(self.named_parameters) != len(argument_list):

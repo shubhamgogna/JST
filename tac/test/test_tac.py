@@ -243,7 +243,6 @@ class TestTac(unittest.TestCase):
               for (i = 0; i < ARRAY_DIM; i++) {
                 for (j = 0; j < ARRAY_DIM; j++) {
                   A[i][j] = B[i][j] = 1;
-                  C[i][j] = 0;
                 }
               }
 
@@ -257,12 +256,12 @@ class TestTac(unittest.TestCase):
 
               for (i = 0; i < ARRAY_DIM; i++) {
                 for (j = 0; j < ARRAY_DIM; j++) {
+                  C[i][j] = 0;
                   for (k = 0; k < ARRAY_DIM; k++) {
                     C[i][j] += A[i][j + k] * B[i + k][j];
                   }
                 }
               }
-
             }
             """
 

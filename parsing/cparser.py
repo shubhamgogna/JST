@@ -169,15 +169,19 @@ class JSTParser(object):
         symbol = t[1]
         function_symbol = FunctionSymbol.from_variable_symbol(symbol)
 
+        result, existing = self.compiler_state.symbol_table.insert(symbol)
+        if result is Scope.INSERT_REDECL:
+            if existing[0].finalized:
+                tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+                raise CompileError('Reimplementation of function not allowed.', tup[0], tup[1], tup[2])
+            else:
+                existing[0].named_parameters = function_symbol.named_parameters
+                function_symbol = existing[0]
+
         type_declaration = TypeDeclaration()
         type_declaration.add_type_specifier('int')
-        function_symbol.add_type_declaration(type_declaration)
+        function_symbol.add_return_type_declaration(type_declaration)
         function_symbol.finalized = True
-
-        result, existing = self.compiler_state.symbol_table.insert(symbol)
-        if result is Scope.INSERT_REDECL and existing[0].finalized:
-            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
-            raise CompileError('Reimplementation of function not allowed.', tup[0], tup[1], tup[2])
 
         function_symbol.activation_frame_size = self.compiler_state.symbol_table.next_activation_frame_offset
         self.compiler_state.symbol_table.next_activation_frame_offset = 0
@@ -201,13 +205,18 @@ class JSTParser(object):
             raise CompileError(message, tup[0], tup[1], tup[2])
 
         function_symbol = FunctionSymbol.from_variable_symbol(t[2]) if isinstance(t[2], VariableSymbol) else t[2]
-        function_symbol.add_return_type_declaration(t[1])
-        function_symbol.finalized = True
 
         result, existing = self.compiler_state.symbol_table.insert(function_symbol)
-        if result is Scope.INSERT_REDECL and existing[0].finalized:
-            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
-            raise CompileError('Reimplementation of function not allowed.', tup[0], tup[1], tup[2])
+        if result is Scope.INSERT_REDECL:
+            if existing[0].finalized:
+                tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+                raise CompileError('Reimplementation of function not allowed.', tup[0], tup[1], tup[2])
+            else:
+                existing[0].named_parameters = function_symbol.named_parameters
+                function_symbol = existing[0]
+
+        function_symbol.add_return_type_declaration(t[1])
+        function_symbol.finalized = True
 
         function_symbol.activation_frame_size = self.compiler_state.symbol_table.next_activation_frame_offset
         self.compiler_state.symbol_table.next_activation_frame_offset = 0
@@ -288,6 +297,8 @@ class JSTParser(object):
                 if result is Scope.INSERT_REDECL:
                     tup = self.compiler_state.get_line_col_source(lineno, lexpos)
                     raise CompileError('Function is being redeclared.', tup[0], tup[1], tup[2])
+
+
 
                 decl_ast = FunctionDeclaration(symbol,
                                                [SymbolNode(sym) for sym in symbol.named_parameters],
@@ -1949,6 +1960,8 @@ class JSTParser(object):
         for named_parameter in function_symbol.named_parameters:
             # TODO: may need to turn these into symbols
             self.compiler_state.symbol_table.insert(named_parameter)
+            assert(named_parameter.activation_frame_offset is not None)
+            print('OFFSET', named_parameter.activation_frame_offset)
 
     def p_enter_scope(self, t):
         """

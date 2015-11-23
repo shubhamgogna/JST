@@ -19,6 +19,7 @@ import tac.instructions as instructions
 # Special Registers
 ZERO = '$zero'
 FP = '$FP'
+SP = '$SP'
 RA = '$RA'
 V0 = '$v0'
 
@@ -571,9 +572,13 @@ def ASSIGN(result, lvalue, rvalue):
 def LW(result, address):
     return TacInstruction(instructions.LW, result, address)
 
+
 def SW(result, address):
     return TacInstruction(instructions.SW, result, address)
 
+
+def LA(result, address):
+    return TacInstruction(instructions.LA, result, address)
 
 #
 # PROGRAM FLOW

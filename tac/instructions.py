@@ -81,6 +81,7 @@ ASSIGN = 'ASSIGN'
 # Memory Accesses
 LW = 'LW'
 SW = 'SW'
+LA = 'LA'
 
 # Control Flow
 LABEL = 'LABEL'

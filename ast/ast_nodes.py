@@ -158,7 +158,7 @@ class ArrayReference(BaseAstNode):
         for i in range(0, dim_count - 1):
             output.append(MULIU(offset_reg, offset_reg, self.symbol.array_dims[i + 1]))
 
-            subscript_tac = self.subscripts[i].to_3ac(get_rval=True)
+            subscript_tac = self.subscripts[i + 1].to_3ac(get_rval=True)
             if '3ac' in subscript_tac:
                 output.extend(subscript_tac['3ac'])
 
@@ -172,7 +172,6 @@ class ArrayReference(BaseAstNode):
             output.append(ADDU(offset_reg, offset_reg, self.symbol.global_memory_location))
         else:
             output.append(ADDU(offset_reg, offset_reg, create_offset_reference(self.symbol.activation_frame_offset , FP)))
-
         if get_rval:
             output.append(LW(offset_reg, offset_reg))
             return {'3ac': output, 'rvalue': offset_reg}
@@ -613,6 +612,7 @@ class FunctionCall(BaseAstNode):
 
             # get casted value if necessary
             if arg_type != param_type:
+                # print(arg_type, param_type)
                 if param_type == type_utils.INT:
                     new_register = INT_REGISTER_TICKETS.get()
                     _3ac.append(CVTSW(new_register, arg_rvalue))
@@ -624,6 +624,12 @@ class FunctionCall(BaseAstNode):
 
             # store value at memory location indicated by parameter_template
             offset = parameter_template.activation_frame_offset
+
+            if isinstance(argument, SymbolNode) and len(argument.symbol.array_dims) > 0:
+                array_base = INT_REGISTER_TICKETS.get()
+                _3ac.append(LA(array_base, create_offset_reference(argument.symbol.activation_frame_offset, SP)))
+                arg_rvalue = array_base
+
             _3ac.append(SW(arg_rvalue, create_offset_reference(offset, FP)))
 
         # jump to function body
@@ -1031,10 +1037,10 @@ class SymbolNode(BaseAstNode):
         output = [SOURCE(self.linerange[0], self.linerange[1])]
 
         # get ticket to copy memory location
-        if self.symbol.get_resulting_type() == 'int':
-            reg = INT_REGISTER_TICKETS.get()
-        else:
+        if type_utils.is_floating_point_type(self.symbol.get_resulting_type()):
             reg = FLOAT_REGISTER_TICKETS.get()
+        else:
+            reg = INT_REGISTER_TICKETS.get()
 
         if self.symbol.global_memory_location:
 
