@@ -219,7 +219,11 @@ class TestTac(unittest.TestCase):
             int main()
             {
                 int i;
-                do { i = 5; } while (i > 10);
+                do
+                {
+                    i = 5;
+                }
+                while (i > 10);
             }
             """
         ast = self.compiler_state.parse(data)

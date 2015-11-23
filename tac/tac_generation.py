@@ -93,7 +93,7 @@ def DUP(clone, original):
 #
 # THE ALMIGHTY SOURCE
 #
-def SOURCE(start_line):
+def SOURCE(line_start, line_end):
     """
     args:
         start_line
@@ -101,7 +101,7 @@ def SOURCE(start_line):
     function:
         Instruction that gets filtered in the output and converted to the actual source from the program.
     """
-    return TacInstruction(instructions.SOURCE, start_line)
+    return TacInstruction(instructions.SOURCE, line_start, line_end)
 
 
 #

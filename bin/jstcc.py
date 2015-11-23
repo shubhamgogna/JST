@@ -38,8 +38,9 @@ def main():
                                  " 2: Productions and Source Code \n 3: Productions, Source, Misc info")
     arg_parser.add_argument("-ast", "--astree", action='store_true',
                             help="Enables the printing of the GraphViz string after parsing.")
-    arg_parser.add_argument("-tac", "--threeac", action='store_true',
-                            help="Enables the printing of the Three-Address-Code after AST traversal.")
+    arg_parser.add_argument("-tac", "--threeac", type=int, choices=[0, 1, 2], default=0,
+                            help="The debug level for the 3AC. \n 0: No debug \n 1: 3AC \n "
+                                 " 2: 3AC + Source")
     arg_parser.add_argument("-w", "--warnlevel", action='store_true',
                             help="Enables warnings being printed.")
 
@@ -83,8 +84,8 @@ def main():
         ast = compiler_state.parse(data)
         if args['astree']:
             print(ast.to_graph_viz_str())
-        if args['threeac']:
-            ast.to_3ac(include_source=True)
+        if args['threeac'] > 0:
+            ast.to_3ac(include_source=(args['threeac'] is 2))
     except CompileError as error:
         print(error)
     finally:

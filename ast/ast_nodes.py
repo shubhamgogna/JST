@@ -56,7 +56,7 @@ class ArrayDeclaration(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        output = [SOURCE(self.lineno)]
+        output = [SOURCE(self.linerange[0], self.linerange[1])]
 
         if not self.initializers:
             return output
@@ -132,7 +132,7 @@ class ArrayReference(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, get_rval=True, include_source=False):
-        output = [SOURCE(self.lineno)]
+        output = [SOURCE(self.linerange[0], self.linerange[1])]
         dim_count = len(self.symbol.array_dims)
 
         if dim_count is 0:
@@ -201,7 +201,7 @@ class Assignment(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        output = [SOURCE(self.lineno)]
+        output = [SOURCE(self.linerange[0], self.linerange[1])]
 
         # get memory address of lvalue by calling to3ac on lvalue
         left = self.lvalue.to_3ac(get_rval=False)
@@ -277,7 +277,7 @@ class BinaryOperator(BaseAstNode):
 
         # since calculating value, should only return rvalue
 
-        output = [SOURCE(self.lineno)]
+        output = [SOURCE(self.linerange[0], self.linerange[1])]
 
         # get memory address of lvalue by calling to3ac on lvalue
         left = self.lvalue.to_3ac(get_rval=True)
@@ -384,7 +384,7 @@ class Cast(BaseAstNode):
 
         # since returns cast value, should only return rvalue
 
-        output = [SOURCE(self.lineno)]
+        output = [SOURCE(self.linerange[0], self.linerange[1])]
 
         # if same, don't cast
         if self.to_type == self.expression.get_resulting_type():
@@ -437,7 +437,7 @@ class CompoundStatement(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        output = [SOURCE(self.lineno)]
+        output = [SOURCE(self.linerange[0], self.linerange[1])]
 
         # gen 3ac for declaration_list
         if self.declaration_list is not None:
@@ -478,7 +478,7 @@ class Declaration(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        output = [SOURCE(self.lineno)]
+        output = [SOURCE(self.linerange[0], self.linerange[1])]
 
         if self.initializer:
             item_tac = self.initializer.to_3ac(get_rval=True)
@@ -524,9 +524,13 @@ class FileAST(BaseAstNode):
         counter = [0] * len(self.compiler_state.source_lines if self.compiler_state else [0])
         for item in output:
             if include_source and item.instruction == 'SOURCE':
-                if counter[item.dest - 1] is 0:
-                    print(self.compiler_state.source_lines[item.dest - 1])
+                if item.dest is item.src1 and counter[item.dest - 1] is 0:
+                    print('\n#   ' + self.compiler_state.source_lines[item.dest - 1])
                     counter[item.dest - 1] = 1
+                elif item.dest is not item.src1:
+                    print()
+                    for lineno in range(item.dest, item.src1 + 1):
+                        print('### [Source Chunk] ' + self.compiler_state.source_lines[lineno - 1])
             else:
                 print(item)
 
@@ -628,7 +632,7 @@ class FunctionDefinition(BaseAstNode):
 
         # dump label
         label = LABEL(label)
-        output = [SOURCE(self.lineno), label]
+        output = [SOURCE(self.linerange[0], self.linerange[1]), label]
 
         # get 3ac for arguments
         for item in self.arguments:
@@ -668,7 +672,7 @@ class If(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        output = [SOURCE(self.lineno)]
+        output = [SOURCE(self.linerange[0], self.linerange[1])]
 
         # get three labels
         lTrue = LABEL_TICKETS.get()
@@ -778,7 +782,7 @@ class IterationNode(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        output = [SOURCE(self.lineno)]
+        output = [SOURCE(self.linerange[0], self.linerange[1])]
         condition_check_label = LABEL_TICKETS.get()
         condition_ok_label = LABEL_TICKETS.get()
         loop_exit_label = LABEL_TICKETS.get()
@@ -903,7 +907,7 @@ class Return(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        output = [SOURCE(self.lineno)]
+        output = [SOURCE(self.linerange[0], self.linerange[1])]
         prev_result = self.expression.to_3ac()
 
         # Note: Does not currently pass back the register of the value being returned....
@@ -947,7 +951,7 @@ class SymbolNode(BaseAstNode):
 
     def to_3ac(self, get_rval=True, include_source=False):
 
-        output = [SOURCE(self.lineno)]
+        output = [SOURCE(self.linerange[0], self.linerange[1])]
 
         # get ticket to copy memory location
         if self.symbol.get_resulting_type() == 'int':
@@ -1004,7 +1008,7 @@ class UnaryOperator(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        output = [SOURCE(self.lineno)]
+        output = [SOURCE(self.linerange[0], self.linerange[1])]
 
         # get memory location of expression by calling to3ac function
         result = (self.expression.to_3ac(get_rval = False))
@@ -1090,7 +1094,7 @@ class Constant(BaseAstNode):
 
         # since const, should always return rvalue!
 
-        output = [SOURCE(self.lineno)]
+        output = [SOURCE(self.linerange[0], self.linerange[1])]
 
         # load constant into register and return register
         reg = INT_REGISTER_TICKETS.get()
