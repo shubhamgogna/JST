@@ -56,6 +56,9 @@ class ArrayDeclaration(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
+        if not self.initializers:
+            return []
+
         output = []
         offset_reg = INT_REGISTER_TICKETS.get()
 
@@ -65,12 +68,12 @@ class ArrayDeclaration(BaseAstNode):
             output.append(ADDIU(offset_reg, 0, 'Frame_{}'.format(self.symbol.activation_frame_offset)))
 
         for item in self.initializers:
-            item_tac = item.to_3ac()
+            item_tac = item.to_3ac(get_rval=True)
             if '3ac' in item_tac:
                 output.extend(item_tac['3ac'])
 
             # Store the value into memory
-            output.append(SW(offset_reg, item_tac['register']))
+            output.append(SW(offset_reg, item_tac['rvalue']))
 
             # Move to the next word
             output.append(ADDIU(offset_reg, offset_reg, 4))
@@ -474,15 +477,17 @@ class Declaration(BaseAstNode):
 
     def to_3ac(self, include_source=False):
         output = []
-        item_tac = self.initializer.to_3ac()
-        if '3ac' in item_tac:
-            output.extend(item_tac['3ac'])
 
-        # Store the value into memory
-        if self.symbol.global_memory_location:
-            output.append(SW(self.symbol.global_memory_location, item_tac['register']))
-        else:
-            output.append(SW(self.symbol.activation_frame_offset, item_tac['register']))
+        if self.initializer:
+            item_tac = self.initializer.to_3ac(get_rval=True)
+            if '3ac' in item_tac:
+                output.extend(item_tac['3ac'])
+
+            # Store the value into memory
+            if self.symbol.global_memory_location:
+                output.append(SW(self.symbol.global_memory_location, item_tac['rvalue']))
+            else:
+                output.append(SW(self.symbol.activation_frame_offset, item_tac['rvalue']))
 
         return output
 
