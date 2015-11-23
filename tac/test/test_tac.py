@@ -227,6 +227,7 @@ class TestTac(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
+        # print(ast.to_graph_viz_str())
         ast.to_3ac()
 
     def test_matrix_multiplication(self):
