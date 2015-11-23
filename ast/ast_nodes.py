@@ -557,6 +557,9 @@ class FileAST(BaseAstNode):
             else:
                 print(item)
 
+        for lineno in range(last_line, len(self.compiler_state.source_lines)):
+            print('# ' + self.compiler_state.source_lines[lineno])
+
         return output
 
     def to_graph_viz_str(self):
