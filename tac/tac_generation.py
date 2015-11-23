@@ -15,13 +15,13 @@
 
 import tac.instructions as instructions
 
-
 # Special Registers
 ZERO = '$zero'
 FP = '$FP'
 SP = '$SP'
 RA = '$RA'
 V0 = '$v0'
+
 
 class TacInstruction(object):
     NULL = None
@@ -51,18 +51,15 @@ class TacInstruction(object):
         __repr__ is supposed to be "unambiguous," but it gets called on all contained objects when you stringify a
         container, so this will be the method that produces the fixed field format string representing the instruction.
         """
-        ret = ''
         if self.instruction == instructions.COMMENT:
-            ret = '# ' + self.dest
+            return '# ' + self.dest
         elif self.instruction == instructions.LABEL:
-            ret = self.dest + ':'
+            return self.dest + ':'
         else:
-            ret = '{:<15}, {:<15}, {:<15}, {:<15}'.format(self.instruction,
-                                                          self.dest if self.dest is not TacInstruction.NULL else '-',
-                                                          self.src1 if self.src1 is not TacInstruction.NULL else '-',
-                                                          self.src2 if self.src2 is not TacInstruction.NULL else '-')
-
-        return ret
+            return '{:<15}, {:<15}, {:<15}, {:<15}'.format(self.instruction,
+                                                           self.dest if self.dest is not TacInstruction.NULL else '-',
+                                                           self.src1 if self.src1 is not TacInstruction.NULL else '-',
+                                                           self.src2 if self.src2 is not TacInstruction.NULL else '-')
 
     @classmethod
     def from_str(cls, tac_str):
@@ -445,6 +442,7 @@ def NEGS(result, operand):
     """
     return TacInstruction(instructions.NEGS, result, operand)
 
+
 #
 # LOGICAL
 #
@@ -552,7 +550,6 @@ def CVTSW(result, operand):
 #
 # ASSIGNMENT
 #
-
 def ASSIGN(result, lvalue, rvalue):
     """
     args:
@@ -580,10 +577,10 @@ def SW(result, address):
 def LA(result, address):
     return TacInstruction(instructions.LA, result, address)
 
+
 #
 # PROGRAM FLOW
 #
-
 def LABEL(label_name):
     """
     args:
@@ -600,8 +597,10 @@ def LABEL(label_name):
 def JAL(label):
     return TacInstruction(instructions.JAL, label)
 
+
 def JR(register):
     return TacInstruction(instructions.JR, register)
+
 
 def BR(label_name):
     """
@@ -710,7 +709,6 @@ def HALT():
 #
 # PROCEDURE/FUNCTION
 #
-
 def ARGS(argc):
     """
     args:
@@ -750,7 +748,7 @@ def VALOUT(arg):
     return TacInstruction(instructions.VALOUT, arg)
 
 
-# CALL and LAC will be defined as macros in the actual MIPS
+# CALL and LLAC will be defined as macros in the actual MIPS
 def CALL(function_name, size):
     """
     args:
@@ -814,7 +812,6 @@ def RETURN(rvalue='$zero'):
 #
 # MISCELLANEOUS
 #
-
 def BOUND(test, lower, upper):
     """
     args:
@@ -880,8 +877,5 @@ def COMMENT(text):
     return TacInstruction(instructions.COMMENT, text)
 
 
-#
-#
-#
 def create_offset_reference(offset, register):
     return '{}({})'.format(offset, register)
