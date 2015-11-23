@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="JST : Python Compiler for ANSI C">
+
+    <link rel="stylesheet" type="text/css" media="screen" href="../stylesheets/stylesheet.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="../stylesheets/navigation.css">
+    <link href="../stylesheets/lightbox.css" rel="stylesheet">
+
+    <title>JST</title>
+  </head>
+
+<body>
+
+  <!-- HEADER -->
+  <div id="header_wrap" class="outer">
+      <header class="inner">
+        <a id="forkme_banner" href="https://github.com/s-gogna/JST">View on GitHub</a>
+
+        <h1 id="project_title"><a href="../index.html">JST</a></h1>
+        <h2 id="project_tagline" style="font-size: 18px">By Janelle Blankenburg, Shubham Gogna, and Terence Henriod<br>UNR CS 660: Compiler Construction</h2>
+
+        <div class="nav_bar">
+          <div class="nav_item" id="first_nav_item"><a href='../index.html'>Home</a></div>
+          <div class="nav_item"><a href='../running.html'>Running</a></div>
+          <div class="nav_item"><a href='../tests.html'>Tests</a></div>
+          <div class="nav_item"><a href='../files.html'>Files</a></div>
+          <div class="nav_item"><a href="https://github.com/s-gogna/JST">Source</a></div>
+        </div>
+
+          <section id="downloads">
+            <a class="zip_download_link" href="https://github.com/s-gogna/JST/zipball/master">Download this project as a .zip file</a>
+            <a class="tar_download_link" href="https://github.com/s-gogna/JST/tarball/master">Download this project as a tar.gz file</a>
+          </section>
+      </header>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div id="main_content_wrap" class="outer">
+    <section id="main_content" class="inner">
+      <h1>
+        <a id="test-runs" class="anchor" href="#test-runs" aria-hidden="true"><span class="octicon octicon-link"></span></a>Matrix Multiplication
+      </h1>
+
+      <h3>
+        <span id="input">Input Source</span>
+      </h3>
+
+<pre><code>const int ARRAY_DIM = 2;
+
+// hard code dimensions for simplicity
+int matrix_multiply(int C[ARRAY_DIM][ARRAY_DIM], int A[ARRAY_DIM][ARRAY_DIM], int B[ARRAY_DIM][ARRAY_DIM]);
+
+int main() {
+  int i, j;
+  int A[ARRAY_DIM][ARRAY_DIM], B[ARRAY_DIM][ARRAY_DIM], C[ARRAY_DIM][ARRAY_DIM];
+
+  for (i = 0; i < ARRAY_DIM; i++) {
+    for (j = 0; j < ARRAY_DIM; j++) {
+      A[i][j] = B[i][j] = 1;
+    }
+  }
+
+  matrix_multiply(C, A, B);
+
+  return 0;
+}
+
+int matrix_multiply(int C[ARRAY_DIM][ARRAY_DIM], int A[ARRAY_DIM][ARRAY_DIM], int B[ARRAY_DIM][ARRAY_DIM]) {
+  int i, j, k;
+
+  for (i = 0; i < ARRAY_DIM; i++) {
+    for (j = 0; j < ARRAY_DIM; j++) {
+      C[i][j] = 0;
+      for (k = 0; k < ARRAY_DIM; k++) {
+        C[i][j] += A[i][j + k] * B[i + k][j];
+      }
+    }
+  }
+}</code></pre>
+
+      <h3>
+        <span id="3ac">3AC (Three-Address Code)</span>
+      </h3>
+
+<pre><code>DATA           , -              , -              , -              
+# 
+#             const int ARRAY_DIM = 2;
+ADDIU          , ireg_00000     , $zero          , 2              
+SW             , 268500992      , ireg_00000     , -              
+TEXT           , -              , -              , -              
+CALL           , main           , 56             , -              
+LLAC           , 56             , -              , -              
+BR             , PROG_END       , -              , -              
+# 
+#             // hard code dimensions for simplicity
+#             int matrix_multiply(int C[ARRAY_DIM][ARRAY_DIM], int A[ARRAY_DIM][ARRAY_DIM], int B[ARRAY_DIM][ARRAY_DIM]);
+# 
+#             int main() {
+main:
+#               int i, j;
+#               int A[ARRAY_DIM][ARRAY_DIM], B[ARRAY_DIM][ARRAY_DIM], C[ARRAY_DIM][ARRAY_DIM];
+# 
+#               for (i = 0; i < ARRAY_DIM; i++) {
+ADDI           , ireg_00001     , 0($fp)         , 0              
+ADDIU          , ireg_00002     , $zero          , 0              
+ASSIGN         , ireg_00002     , ireg_00001     , ireg_00002     
+label_00000:
+LW             , ireg_00003     , 0($fp)         , -              
+LW             , ireg_00004     , 268500992      , -              
+LT             , ireg_00005     , ireg_00003     , ireg_00004     
+BRNE           , label_00001    , $zero          , ireg_00005     
+BR             , label_00002    , -              , -              
+label_00001:
+#                 for (j = 0; j < ARRAY_DIM; j++) {
+ADDI           , ireg_00006     , 4($fp)         , 0              
+ADDIU          , ireg_00007     , $zero          , 0              
+ASSIGN         , ireg_00007     , ireg_00006     , ireg_00007     
+label_00003:
+LW             , ireg_00008     , 4($fp)         , -              
+LW             , ireg_00009     , 268500992      , -              
+LT             , ireg_00010     , ireg_00008     , ireg_00009     
+BRNE           , label_00004    , $zero          , ireg_00010     
+BR             , label_00005    , -              , -              
+label_00004:
+#                   A[i][j] = B[i][j] = 1;
+LW             , ireg_00011     , 0($fp)         , -              
+ADDU           , ireg_00012     , 0              , ireg_00011     
+MULIU          , ireg_00012     , ireg_00012     , 2              
+LW             , ireg_00013     , 4($fp)         , -              
+ADDU           , ireg_00012     , ireg_00012     , ireg_00013     
+MULIU          , ireg_00012     , ireg_00012     , 4              
+ADDU           , ireg_00012     , ireg_00012     , 8($FP)         
+LW             , ireg_00014     , 0($fp)         , -              
+ADDU           , ireg_00015     , 0              , ireg_00014     
+MULIU          , ireg_00015     , ireg_00015     , 2              
+LW             , ireg_00016     , 4($fp)         , -              
+ADDU           , ireg_00015     , ireg_00015     , ireg_00016     
+MULIU          , ireg_00015     , ireg_00015     , 4              
+ADDU           , ireg_00015     , ireg_00015     , 24($FP)        
+ADDIU          , ireg_00017     , $zero          , 1              
+ASSIGN         , ireg_00017     , ireg_00015     , ireg_00017     
+ASSIGN         , ireg_00017     , ireg_00012     , ireg_00017     
+ADDI           , ireg_00018     , 4($fp)         , 0              
+LW             , ireg_00019     , ireg_00018     , -              
+ADD            , ireg_00020     , ireg_00019     , $zero          
+ADDIU          , ireg_00019     , ireg_00019     , 1              
+SW             , ireg_00018     , ireg_00019     , -              
+BR             , label_00003    , -              , -              
+label_00005:
+ADDI           , ireg_00021     , 0($fp)         , 0              
+LW             , ireg_00022     , ireg_00021     , -              
+ADD            , ireg_00023     , ireg_00022     , $zero          
+ADDIU          , ireg_00022     , ireg_00022     , 1              
+SW             , ireg_00021     , ireg_00022     , -              
+BR             , label_00000    , -              , -              
+label_00002:
+CALL           , matrix_multiply, 24             , -              
+#                 }
+#               }
+# 
+#               matrix_multiply(C, A, B);
+LW             , ireg_00025     , 40($fp)        , -              
+LA             , ireg_00026     , 40($SP)        , -              
+SW             , ireg_00026     , 0($FP)         , -              
+LW             , ireg_00027     , 8($fp)         , -              
+LA             , ireg_00028     , 8($SP)         , -              
+SW             , ireg_00028     , 4($FP)         , -              
+LW             , ireg_00029     , 24($fp)        , -              
+LA             , ireg_00030     , 24($SP)        , -              
+SW             , ireg_00030     , 8($FP)         , -              
+JAL            , matrix_multiply, -              , -              
+LLAC           , 24             , -              , -              
+# 
+#               return 0;
+ADDIU          , ireg_00031     , $zero          , 0              
+RETURN         , ireg_00031     , -              , -              
+JR             , $RA            , -              , -              
+#             }
+# 
+#             int matrix_multiply(int C[ARRAY_DIM][ARRAY_DIM], int A[ARRAY_DIM][ARRAY_DIM], int B[ARRAY_DIM][ARRAY_DIM]) {
+matrix_multiply:
+#               int i, j, k;
+# 
+#               for (i = 0; i < ARRAY_DIM; i++) {
+ADDI           , ireg_00032     , 12($fp)        , 0              
+ADDIU          , ireg_00033     , $zero          , 0              
+ASSIGN         , ireg_00033     , ireg_00032     , ireg_00033     
+label_00006:
+LW             , ireg_00034     , 12($fp)        , -              
+LW             , ireg_00035     , 268500992      , -              
+LT             , ireg_00036     , ireg_00034     , ireg_00035     
+BRNE           , label_00007    , $zero          , ireg_00036     
+BR             , label_00008    , -              , -              
+label_00007:
+#                 for (j = 0; j < ARRAY_DIM; j++) {
+ADDI           , ireg_00037     , 16($fp)        , 0              
+ADDIU          , ireg_00038     , $zero          , 0              
+ASSIGN         , ireg_00038     , ireg_00037     , ireg_00038     
+label_00009:
+LW             , ireg_00039     , 16($fp)        , -              
+LW             , ireg_00040     , 268500992      , -              
+LT             , ireg_00041     , ireg_00039     , ireg_00040     
+BRNE           , label_00010    , $zero          , ireg_00041     
+BR             , label_00011    , -              , -              
+label_00010:
+#                   C[i][j] = 0;
+LW             , ireg_00042     , 12($fp)        , -              
+ADDU           , ireg_00043     , 0              , ireg_00042     
+MULIU          , ireg_00043     , ireg_00043     , 2              
+LW             , ireg_00044     , 16($fp)        , -              
+ADDU           , ireg_00043     , ireg_00043     , ireg_00044     
+MULIU          , ireg_00043     , ireg_00043     , 4              
+ADDU           , ireg_00043     , ireg_00043     , 0($FP)         
+ADDIU          , ireg_00045     , $zero          , 0              
+ASSIGN         , ireg_00045     , ireg_00043     , ireg_00045     
+#                   for (k = 0; k < ARRAY_DIM; k++) {
+ADDI           , ireg_00046     , 20($fp)        , 0              
+ADDIU          , ireg_00047     , $zero          , 0              
+ASSIGN         , ireg_00047     , ireg_00046     , ireg_00047     
+label_00012:
+LW             , ireg_00048     , 20($fp)        , -              
+LW             , ireg_00049     , 268500992      , -              
+LT             , ireg_00050     , ireg_00048     , ireg_00049     
+BRNE           , label_00013    , $zero          , ireg_00050     
+BR             , label_00014    , -              , -              
+label_00013:
+#                     C[i][j] += A[i][j + k] * B[i + k][j];
+LW             , ireg_00051     , 12($fp)        , -              
+ADDU           , ireg_00052     , 0              , ireg_00051     
+MULIU          , ireg_00052     , ireg_00052     , 2              
+LW             , ireg_00053     , 16($fp)        , -              
+ADDU           , ireg_00052     , ireg_00052     , ireg_00053     
+MULIU          , ireg_00052     , ireg_00052     , 4              
+ADDU           , ireg_00052     , ireg_00052     , 0($FP)         
+LW             , ireg_00054     , 12($fp)        , -              
+ADDU           , ireg_00055     , 0              , ireg_00054     
+MULIU          , ireg_00055     , ireg_00055     , 2              
+LW             , ireg_00056     , 16($fp)        , -              
+LW             , ireg_00057     , 20($fp)        , -              
+ADD            , ireg_00058     , ireg_00056     , ireg_00057     
+ADDU           , ireg_00055     , ireg_00055     , ireg_00058     
+MULIU          , ireg_00055     , ireg_00055     , 4              
+ADDU           , ireg_00055     , ireg_00055     , 4($FP)         
+LW             , ireg_00055     , ireg_00055     , -              
+LW             , ireg_00059     , 12($fp)        , -              
+LW             , ireg_00060     , 20($fp)        , -              
+ADD            , ireg_00061     , ireg_00059     , ireg_00060     
+ADDU           , ireg_00062     , 0              , ireg_00061     
+MULIU          , ireg_00062     , ireg_00062     , 2              
+LW             , ireg_00063     , 16($fp)        , -              
+ADDU           , ireg_00062     , ireg_00062     , ireg_00063     
+MULIU          , ireg_00062     , ireg_00062     , 4              
+ADDU           , ireg_00062     , ireg_00062     , 8($FP)         
+LW             , ireg_00062     , ireg_00062     , -              
+MUL            , ireg_00064     , ireg_00055     , ireg_00062     
+ASSIGN         , ireg_00064     , ireg_00052     , ireg_00064     
+ADDI           , ireg_00065     , 20($fp)        , 0              
+LW             , ireg_00066     , ireg_00065     , -              
+ADD            , ireg_00067     , ireg_00066     , $zero          
+ADDIU          , ireg_00066     , ireg_00066     , 1              
+SW             , ireg_00065     , ireg_00066     , -              
+BR             , label_00012    , -              , -              
+label_00014:
+ADDI           , ireg_00068     , 16($fp)        , 0              
+LW             , ireg_00069     , ireg_00068     , -              
+ADD            , ireg_00070     , ireg_00069     , $zero          
+ADDIU          , ireg_00069     , ireg_00069     , 1              
+SW             , ireg_00068     , ireg_00069     , -              
+BR             , label_00009    , -              , -              
+label_00011:
+ADDI           , ireg_00071     , 12($fp)        , 0              
+LW             , ireg_00072     , ireg_00071     , -              
+ADD            , ireg_00073     , ireg_00072     , $zero          
+ADDIU          , ireg_00072     , ireg_00072     , 1              
+SW             , ireg_00071     , ireg_00072     , -              
+BR             , label_00006    , -              , -              
+label_00008:
+JR             , $RA            , -              , -              
+PROG_END:
+#                   }
+#                 }
+#               }
+#             }
+#</code></pre>
+
+      <h3>Generated AST</h3>
+      <a href="images/array_declaration.png" data-lightbox="ast-pic"
+      data-title="Visualization of AST with GraphViz">
+	<img style="width:100%; padding: 0px; margin: 0px;" src="images/array_declaration.png"></img>
+      </a>
+
+    </section>
+  </div>
+
+  <!-- FOOTER  -->
+  <div id="footer_wrap" class="outer">
+    <footer class="inner">
+      <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
+    </footer>
+  </div>
+
+
+<script src="../javascripts/lightbox-plus-jquery.js"></script>
+
+<script>
+    lightbox.option({
+      'fadeDuration': 200,
+      'resizeDuration': 200,
+      'wrapAround': true
+    })
+</script>
+
+</body>
+</html>

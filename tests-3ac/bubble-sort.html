@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="JST : Python Compiler for ANSI C">
+
+    <link rel="stylesheet" type="text/css" media="screen" href="../stylesheets/stylesheet.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="../stylesheets/navigation.css">
+    <link href="../stylesheets/lightbox.css" rel="stylesheet">
+
+    <title>JST</title>
+  </head>
+
+<body>
+
+  <!-- HEADER -->
+  <div id="header_wrap" class="outer">
+      <header class="inner">
+        <a id="forkme_banner" href="https://github.com/s-gogna/JST">View on GitHub</a>
+
+        <h1 id="project_title"><a href="../index.html">JST</a></h1>
+        <h2 id="project_tagline" style="font-size: 18px">By Janelle Blankenburg, Shubham Gogna, and Terence Henriod<br>UNR CS 660: Compiler Construction</h2>
+
+        <div class="nav_bar">
+          <div class="nav_item" id="first_nav_item"><a href='../index.html'>Home</a></div>
+          <div class="nav_item"><a href='../running.html'>Running</a></div>
+          <div class="nav_item"><a href='../tests.html'>Tests</a></div>
+          <div class="nav_item"><a href='../files.html'>Files</a></div>
+          <div class="nav_item"><a href="https://github.com/s-gogna/JST">Source</a></div>
+        </div>
+
+          <section id="downloads">
+            <a class="zip_download_link" href="https://github.com/s-gogna/JST/zipball/master">Download this project as a .zip file</a>
+            <a class="tar_download_link" href="https://github.com/s-gogna/JST/tarball/master">Download this project as a tar.gz file</a>
+          </section>
+      </header>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div id="main_content_wrap" class="outer">
+    <section id="main_content" class="inner">
+      <h1>
+        <a id="test-runs" class="anchor" href="#test-runs" aria-hidden="true"><span class="octicon octicon-link"></span></a>Bubble Sort
+      </h1>
+
+      <h3>
+        <span id="input">Input Source</span>
+      </h3>
+
+<pre><code>const int N_ITEMS = 5;
+int bubble_sort(int items[N_ITEMS], int n_items);
+
+int main() {
+  int items[N_ITEMS] = {5, 1, 4, 3, 2};
+
+  bubble_sort(items, 5);
+
+  return 0;
+}
+
+int bubble_sort(int items[N_ITEMS], int n_items) {
+  int i, j;
+  int temp;
+
+  for (i = 0; i < n_items; i++) {
+    for (j = i; j < n_items; j++) {
+      if (items[i] < items[j]) {
+        temp = items[i];
+        items[i] = items[j];
+        items[j] = temp;
+      }
+    }
+  }
+}</code></pre>
+
+      <h3>
+        <span id="3ac">3AC (Three-Address Code)</span>
+      </h3>
+
+<pre><code>DATA           , -              , -              , -              
+# 
+#             const int N_ITEMS = 5;
+ADDIU          , ireg_00000     , $zero          , 5              
+SW             , 268500992      , ireg_00000     , -              
+TEXT           , -              , -              , -              
+CALL           , main           , 20             , -              
+LLAC           , 20             , -              , -              
+BR             , PROG_END       , -              , -              
+#             int bubble_sort(int items[N_ITEMS], int n_items);
+# 
+#             int main() {
+main:
+#               int items[N_ITEMS] = {5, 1, 4, 3, 2};
+ADDU           , ireg_00001     , 0($FP)         , $zero          
+ADDIU          , ireg_00002     , $zero          , 5              
+SW             , ireg_00001     , ireg_00002     , -              
+ADDIU          , ireg_00001     , ireg_00001     , 4              
+ADDIU          , ireg_00003     , $zero          , 1              
+SW             , ireg_00001     , ireg_00003     , -              
+ADDIU          , ireg_00001     , ireg_00001     , 4              
+ADDIU          , ireg_00004     , $zero          , 4              
+SW             , ireg_00001     , ireg_00004     , -              
+ADDIU          , ireg_00001     , ireg_00001     , 4              
+ADDIU          , ireg_00005     , $zero          , 3              
+SW             , ireg_00001     , ireg_00005     , -              
+ADDIU          , ireg_00001     , ireg_00001     , 4              
+ADDIU          , ireg_00006     , $zero          , 2              
+SW             , ireg_00001     , ireg_00006     , -              
+ADDIU          , ireg_00001     , ireg_00001     , 4              
+CALL           , bubble_sort    , 20             , -              
+# 
+#               bubble_sort(items, 5);
+LW             , ireg_00008     , 0($fp)         , -              
+LA             , ireg_00009     , 0($SP)         , -              
+SW             , ireg_00009     , 0($FP)         , -              
+ADDIU          , ireg_00010     , $zero          , 5              
+SW             , ireg_00010     , 4($FP)         , -              
+JAL            , bubble_sort    , -              , -              
+LLAC           , 20             , -              , -              
+# 
+#               return 0;
+ADDIU          , ireg_00011     , $zero          , 0              
+RETURN         , ireg_00011     , -              , -              
+JR             , $RA            , -              , -              
+#             }
+# 
+#             int bubble_sort(int items[N_ITEMS], int n_items) {
+bubble_sort:
+#               int i, j;
+#               int temp;
+# 
+#               for (i = 0; i < n_items; i++) {
+ADDI           , ireg_00012     , 8($fp)         , 0              
+ADDIU          , ireg_00013     , $zero          , 0              
+ASSIGN         , ireg_00013     , ireg_00012     , ireg_00013     
+label_00000:
+LW             , ireg_00014     , 8($fp)         , -              
+LW             , ireg_00015     , 4($fp)         , -              
+LT             , ireg_00016     , ireg_00014     , ireg_00015     
+BRNE           , label_00001    , $zero          , ireg_00016     
+BR             , label_00002    , -              , -              
+label_00001:
+#                 for (j = i; j < n_items; j++) {
+ADDI           , ireg_00017     , 12($fp)        , 0              
+LW             , ireg_00018     , 8($fp)         , -              
+ASSIGN         , ireg_00018     , ireg_00017     , ireg_00018     
+label_00003:
+LW             , ireg_00019     , 12($fp)        , -              
+LW             , ireg_00020     , 4($fp)         , -              
+LT             , ireg_00021     , ireg_00019     , ireg_00020     
+BRNE           , label_00004    , $zero          , ireg_00021     
+BR             , label_00005    , -              , -              
+label_00004:
+#                   if (items[i] < items[j]) {
+LW             , ireg_00022     , 8($fp)         , -              
+ADDU           , ireg_00023     , 0              , ireg_00022     
+MULIU          , ireg_00023     , ireg_00023     , 4              
+ADDU           , ireg_00023     , ireg_00023     , 0($FP)         
+LW             , ireg_00023     , ireg_00023     , -              
+LW             , ireg_00024     , 12($fp)        , -              
+ADDU           , ireg_00025     , 0              , ireg_00024     
+MULIU          , ireg_00025     , ireg_00025     , 4              
+ADDU           , ireg_00025     , ireg_00025     , 0($FP)         
+LW             , ireg_00025     , ireg_00025     , -              
+LT             , ireg_00026     , ireg_00023     , ireg_00025     
+ADDI           , ireg_00027     , $zero          , 0              
+BRNE           , label_00006    , ireg_00026     , ireg_00027     
+BR             , label_00007    , -              , -              
+label_00006:
+#                     temp = items[i];
+ADDI           , ireg_00028     , 16($fp)        , 0              
+LW             , ireg_00029     , 8($fp)         , -              
+ADDU           , ireg_00030     , 0              , ireg_00029     
+MULIU          , ireg_00030     , ireg_00030     , 4              
+ADDU           , ireg_00030     , ireg_00030     , 0($FP)         
+LW             , ireg_00030     , ireg_00030     , -              
+ASSIGN         , ireg_00030     , ireg_00028     , ireg_00030     
+#                     items[i] = items[j];
+LW             , ireg_00031     , 8($fp)         , -              
+ADDU           , ireg_00032     , 0              , ireg_00031     
+MULIU          , ireg_00032     , ireg_00032     , 4              
+ADDU           , ireg_00032     , ireg_00032     , 0($FP)         
+LW             , ireg_00033     , 12($fp)        , -              
+ADDU           , ireg_00034     , 0              , ireg_00033     
+MULIU          , ireg_00034     , ireg_00034     , 4              
+ADDU           , ireg_00034     , ireg_00034     , 0($FP)         
+LW             , ireg_00034     , ireg_00034     , -              
+ASSIGN         , ireg_00034     , ireg_00032     , ireg_00034     
+#                     items[j] = temp;
+LW             , ireg_00035     , 12($fp)        , -              
+ADDU           , ireg_00036     , 0              , ireg_00035     
+MULIU          , ireg_00036     , ireg_00036     , 4              
+ADDU           , ireg_00036     , ireg_00036     , 0($FP)         
+LW             , ireg_00037     , 16($fp)        , -              
+ASSIGN         , ireg_00037     , ireg_00036     , ireg_00037     
+label_00007:
+ADDI           , ireg_00038     , 12($fp)        , 0              
+LW             , ireg_00039     , ireg_00038     , -              
+ADD            , ireg_00040     , ireg_00039     , $zero          
+ADDIU          , ireg_00039     , ireg_00039     , 1              
+SW             , ireg_00038     , ireg_00039     , -              
+BR             , label_00003    , -              , -              
+label_00005:
+ADDI           , ireg_00041     , 8($fp)         , 0              
+LW             , ireg_00042     , ireg_00041     , -              
+ADD            , ireg_00043     , ireg_00042     , $zero          
+ADDIU          , ireg_00042     , ireg_00042     , 1              
+SW             , ireg_00041     , ireg_00042     , -              
+BR             , label_00000    , -              , -              
+label_00002:
+JR             , $RA            , -              , -              
+PROG_END:
+#                   }
+#                 }
+#               }
+#             }
+#</code></pre>
+
+      <h3>Generated AST</h3>
+      <a href="images/array_declaration.png" data-lightbox="ast-pic"
+      data-title="Visualization of AST with GraphViz">
+	<img style="width:100%; padding: 0px; margin: 0px;" src="images/array_declaration.png"></img>
+      </a>
+
+    </section>
+  </div>
+
+  <!-- FOOTER  -->
+  <div id="footer_wrap" class="outer">
+    <footer class="inner">
+      <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
+    </footer>
+  </div>
+
+
+<script src="../javascripts/lightbox-plus-jquery.js"></script>
+
+<script>
+    lightbox.option({
+      'fadeDuration': 200,
+      'resizeDuration': 200,
+      'wrapAround': true
+    })
+</script>
+
+</body>
+</html>

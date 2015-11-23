@@ -62,9 +62,15 @@
 
       <ul>
         <li>Variable declaration <code>int x;</code></li>
-        <li>Pointers <code>float *x;</code></li>
-        <li>Function declaration and implementation <code>int isExciting() { return 1; }</code></li>
-        <li>Calling functions <code>isWorking();</code></li>
+        <li>Variable assignment <code>x = 5;</code></li>
+        <li>Array declaration <code>char buffer[16];</code></li>
+        <li>Array access <code>buffer[0] = buffer[1];</code></li>
+        <li>For loops <code>for(x = 0; x < 16; ++x) {}</code></li>
+        <li>While loops </li>
+        <li>Do .. While loops </li>
+        <li>Function declaration <code>long isWorking();</code></li>
+        <li>Function implementation <code>long isWorking() { return 1; }</code></li>
+        <li>Function calls <code>isWorking();</code></li>
       </ul>
 
       <h3>
@@ -73,6 +79,7 @@
 
       <ul>
         <li>Programs are reasonably close to C syntax (as the grammar allows some very strange programs to be parsed)</li>
+        <li>Every program must declare a main function with the signature <code>int main();</code></li>
       </ul>
 
       <h3>
@@ -81,20 +88,9 @@
 
       <ul>
         <li>Parse terminates if an error is raised</li>
-        <li>Typedefs not implemented</li>
-        <li>Structs and unions not implemented</li>
-      </ul>
-
-      <h3>
-        <a id="implementation" class="anchor" href="#implementation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Implementation
-      </h3>
-
-      <ul>
-        <li>Scanner</li>
-        <li>Parser</li>
-        <li>Symbol</li>
-        <li>Scope</li>
-        <li>Symbol Table</li>
+        <li>Pointers are not implemented</li>
+        <li>Typedefs are not implemented</li>
+        <li>Structs and unions are not implemented</li>
       </ul>
 
       <h3>
@@ -102,9 +98,12 @@
       </h3>
 
       <ul>
-        <li>Typedef support</li>
+        <li>MIPS Assembly</li>
+        <li>Pointers</li>
+        <li>Typedef</li>
         <li>Function pointers</li>
-        <li>Structs and unions</li>
+        <li>Structs</li>
+        <li>unions</li>
       </ul>
 
       <br>
