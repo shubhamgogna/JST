@@ -17,6 +17,14 @@
 DUP = 'DUP'
 SOURCE = 'SOURCE'
 
+
+#
+# Program Sections
+#
+DATA = 'DATA'
+TEXT = 'TEXT'
+
+
 # Math Operations
 # TODO: create versions for both int and floating point?
 ADD = 'ADD'
@@ -74,8 +82,10 @@ ASSIGN = 'ASSIGN'
 LW = 'LW'
 SW = 'SW'
 
-# # Control Flow
+# Control Flow
 LABEL = 'LABEL'
+JAL = 'JAL'
+JR = 'JR'
 BR = 'BR'
 BREQ = 'BREQ'
 BRGT = 'BRGT'
@@ -90,6 +100,8 @@ ARGS = 'ARGS'
 REFOUT = 'REFOUT'
 VALOUT = 'VALOUT'
 CALL = 'CALL'
+LLAC = 'LLAC'
+
 PROCENTRY = 'PROCENTRY'
 ENDPROC = 'ENDPROC'
 RETURN = 'RETURN'

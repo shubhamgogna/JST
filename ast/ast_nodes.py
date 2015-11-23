@@ -13,6 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
+import math
+
+import itertools
+
 from ast.base_ast_node import BaseAstNode
 from utils import type_utils
 from utils import operator_utils
@@ -381,37 +385,27 @@ class Cast(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, get_rval=True, include_source=False):
-
         # since returns cast value, should only return rvalue
+        _3ac = [SOURCE(self.linerange[0], self.linerange[1])]
 
-        output = [SOURCE(self.linerange[0], self.linerange[1])]
+        expression_type = self.expression.get_resulting_type()
+        expression_result = self.expression.to_3ac()
+        _3ac.extend(expression_result['3ac'])
+
+        return_register = expression_result['rvalue']
 
         # if same, don't cast
-        if self.to_type == self.expression.get_resulting_type():
-            output = []
-            reg = self.expression.value
+        if self.to_type != expression_type:
+            if type_utils.is_integral_type(self.to_type):
+                new_register = INT_REGISTER_TICKETS.get()
+                _3ac.append(CVTSW(new_register, return_register))
+                return_register = new_register
+            else:
+                new_register = FLOAT_REGISTER_TICKETS.get()
+                _3ac.append(CVTWS(new_register, return_register))
+                return_register = new_register
 
-        else:
-            # get correct casted value
-            if self.to_type in type_utils.INTEGRAL_TYPES:
-                value = int(self.expression.value)
-            if self.to_type in type_utils.FLOATING_POINT_TYPES:
-                value = float(self.expression.value)
-            if self.to_type == 'char':
-                # value = char(self.expression)
-                raise(NotImplementedError('Please implement char casting in p_cast_expressoin_2'))
-
-            # load casted value into register and return register
-            if type(value) is int:
-                reg = INT_REGISTER_TICKETS.get()
-                output.append(ADDI(reg, '$zero', value))
-            if type(value) is float:
-                reg = FLOAT_REGISTER_TICKETS.get()
-                output.append(ADD(reg, '$zero', value ))
-
-            register_allocation_table[reg] = value
-
-        return {'3ac': output, 'rvalue': reg}
+        return {'3ac': _3ac, 'rvalue': return_register}
 
 
 class CompoundStatement(BaseAstNode):
@@ -517,8 +511,18 @@ class FileAST(BaseAstNode):
         return tuple(childrens)
 
     def to_3ac(self, include_source=False):
-        output = []
+        output = [DATA()]
+
+        global_data_declarations = []
+        function_definitions = []
+        for external_declaration in self.external_declarations:
+            if isinstance(external_declaration, FunctionDefinition):
+                function_definitions.append(external_declaration)
+            else:
+                global_data_declarations.append(external_declaration)
+
         for item in self.external_declarations:
+            print('external declaration:', item, type(item))
             output.extend(item.to_3ac())
 
         counter = [0] * len(self.compiler_state.source_lines if self.compiler_state else [0])
@@ -566,7 +570,51 @@ class FunctionCall(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+        _3ac = []
+        return_type = self.function_symbol.get_resulting_type()
+        rvalue = INT_REGISTER_TICKETS.get() if type_utils.is_integral_type(return_type) else FLOAT_REGISTER_TICKETS.get()
+
+        # call the prologue macro
+        _3ac.append(CALL(self.function_symbol.identifier, self.function_symbol.activation_frame_size))
+
+        # copy the argument values into
+        for parameter_template, argument in itertools.zip_longest(self.function_symbol.named_params, self.arguments):
+            # evaluate the argument expression
+            # get register with value of arg
+            arg_result = argument.to_3ac(get_rval=True)
+            _3ac.extend(arg_result['3ac'])
+            arg_rvalue = arg_result['rvalue']
+
+            arg_type = type_utils.INT if arg_rvalue[0] == 'i' else type_utils.FLOAT
+            param_type = type_utils.INT if type_utils.is_integral_type(return_type) else type_utils.FLOAT
+
+            # get casted value if necessary
+            if arg_type != param_type:
+                if param_type == type_utils.INT:
+                    new_register = INT_REGISTER_TICKETS.get()
+                    _3ac.append(CVTSW(new_register, arg_rvalue))
+                    arg_rvalue = new_register
+                else:
+                    new_register = FLOAT_REGISTER_TICKETS.get()
+                    _3ac.append(CVTWS(new_register, arg_rvalue))
+                    arg_rvalue = new_register
+
+            # store value at memory location indicated by parameter_template
+            offset = parameter_template.activation_frame_offset
+            _3ac.append(SW(arg_rvalue, create_offset_reference(offset, FP)))
+
+        # jump to function body
+        _3ac.append(JAL(self.function_symbol.identifier))
+
+        # the function will jump back to this address at this point
+
+        # copy the return value before it gets obliterated
+
+
+        _3ac.append(LLAC(self.function_symbol.activation_frame_size))
+
+
+        return {'3ac': _3ac, 'rvalue': rvalue}
 
 
 class FunctionDeclaration(BaseAstNode):
@@ -625,28 +673,26 @@ class FunctionDefinition(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        # raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
-
-        # get label for function i.e. function name
-        label = LABEL_TICKETS.get()
+        _3ac = [SOURCE(self.linerange[0], self.linerange[1])]
 
         # dump label
-        label = LABEL(label)
-        output = [SOURCE(self.linerange[0], self.linerange[1]), label]
+        _3ac.append(LABEL(self.function_symbol.identifier))
 
         # get 3ac for arguments
-        for item in self.arguments:
-            output.extend(item.to_3ac())
-            # print(output)
+        # for item in self.arguments:
+        #     _3ac.extend(item.to_3ac())
 
         # gen 3ac for body
         # body will always be a compound statement.
-        output.extend(self.body.to_3ac())
+        _3ac.extend(self.body.to_3ac())
         # for item in self.body:
         #     output.append(item.to_3ac())
         #     # print(output)
 
-        return output
+        # jump back the caller
+        _3ac.append(JR(RA))
+
+        return {'3ac': _3ac}
 
 
 class If(BaseAstNode):
@@ -908,11 +954,13 @@ class Return(BaseAstNode):
 
     def to_3ac(self, include_source=False):
         output = [SOURCE(self.linerange[0], self.linerange[1])]
-        prev_result = self.expression.to_3ac()
 
-        # Note: Does not currently pass back the register of the value being returned....
-        output.extend(prev_result['3ac'])
-        output.append(RETURN())
+        prev_result = {}
+        if self.expression:
+            prev_result = self.expression.to_3ac()
+            output.extend(prev_result['3ac'])
+
+        output.append(RETURN(prev_result.get('rvalue', ZERO)))
         return output
 
 

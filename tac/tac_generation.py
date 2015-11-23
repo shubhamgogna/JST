@@ -18,7 +18,9 @@ import tac.instructions as instructions
 
 # Special Registers
 ZERO = '$zero'
-
+FP = '$FP'
+RA = '$RA'
+V0 = '$v0'
 
 class TacInstruction(object):
     NULL = None
@@ -102,6 +104,17 @@ def SOURCE(line_start, line_end):
         Instruction that gets filtered in the output and converted to the actual source from the program.
     """
     return TacInstruction(instructions.SOURCE, line_start, line_end)
+
+
+#
+# PROGRAM SECTIONS
+#
+def DATA():
+    return TacInstruction(instructions.DATA)
+
+
+def TEXT():
+    return TacInstruction(instructions.TEXT)
 
 
 #
@@ -579,6 +592,12 @@ def LABEL(label_name):
     return TacInstruction(instructions.LABEL, label_name)
 
 
+def JAL(label):
+    return TacInstruction(instructions.JAL, label)
+
+def JR(register):
+    return TacInstruction(instructions.JR, register)
+
 def BR(label_name):
     """
     args:
@@ -726,17 +745,26 @@ def VALOUT(arg):
     return TacInstruction(instructions.VALOUT, arg)
 
 
-def CALL(function_name):
+# CALL and LAC will be defined as macros in the actual MIPS
+def CALL(function_name, size):
     """
     args:
-        sum: the register where the addition result is stored.
-        augend: the left operand of the addition.
-        addend: the right operand of the addition.
-
+        function_name: the label of the function definition
+        size: the size of the portion of the activation frame to be dedicated to argument and parameter values
     function:
-        Performs basic addition.
+
     """
-    return TacInstruction(instructions.CALL, function_name)
+    return TacInstruction(instructions.CALL, function_name, size)
+
+def LLAC(size):
+    """
+    args:
+        function_name: the label of the function definition
+        size: the size of the portion of the activation frame to be dedicated to argument and parameter values
+    function:
+
+    """
+    return TacInstruction(instructions.LLAC, size)
 
 
 def PROCENTRY(op1, op2, op3):
@@ -765,7 +793,7 @@ def ENDPROC():
     return TacInstruction(instructions.ENDPROC)
 
 
-def RETURN():
+def RETURN(rvalue='$zero'):
     """
     args:
         sum: the register where the addition result is stored.
@@ -775,7 +803,7 @@ def RETURN():
     function:
         Performs basic addition.
     """
-    return TacInstruction(instructions.RETURN)
+    return TacInstruction(instructions.RETURN, rvalue)
 
 
 #
@@ -845,3 +873,10 @@ def COMMENT(text):
         Performs basic addition.
     """
     return TacInstruction(instructions.COMMENT, text)
+
+
+#
+#
+#
+def create_offset_reference(offset, register):
+    return '{}({})'.format(offset, register)

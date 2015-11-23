@@ -179,6 +179,8 @@ class JSTParser(object):
             tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
             raise CompileError('Reimplementation of function not allowed.', tup[0], tup[1], tup[2])
 
+        function_symbol.activation_frame_size = self.compiler_state.symbol_table.next_activation_frame_offset
+
         arguments = [SymbolNode(symbol) for symbol in symbol.named_parameters]
         t[0] = FunctionDefinition(function_symbol, function_symbol.identifier, arguments, t[3],
                                   linerange=(t.lineno(1), t.lineno(4)))
@@ -202,6 +204,8 @@ class JSTParser(object):
         if result is Scope.INSERT_REDECL and existing[0].finalized:
             tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
             raise CompileError('Reimplementation of function not allowed.', tup[0], tup[1], tup[2])
+
+        function_symbol.activation_frame_size = self.compiler_state.symbol_table.next_activation_frame_offset
 
         arguments = [SymbolNode(symbol) for symbol in function_symbol.named_parameters]
         t[0] = FunctionDefinition(function_symbol, function_symbol.identifier, arguments, t[4],
