@@ -120,7 +120,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='translation_unit_opt -> translation_unit')
 
-        t[0] = FileAST(external_declarations=t[1] if t[1] else [])
+        t[0] = FileAST(t[1], self.compiler_state, lineno=None)
 
     def p_translation_unit_1(self, t):
         """
@@ -182,7 +182,7 @@ class JSTParser(object):
             raise CompileError('Reimplementation of function not allowed.', tup[0], tup[1], tup[2])
 
         arguments = [SymbolNode(symbol) for symbol in symbol.named_parameters]
-        t[0] = FunctionDefinition(function_symbol, function_symbol.identifier, arguments, t[3])
+        t[0] = FunctionDefinition(function_symbol, function_symbol.identifier, arguments, t[3], lineno=t.lineno(1))
 
     def p_function_definition_2(self, t):
         """
@@ -205,7 +205,7 @@ class JSTParser(object):
             raise CompileError('Reimplementation of function not allowed.', tup[0], tup[1], tup[2])
 
         arguments = [SymbolNode(symbol) for symbol in function_symbol.named_parameters]
-        t[0] = FunctionDefinition(function_symbol, function_symbol.identifier, arguments, t[4])
+        t[0] = FunctionDefinition(function_symbol, function_symbol.identifier, arguments, t[4], lineno=t.lineno(1))
 
     def p_function_definition_3(self, t):
         """
@@ -260,9 +260,9 @@ class JSTParser(object):
                     print(warning, 'Still need a way to output warnings.')
 
                 if len(symbol.array_dims) == 0:
-                    decl_ast = Declaration(symbol, initializer)
+                    decl_ast = Declaration(symbol, initializer, lineno=t.lineno(1))
                 else:
-                    decl_ast = ArrayDeclaration(symbol, symbol.array_dims, initializer)
+                    decl_ast = ArrayDeclaration(symbol, symbol.array_dims, initializer, lineno=t.lineno(1))
 
             elif isinstance(symbol, FunctionSymbol):
                 if initializer:
@@ -276,7 +276,8 @@ class JSTParser(object):
                     raise CompileError('Function is being redeclared.', tup[0], tup[1], tup[2])
 
                 decl_ast = FunctionDeclaration(symbol,
-                                               [SymbolNode(sym) for sym in symbol.named_parameters])
+                                               [SymbolNode(sym) for sym in symbol.named_parameters],
+                                               lineno=t.lineno(1))
 
             if decl_ast:
                 t[0].append(decl_ast)
@@ -1257,7 +1258,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='compound_statement -> LBRACE declaration_list statement_list RBRACE')
 
-        t[0] = CompoundStatement(declaration_list=t[4], statement_list=t[6])
+        t[0] = CompoundStatement(declaration_list=t[4], statement_list=t[6], lineno=t.lineno(4))
 
     def p_compound_statement_2(self, t):
         """
@@ -1265,7 +1266,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='compound_statement -> LBRACE statement_list RBRACE')
 
-        t[0] = CompoundStatement(statement_list=t[4])
+        t[0] = CompoundStatement(statement_list=t[4], lineno=t.lineno(4))
 
     def p_compound_statement_3(self, t):
         """
@@ -1273,7 +1274,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='compound_statement -> LBRACE declaration_list RBRACE')
 
-        t[0] = CompoundStatement(declaration_list=t[4])
+        t[0] = CompoundStatement(declaration_list=t[4], lineno=t.lineno(4))
 
     def p_compound_statement_4(self, t):
         """
@@ -1312,7 +1313,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='selection_statement -> IF LPAREN expression RPAREN statement')
 
-        t[0] = If(conditional=t[3], if_true=t[5], if_false=None)
+        t[0] = If(conditional=t[3], if_true=t[5], if_false=None, lineno=t.lineno(1))
 
     def p_selection_statement_2(self, t):
         """
@@ -1321,7 +1322,7 @@ class JSTParser(object):
         self.output_production(t,
             production_message='selection_statement -> IF LPAREN expression RPAREN statement ELSE statement')
 
-        t[0] = If(conditional=t[3], if_true=t[5], if_false=t[7])
+        t[0] = If(conditional=t[3], if_true=t[5], if_false=t[7], lineno=t.lineno(1))
 
     def p_selection_statement_3(self, t):
         """
@@ -1338,7 +1339,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='iteration_statement -> WHILE LPAREN expression RPAREN statement')
 
-        t[0] = IterationNode(True, None, t[3], None, t[5])
+        t[0] = IterationNode(True, None, t[3], None, t[5], lineno=t.lineno(3))
 
     def p_iteration_statement_2(self, t):
         """
@@ -1348,7 +1349,7 @@ class JSTParser(object):
             'iteration_statement -> FOR LPAREN expression_option SEMI expression_option SEMI expression_option RPAREN '
             'statement')
 
-        t[0] = IterationNode(True, t[3], t[5], t[7], t[9])
+        t[0] = IterationNode(True, t[3], t[5], t[7], t[9], lineno=t.lineno(1))
 
     def p_iteration_statement_3(self, t):
         """
@@ -1356,7 +1357,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='iteration_statement -> DO statement WHILE LPAREN expression RPAREN SEMI')
 
-        t[0] = IterationNode(False, None, t[5], None, t[2])
+        t[0] = IterationNode(False, None, t[5], None, t[2], lineno=t.lineno(5))
 
     #
     # jump_statement:
@@ -1385,7 +1386,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='jump_statement -> RETURN expression_option SEMI')
 
-        t[0] = Return(expression=t[2] if t[2] else None)
+        t[0] = Return(expression=t[2] if t[2] else None, lineno=t.lineno(2))
 
     #
     # Expression Option
@@ -1464,7 +1465,7 @@ class JSTParser(object):
 
         cast_result, message = type_utils.can_assign(t[1].get_resulting_type(), t[3].get_resulting_type())
         if cast_result != type_utils.INCOMPATIBLE_TYPES:
-            t[0] = Assignment(t[2], t[1], t[3])
+            t[0] = Assignment(t[2], t[1], t[3], lineno=t.lineno(1))
         else:
             tup = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
             raise CompileError(message, tup[0], tup[1], tup[2])
@@ -1553,7 +1554,7 @@ class JSTParser(object):
             t[0] = JSTParser.perform_binary_operation(t[1], t[2], t[3])
         else:
             # not constant expression, so need binary operator node
-            t[0] = BinaryOperator(t[2], t[1], t[3])
+            t[0] = BinaryOperator(t[2], t[1], t[3], lineno=t.lineno(1))
 
     def p_binary_expression_to_cast_expression(self, t):
         """
@@ -1601,7 +1602,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='unary_expression -> PLUSPLUS unary_expression')
 
-        t[0] = UnaryOperator(t[1], t[2])
+        t[0] = UnaryOperator(t[1], t[2], lineno=t.lineno(1))
 
     def p_unary_expression_pre_minus_minus(self, t):
         """
@@ -1609,7 +1610,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='unary_expression -> MINUSMINUS unary_expression')
 
-        t[0] = UnaryOperator(t[1], t[2])
+        t[0] = UnaryOperator(t[1], t[2], lineno=t.lineno(1))
 
     def p_unary_expression_to_unary_operator_and_cast(self, t):
         """
@@ -1702,7 +1703,7 @@ class JSTParser(object):
             if isinstance(t[1].symbol, VariableSymbol):
 
                 if len(t[1].symbol.array_dims) > 0 or len(t[1].symbol.pointer_modifiers) > 0:
-                    t[0] = ArrayReference(t[1].symbol, [t[3]])
+                    t[0] = ArrayReference(t[1].symbol, [t[3]], lineno=t.lineno(1))
                 else:
                     raise CompileError('Symbol is not an array.', tup[0], tup[1], tup[2])
 
@@ -1729,7 +1730,7 @@ class JSTParser(object):
             matched, message = function_symbol.arguments_match_parameter_types(t[3])
 
             if matched:
-                t[0] = FunctionCall(function_symbol, t[3])
+                t[0] = FunctionCall(function_symbol, t[3], lineno=t.lineno(1))
             else:
                 tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
                 raise CompileError(message, tup[0], tup[1], tup[2])
@@ -1745,7 +1746,7 @@ class JSTParser(object):
             matched, message = function_symbol.arguments_match_parameter_types([])
 
             if matched:
-                t[0] = FunctionCall(function_symbol, None)
+                t[0] = FunctionCall(function_symbol, None, lineno=t.lineno(1))
             else:
                 tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
                 raise CompileError(message, tup[0], tup[1], tup[2])
@@ -1771,7 +1772,7 @@ class JSTParser(object):
         self.output_production(t, production_message='postfix_expression -> postfix_expression PLUSPLUS')
 
         # TODO This should have another node or a flag that says the increment occurs AFTER
-        t[0] = UnaryOperator(operator=t[2], pre=False, expression=t[1])
+        t[0] = UnaryOperator(operator=t[2], pre=False, expression=t[1], lineno=t.lineno(1))
 
     def p_postfix_expression_to_post_decrement(self, t):
         """
@@ -1780,7 +1781,7 @@ class JSTParser(object):
         self.output_production(t, production_message='postfix_expression -> postfix_expression MINUSMINUS')
 
         # TODO This should have another node or a flag that says the decrement occurs AFTER
-        t[0] = UnaryOperator(operator=t[2], pre=False, expression=t[1])
+        t[0] = UnaryOperator(operator=t[2], pre=False, expression=t[1], lineno=t.lineno(1))
 
     #
     # primary-expression:
@@ -1796,7 +1797,7 @@ class JSTParser(object):
             result = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
             raise CompileError('Use of variable before declaration.', result[0], result[1], result[2])
         else:
-            t[0] = SymbolNode(symbol)
+            t[0] = SymbolNode(symbol, lineno=t.lineno(1))
 
     def p_primary_expression_constant(self, t):
         """
@@ -1870,16 +1871,16 @@ class JSTParser(object):
         self.output_production(t, production_message='constant -> ICONST {}'.format(t[1]))
 
         if t[1][1] is 'CHAR':
-            t[0] = Constant(Constant.CHAR, t[1][0])
+            t[0] = Constant(Constant.CHAR, t[1][0], lineno=t.lineno(1))
 
         elif t[1][1] is 'INT':
-            t[0] = Constant(Constant.INTEGER, t[1][0])
+            t[0] = Constant(Constant.INTEGER, t[1][0], lineno=t.lineno(1))
 
         elif t[1][1] is 'LONG':
-            t[0] = Constant(Constant.LONG, t[1][0])
+            t[0] = Constant(Constant.LONG, t[1][0], lineno=t.lineno(1))
 
         elif t[1][1] is 'LONG_LONG':
-            t[0] = Constant(Constant.LONG_LONG, t[1][0])
+            t[0] = Constant(Constant.LONG_LONG, t[1][0], lineno=t.lineno(1))
 
     def p_constant_float(self, t):
         """
@@ -1887,7 +1888,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='constant -> FCONST {}'.format(t[1]))
 
-        t[0] = Constant(Constant.FLOAT, float(t[1]))
+        t[0] = Constant(Constant.FLOAT, float(t[1]), lineno=t.lineno(1))
 
     def p_constant_char(self, t):
         """
@@ -1895,7 +1896,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='constant -> CCONST ({})'.format(t[1]))
 
-        t[0] = Constant(Constant.CHAR, t[1])
+        t[0] = Constant(Constant.CHAR, t[1], lineno=t.lineno(1))
 
     #
     # identifier:

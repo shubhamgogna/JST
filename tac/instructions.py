@@ -15,6 +15,7 @@
 
 #
 DUP = 'DUP'
+SOURCE = 'SOURCE'
 
 # Math Operations
 # TODO: create versions for both int and floating point?
@@ -68,7 +69,6 @@ CVTWS = 'CVTWS'
 
 # Assignment
 ASSIGN = 'ASSIGN'
-
 
 # Memory Accesses
 LW = 'LW'

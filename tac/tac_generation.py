@@ -73,6 +73,7 @@ class TacInstruction(object):
                    src1=parts[2].trim() if parts[2] != '-' else TacInstruction.NULL,
                    src2=parts[3].trim() if parts[3] != '-' else TacInstruction.NULL)
 
+
 #
 # THE ALMIGHTY DUP
 #
@@ -87,6 +88,21 @@ def DUP(clone, original):
         allocation scheme later.
     """
     return TacInstruction(instructions.DUP, clone, original)
+
+
+#
+# THE ALMIGHTY SOURCE
+#
+def SOURCE(start_line):
+    """
+    args:
+        start_line
+
+    function:
+        Instruction that gets filtered in the output and converted to the actual source from the program.
+    """
+    return TacInstruction(instructions.SOURCE, start_line)
+
 
 #
 # MATH

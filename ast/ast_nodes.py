@@ -40,7 +40,7 @@ class ArrayDeclaration(BaseAstNode):
         super(ArrayDeclaration, self).__init__(**kwargs)
 
         self.dimensions = dimensions
-        self.initializers = initializers
+        self.initializers = initializers[:min(len(initializers), symbol.array_dims[0])]
 
         self.symbol = symbol
 
@@ -56,17 +56,21 @@ class ArrayDeclaration(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        if not self.initializers:
-            return []
+        output = [SOURCE(self.lineno)]
 
-        output = []
+        if not self.initializers:
+            return output
+
+        # Get a new register for the offset
         offset_reg = INT_REGISTER_TICKETS.get()
 
+        # Initialize offset with base address
         if self.symbol.global_memory_location:
             output.append(ADDIU(offset_reg, 0, 'Global_{}'.format(self.symbol.global_memory_location)))
         else:
             output.append(ADDIU(offset_reg, 0, 'Frame_{}'.format(self.symbol.activation_frame_offset)))
 
+        # Loop through initializers and copy words
         for item in self.initializers:
             item_tac = item.to_3ac(get_rval=True)
             if '3ac' in item_tac:
@@ -80,8 +84,7 @@ class ArrayDeclaration(BaseAstNode):
 
         return output
 
-        # TODO: This memory allocation stuff should happen in the call?
-        return []
+
 ##
 # Node for referencing an array through subscripts.
 ##
@@ -129,7 +132,7 @@ class ArrayReference(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, get_rval=True, include_source=False):
-        output = []
+        output = [SOURCE(self.lineno)]
         dim_count = len(self.symbol.array_dims)
 
         if dim_count is 0:
@@ -163,13 +166,12 @@ class ArrayReference(BaseAstNode):
         else:
             output.append(ADDIU(offset_reg, offset_reg, 'Frame_{}'.format(self.symbol.activation_frame_offset)))
 
-
-        # TODO: Need to add in logic to do rvalue or lvalue
         if get_rval:
-            output.append(LW(offset_reg,offset_reg))
+            output.append(LW(offset_reg, offset_reg))
             return {'3ac': output, 'rvalue': offset_reg}
         else:
-            return{'3ac': output, 'lvalue': offset_reg}
+            return {'3ac': output, 'lvalue': offset_reg}
+
 
 class Assignment(BaseAstNode):
     """
@@ -199,7 +201,7 @@ class Assignment(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        output = []
+        output = [SOURCE(self.lineno)]
 
         # get memory address of lvalue by calling to3ac on lvalue
         left = self.lvalue.to_3ac(get_rval=False)
@@ -275,7 +277,7 @@ class BinaryOperator(BaseAstNode):
 
         # since calculating value, should only return rvalue
 
-        output = []
+        output = [SOURCE(self.lineno)]
 
         # get memory address of lvalue by calling to3ac on lvalue
         left = self.lvalue.to_3ac(get_rval=True)
@@ -382,7 +384,7 @@ class Cast(BaseAstNode):
 
         # since returns cast value, should only return rvalue
 
-        output = []
+        output = [SOURCE(self.lineno)]
 
         # if same, don't cast
         if self.to_type == self.expression.get_resulting_type():
@@ -435,7 +437,7 @@ class CompoundStatement(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        output = []
+        output = [SOURCE(self.lineno)]
 
         # gen 3ac for declaration_list
         if self.declaration_list is not None:
@@ -476,7 +478,7 @@ class Declaration(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        output = []
+        output = [SOURCE(self.lineno)]
 
         if self.initializer:
             item_tac = self.initializer.to_3ac(get_rval=True)
@@ -502,10 +504,11 @@ class FileAST(BaseAstNode):
 
     Simply amalgamates 3AC. Might not produce any code other than standard boilerplate.
     """
-    def __init__(self, external_declarations=None, **kwargs):
+    def __init__(self, external_declarations, compiler_state, **kwargs):
         super(FileAST, self).__init__(**kwargs)
 
         self.external_declarations = external_declarations if external_declarations else []
+        self.compiler_state = compiler_state if compiler_state else None
 
     @property
     def children(self):
@@ -514,15 +517,18 @@ class FileAST(BaseAstNode):
         return tuple(childrens)
 
     def to_3ac(self, include_source=False):
-        # raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
-
-        # gen 3ac for external declarations
         output = []
         for item in self.external_declarations:
             output.extend(item.to_3ac())
 
+        counter = [0] * len(self.compiler_state.source_lines if self.compiler_state else [0])
         for item in output:
-            print(item)
+            if include_source and item.instruction == 'SOURCE':
+                if counter[item.dest - 1] is 0:
+                    print(self.compiler_state.source_lines[item.dest - 1])
+                    counter[item.dest - 1] = 1
+            else:
+                print(item)
 
         return output
 
@@ -622,7 +628,7 @@ class FunctionDefinition(BaseAstNode):
 
         # dump label
         label = LABEL(label)
-        output = [label]
+        output = [SOURCE(self.lineno), label]
 
         # get 3ac for arguments
         for item in self.arguments:
@@ -662,7 +668,7 @@ class If(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        output = []
+        output = [SOURCE(self.lineno)]
 
         # get three labels
         lTrue = LABEL_TICKETS.get()
@@ -772,7 +778,7 @@ class IterationNode(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        output = []
+        output = [SOURCE(self.lineno)]
         condition_check_label = LABEL_TICKETS.get()
         condition_ok_label = LABEL_TICKETS.get()
         loop_exit_label = LABEL_TICKETS.get()
@@ -813,7 +819,6 @@ class IterationNode(BaseAstNode):
             output.extend(result['3ac'])
             # dont need to access reg, since same reg is used for condition check still and this is already grabbed above
             # ??? = result['rvalue']
-
 
         # Add loop instruction
         output.append(BR(condition_check_label))
@@ -898,11 +903,9 @@ class Return(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        # raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
-
-        # return value
-        output = []
+        output = [SOURCE(self.lineno)]
         prev_result = self.expression.to_3ac()
+
         # Note: Does not currently pass back the register of the value being returned....
         output.extend(prev_result['3ac'])
         output.append(RETURN())
@@ -944,7 +947,7 @@ class SymbolNode(BaseAstNode):
 
     def to_3ac(self, get_rval=True, include_source=False):
 
-        output = []
+        output = [SOURCE(self.lineno)]
 
         # get ticket to copy memory location
         if self.symbol.get_resulting_type() == 'int':
@@ -975,7 +978,6 @@ class SymbolNode(BaseAstNode):
                 return {'3ac': output, 'lvalue': reg}
 
 
-
 class UnaryOperator(BaseAstNode):
     """
     Requires: An lvalue for the operation to operate on.
@@ -1002,9 +1004,7 @@ class UnaryOperator(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        # raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
-
-        output = []
+        output = [SOURCE(self.lineno)]
 
         # get memory location of expression by calling to3ac function
         result = (self.expression.to_3ac(get_rval = False))
@@ -1039,6 +1039,7 @@ class UnaryOperator(BaseAstNode):
         output.append(SW(value_reg, rvalue))
 
         return {'3ac': output, 'rvalue': return_reg}
+
 
 class Constant(BaseAstNode):
     """
@@ -1089,7 +1090,7 @@ class Constant(BaseAstNode):
 
         # since const, should always return rvalue!
 
-        output = []
+        output = [SOURCE(self.lineno)]
 
         # load constant into register and return register
         reg = INT_REGISTER_TICKETS.get()

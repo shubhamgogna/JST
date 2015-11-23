@@ -27,10 +27,10 @@ class BaseAstNode:
     # @param line_range A tuple of start line and end line for where this node applies
     # @param uuid A unique identifier number from a TicketCounter
     #
-    def __init__(self, uuid=None, linerange=None, **kwargs):
+    def __init__(self, uuid=None, lineno=None, **kwargs):
         # Initialize the uuid
         self.uuid = uuid if uuid else UUID_TICKETS.get()
-        self.linerange = linerange
+        self.lineno = lineno
 
     # Define str function to concisely summarize a node with its uuid, name/type, and relevant info
     def __str__(self):

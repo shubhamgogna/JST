@@ -84,7 +84,7 @@ def main():
         if args['astree']:
             print(ast.to_graph_viz_str())
         if args['threeac']:
-            ast.to_3ac()
+            ast.to_3ac(include_source=True)
     except CompileError as error:
         print(error)
     finally:
