@@ -289,14 +289,12 @@ class BinaryOperator(BaseAstNode):
         # get memory address of lvalue by calling to3ac on lvalue
         left = self.lvalue.to_3ac(get_rval=True)
         lval = left['rvalue']
-        if '3ac' in left:
-            output.extend(left['3ac'])
+        output.extend(left['3ac'])
 
         # get memory address of rvalue by calling to3ac on rvalue
         right = self.rvalue.to_3ac(get_rval=True)
         rval = right['rvalue']
-        if '3ac' in right:
-            output.extend(right['3ac'])
+        output.extend(right['3ac'])
 
         # get temporary register
         # TODO: Add in checking for int or float so can pull correct ticket
@@ -551,6 +549,7 @@ class FileAST(BaseAstNode):
 
         counter = [0] * len(self.compiler_state.source_lines if self.compiler_state else [0])
         for item in output:
+            print('here', item, type(item))
             if include_source and item.instruction == 'SOURCE':
                 if item.dest is item.src1 and counter[item.dest - 1] is 0:
                     print('\n#   ' + self.compiler_state.source_lines[item.dest - 1])
@@ -748,42 +747,42 @@ class If(BaseAstNode):
         lEnd = LABEL_TICKETS.get()
 
         # gen 3ac for conditional
-        # print(self.conditional, '\n\n\n')
-        # result = self.conditional.to_3ac()
-        # output.append(result['3ac'])
-        #
-        # # check the register that results from the conditional to see if false
-        # reg = result['register']
-        # if register_allocation_table[reg] is False:
-        #     output.append(BREQ(lFalse, False, register_allocation_table[reg]))
+        result = self.conditional.to_3ac()
+        output.extend(result['3ac'])
+
+        # check the register that results from the conditional to see if false
+        reg = result['rvalue']
+        false_reg = INT_REGISTER_TICKETS.get()
+        output.append(ADDI(false_reg, ZERO, '0'))
+        output.append(BRNE(lTrue, reg, false_reg))
 
         # get values of conditional
         # get memory address of lvalue by calling to3ac on lvalue
-        left = self.conditional.lvalue.to_3ac(get_rval = True)
-        lval = left['rvalue']
-        if '3ac' in left:
-            output.extend(left['3ac'])
-
-        # get memory address of rvalue by calling to3ac on rvalue
-        right = self.conditional.rvalue.to_3ac(get_rval = True)
-        rval = right['rvalue']
-        if '3ac' in right:
-            output.extend(right['3ac'])
-
-        # # check which operator in conditional, to know which branch to take
-        # branching on true
-        if self.conditional.operator == '<':
-            output.append(BRLT(lTrue, lval, rval))
-        if self.conditional.operator == '<=':
-            output.append(BRLE(lTrue, lval, rval))
-        if self.conditional.operator == '>':
-            output.append(BRGT(lTrue, lval, rval))
-        if self.conditional.operator == '>=':
-            output.append(BRGE(lTrue, lval, rval))
-        if self.conditional.operator == '==':
-            output.append(BREQ(lTrue, lval, rval))
-        if self.conditional.operator == '!=':
-            output.append(BRNE(lTrue, lval, rval))
+        # left = self.conditional.lvalue.to_3ac(get_rval = True)
+        # lval = left['rvalue']
+        # if '3ac' in left:
+        #     output.extend(left['3ac'])
+        #
+        # # get memory address of rvalue by calling to3ac on rvalue
+        # right = self.conditional.rvalue.to_3ac(get_rval = True)
+        # rval = right['rvalue']
+        # if '3ac' in right:
+        #     output.extend(right['3ac'])
+        #
+        # # # check which operator in conditional, to know which branch to take
+        # # branching on true
+        # if self.conditional.operator == '<':
+        #     output.append(BRLT(lTrue, lval, rval))
+        # if self.conditional.operator == '<=':
+        #     output.append(BRLE(lTrue, lval, rval))
+        # if self.conditional.operator == '>':
+        #     output.append(BRGT(lTrue, lval, rval))
+        # if self.conditional.operator == '>=':
+        #     output.append(BRGE(lTrue, lval, rval))
+        # if self.conditional.operator == '==':
+        #     output.append(BREQ(lTrue, lval, rval))
+        # if self.conditional.operator == '!=':
+        #     output.append(BRNE(lTrue, lval, rval))
 
         # if conditional is false, gen 3ac
         if self.if_false:
@@ -906,7 +905,7 @@ class IterationNode(BaseAstNode):
         # Add loop exit label
         output.append(LABEL(loop_exit_label))
 
-        return output
+        return {'3ac': output}
 
 
 class Label(BaseAstNode):
