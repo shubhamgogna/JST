@@ -73,9 +73,9 @@ class ArrayDeclaration(BaseAstNode):
 
         # Initialize offset with base address
         if self.symbol.global_memory_location:
-            output.append(ADDIU(offset_reg, 0, 'Global_{}'.format(self.symbol.global_memory_location)))
+            output.append(ADDU(offset_reg, self.symbol.global_memory_location, ZERO))
         else:
-            output.append(ADDIU(offset_reg, 0, 'Frame_{}'.format(self.symbol.activation_frame_offset)))
+            output.append(ADDU(offset_reg, create_offset_reference(self.symbol.activation_frame_offset, FP), ZERO))
 
         # Loop through initializers and copy words
         for item in self.initializers:
@@ -169,9 +169,9 @@ class ArrayReference(BaseAstNode):
 
         # Add offset to symbol base address
         if self.symbol.global_memory_location:
-            output.append(ADDIU(offset_reg, offset_reg, 'Global_{}'.format(self.symbol.global_memory_location)))
+            output.append(ADDU(offset_reg, offset_reg, self.symbol.global_memory_location))
         else:
-            output.append(ADDIU(offset_reg, offset_reg, 'Frame_{}'.format(self.symbol.activation_frame_offset)))
+            output.append(ADDU(offset_reg, offset_reg, create_offset_reference(self.symbol.activation_frame_offset , FP)))
 
         if get_rval:
             output.append(LW(offset_reg, offset_reg))
@@ -490,7 +490,7 @@ class Declaration(BaseAstNode):
             if self.symbol.global_memory_location:
                 output.append(SW(self.symbol.global_memory_location, item_tac['rvalue']))
             else:
-                output.append(SW(self.symbol.activation_frame_offset, item_tac['rvalue']))
+                output.append(SW(create_offset_reference(self.symbol.activation_frame_offset, FP), item_tac['rvalue']))
 
         return {'3ac': output}
 
@@ -549,6 +549,7 @@ class FileAST(BaseAstNode):
 
         last_line = 0
         for item in output:
+            # print('here', item, type(item))
             if include_source and item.instruction == 'SOURCE':
                 if item.dest > last_line:
                     for lineno in range(last_line, item.dest):
@@ -1089,7 +1090,7 @@ class UnaryOperator(BaseAstNode):
         # get memory location of expression by calling to3ac function
         result = (self.expression.to_3ac(get_rval = False))
         if '3ac' in result:
-            output.append(result['3ac'])
+            output.extend(result['3ac'])
         value_reg = result['lvalue']
 
         # get the rvalue
@@ -1111,9 +1112,9 @@ class UnaryOperator(BaseAstNode):
 
         # determine correct operator and apply to register
         if self.operator == '++':
-             output.append(ADDIU(rvalue, 1, rvalue))
+             output.append(ADDIU(rvalue, rvalue, 1))
         if self.operator == '--':
-             output.append(SUBI(rvalue, 1, rvalue))
+             output.append(SUBI(rvalue, rvalue, 1))
 
         # store updated value
         output.append(SW(value_reg, rvalue))

@@ -49,8 +49,8 @@ class SymbolTable(object):
     # Pops the top-most Scope from the table and returns it.
     def pop(self):
         # The second scope is first scope of a function
-        if len(self.table) == 2:
-            self.next_activation_frame_offset = 0
+        # if len(self.table) == 2:
+        #     self.next_activation_frame_offset = 0
 
         return self.table.pop()
 

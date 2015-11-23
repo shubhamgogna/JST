@@ -180,6 +180,7 @@ class JSTParser(object):
             raise CompileError('Reimplementation of function not allowed.', tup[0], tup[1], tup[2])
 
         function_symbol.activation_frame_size = self.compiler_state.symbol_table.next_activation_frame_offset
+        self.compiler_state.symbol_table.next_activation_frame_offset = 0
 
         if function_symbol.identifier == 'main':
             self.compiler_state.main_function = function_symbol
@@ -209,6 +210,7 @@ class JSTParser(object):
             raise CompileError('Reimplementation of function not allowed.', tup[0], tup[1], tup[2])
 
         function_symbol.activation_frame_size = self.compiler_state.symbol_table.next_activation_frame_offset
+        self.compiler_state.symbol_table.next_activation_frame_offset = 0
 
         if function_symbol.identifier == 'main':
             self.compiler_state.main_function = function_symbol
