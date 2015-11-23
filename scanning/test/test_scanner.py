@@ -15,8 +15,8 @@
 
 import unittest
 import itertools
-from compiler.compiler_state import CompilerState
 from ply import lex
+from compiler.compiler_state import CompilerState
 from scanning.clexer import JSTLexer
 
 
@@ -105,21 +105,21 @@ class TestLexer(unittest.TestCase):
             """
         self.compare_token_output(data, expected_token_types=TestLexer.TEST_VAR_TOKEN_TYPES)
 
-
-    # def test_illegal_character(self):
-    #     with self.assertRaisesRegex(Exception, "Illegal token: 사 on Line 4, Column 21"):
-    #         data = """
-    #         int main() {
-    #             int i = 0;
-    #             char 사 = 'E';
-    #             return 0;
-    #         }
-    #         """
-    #         self.lexer.input(data)
-    #         while True:
-    #           tok = self.lexer.token()
-    #           if not tok:
-    #             break
+    def test_illegal_character(self):
+        with self.assertRaisesRegex(Exception, "Illegal token: 사 = 'E';"):
+            data = """
+            int main() {
+                int i = 0;
+                char 사 = 'E';
+                return 0;
+            }
+            """
+            self.scanner.input(data)
+            while True:
+                tok = self.scanner.token()
+                print(tok)
+                if not tok:
+                    break
 
     def test_declare_global_constant(self):
         data = """
@@ -131,7 +131,6 @@ class TestLexer(unittest.TestCase):
         """
         self.compare_token_output(data, expected_token_types=TestLexer.TEST_GLOBAL_TOKEN_TYPES)
 
-
     def test_declare_array(self):
         data = """
         int main() {
@@ -140,7 +139,6 @@ class TestLexer(unittest.TestCase):
         }
         """
         self.compare_token_output(data, expected_token_types=TestLexer.TEST_ARRAY_TOKEN_TYPES)
-
 
     def test_block_comments(self):
         data = """
@@ -166,7 +164,6 @@ class TestLexer(unittest.TestCase):
             }
             """
         self.compare_token_output(data, expected_token_types=TestLexer.TEST_CONST_TOKEN_TYPES)
-
 
     def test_declare_and_call_function(self):
         data = """
@@ -202,7 +199,6 @@ class TestLexer(unittest.TestCase):
         """
         self.compare_token_output(data, expected_token_types=TestLexer.TEST_BANGBANGS_TOKEN_TYPES)
 
-
     def test_declare_struct(self):
         data = """
             struct Pixel {
@@ -217,7 +213,6 @@ class TestLexer(unittest.TestCase):
         """
         self.compare_token_output(data, expected_token_types=TestLexer.TEST_STRUCT_TOKEN_TYPES)
 
-
     def test_token_symbols(self):
         data = """
         + - * / % | & ~ ^ << >>  ||  &&  !  <  <=  > >=  ==  !=
@@ -229,7 +224,6 @@ class TestLexer(unittest.TestCase):
         ...
         """
         self.compare_token_output(data, expected_token_types=TestLexer.TEST_SYMBOLS_TOKEN_TYPES)
-
 
     def test_reserved_words(self):
         data = """
@@ -300,44 +294,6 @@ class TestLexer(unittest.TestCase):
         }
         """
         self.compare_token_output(data, expected_token_types=TestLexer.TEST_FPTR_TOKEN_TYPES)
-
-
-# Not sure what this is testing...
-#
-#     def test_clone(self):
-#         data = """
-#             int do_stuff(char c);
-#
-#             int main() {
-#
-#               int x = 1;
-#               int y = 2;
-#
-#               do_stuff('f');
-#
-#               return 0;
-#             }
-#
-#             int do_stuff(char c) {
-#                 !!C
-#                 return c + c;
-#              }
-#         """
-#         self.lexer.lexer.input(data)
-#         while True:
-#             tok = self.lexer.lexer.token()
-#             if not tok:
-# #                print(self.lexer.lexer.compiler_state.symbol_table)
-#
-#                 break
-#
-#         # data =  self.lexer.lexdata
-#         # for i in data:
-#             # if data == '!!S':
-#             #     print(self.compiler_state.symbol_table)
-#             # if data == '!!C':
-#             #     print("BLADDDDDD")
-
 
     def test_int_verify_no_overflow(self):
         self.assertFalse(JSTLexer.string_to_int_fails("4"), "4 should be acceptable")
