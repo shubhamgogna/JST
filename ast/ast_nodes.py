@@ -43,6 +43,9 @@ class ArrayDeclaration(BaseAstNode):
     def __init__(self, symbol, dimensions, initializers, **kwargs):
         super(ArrayDeclaration, self).__init__(**kwargs)
 
+        if initializers is None:
+            initializers = []
+
         self.dimensions = dimensions
         self.initializers = initializers[:min(len(initializers), symbol.array_dims[0])]
 
@@ -204,7 +207,7 @@ class Assignment(BaseAstNode):
         children.append(self.rvalue)
         return tuple(children)
 
-    def to_3ac(self, include_source=False):
+    def to_3ac(self, get_rval=True, include_source=False):
         output = [SOURCE(self.linerange[0], self.linerange[1])]
 
         # get memory address of lvalue by calling to3ac on lvalue
@@ -214,6 +217,7 @@ class Assignment(BaseAstNode):
             output.extend(left['3ac'])
 
         # get memory address of rvalue by calling to3ac on rvalue
+        print('HERE', self.rvalue, type(self.rvalue))
         right = self.rvalue.to_3ac(get_rval=True)
         rval = right['rvalue']
         if '3ac' in right:
@@ -235,7 +239,7 @@ class Assignment(BaseAstNode):
         #       right now both are registers, should the rvalue be the actual value? I don't think so but not sure
         output.append(ASSIGN(rval, lval, rval))
 
-        return output
+        return {'3ac': output, 'rvalue': rval}
 
 
 # TODO (Shubham) The return type needs to be explicitly stated here.
@@ -457,6 +461,9 @@ class Declaration(BaseAstNode):
         self.symbol = symbol
         self.initializer = initializer
 
+        if self.symbol.immutable and isinstance(initializer, Constant):
+            self.symbol.value = initializer.value
+
     def sizeof(self):
         return type_utils.type_size_in_bytes(self.symbol.type_str())
 
@@ -475,6 +482,7 @@ class Declaration(BaseAstNode):
         output = [SOURCE(self.linerange[0], self.linerange[1])]
 
         if self.initializer:
+            print(self.initializer, type(self.initializer))
             item_tac = self.initializer.to_3ac(get_rval=True)
             if '3ac' in item_tac:
                 output.extend(item_tac['3ac'])
@@ -485,7 +493,7 @@ class Declaration(BaseAstNode):
             else:
                 output.append(SW(self.symbol.activation_frame_offset, item_tac['rvalue']))
 
-        return output
+        return {'3ac': output}
 
 
 ##
@@ -511,7 +519,7 @@ class FileAST(BaseAstNode):
         return tuple(childrens)
 
     def to_3ac(self, include_source=False):
-        output = [DATA()]
+        output = []
 
         global_data_declarations = []
         function_definitions = []
@@ -521,9 +529,19 @@ class FileAST(BaseAstNode):
             else:
                 global_data_declarations.append(external_declaration)
 
-        for item in self.external_declarations:
-            print('external declaration:', item, type(item))
-            output.extend(item.to_3ac())
+        # insert the call to main
+        output.append(CALL(self.compiler_state.main_function.identifier, self.compiler_state.main_function.activation_frame_size))
+        # if we did the argc, argv versions, that stuff would go here
+
+        output = [DATA()]
+        for external_declaration in global_data_declarations:
+            result = external_declaration.to_3ac()
+            output.extend(result['3ac'])
+
+        output.append(TEXT())
+        for function_definition in function_definitions:
+            result = function_definition.to_3ac()
+            output.extend(result['3ac'])
 
         counter = [0] * len(self.compiler_state.source_lines if self.compiler_state else [0])
         for item in output:
@@ -569,7 +587,7 @@ class FunctionCall(BaseAstNode):
         children.extend(self.arguments)
         return tuple(children)
 
-    def to_3ac(self, include_source=False):
+    def to_3ac(self, get_rval=True, include_source=False):
         _3ac = []
         return_type = self.function_symbol.get_resulting_type()
         rvalue = INT_REGISTER_TICKETS.get() if type_utils.is_integral_type(return_type) else FLOAT_REGISTER_TICKETS.get()
@@ -578,7 +596,7 @@ class FunctionCall(BaseAstNode):
         _3ac.append(CALL(self.function_symbol.identifier, self.function_symbol.activation_frame_size))
 
         # copy the argument values into
-        for parameter_template, argument in itertools.zip_longest(self.function_symbol.named_params, self.arguments):
+        for parameter_template, argument in itertools.zip_longest(self.function_symbol.named_parameters, self.arguments):
             # evaluate the argument expression
             # get register with value of arg
             arg_result = argument.to_3ac(get_rval=True)
@@ -641,9 +659,7 @@ class FunctionDeclaration(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
-
-        # TODO: does this need any space in memory? No right?
+        return {'3ac': []}
 
 
 class FunctionDefinition(BaseAstNode):
@@ -763,7 +779,9 @@ class If(BaseAstNode):
             output.append(BRNE(lTrue, lval, rval))
 
         # if conditional is false, gen 3ac
-        output.extend(self.if_false.to_3ac())
+        if self.if_false:
+            output.extend(self.if_false.to_3ac())
+
         output.append(BR(lEnd))
 
         # if conditional is true, dump label and gen 3ac
@@ -1125,12 +1143,13 @@ class Constant(BaseAstNode):
     def name(self, **kwargs):
         return super(Constant, self).name(arg=str(self.value))
 
+    @property
+    def immutable(self):
+        return True
+
     @staticmethod
     def is_integral_type(source):
-        return source.type_declaration is Constant.CHAR or \
-            source.type_declaration is Constant.INTEGER or \
-            source.type_declaration is Constant.LONG or \
-            source.type_declaration is Constant.LONG_LONG
+        return type_utils.is_integral_type(source.get_resulting_type())
 
     @property
     def children(self):

@@ -95,6 +95,9 @@ class CompilerState:
         self.jst_parser = JSTParser(self)
         self.parser = yacc.yacc(module=self.jst_parser, start='program')
 
+        # we will need a reference to the symbol for the main function
+        self.main_function = None
+
     def parse(self, source_code):
         # Lex uses 1 based indexing for line numbers.
         # We are using 0 based for source_code.

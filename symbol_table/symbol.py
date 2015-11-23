@@ -47,6 +47,8 @@ class VariableSymbol(Symbol):
         self.type_qualifiers = set()
         self.type_specifiers = ''
 
+        self.value = None
+
     def finalize(self):
         # TODO:
         # check the type specifiers for correctness

@@ -269,21 +269,21 @@ class TestTac(unittest.TestCase):
         ast = self.compiler_state.parse(test_program)
         ast.to_3ac()
 
-        self.fail('Implement the matrix multiplication test.')
 
     def test_bubble_sort(self):
         test_program = """
-            int bubble_sort(int items[], int n_items);
+            const int N_ITEMS = 5;
+            int bubble_sort(int items[N_ITEMS], int n_items);
 
             int main() {
-              int items[] = {5, 1, 4, 3, 2};
+              int items[N_ITEMS] = {5, 1, 4, 3, 2};
 
               bubble_sort(items, 5);
 
               return 0;
             }
 
-            int bubble_sort(int items[], int n_items) {
+            int bubble_sort(int items[N_ITEMS], int n_items) {
               int i, j;
               int temp;
 
@@ -302,7 +302,6 @@ class TestTac(unittest.TestCase):
         ast = self.compiler_state.parse(test_program)
         ast.to_3ac()
 
-        self.fail('Implement the bubble sort test.')
 
     def test_recursive_factorial(self):
         test_program = """
@@ -326,5 +325,3 @@ class TestTac(unittest.TestCase):
 
         ast = self.compiler_state.parse(test_program)
         ast.to_3ac()
-
-        self.fail('Implement the recursive factorial test.')

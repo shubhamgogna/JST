@@ -181,6 +181,9 @@ class JSTParser(object):
 
         function_symbol.activation_frame_size = self.compiler_state.symbol_table.next_activation_frame_offset
 
+        if function_symbol.identifier == 'main':
+            self.compiler_state.main_function = function_symbol
+
         arguments = [SymbolNode(symbol) for symbol in symbol.named_parameters]
         t[0] = FunctionDefinition(function_symbol, function_symbol.identifier, arguments, t[3],
                                   linerange=(t.lineno(1), t.lineno(4)))
@@ -206,6 +209,9 @@ class JSTParser(object):
             raise CompileError('Reimplementation of function not allowed.', tup[0], tup[1], tup[2])
 
         function_symbol.activation_frame_size = self.compiler_state.symbol_table.next_activation_frame_offset
+
+        if function_symbol.identifier == 'main':
+            self.compiler_state.main_function = function_symbol
 
         arguments = [SymbolNode(symbol) for symbol in function_symbol.named_parameters]
         t[0] = FunctionDefinition(function_symbol, function_symbol.identifier, arguments, t[4],
@@ -823,8 +829,11 @@ class JSTParser(object):
             result = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
             raise CompileError('Array dimension must be an integral type.', result[0], result[1], result[2])
 
-        if isinstance(t[1], VariableSymbol):
-            t[1].add_array_dimension(t[3].value)
+        if isinstance(t[1], VariableSymbol) and t[3].immutable:
+            if isinstance(t[3], SymbolNode) and isinstance(t[3].symbol, VariableSymbol):
+                t[1].add_array_dimension(t[3].symbol.value)
+            elif isinstance(t[3], Constant):
+                t[1].add_array_dimension(t[3].value)
             t[0] = t[1]
         elif isinstance(t[1], FunctionSymbol):
             result = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
@@ -1588,7 +1597,7 @@ class JSTParser(object):
         self.output_production(t, production_message='cast_expression -> LPAREN type_name RPAREN cast_expression')
 
         # TODO: might need to change this
-        t[0] = Cast(t[2],t[4])
+        t[0] = Cast(t[2],t[4], linerange=(t.lineno(1), t.lineno(4)))
         # t[0] = Cast(to_type=t[2], expression=t[4])
 
     #
@@ -1707,7 +1716,6 @@ class JSTParser(object):
                 raise CompileError('Functions cannot be accessed like arrays.', tup[0], tup[1], tup[2])
 
             if isinstance(t[1].symbol, VariableSymbol):
-
                 if len(t[1].symbol.array_dims) > 0 or len(t[1].symbol.pointer_modifiers) > 0:
                     t[0] = ArrayReference(t[1].symbol, [t[3]], linerange=(t.lineno(1), t.lineno(4)))
                 else:
