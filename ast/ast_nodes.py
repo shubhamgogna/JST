@@ -13,8 +13,6 @@
 # You should have received a copy of the GNU General Public License
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
-import math
-
 import itertools
 
 from ast.base_ast_node import BaseAstNode
@@ -24,10 +22,6 @@ from ticket_counting.ticket_counters import LABEL_TICKETS
 from ticket_counting.ticket_counters import INT_REGISTER_TICKETS
 from ticket_counting.ticket_counters import FLOAT_REGISTER_TICKETS
 from tac.tac_generation import *
-
-# Setup register allocation table and address table to keep track of where vars
-# are declared so can be accessed throughout each node.
-register_allocation_table = {}
 
 
 ##
@@ -171,7 +165,7 @@ class ArrayReference(BaseAstNode):
         if self.symbol.global_memory_location:
             output.append(ADDU(offset_reg, offset_reg, self.symbol.global_memory_location))
         else:
-            output.append(ADDU(offset_reg, offset_reg, create_offset_reference(self.symbol.activation_frame_offset , FP)))
+            output.append(ADDU(offset_reg, offset_reg, create_offset_reference(self.symbol.activation_frame_offset, FP)))
         if get_rval:
             output.append(LW(offset_reg, offset_reg))
             return {'3ac': output, 'rvalue': offset_reg}
@@ -379,8 +373,6 @@ class Cast(BaseAstNode):
     @property
     def children(self):
         children = []
-        # since to_type is like 'int' its an attribute, not a child
-        # children.append(self.to_type)
         children.append(self.expression)
         return tuple(children)
 
@@ -480,7 +472,6 @@ class Declaration(BaseAstNode):
         output = [SOURCE(self.linerange[0], self.linerange[1])]
 
         if self.initializer:
-            # print(self.initializer, type(self.initializer))
             item_tac = self.initializer.to_3ac(get_rval=True)
             if '3ac' in item_tac:
                 output.extend(item_tac['3ac'])
@@ -748,80 +739,36 @@ class If(BaseAstNode):
     def to_3ac(self, include_source=False):
         output = [SOURCE(self.linerange[0], self.linerange[1])]
 
-        # get three labels
+        # Get two labels
         lTrue = LABEL_TICKETS.get()
         lEnd = LABEL_TICKETS.get()
 
-        # gen 3ac for conditional
+        # Gen 3ac for conditional
         result = self.conditional.to_3ac()
         output.extend(result['3ac'])
 
-        # check the register that results from the conditional to see if false
+        # Branch based on the contents of the result register of the conditional
         reg = result['rvalue']
-        false_reg = INT_REGISTER_TICKETS.get()
-        output.append(ADDI(false_reg, ZERO, '0'))
-        output.append(BRNE(lTrue, reg, false_reg))
+        output.append(BRNE(lTrue, reg, ZERO))
 
-        # get values of conditional
-        # get memory address of lvalue by calling to3ac on lvalue
-        # left = self.conditional.lvalue.to_3ac(get_rval = True)
-        # lval = left['rvalue']
-        # if '3ac' in left:
-        #     output.extend(left['3ac'])
-        #
-        # # get memory address of rvalue by calling to3ac on rvalue
-        # right = self.conditional.rvalue.to_3ac(get_rval = True)
-        # rval = right['rvalue']
-        # if '3ac' in right:
-        #     output.extend(right['3ac'])
-        #
-        # # # check which operator in conditional, to know which branch to take
-        # # branching on true
-        # if self.conditional.operator == '<':
-        #     output.append(BRLT(lTrue, lval, rval))
-        # if self.conditional.operator == '<=':
-        #     output.append(BRLE(lTrue, lval, rval))
-        # if self.conditional.operator == '>':
-        #     output.append(BRGT(lTrue, lval, rval))
-        # if self.conditional.operator == '>=':
-        #     output.append(BRGE(lTrue, lval, rval))
-        # if self.conditional.operator == '==':
-        #     output.append(BREQ(lTrue, lval, rval))
-        # if self.conditional.operator == '!=':
-        #     output.append(BRNE(lTrue, lval, rval))
-
-        # if conditional is false, gen 3ac
+        # Gen 3AC for false branch
         if self.if_false:
             result = self.if_false.to_3ac()
             output.extend(result['3ac'])
 
+        # Add jump to end of conditional
         output.append(BR(lEnd))
 
-        # if conditional is true, dump label and gen 3ac
+        # Gen 3AC for true branch
         output.append(LABEL(lTrue))
-        result = self.if_true.to_3ac()
-        output.extend(result['3ac'])
+        if self.if_true:
+            result = self.if_true.to_3ac()
+            output.extend(result['3ac'])
 
-        # dump end label
+        # Dump end label
         output.append(LABEL(lEnd))
 
         return {'3ac': output}
-
-
-class InitializerList(BaseAstNode):
-    def __init__(self, initializers=None, **kwargs):
-        super(InitializerList, self).__init__(**kwargs)
-
-        self.initializers = initializers if initializers else []
-
-    @property
-    def children(self):
-        children = []
-        children.extend(self.initializers)
-        return tuple(children)
-
-    def to_3ac(self, include_source=False):
-        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
 
 ##
@@ -871,7 +818,6 @@ class IterationNode(BaseAstNode):
 
         # Initialize
         if self.initialization_expression:
-            # TODO (Shubham) What type of information do we get back from expression?
             result = self.initialization_expression.to_3ac()
             output.extend(result['3ac'])
 
@@ -884,7 +830,7 @@ class IterationNode(BaseAstNode):
 
             # If condition is false
             output.extend(condition_tac['3ac'])
-            output.append(BRNE(condition_ok_label, '$zero', condition_tac['rvalue']))
+            output.append(BRNE(condition_ok_label, ZERO, condition_tac['rvalue']))
             output.append(BR(loop_exit_label))
 
         # Add condition okay label
@@ -897,11 +843,8 @@ class IterationNode(BaseAstNode):
 
         # Add increment expressions
         if self.increment_expression:
-            # TODO (Shubham) What type of information do we get back from expression?
             result = self.increment_expression.to_3ac()
             output.extend(result['3ac'])
-            # dont need to access reg, since same reg is used for condition check still and this is already grabbed above
-            # ??? = result['rvalue']
 
         # Add loop instruction
         output.append(BR(condition_check_label))
@@ -910,30 +853,6 @@ class IterationNode(BaseAstNode):
         output.append(LABEL(loop_exit_label))
 
         return {'3ac': output}
-
-
-class Label(BaseAstNode):
-    """
-    Requires: Only its own name.
-    Output:   The 3AC for a label.
-    """
-    def __init__(self, label_name, body_statement, **kwargs):
-        super(Label, self).__init__(**kwargs)
-
-        self.label_name = label_name
-        self.body_statement = body_statement
-
-    def name(self, arg=None):
-        return super(Label, self).name(arg=self.label_name)
-
-    @property
-    def children(self):
-        children = []
-        children.append(self.body_statement)
-        return tuple(children)
-
-    def to_3ac(self, include_source=False):
-        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
 
 class PointerDeclaration(BaseAstNode):
@@ -1132,15 +1051,10 @@ class Constant(BaseAstNode):
     Output:   An rvalue register containing the value of the constant.
     """
     CHAR = 'char'
-
     INTEGER = 'int'
-
     LONG = 'long'
-
     LONG_LONG = 'long long'
-
     FLOAT = 'float'
-
     DOUBLE = 'double'
 
     def __init__(self, type_, value, **kwargs):
@@ -1172,16 +1086,10 @@ class Constant(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, get_rval=True, include_source=False):
-        # raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
-
-        # since const, should always return rvalue!
-
         output = [SOURCE(self.linerange[0], self.linerange[1])]
 
-        # load constant into register and return register
         reg = INT_REGISTER_TICKETS.get()
-        output.append(ADDIU(reg, '$zero', self.value ))
+        output.append(ADDIU(reg, ZERO, self.value))
 
-        register_allocation_table[reg] = self.value
-
+        # Since value is constant, an rvalue is always returned
         return {'3ac': output, 'rvalue': reg}
