@@ -21,7 +21,7 @@
 import compiler
 from ast.ast_nodes import *
 from exceptions.compile_error import CompileError
-from scanning.clexer import JSTLexer
+from scanning.jst_lexer import JSTLexer
 from symbol_table.scope import Scope
 from symbol_table.symbol import Symbol, VariableSymbol, FunctionSymbol, TypeDeclaration
 

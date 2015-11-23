@@ -17,7 +17,7 @@ import unittest
 import itertools
 from ply import lex
 from compiler.compiler_state import CompilerState
-from scanning.clexer import JSTLexer
+from scanning.jst_lexer import JSTLexer
 
 
 class TestLexer(unittest.TestCase):

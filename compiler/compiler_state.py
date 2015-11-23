@@ -15,8 +15,8 @@
 
 import sys
 from ply import lex, yacc
-from parsing.cparser import JSTParser
-from scanning.clexer import JSTLexer
+from parsing.jst_parser import JSTParser
+from scanning.jst_lexer import JSTLexer
 from symbol_table.symbol_table import SymbolTable
 from loggers.logger import Logger
 
