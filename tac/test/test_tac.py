@@ -203,9 +203,10 @@ class TestTac(unittest.TestCase):
             int main()
             {
                 int i = 0;
+                int j;
                 for(i=0;i<3;i++)
                 {
-                    /* pass */
+                    j = 5;
                 }
                 return 0;
             }

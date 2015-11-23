@@ -60,11 +60,12 @@ class ArrayDeclaration(BaseAstNode):
     def to_3ac(self, include_source=False):
         # Single integer and char declaration should take up 1 word (4 bytes)
         # Arrays need padding at the end to finish the word
-        byte_size = int(math.ceil(self.symbol.size_in_bytes() / 4) * 4)
-        output = [SUBIU('StackPointer', 'StackPointer', byte_size)]
-        return output
+        # byte_size = int(math.ceil(self.symbol.size_in_bytes() / 4) * 4)
+        # output = [SUBIU('StackPointer', 'StackPointer', byte_size)]
+        # return output
 
-
+        # TODO: This memory allocation stuff should happen in the call?
+        return []
 ##
 # Node for referencing an array through subscripts.
 ##
@@ -111,7 +112,7 @@ class ArrayReference(BaseAstNode):
         children.extend(self.subscripts)
         return tuple(children)
 
-    def to_3ac(self, include_source=False):
+    def to_3ac(self, get_rval=True, include_source=False):
         output = []
         dim_count = len(self.symbol.array_dims)
 
@@ -119,23 +120,23 @@ class ArrayReference(BaseAstNode):
             raise Exception('There was an error. Subscripting a non-array symbol.')
 
         # Initialize offset_reg to the value of the first subscript
-        subscript_tac = self.subscripts[0].to_3ac()
+        subscript_tac = self.subscripts[0].to_3ac(get_rval=True)
         if '3ac' in subscript_tac:
             output.extend(subscript_tac['3ac'])
 
         # Create a new register to hold the offset value
         offset_reg = INT_REGISTER_TICKETS.get()
-        output.append(ADDU(offset_reg, 0, subscript_tac['register']))
+        output.append(ADDU(offset_reg, 0, subscript_tac['rvalue']))
 
         # range(a,b) is (inclusive, exclusive)
         for i in range(0, dim_count - 1):
             output.append(MULIU(offset_reg, offset_reg, self.symbol.array_dims[i + 1]))
 
-            subscript_tac = self.subscripts[i].to_3ac()
+            subscript_tac = self.subscripts[i].to_3ac(get_rval=True)
             if '3ac' in subscript_tac:
                 output.extend(subscript_tac['3ac'])
 
-            output.append(ADDU(offset_reg, offset_reg, subscript_tac['register']))
+            output.append(ADDU(offset_reg, offset_reg, subscript_tac['rvalue']))
 
         # Offset by symbol size
         output.append(MULIU(offset_reg, offset_reg, type_utils.get_bit_size(self.symbol.type_specifiers) // 8))
@@ -146,8 +147,13 @@ class ArrayReference(BaseAstNode):
         else:
             output.append(ADDIU(offset_reg, offset_reg, 'Frame_{}'.format(self.symbol.activation_frame_offset)))
 
-        return {'3ac': output, 'register': offset_reg}
 
+        # TODO: Need to add in logic to do rvalue or lvalue
+        if get_rval:
+            output.append(LW(offset_reg,offset_reg))
+            return {'3ac': output, 'rvalue': offset_reg}
+        else:
+            return{'3ac': output, 'lvalue': offset_reg}
 
 class Assignment(BaseAstNode):
     """
@@ -180,16 +186,21 @@ class Assignment(BaseAstNode):
         output = []
 
         # get memory address of lvalue by calling to3ac on lvalue
-        left = self.lvalue.to_3ac()
-        lval = left['register']
+        left = self.lvalue.to_3ac(get_rval=False)
+        lval = left['lvalue']
         if '3ac' in left:
             output.extend(left['3ac'])
 
         # get memory address of rvalue by calling to3ac on rvalue
-        right = self.rvalue.to_3ac()
-        rval = right['register']
+        right = self.rvalue.to_3ac(get_rval=True)
+        rval = right['rvalue']
         if '3ac' in right:
             output.extend(right['3ac'])
+
+        # if values aren't the same type, get cast node. new value will be in rval.
+
+
+
 
         # TODO: Fix this??
         # # load rvalue into register - does this need to happen or not?
@@ -243,20 +254,22 @@ class BinaryOperator(BaseAstNode):
         children.append(self.rvalue)
         return tuple(children)
 
-    def to_3ac(self, include_source=False):
+    def to_3ac(self, get_rval=True, include_source=False):
         # raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+
+        # since calculating value, should only return rvalue
 
         output = []
 
         # get memory address of lvalue by calling to3ac on lvalue
-        left = self.lvalue.to_3ac()
-        lval = left['register']
+        left = self.lvalue.to_3ac(get_rval=True)
+        lval = left['rvalue']
         if '3ac' in left:
             output.extend(left['3ac'])
 
         # get memory address of rvalue by calling to3ac on rvalue
-        right = self.rvalue.to_3ac()
-        rval = right['register']
+        right = self.rvalue.to_3ac(get_rval=True)
+        rval = right['rvalue']
         if '3ac' in right:
             output.extend(right['3ac'])
 
@@ -320,7 +333,7 @@ class BinaryOperator(BaseAstNode):
         # TODO: since don't have the value since not calculating anything, can't store it to the table yet
         # register_allocation_table[reg] = value
 
-        return {'3ac': output, 'register': reg}
+        return {'3ac': output, 'rvalue': reg}
 
 
 class Cast(BaseAstNode):
@@ -349,29 +362,38 @@ class Cast(BaseAstNode):
         children.append(self.expression)
         return tuple(children)
 
-    def to_3ac(self, include_source=False):
+    def to_3ac(self, get_rval=True, include_source=False):
+
+        # since returns cast value, should only return rvalue
+
         output = []
 
-        # get correct casted value
-        if self.to_type == 'int':
-            value = int(self.expression.value)
-        if self.to_type == 'float':
-            value = float(self.expression.value)
-        if self.to_type == 'char':
-            # value = char(self.expression)
-            raise(NotImplementedError('Please implement char casting in p_cast_expressoin_2'))
+        # if same, don't cast
+        if self.to_type == self.expression.get_resulting_type():
+            output = []
+            reg = self.expression.value
 
-        # load casted value into register and return register
-        if type(value) is int:
-            reg = INT_REGISTER_TICKETS.get()
-            output.append(ADDI(reg, value, '$zero'))
-        if type(value) is float:
-            reg = FLOAT_REGISTER_TICKETS.get()
-            output.append(ADD(reg, value, '$zero'))
+        else:
+            # get correct casted value
+            if self.to_type in type_utils.INTEGRAL_TYPES:
+                value = int(self.expression.value)
+            if self.to_type in type_utils.FLOATING_POINT_TYPES:
+                value = float(self.expression.value)
+            if self.to_type == 'char':
+                # value = char(self.expression)
+                raise(NotImplementedError('Please implement char casting in p_cast_expressoin_2'))
 
-        register_allocation_table[reg] = value
+            # load casted value into register and return register
+            if type(value) is int:
+                reg = INT_REGISTER_TICKETS.get()
+                output.append(ADDI(reg, '$zero', value))
+            if type(value) is float:
+                reg = FLOAT_REGISTER_TICKETS.get()
+                output.append(ADD(reg, '$zero', value ))
 
-        return {'3ac': output, 'register': reg}
+            register_allocation_table[reg] = value
+
+        return {'3ac': output, 'rvalue': reg}
 
 
 class CompoundStatement(BaseAstNode):
@@ -635,16 +657,14 @@ class If(BaseAstNode):
 
         # get values of conditional
         # get memory address of lvalue by calling to3ac on lvalue
-        left = self.conditional.lvalue.to_3ac()
-        lval = left['register']
+        left = self.conditional.lvalue.to_3ac(get_rval = True)
+        lval = left['rvalue']
         if '3ac' in left:
             output.extend(left['3ac'])
 
-        # load lvalue into register  - does this need to happen or not?
-
         # get memory address of rvalue by calling to3ac on rvalue
-        right = self.conditional.rvalue.to_3ac()
-        rval = right['register']
+        right = self.conditional.rvalue.to_3ac(get_rval = True)
+        rval = right['rvalue']
         if '3ac' in right:
             output.extend(right['3ac'])
 
@@ -753,7 +773,7 @@ class IterationNode(BaseAstNode):
 
             # If condition is false
             output.extend(condition_tac['3ac'])
-            output.append(BRNE(condition_ok_label, 0, condition_tac['register']))
+            output.append(BRNE(condition_ok_label, 0, condition_tac['rvalue']))
             output.append(BR(loop_exit_label))
 
         # Add condition okay label
@@ -766,7 +786,11 @@ class IterationNode(BaseAstNode):
         # Add increment expressions
         if self.increment_expression:
             # TODO (Shubham) What type of information do we get back from expression?
-            output.extend(self.increment_expression.to_3ac())
+            result = self.increment_expression.to_3ac()
+            output.extend(result['3ac'])
+            # dont need to access reg, since same reg is used for condition check still and this is already grabbed above
+            # ??? = result['rvalue']
+
 
         # Add loop instruction
         output.append(BR(condition_check_label))
@@ -895,11 +919,38 @@ class SymbolNode(BaseAstNode):
         children = []
         return tuple(children)
 
-    def to_3ac(self, include_source=False):
-        if self.symbol.global_memory_location:
-            return {'register': 'Global_{}'.format(self.symbol.global_memory_location)}
+    def to_3ac(self, get_rval=True, include_source=False):
+
+        output = []
+
+        # get ticket to copy memory location
+        if self.symbol.get_resulting_type() == 'int':
+            reg = INT_REGISTER_TICKETS.get()
         else:
-            return {'register': 'Frame_{}'.format(self.symbol.activation_frame_offset)}
+            reg = FLOAT_REGISTER_TICKETS.get()
+
+        if self.symbol.global_memory_location:
+
+            if get_rval:
+                # return {'register': 'Global_{}'.format(self.symbol.global_memory_location)}
+                output.append(LW(reg,self.symbol.global_memory_location))
+                return {'3ac': output, 'rvalue': reg}
+
+            else:
+                output.append(ADD(reg, self.symbol.global_memory_location))
+                return {'3ac': output, 'lvalue': reg}
+
+        else:
+            # return {'register': 'Frame_{}'.format(self.symbol.activation_frame_offset)}
+
+            if get_rval:
+                output.append(LW(reg, str(self.symbol.activation_frame_offset) + '($fp)'))
+                return {'3ac': output, 'rvalue': reg}
+
+            else:
+                output.append(ADDI(reg, str(self.symbol.activation_frame_offset) + '($fp)', 0))
+                return {'3ac': output, 'lvalue': reg}
+
 
 
 class UnaryOperator(BaseAstNode):
@@ -933,14 +984,14 @@ class UnaryOperator(BaseAstNode):
         output = []
 
         # get memory location of expression by calling to3ac function
-        result = (self.expression.to_3ac())
+        result = (self.expression.to_3ac(get_rval = False))
         if '3ac' in result:
             output.append(result['3ac'])
-        value_reg = result['register']
+        value_reg = result['lvalue']
 
         # get the rvalue
         rvalue = INT_REGISTER_TICKETS.get()
-        output.extend(LW(rvalue, value_reg))
+        output.append(LW(rvalue, value_reg))
 
         # make 2 variables: 1 to point to the register this function returns, 1 to point to the register where the ++
         # will happen
@@ -954,15 +1005,12 @@ class UnaryOperator(BaseAstNode):
         else:  # in the case of pre plusplus, we will be returning a register with the updated value
             return_reg = rvalue
 
-        # add 1 into temp reg
-        reg = INT_REGISTER_TICKETS.get()
-        output.append(ADDIU(reg, 1, '$zero'))
 
         # determine correct operator and apply to register
         if self.operator == '++':
-             output.append(ADDU(rvalue, reg, rvalue))
+             output.append(ADDIU(rvalue, 1, rvalue))
         if self.operator == '--':
-             output.append(SUB(rvalue, reg, rvalue))
+             output.append(SUBI(rvalue, 1, rvalue))
 
         # store updated value
         output.append(SW(value_reg, rvalue))
@@ -1013,15 +1061,17 @@ class Constant(BaseAstNode):
         children = []
         return tuple(children)
 
-    def to_3ac(self, include_source=False):
+    def to_3ac(self, get_rval=True, include_source=False):
         # raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
+
+        # since const, should always return rvalue!
 
         output = []
 
         # load constant into register and return register
         reg = INT_REGISTER_TICKETS.get()
-        output.append(ADDIU(reg, self.value, '$zero'))
+        output.append(ADDIU(reg, '$zero', self.value ))
 
         register_allocation_table[reg] = self.value
 
-        return {'3ac': output, 'register': reg}
+        return {'3ac': output, 'rvalue': reg}
