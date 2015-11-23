@@ -802,11 +802,11 @@ class TestParser(unittest.TestCase):
         f_a, _ = function_symbol_table.find('a')
         self.assertEqual(0, f_a.activation_frame_offset)
         f_b, _ = function_symbol_table.find('b')
-        self.assertEqual(1, f_b.activation_frame_offset)
+        self.assertEqual(4, f_b.activation_frame_offset)
         f_c, _ = function_symbol_table.find('c')
-        self.assertEqual(5, f_c.activation_frame_offset)
+        self.assertEqual(8, f_c.activation_frame_offset)
         f_d, _ = function_symbol_table.find('d')
-        self.assertEqual(9, f_d.activation_frame_offset)
+        self.assertEqual(12, f_d.activation_frame_offset)
 
     def enable_parser_debugging(self):
         if self.debug:

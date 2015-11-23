@@ -141,6 +141,8 @@ class FunctionSymbol(Symbol):
         self.return_type_pointer_modifiers = []
         self.return_type_specifiers = ''
 
+        self.activation_frame_size = 0  # the variables and params, doesn't count stored registers
+
     @classmethod
     def from_variable_symbol(cls, variable_symbol):
         if not isinstance(variable_symbol, VariableSymbol):
