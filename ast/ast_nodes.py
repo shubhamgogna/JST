@@ -13,8 +13,6 @@
 # You should have received a copy of the GNU General Public License
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
-import math
-
 from ast.base_ast_node import BaseAstNode
 from utils import type_utils
 from utils import operator_utils
@@ -38,11 +36,11 @@ class ArrayDeclaration(BaseAstNode):
               thing should be recorded somewhere.
     """
 
-    def __init__(self, symbol, dimensions, dim_qualifiers, **kwargs):
+    def __init__(self, symbol, dimensions, initializers, **kwargs):
         super(ArrayDeclaration, self).__init__(**kwargs)
 
         self.dimensions = dimensions
-        self.dim_qualifiers = dim_qualifiers
+        self.initializers = initializers
 
         self.symbol = symbol
 
@@ -58,11 +56,26 @@ class ArrayDeclaration(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        # Single integer and char declaration should take up 1 word (4 bytes)
-        # Arrays need padding at the end to finish the word
-        # byte_size = int(math.ceil(self.symbol.size_in_bytes() / 4) * 4)
-        # output = [SUBIU('StackPointer', 'StackPointer', byte_size)]
-        # return output
+        output = []
+        offset_reg = INT_REGISTER_TICKETS.get()
+
+        if self.symbol.global_memory_location:
+            output.append(ADDIU(offset_reg, 0, 'Global_{}'.format(self.symbol.global_memory_location)))
+        else:
+            output.append(ADDIU(offset_reg, 0, 'Frame_{}'.format(self.symbol.activation_frame_offset)))
+
+        for item in self.initializers:
+            item_tac = item.to_3ac()
+            if '3ac' in item_tac:
+                output.extend(item_tac['3ac'])
+
+            # Store the value into memory
+            output.append(SW(offset_reg, item_tac['register']))
+
+            # Move to the next word
+            output.append(ADDIU(offset_reg, offset_reg, 4))
+
+        return output
 
         # TODO: This memory allocation stuff should happen in the call?
         return []
@@ -439,11 +452,11 @@ class Declaration(BaseAstNode):
     Output:   Probably no direct output in the form of temporary registers, but the memory assigned for the
               thing should be recorded somewhere.
     """
-    def __init__(self, symbol, initialization_value=None, **kwargs):
+    def __init__(self, symbol, initializer=None, **kwargs):
         super(Declaration, self).__init__(**kwargs)
 
         self.symbol = symbol
-        self.initialization_value = initialization_value
+        self.initializer = initializer
 
     def sizeof(self):
         return type_utils.type_size_in_bytes(self.symbol.type_str())
@@ -455,20 +468,25 @@ class Declaration(BaseAstNode):
     @property
     def children(self):
         children = []
-        if self.initialization_value is not None:
-            children.append(self.initialization_value)
+        if self.initializer is not None:
+            children.append(self.initializer)
         return tuple(children)
 
     def to_3ac(self, include_source=False):
+        output = []
+        item_tac = self.initializer.to_3ac()
+        if '3ac' in item_tac:
+            output.extend(item_tac['3ac'])
 
-        # # Single integer and char declaration should take up 1 word (4 bytes)
-        # byte_size = int(math.ceil(self.symbol.size_in_bytes() / 4) * 4)
-        # output = [SUBIU('StackPointer', 'StackPointer', byte_size)]
-        # return output
+        # Store the value into memory
+        if self.symbol.global_memory_location:
+            output.append(SW(self.symbol.global_memory_location, item_tac['register']))
+        else:
+            output.append(SW(self.symbol.activation_frame_offset, item_tac['register']))
 
-        # TODO: We are not actually producing 3ac here. It should allocation in the call function prodedure
-        #       We will need to make a call explicitly for main at some point....
-        return  []
+        return output
+
+
 ##
 # Root node of the AST.
 ##
@@ -773,7 +791,7 @@ class IterationNode(BaseAstNode):
 
             # If condition is false
             output.extend(condition_tac['3ac'])
-            output.append(BRNE(condition_ok_label, 0, condition_tac['rvalue']))
+            output.append(BRNE(condition_ok_label, '$zero', condition_tac['rvalue']))
             output.append(BR(loop_exit_label))
 
         # Add condition okay label

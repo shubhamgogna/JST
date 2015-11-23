@@ -262,7 +262,7 @@ class JSTParser(object):
                 if len(symbol.array_dims) == 0:
                     decl_ast = Declaration(symbol, initializer)
                 else:
-                    decl_ast = ArrayDeclaration(symbol, symbol.array_dims, None)
+                    decl_ast = ArrayDeclaration(symbol, symbol.array_dims, initializer)
 
             elif isinstance(symbol, FunctionSymbol):
                 if initializer:
@@ -620,7 +620,19 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='init_declarator -> declarator EQUALS initializer')
 
-        t[0] = {"declarator": t[1], "initializer": t[3]}
+        if isinstance(t[3], list):
+            initializer_types = [type(item) for item in t[3]]
+
+            if len(t[1].array_dims) is 1 and isinstance(t[3], list) and (list not in initializer_types):
+                t[0] = {"declarator": t[1], "initializer": t[3]}
+            else:
+                tup = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
+                message = 'Only 1D array initializers for array variables are accepted. Initializer ignored.'
+                self.prod_logger.info(str(CompileError(message, tup[0], tup[1], tup[2])))
+                t[0] = {"declarator": t[1], "initializer": None}
+
+        else:
+            t[0] = {"declarator": t[1], "initializer": t[3]}
 
     #
     # struct-declaration:
@@ -1018,11 +1030,15 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='initializer -> LBRACE initializer_list RBRACE')
 
+        t[0] = t[2]
+
     def p_initializer_3(self, t):
         """
         initializer : LBRACE initializer_list COMMA RBRACE
         """
         self.output_production(t, production_message='initializer -> LBRACE initializer_list COMMA RBRACE')
+
+        t[0] = t[2]
 
     #
     # initializer-list:
@@ -1031,9 +1047,14 @@ class JSTParser(object):
         """initializer_list : initializer"""
         self.output_production(t, production_message='initializer_list -> initializer')
 
+        t[0] = [t[1]]
+
     def p_initializer_list_2(self, t):
         """initializer_list : initializer_list COMMA initializer"""
         self.output_production(t, production_message='initializer_list -> initializer_list COMMA initializer')
+
+        t[1].append(t[3])
+        t[0] = t[1]
 
     #
     # type-name:
