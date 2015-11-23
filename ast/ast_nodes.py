@@ -867,9 +867,7 @@ class IterationNode(BaseAstNode):
 
         # Check for pre-test loop
         if not self.is_pre_test_loop:
-            if self.body_statements:
-                result = self.body_statements.to_3ac()
-                output.extend(result['3ac'])
+            output.append(BR(condition_ok_label))
 
         # Initialize
         if self.initialization_expression:
