@@ -547,17 +547,13 @@ class FileAST(BaseAstNode):
 
         output.append(LABEL('PROG_END'))
 
-        counter = [0] * len(self.compiler_state.source_lines if self.compiler_state else [0])
+        last_line = 0
         for item in output:
-            print('here', item, type(item))
             if include_source and item.instruction == 'SOURCE':
-                if item.dest is item.src1 and counter[item.dest - 1] is 0:
-                    print('\n#   ' + self.compiler_state.source_lines[item.dest - 1])
-                    counter[item.dest - 1] = 1
-                elif item.dest is not item.src1:
-                    print()
-                    for lineno in range(item.dest, item.src1 + 1):
-                        print('### [Source Chunk] ' + self.compiler_state.source_lines[lineno - 1])
+                if item.dest > last_line:
+                    for lineno in range(last_line, item.dest):
+                        print('# ' + self.compiler_state.source_lines[lineno])
+                    last_line = item.dest
             else:
                 print(item)
 
