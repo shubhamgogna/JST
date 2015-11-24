@@ -271,7 +271,6 @@ class TestTac(unittest.TestCase):
         ast = self.compiler_state.parse(test_program)
         ast.to_3ac()
 
-
     def test_bubble_sort(self):
         test_program = """
             const int N_ITEMS = 5;
@@ -303,7 +302,6 @@ class TestTac(unittest.TestCase):
 
         ast = self.compiler_state.parse(test_program)
         ast.to_3ac()
-
 
     def test_recursive_factorial(self):
         test_program = """
