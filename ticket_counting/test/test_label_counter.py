@@ -14,26 +14,29 @@
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
-from ticket_counting.ticket_counters import LabelCounter
+from ticket_counting.ticket_counters import UUID_TICKETS, LABEL_TICKETS, INT_REGISTER_TICKETS, FLOAT_REGISTER_TICKETS
 
 
 class TestLabelCounter(unittest.TestCase):
     def setUp(self):
-        LabelCounter.reset()
+        UUID_TICKETS.next_value = 0
+        LABEL_TICKETS.next_value = 0
+        INT_REGISTER_TICKETS.next_value = 0
+        FLOAT_REGISTER_TICKETS.next_value = 0
 
-    def test_get_one(self):
-        self.assertEqual("00000", LabelCounter.get())
+    def tearDown(self):
+        UUID_TICKETS.next_value = 0
+        LABEL_TICKETS.next_value = 0
+        INT_REGISTER_TICKETS.next_value = 0
+        FLOAT_REGISTER_TICKETS.next_value = 0
 
-    def test_get_five(self):
-        self.assertEqual("00000", LabelCounter.get())
-        self.assertEqual("00001", LabelCounter.get())
-        self.assertEqual("00002", LabelCounter.get())
-        self.assertEqual("00003", LabelCounter.get())
-        self.assertEqual("00004", LabelCounter.get())
+    def test_get(self):
+        self.assertEqual("00000", UUID_TICKETS.get())
+        self.assertEqual("label_00000", LABEL_TICKETS.get())
+        self.assertEqual("ireg_00000", INT_REGISTER_TICKETS.get())
+        self.assertEqual("freg_00000", FLOAT_REGISTER_TICKETS.get())
 
-    def test_get_more_than_ten(self):
-        self.assertEqual("00000", LabelCounter.get())
-        LabelCounter.next_value = 10
-        self.assertEqual("00010", LabelCounter.get())
-        self.assertEqual("00011", LabelCounter.get())
-        self.assertEqual("00012", LabelCounter.get())
+        self.assertEqual("00001", UUID_TICKETS.get())
+        self.assertEqual("label_00001", LABEL_TICKETS.get())
+        self.assertEqual("ireg_00001", INT_REGISTER_TICKETS.get())
+        self.assertEqual("freg_00001", FLOAT_REGISTER_TICKETS.get())

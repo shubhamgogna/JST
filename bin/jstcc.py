@@ -41,7 +41,7 @@ def main():
     arg_parser.add_argument("-tac", "--threeac", type=int, choices=[0, 1, 2], default=0,
                             help="The debug level for the 3AC. \n 0: No debug \n 1: 3AC \n "
                                  " 2: 3AC + Source")
-    arg_parser.add_argument("-w", "--warnlevel", action='store_true',
+    arg_parser.add_argument("-w", "--warnings", action='store_true',
                             help="Enables warnings being printed.")
 
     args = vars(arg_parser.parse_args())
@@ -78,7 +78,8 @@ def main():
                                    print_source_scanner=print_source_scanner,
                                    print_productions=print_productions,
                                    print_source_parser=print_source_parser,
-                                   print_info=print_info)
+                                   print_info=print_info,
+                                   print_warnings=args['warnings'])
 
     try:
         ast = compiler_state.parse(data)

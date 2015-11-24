@@ -14,9 +14,9 @@
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
-from parsing.cparser import JSTParser
 from ply import lex, yacc
-from scanning.clexer import JSTLexer
+from parsing.jst_parser import JSTParser
+from scanning.jst_lexer import JSTLexer
 from symbol_table.symbol_table import SymbolTable
 from loggers.logger import Logger
 
@@ -33,6 +33,7 @@ class CompilerState:
                  scanner_logfile='log_scanner_tokens.txt',
                  print_productions=False, print_source_parser=False, print_info=False,
                  parser_logfile=sys.stdout,
+                 print_warnings=False,
                  **kwargs):
 
         # Initialize variables
@@ -48,7 +49,7 @@ class CompilerState:
         else:
             self.symbol_table_logger = Logger(open(table_logfile, 'w'))
 
-        if print_table is True:
+        if print_table:
             self.symbol_table_logger.add_switch(Logger.SYMBOL_TABLE)
 
         # Initialize token/lexer logger
@@ -57,10 +58,10 @@ class CompilerState:
         else:
             self.token_logger = Logger(open(scanner_logfile, 'w'))
 
-        if print_source_scanner is True:
+        if print_source_scanner:
             self.token_logger.add_switch(Logger.SOURCE)
 
-        if print_tokens is True:
+        if print_tokens:
             self.token_logger.add_switch(Logger.TOKEN)
 
         # Initialize parser logger
@@ -69,14 +70,20 @@ class CompilerState:
         else:
             self.parser_logger = Logger(open(parser_logfile, 'w'))
 
-        if print_source_parser is True:
+        if print_source_parser:
             self.parser_logger.add_switch(Logger.SOURCE)
 
-        if print_productions is True:
+        if print_productions:
             self.parser_logger.add_switch(Logger.PRODUCTION)
 
-        if print_info is True:
+        if print_info:
             self.parser_logger.add_switch(Logger.INFO)
+
+        # Initialize warning logger
+        self.warning_logger = Logger(sys.stdout)
+
+        if print_warnings:
+            self.warning_logger.add_switch(Logger.WARNING)
 
         # Other stuff
         self.function_scope_entered = False
@@ -123,6 +130,9 @@ class CompilerState:
 
     def get_parser_logger(self):
         return self.parser_logger
+
+    def get_warning_logger(self):
+        return self.warning_logger
 
     def get_line_col(self, production, index):
         lexpos = production.lexpos(index)

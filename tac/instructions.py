@@ -13,17 +13,13 @@
 # You should have received a copy of the GNU General Public License
 # along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
 
-#
+# General
 DUP = 'DUP'
 SOURCE = 'SOURCE'
 
-
-#
 # Program Sections
-#
 DATA = 'DATA'
 TEXT = 'TEXT'
-
 
 # Math Operations
 # TODO: create versions for both int and floating point?
@@ -58,11 +54,11 @@ DIVS = 'DIVS'
 NEGS = 'NEGS'
 
 # Logical Operations
-## these won't correspond directly to MIPS instructions, but it seems like good practice to have them in the 3AC for
-# decoupling the instruction from assembly
+# These won't correspond directly to MIPS instructions, but it seems like good practice to have them in the 3AC for
+# decoupling the instruction from assembly.
 LAND = 'LAND'
-LOR  = 'LOR'
-#
+LOR = 'LOR'
+
 NOT = 'NOT'
 EQ = 'EQ'
 NE = 'NE'

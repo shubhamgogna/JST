@@ -21,7 +21,7 @@
 import compiler
 from ast.ast_nodes import *
 from exceptions.compile_error import CompileError
-from scanning.clexer import JSTLexer
+from scanning.jst_lexer import JSTLexer
 from symbol_table.scope import Scope
 from symbol_table.symbol import Symbol, VariableSymbol, FunctionSymbol, TypeDeclaration
 
@@ -52,6 +52,7 @@ class JSTParser(object):
 
         self.compiler_state = compiler_state
         self.prod_logger = self.compiler_state.get_parser_logger()
+        self.warn_logger = self.compiler_state.get_warning_logger()
 
     # A method to do any cleanup that can't be handled by typical garbage collection.
     #
@@ -277,8 +278,7 @@ class JSTParser(object):
                     raise CompileError('Variable is being redeclared.', tup[0], tup[1], tup[2])
                 elif result is Scope.INSERT_SHADOWED:
                     tup = self.compiler_state.get_line_col_source(lineno, lexpos)
-                    warning = str(CompileError('Variable is being shadowed.', tup[0], tup[1], tup[2]))
-                    print(warning, 'Still need a way to output warnings.')
+                    self.warn_logger.warning(str(CompileError('Variable is being shadowed.', tup[0], tup[1], tup[2])))
 
                 if len(symbol.array_dims) == 0:
                     decl_ast = Declaration(symbol, initializer,

@@ -13,18 +13,12 @@
 # You should have received a copy of the GNU General Public License
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
-###############################################################################
-# File Description: Class definition for the compiler logger.
-###############################################################################
-
 import sys
 
 
 class Logger(object):
     INFO = 'INFO'
-    DEBUG = 'DEBUG'
-    CRITICAL = 'CRITICAL'
-    IMPLEMENT_ME = 'IMPLEMENT_ME'
+    WARNING = 'WARNING'
     TOKEN = 'TOKEN'
     PRODUCTION = 'PRODUCTION'
     SOURCE = 'SOURCE'
@@ -50,14 +44,8 @@ class Logger(object):
     def info(self, message, level=0):
         self.log(Logger.INFO, message, level)
 
-    def debug(self, message, level=0):
-        self.log(Logger.DEBUG, message, level)
-
-    def critical(self, message, level=0):
-        self.log(Logger.CRITICAL, message, level)
-
-    def implement_me(self, method_name, level=0):
-        self.log(Logger.IMPLEMENT_ME, method_name, level)
+    def warning(self, message, level=0):
+        self.log(Logger.WARNING, message, level)
 
     def production(self, message, level=0):
         self.log(Logger.PRODUCTION, message, level)

@@ -14,20 +14,6 @@
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
 
-class LabelCounter(object):
-    next_value = 0
-    str_format = '%05d'
-
-    @staticmethod
-    def get():
-        result = LabelCounter.str_format % LabelCounter.next_value
-        LabelCounter.next_value += 1
-        return result
-
-    @staticmethod
-    def reset():
-        LabelCounter.next_value = 0
-
 class GenericTicketCounter(object):
     def __init__(self, prefix=''):
         if prefix == '':
@@ -42,8 +28,6 @@ class GenericTicketCounter(object):
         return ticket
 
 UUID_TICKETS = GenericTicketCounter()
+LABEL_TICKETS = GenericTicketCounter(prefix='label')
 INT_REGISTER_TICKETS = GenericTicketCounter(prefix='ireg')
 FLOAT_REGISTER_TICKETS = GenericTicketCounter(prefix='freg')
-
-LABEL_TICKETS = GenericTicketCounter(prefix='label')
-
