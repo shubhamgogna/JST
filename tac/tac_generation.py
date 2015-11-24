@@ -56,6 +56,8 @@ class TacInstruction(object):
             ret = '# ' + self.dest
         elif self.instruction == instructions.LABEL:
             ret = self.dest + ':'
+        elif self.instruction in (instructions.TEXT, instructions.DATA):
+            ret = '.' + self.instruction.lower()
         else:
             ret = '{:<15}, {:<15}, {:<15}, {:<15}'.format(self.instruction,
                                                           self.dest if self.dest is not TacInstruction.NULL else '-',

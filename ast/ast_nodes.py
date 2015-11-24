@@ -168,10 +168,25 @@ class ArrayReference(BaseAstNode):
         output.append(MULIU(offset_reg, offset_reg, type_utils.get_bit_size(self.symbol.type_specifiers) // 8))
 
         # Add offset to symbol base address
+        base_address = 0
+        end_address = 0
+        size_of_element = 4  # word size for now cuz I'm lazy
+
+        product = 1
+        for dim in self.symbol.array_dims:
+            product *= dim
+
         if self.symbol.global_memory_location:
+            base_address = self.symbol.global_memory_location
+            end_address = base_address + (product * size_of_element)
             output.append(ADDU(offset_reg, offset_reg, self.symbol.global_memory_location))
         else:
+            base_address = create_offset_reference(self.symbol.activation_frame_offset, FP)
+            end_address =  create_offset_reference(self.symbol.activation_frame_offset + (product * size_of_element), FP)
             output.append(ADDU(offset_reg, offset_reg, create_offset_reference(self.symbol.activation_frame_offset , FP)))
+
+        output.append(BOUND(offset_reg, base_address, end_address))
+
         if get_rval:
             output.append(LW(offset_reg, offset_reg))
             return {'3ac': output, 'rvalue': offset_reg}
@@ -240,7 +255,6 @@ class Assignment(BaseAstNode):
         return {'3ac': output, 'rvalue': rval}
 
 
-# TODO (Shubham) The return type needs to be explicitly stated here.
 class BinaryOperator(BaseAstNode):
     """
     Requires: Two rvalue registers that contain the values to be operated on.
