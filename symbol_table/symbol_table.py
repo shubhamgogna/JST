@@ -16,7 +16,7 @@
 import math
 
 from symbol_table.scope import Scope
-from symbol_table.symbol import Symbol, VariableSymbol
+from symbol_table.symbol import Symbol, VariableSymbol, PointerSymbol
 
 # This is where MARS starts the global data memory
 # We may need to watch out for memory things like .asciiz grab
@@ -65,7 +65,7 @@ class SymbolTable(object):
         elif not self.table:
             raise Exception('Table has no scopes available to insert into. Offending symbol: {}'.format(symbol))
 
-        if isinstance(symbol, VariableSymbol):
+        if isinstance(symbol, (VariableSymbol, PointerSymbol)):
             required_byte_size = math.ceil(symbol.size_in_bytes() / 4) * 4
             if len(self.table) == 1:
                 symbol.global_memory_location = self.next_data_memory_location

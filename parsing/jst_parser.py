@@ -23,7 +23,8 @@ from ast.ast_nodes import *
 from exceptions.compile_error import CompileError
 from scanning.jst_lexer import JSTLexer
 from symbol_table.scope import Scope
-from symbol_table.symbol import Symbol, VariableSymbol, FunctionSymbol, TypeDeclaration
+from symbol_table.symbol import Symbol, VariableSymbol, FunctionSymbol, TypeDeclaration, PointerSymbol, \
+    build_from_declarator
 
 
 # Parser Class
@@ -167,30 +168,32 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='function_definition -> declarator compound_statement')
 
-        symbol = t[1]
-        function_symbol = FunctionSymbol.from_variable_symbol(symbol)
+        function_symbol = FunctionSymbol(t[1]['identifier'], t[1]['linecol'][0], t[1]['linecol'][1])
 
-        result, existing = self.compiler_state.symbol_table.insert(symbol)
+        result, existing = self.compiler_state.symbol_table.insert(function_symbol)
         if result is Scope.INSERT_REDECL:
             if existing[0].finalized:
                 tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
-                raise CompileError('Reimplementation of function not allowed.', tup[0], tup[1], tup[2])
+                raise CompileError.from_tuple('Reimplementation of function not allowed.', tup)
             else:
-                existing[0].named_parameters = function_symbol.named_parameters
                 function_symbol = existing[0]
 
+        function_symbol.named_parameters = t[1]['parameters']
         type_declaration = TypeDeclaration()
         type_declaration.add_type_specifier('int')
         function_symbol.add_return_type_declaration(type_declaration)
         function_symbol.finalized = True
 
+        # Manually set the frame size and clear counter
         function_symbol.activation_frame_size = self.compiler_state.symbol_table.next_activation_frame_offset
         self.compiler_state.symbol_table.next_activation_frame_offset = 0
 
+        # Check if function is a definition of main
         if function_symbol.identifier == 'main':
             self.compiler_state.main_function = function_symbol
 
-        arguments = [SymbolNode(symbol) for symbol in symbol.named_parameters]
+        # TODO SymbolNode no longer exists. - Shubham (sg-array-symbol)
+        arguments = [SymbolNode(symbol) for symbol in function_symbol.named_parameters]
         t[0] = FunctionDefinition(function_symbol, function_symbol.identifier, arguments, t[3],
                                   linerange=(t.lineno(1), t.lineno(4)))
 
@@ -203,28 +206,31 @@ class JSTParser(object):
         is_type_valid, message = type_utils.is_valid_type(t[1])
         if not is_type_valid:
             tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
-            raise CompileError(message, tup[0], tup[1], tup[2])
+            raise CompileError.from_tuple(message, tup)
 
-        function_symbol = FunctionSymbol.from_variable_symbol(t[2]) if isinstance(t[2], VariableSymbol) else t[2]
+        function_symbol = FunctionSymbol(t[2]['identifier'], t[2]['linecol'][0], t[2]['linecol'][1])
 
         result, existing = self.compiler_state.symbol_table.insert(function_symbol)
         if result is Scope.INSERT_REDECL:
             if existing[0].finalized:
                 tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
-                raise CompileError('Reimplementation of function not allowed.', tup[0], tup[1], tup[2])
+                raise CompileError.from_tuple('Reimplementation of function not allowed.', tup)
             else:
-                existing[0].named_parameters = function_symbol.named_parameters
                 function_symbol = existing[0]
 
+        function_symbol.named_parameters = t[2]['parameters']
         function_symbol.add_return_type_declaration(t[1])
         function_symbol.finalized = True
 
+        # Manually set the frame size and clear counter
         function_symbol.activation_frame_size = self.compiler_state.symbol_table.next_activation_frame_offset
         self.compiler_state.symbol_table.next_activation_frame_offset = 0
 
+        # Check if function is a definition of main
         if function_symbol.identifier == 'main':
             self.compiler_state.main_function = function_symbol
 
+        # TODO SymbolNode no longer exists. - Shubham (sg-array-symbol)
         arguments = [SymbolNode(symbol) for symbol in function_symbol.named_parameters]
         t[0] = FunctionDefinition(function_symbol, function_symbol.identifier, arguments, t[4],
                                   linerange=(t.lineno(1), t.lineno(5)))
@@ -263,49 +269,107 @@ class JSTParser(object):
             raise CompileError(message, tup[0], tup[1], tup[2])
 
         t[0] = []
-        for init_declarator_tuple in t[2]:
-            init_declarator, lineno, lexpos = init_declarator_tuple
-            symbol = init_declarator['declarator']
+        for init_declarator in t[2]:
+
+            identifier = init_declarator['identifier']
+            linecol = init_declarator['linecol']
             initializer = init_declarator['initializer']
-            decl_ast = None
 
-            if isinstance(symbol, VariableSymbol):
-                symbol.add_type_declaration(type_declaration=t[1])
-                result, _ = self.compiler_state.symbol_table.insert(symbol)
+            if 'dimensions' in init_declarator:
+                dimensions = init_declarator['dimensions']
+                symbol = PointerSymbol(identifier, linecol[0], linecol[1])
+                symbol.add_type_declaration(t[1])
 
-                if result is Scope.INSERT_REDECL:
-                    tup = self.compiler_state.get_line_col_source(lineno, lexpos)
-                    raise CompileError('Variable is being redeclared.', tup[0], tup[1], tup[2])
-                elif result is Scope.INSERT_SHADOWED:
-                    tup = self.compiler_state.get_line_col_source(lineno, lexpos)
-                    self.warn_logger.warning(str(CompileError('Variable is being shadowed.', tup[0], tup[1], tup[2])))
+                for dimension in dimensions:
+                    symbol.add_dimension(None, dimension)
 
-                if len(symbol.array_dims) == 0:
-                    decl_ast = Declaration(symbol, initializer,
-                                           linerange=(t.lineno(1), t.lineno(3)))
-                else:
-                    decl_ast = ArrayDeclaration(symbol, symbol.array_dims, initializer,
-                                                linerange=(t.lineno(1), t.lineno(3)))
+                decl_ast = ArrayDeclaration(symbol, symbol.dimensions, initializer)
 
-            elif isinstance(symbol, FunctionSymbol):
-                if initializer:
-                    tup = self.compiler_state.get_line_col_source(lineno, lexpos)
-                    raise CompileError('Functions cannot have initializers.', tup[0], tup[1], tup[2])
+            elif 'ptr_dimensions' in init_declarator:
+                ptr_dimensions = init_declarator['ptr_dimensions']
+                symbol = PointerSymbol(identifier, linecol[0], linecol[1])
+                symbol.add_type_declaration(t[1])
 
+                for dimension in ptr_dimensions:
+                    symbol.add_dimension(dimension, None)
+
+                decl_ast = ArrayDeclaration(symbol, symbol.dimensions, initializer)
+
+            elif 'parameters' in init_declarator:
+                parameters = init_declarator['parameters']
+                symbol = FunctionSymbol(identifier, linecol[0], linecol[1])
                 symbol.add_return_type_declaration(t[1])
-                result, _ = self.compiler_state.symbol_table.insert(symbol)
-                if result is Scope.INSERT_REDECL:
-                    tup = self.compiler_state.get_line_col_source(lineno, lexpos)
-                    raise CompileError('Function is being redeclared.', tup[0], tup[1], tup[2])
+                symbol.set_named_parameters(parameters)
 
+                decl_ast = FunctionDeclaration(symbol, parameters)
 
+            else:
+                symbol = VariableSymbol(identifier, linecol[0], linecol[1])
+                symbol.add_type_declaration(t[1])
 
-                decl_ast = FunctionDeclaration(symbol,
-                                               [SymbolNode(sym) for sym in symbol.named_parameters],
-                                               linerange=(t.lineno(1), t.lineno(3)))
+                # TODO Type check to make sure the constant matches - Shubham
+                if initializer and isinstance(initializer, Constant):
+                    symbol.value = initializer.value
+
+                decl_ast = Declaration(symbol, initalizer=initializer)
+
+            result, _ = self.compiler_state.symbol_table.insert(symbol)
+            if result is Scope.INSERT_REDECL:
+                raise CompileError('Redeclaration of variable!', linecol[0], linecol[1],
+                                   self.compiler_state.source_lines[linecol[0] - 1])
+            elif result is Scope.INSERT_SHADOWED:
+                if isinstance(symbol, FunctionSymbol):
+                    raise CompileError('Redeclaration of function!', linecol[0], linecol[1],
+                                       self.compiler_state.source_lines[linecol[0] - 1])
+                else:
+                    self.warn_logger.warning(str(
+                        CompileError('Redeclaration of variable!', linecol[0], linecol[1],
+                                     self.compiler_state.source_lines[linecol[0] - 1])))
 
             if decl_ast:
                 t[0].append(decl_ast)
+            else:
+                raise Exception('Declaration AST is None!')
+
+            # init_declarator, lineno, lexpos = init_declarator_tuple
+            # symbol = init_declarator['declarator']
+            # initializer = init_declarator['initializer']
+            # decl_ast = None
+            #
+            # if isinstance(symbol, VariableSymbol):
+            #     symbol.add_type_declaration(type_declaration=t[1])
+            #     result, _ = self.compiler_state.symbol_table.insert(symbol)
+            #
+            #     if result is Scope.INSERT_REDECL:
+            #         tup = self.compiler_state.get_line_col_source(lineno, lexpos)
+            #         raise CompileError('Variable is being redeclared.', tup[0], tup[1], tup[2])
+            #     elif result is Scope.INSERT_SHADOWED:
+            #         tup = self.compiler_state.get_line_col_source(lineno, lexpos)
+            #         self.warn_logger.warning(str(CompileError('Variable is being shadowed.', tup[0], tup[1], tup[2])))
+            #
+            #     if len(symbol.array_dims) == 0:
+            #         decl_ast = Declaration(symbol, initializer,
+            #                                linerange=(t.lineno(1), t.lineno(3)))
+            #     else:
+            #         decl_ast = ArrayDeclaration(symbol, symbol.array_dims, initializer,
+            #                                     linerange=(t.lineno(1), t.lineno(3)))
+            #
+            # elif isinstance(symbol, FunctionSymbol):
+            #     if initializer:
+            #         tup = self.compiler_state.get_line_col_source(lineno, lexpos)
+            #         raise CompileError('Functions cannot have initializers.', tup[0], tup[1], tup[2])
+            #
+            #     symbol.add_return_type_declaration(t[1])
+            #     result, _ = self.compiler_state.symbol_table.insert(symbol)
+            #     if result is Scope.INSERT_REDECL:
+            #         tup = self.compiler_state.get_line_col_source(lineno, lexpos)
+            #         raise CompileError('Function is being redeclared.', tup[0], tup[1], tup[2])
+            #
+            #
+            #
+            #     decl_ast = FunctionDeclaration(symbol,
+            #                                    [SymbolNode(sym) for sym in symbol.named_parameters],
+            #                                    linerange=(t.lineno(1), t.lineno(3)))
 
     def p_declaration_2(self, t):
         """declaration : declaration_specifiers SEMI"""
@@ -617,8 +681,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='init_declarator_list -> init_declarator')
 
-        # Create a list with a tuple of (string identifier, lineno, and lexpos)
-        t[0] = [(t[1], t.lineno(1), t.lexpos(1))]
+        t[0] = [t[1]]
 
     def p_init_declarator_list_2(self, t):
         """
@@ -626,8 +689,12 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='init_declarator_list -> init_declarator_list COMMA init_declarator')
 
-        # Concat the new init_declarator to the existing list
-        t[0] = t[1] + [(t[3], t.lineno(3), t.lexpos(3))]
+        if 'parameters' in t[1][0] or 'parameters' in t[3]:
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError.from_tuple('Functions cannot be declared in a list.', tup)
+
+        t[1].append(t[3])
+        t[0] = t[1]
 
     #
     # init-declarator
@@ -638,7 +705,15 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='init_declarator -> declarator')
 
-        t[0] = {"declarator": t[1], "initializer": None}
+        if 'dimensions' in t[1]:
+            for dimension in t[1]['dimensions']:
+                if dimension is None:
+                    tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+                    raise CompileError.from_tuple('All dimensions in an array declaration must be'
+                                                  ' specified if an initializer is not provided.', tup)
+
+        t[1]['initializer'] = None
+        t[0] = t[1]
 
     def p_init_declarator_2(self, t):
         """
@@ -646,19 +721,38 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='init_declarator -> declarator EQUALS initializer')
 
+        if 'parameters' in t[1]:
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError.from_tuple('Functions cannot have initializers.', tup)
+
+        if 'dimensions' in t[1]:
+            for dimension in t[1]['dimensions'][1:]:
+                if dimension is None:
+                    tup = self.compiler_state.get_line_col_source(t.linepos(1), t.lexpos(1))
+                    raise CompileError.from_tuple('Only the first dimension in an array declaration can be empty.', tup)
+
         if isinstance(t[3], list):
+            if 'dimensions' not in t[1]:
+                tup = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
+                raise CompileError.from_tuple('Array initializer provided for non-array symbol.', tup)
+
             initializer_types = [type(item) for item in t[3]]
 
-            if len(t[1].array_dims) is 1 and isinstance(t[3], list) and (list not in initializer_types):
-                t[0] = {"declarator": t[1], "initializer": t[3]}
-            else:
+            if len(t[1]['dimensions']) is not 1 or (list in initializer_types):
                 tup = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
-                message = 'Only 1D array initializers for array variables are accepted. Initializer ignored.'
-                self.prod_logger.info(str(CompileError(message, tup[0], tup[1], tup[2])))
-                t[0] = {"declarator": t[1], "initializer": None}
+                raise CompileError.from_tuple('Only 1D array initializers are allowed.', tup)
+
+            # Fill in the empty dimension
+            if t[1]['dimensions'][0] is None:
+                t[1]['dimensions'][0] = len(t[3])
 
         else:
-            t[0] = {"declarator": t[1], "initializer": t[3]}
+            if 'dimensions' in t[1]:
+                tup = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
+                raise CompileError.from_tuple('Non-array initializer provided for array symbol.', tup)
+
+        t[1]['initializer'] = t[3]
+        t[0] = t[1]
 
     #
     # struct-declaration:
@@ -791,11 +885,21 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='declarator -> pointer direct_declarator')
 
-        if isinstance(t[2], VariableSymbol):
-            t[2].add_pointer_level(t[1])
-            t[0] = t[2]
+        if 'dimensions' in t[2]:
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError.from_tuple('Arrays of pointers are not supported.', tup)
+
+        if 'parameters' in t[2]:
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError.from_tuple('Is this a function pointer? Not supported.', tup)
+
+        if 'ptr_dimensions' not in t[2]:
+            t[2]['ptr_dimensions'] = t[1]
         else:
-            raise Exception('Not currently supported')
+            t[2]['ptr_dimensions'].extend(t[1])
+
+        # Don't forget to assign
+        t[0] = t[2]
 
     def p_declarator_2(self, t):
         """
@@ -803,6 +907,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='declarator -> direct_declarator')
 
+        # Don't forget to assign
         t[0] = t[1]
 
     #
@@ -815,81 +920,73 @@ class JSTParser(object):
         self.output_production(t, production_message='direct_declarator -> identifier')
 
         result = self.compiler_state.get_line_col(t, 1)
-        t[0] = VariableSymbol(t[1], result[0], result[1])
+        t[0] = {'identifier': t[1], 'linecol': result}
 
     def p_direct_declarator_2(self, t):
         """
-        direct_declarator : LPAREN declarator RPAREN
+        direct_declarator : direct_declarator LPAREN RPAREN
         """
-        self.output_production(t, production_message='direct_declarator -> LPAREN declarator RPAREN')
-        raise NotImplemented(str(t[2]))
+        self.output_production(t, production_message='direct_declarator -> direct_declarator LPAREN RPAREN')
+
+        t[1]['parameters'] = []
+        t[0] = t[1]
 
     def p_direct_declarator_3(self, t):
-        """
-        direct_declarator : direct_declarator LBRACKET constant_expression_option RBRACKET
-        """
-        self.output_production(t, production_message=
-            'direct_declarator -> direct_declarator LBRACKET constant_expression_option RBRACKET')
-
-        # TODO To support string initialization, this check needs to be moved to the declaration
-        # TODO production where it can check dimensions of the initializer and compare/set
-        if t[3] is None:
-            result = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
-            # 'result[1] - 1' is a fix to get the column indicator to align correctly
-            raise CompileError('Value required for array dimension.', result[0], result[1] - 1, result[2])
-
-        if not Constant.is_integral_type(t[3]):
-            result = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
-            raise CompileError('Array dimension must be an integral type.', result[0], result[1], result[2])
-
-        if isinstance(t[1], VariableSymbol) and t[3].immutable:
-            if isinstance(t[3], SymbolNode) and isinstance(t[3].symbol, VariableSymbol):
-                t[1].add_array_dimension(t[3].symbol.value)
-            elif isinstance(t[3], Constant):
-                t[1].add_array_dimension(t[3].value)
-            t[0] = t[1]
-        elif isinstance(t[1], FunctionSymbol):
-            result = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
-            raise CompileError('Functions cannot have array dimensions.', result[0], result[1], result[2])
-        else:
-            raise Exception('Unknown type ' + str(type(t[1])))
-
-    def p_direct_declarator_4(self, t):
         """
         direct_declarator : direct_declarator LPAREN parameter_type_list RPAREN
         """
         self.output_production(t, production_message=
             'direct_declarator -> direct_declarator LPAREN parameter_type_list RPAREN')
 
-        if len(t[1].array_dims):
-            result = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
-            raise CompileError('Function cannot be declared with array dimensions.', result[0], result[1], result[2])
+        if 'dimensions' in t[1]:
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError.from_tuple('Functions cannot have dimensions.', tup)
 
-        function_symbol = FunctionSymbol(t[1].identifier, t[1].lineno, t[1].column)
-        function_symbol.set_named_parameters(t[3])
-        t[0] = function_symbol
+        t[1]['parameters'] = t[3]
+        t[0] = t[1]
+
+    def p_direct_declarator_4(self, t):
+        """
+        direct_declarator : direct_declarator LBRACKET constant_expression_option RBRACKET
+        """
+        self.output_production(t, production_message=
+            'direct_declarator -> direct_declarator LBRACKET constant_expression_option RBRACKET')
+
+        if 'parameters' in t[1]:
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError.from_tuple('Functions cannot have dimensions.', tup)
+
+        if 'dimensions' not in t[1]:
+            t[1]['dimensions'] = []
+
+        if t[3] is not None:
+            if isinstance(t[3], VariableSymbol) and Constant.is_integral_type(t[3]) and t[3].immutable:
+                t[1]['dimensions'].append(t[3].value)
+            if isinstance(t[3], Constant) and Constant.is_integral_type(t[3]):
+                t[1]['dimensions'].append(t[3].value)
+            else:
+                tup = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
+                raise CompileError.from_tuple('Non-constant value provided for array dimension.', tup)
+        else:
+            t[1]['dimensions'].append(None)
+
+        # Don't forget to assign
+        t[0] = t[1]
 
     def p_direct_declarator_5(self, t):
+        """
+        direct_declarator : LPAREN declarator RPAREN
+        """
+        self.output_production(t, production_message='direct_declarator -> LPAREN declarator RPAREN')
+        raise NotImplementedError('Unknown Production.')
+
+    def p_direct_declarator_6(self, t):
         """
         direct_declarator : direct_declarator LPAREN identifier_list RPAREN
         """
         self.output_production(t, production_message=
             'direct_declarator -> direct_declarator LPAREN identifier_list RPAREN')
-        raise NotImplemented('Looks like the production for a function call.')
-
-    def p_direct_declarator_6(self, t):
-        """
-        direct_declarator : direct_declarator LPAREN RPAREN
-        """
-        self.output_production(t, production_message='direct_declarator -> direct_declarator LPAREN RPAREN')
-
-        if len(t[1].array_dims):
-            result = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
-            raise CompileError('Function cannot be declared with array dimensions.', result[0], result[1], result[2])
-
-        function_symbol = FunctionSymbol(t[1].identifier, t[1].lineno, t[1].column)
-        function_symbol.set_named_parameters([])
-        t[0] = function_symbol
+        raise NotImplementedError('Unknown Production.')
 
     #
     # pointer:
@@ -937,12 +1034,15 @@ class JSTParser(object):
     def p_type_qualifier_list_1(self, t):
         """type_qualifier_list : type_qualifier"""
         self.output_production(t, production_message='type_qualifier_list -> type_qualifier')
-        raise NotImplemented()
+
+        t[0] = set(t[1])
 
     def p_type_qualifier_list_2(self, t):
         """type_qualifier_list : type_qualifier_list type_qualifier"""
         self.output_production(t, production_message='type_qualifier_list -> type_qualifier_list type_qualifier')
-        raise NotImplemented()
+
+        t[1].add(t[2])
+        t[0] = t[1]
 
     #
     # parameter-type-list:
@@ -983,14 +1083,16 @@ class JSTParser(object):
         is_type_valid, message = type_utils.is_valid_type(t[1])
         if not is_type_valid:
             tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
-            raise CompileError(message, tup[0], tup[1], tup[2])
+            raise CompileError.from_tuple(message, tup)
 
-        if isinstance(t[2], VariableSymbol):
-            t[2].add_type_declaration(t[1])
-            t[0] = t[2]
-        else:
+        symbol = build_from_declarator(t[1], t[2])
+
+        if not isinstance(symbol, (VariableSymbol, PointerSymbol)):
             tup = self.compiler_state.get_line_col_source(t.lineno(2), t.lexpos(2))
-            raise CompileError('Declarator can only be a variable.', tup[0], tup[1], tup[2])
+            raise CompileError.from_tuple('Cannot build a parameter from {}'.format(type(symbol)), tup)
+
+        # Don't forget to assign
+        t[0] = symbol
 
     def p_parameter_declaration_2(self, t):
         """parameter_declaration : declaration_specifiers abstract_declarator"""
@@ -1020,7 +1122,7 @@ class JSTParser(object):
         is_type_valid, message = type_utils.is_valid_type(t[1])
         if not is_type_valid:
             tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
-            raise CompileError(message, tup[0], tup[1], tup[2])
+            raise CompileError.from_tuple(message, tup)
 
         tup = self.compiler_state.get_line_col(t, 1)
         symbol = VariableSymbol('', tup[0], tup[1])
@@ -1474,6 +1576,7 @@ class JSTParser(object):
             line, column, source_code = self.compiler_state.get_line_col_source(t.lineno(2), t.lexpos(2))
             raise CompileError("Assignment to immutable types is not allowed", line, column, source_code)
 
+        # TODO SymbolNode no longer exists. - Shubham (sg-array-symbol)
         if isinstance(t[1], SymbolNode) and isinstance(t[1].symbol, FunctionSymbol):
             tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
             raise CompileError('The assignment operator cannot be applied to functions.', tup[0], tup[1], tup[2])
@@ -1720,31 +1823,28 @@ class JSTParser(object):
         # TODO t[3] is an integral type
 
         tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+        # TODO SymbolNode no longer exists. - Shubham (sg-array-symbol)
         if isinstance(t[1], SymbolNode):
 
-            print('is it a symbol node?', t[1], type(t[1]))
-            print(t[1].symbol.pointer_modifiers)
-
             if isinstance(t[1].symbol, FunctionSymbol):
-                raise CompileError('Functions cannot be accessed like arrays.', tup[0], tup[1], tup[2])
+                raise CompileError.from_tuple('Functions cannot be indexed like arrays.', tup)
 
             if isinstance(t[1].symbol, VariableSymbol):
-                if len(t[1].symbol.array_dims) > 0 or len(t[1].symbol.pointer_modifiers) > 0:
-                    t[0] = ArrayReference(t[1].symbol, [t[3]], linerange=(t.lineno(1), t.lineno(4)))
-                else:
-                    raise CompileError('Symbol is not an array.', tup[0], tup[1], tup[2])
+                raise CompileError.from_tuple('Non-array variables cannot be indexed like arrays.', tup)
+
+            if isinstance(t[1].symbol, PointerSymbol):
+                t[0] = ArrayReference(t[1].symbol, [t[3]], linerange=(t.lineno(1), t.lineno(4)))
 
         elif isinstance(t[1], ArrayReference):
 
-            if len(t[1].subscripts) < len(t[1].symbol.array_dims):
+            if len(t[1].subscripts) < len(t[1].symbol.dimensions):
                 t[1].subscripts.append(t[3])
                 t[0] = t[1]
             else:
-                raise CompileError('Symbol only has {} dimensions.'.format(len(t[1].symbol.array_dims)),
-                                   tup[0], tup[1], tup[2])
+                raise CompileError.from_tuple('Symbol only has {} dimensions.'.format(len(t[1].symbol.dimensions)), tup)
 
         else:
-            raise CompileError('Unknown postfix expression {}'.format(type(t[1])), tup[0], tup[1], tup[2])
+            raise CompileError.from_tuple('Unknown postfix expression {}'.format(type(t[1])), tup)
 
     def p_postfix_expression_to_parameterized_function_call(self, t):
         """
@@ -1752,6 +1852,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='postfix_expression -> postfix_expression LPAREN argument_expression_list RPAREN')
 
+        # TODO SymbolNode no longer exists. - Shubham (sg-array-symbol)
         if isinstance(t[1], SymbolNode) and isinstance(t[1].symbol, FunctionSymbol):
             function_symbol = t[1].symbol
             matched, message = function_symbol.arguments_match_parameter_types(t[3])
@@ -1768,6 +1869,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='postfix_expression -> postfix_expression LPAREN RPAREN')
 
+        # TODO SymbolNode no longer exists. - Shubham (sg-array-symbol)
         if isinstance(t[1], SymbolNode) and isinstance(t[1].symbol, FunctionSymbol):
             function_symbol = t[1].symbol
             matched, message = function_symbol.arguments_match_parameter_types([])
@@ -1824,6 +1926,7 @@ class JSTParser(object):
             result = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
             raise CompileError('Use of variable before declaration.', result[0], result[1], result[2])
         else:
+            # TODO SymbolNode no longer exists. - Shubham (sg-array-symbol)
             t[0] = SymbolNode(symbol, linerange=(t.lineno(1), t.lineno(1)))
 
     def p_primary_expression_constant(self, t):
@@ -1954,11 +2057,11 @@ class JSTParser(object):
         """
         self.prod_logger.info('Entering scope {}'.format(len(self.compiler_state.symbol_table.table)))
 
-        function_symbol = t[-1]
         self.compiler_state.symbol_table.push()
 
-        for named_parameter in function_symbol.named_parameters:
+        for named_parameter in t[-1]['parameters']:
             # TODO: may need to turn these into symbols
+            print(type(named_parameter))
             self.compiler_state.symbol_table.insert(named_parameter)
             assert(named_parameter.activation_frame_offset is not None)
             print('OFFSET', named_parameter.activation_frame_offset)

@@ -16,11 +16,11 @@
 import copy
 import itertools
 
-from ast.ast_nodes import SymbolNode
 from utils import type_utils
 
 
 class Symbol(object):
+
     def __init__(self, identifier, lineno, column):
         self.identifier = identifier
         self.lineno = lineno
@@ -37,18 +37,16 @@ class Symbol(object):
 
 
 class VariableSymbol(Symbol):
+
     def __init__(self, identifier, lineno, column):
         super(VariableSymbol, self).__init__(identifier, lineno, column)
-        self.array_dims = []
-        self.pointer_modifiers = []
 
+        # In GCC, qualifiers and classes are idempotent
         self.storage_classes = set()
-        # In GCC, qualifiers are idempotent
         self.type_qualifiers = set()
         self.type_specifiers = ''
 
         self.value = None
-
         self.is_parameter = False
 
     def finalize(self):
@@ -64,77 +62,88 @@ class VariableSymbol(Symbol):
         return type_utils.CONST in self.type_qualifiers
 
     def get_type_str(self):
-        pointer_str = '*' * len(self.pointer_modifiers) if self.pointer_modifiers else ''
-        array_str = '[' + ']['.join([str(d) for d in self.array_dims]) + ']' if self.array_dims else ''
-
-        return '{}{}{}'.format(self.type_specifiers, pointer_str, array_str)
+        return self.type_specifiers
 
     def add_type_declaration(self, type_declaration):
         self.storage_classes = type_declaration.storage_classes
         self.type_qualifiers = type_declaration.type_qualifiers
         self.type_specifiers = ' '.join(type_declaration.type_specifiers)
 
-    def add_pointer_level(self, pointer_declarations):
-        self.pointer_modifiers.extend(pointer_declarations)
-
-    def add_array_dimension(self, dimension):
-        self.array_dims.append(dimension)
-
     def get_resulting_type(self):
         return self.get_type_str()
 
-    # Basically the same as __str__ but doesn't include the identifier
-    def to_abstract_str(self):
-        pointer_str = '*' * len(self.pointer_modifiers)
-        # TODO (Shubham) Fix since type_declaration is no longer a class member
-        decl_str = str(self.type_declaration) if self.type_declaration else 'void'
-
-        array_str = ''
-        for dim in self.array_dims:
-            array_str += '[{}]'.format(dim if dim else '')
-
-        return '{}{}{}'.format(decl_str, pointer_str, array_str)
-
-    def type_str(self):
-        array_suffix = '[' + ']['.join([str(dimension) for dimension in self.array_dims]) + ']' if len(self.array_dims) > 0 else ''
-        return '{}{}{}'.format(self.type_specifiers, '*' * len(self.pointer_modifiers), array_suffix)
-
     def size_in_bytes(self):
-        if self.is_parameter and len(self.array_dims) > 0:
-            return 4  # pointer size
-
-        multiplier = 1
-        for dim in self.array_dims:
-            multiplier *= dim
-
-        if len(self.pointer_modifiers) > 0:
-            # MIPS uses 4 bytes for a word (pointers are the size of a word)
-            return multiplier * 4
-        else:
-            return multiplier * type_utils.type_size_in_bytes(self.type_specifiers)
+        return type_utils.type_size_in_bytes(self.type_specifiers)
 
     def __str__(self):
-        if self.identifier == '':  # a case like when the symbol is part of a function signature
-            self_str = self.to_abstract_str()
+        if self.is_parameter:
+            return self.get_type_str() + ('' if self.identifier is '' else (' ' + self.identifier))
         else:
-            pointer_str = len(self.pointer_modifiers) * '*' if len(self.pointer_modifiers) > 0 else ''
-
-            storage_class_str = ' '.join(self.storage_classes) + ' ' if self.storage_classes else ''
-            qualifier_str = ' '.join(self.type_qualifiers) + ' ' if self.type_qualifiers else ''
-            specifier_str = self.type_specifiers
-            base_type_str = '{}{}{}'.format(storage_class_str, qualifier_str, specifier_str)
-
-            type_str = '{}{}'.format(base_type_str, pointer_str)
-            array_str = ''
-            for dim in self.array_dims:
-                array_str += '[{}]'.format(dim if dim else '')
-
-            self_str = '{} {}{}'.format(type_str, self.identifier, array_str)
-
-        return self_str
+            return '{} {} {}'.format(' '.join(self.type_qualifiers), self.type_specifiers, self.identifier).strip(' ')
 
     def __repr__(self):
         return str(self)
+
+
+class PointerSymbol(Symbol):
+
+    def __init__(self, identifier, lineno, column):
+        super(PointerSymbol, self).__init__(identifier, lineno, column)
+        self.dimensions = []
+
+        # In GCC, qualifiers and classes are idempotent
+        self.storage_classes = set()
+        self.type_qualifiers = set()
+        self.type_specifiers = ''
+
+        self.value = None
+        self.is_parameter = False
+
+    @property
+    def immutable(self):
+        return type_utils.CONST in self.type_qualifiers
+
+    @property
+    def is_array(self):
+        for qualifier, size in self.dimensions:
+            if size is None:
+                return False
+        return True
+
+    @property
+    def is_pointer(self):
+        return not self.is_array
+
+    def get_type_str(self):
+        return self.type_specifiers
+
+    def add_type_declaration(self, type_declaration):
+        self.storage_classes = type_declaration.storage_classes
+        self.type_qualifiers = type_declaration.type_qualifiers
+        self.type_specifiers = ' '.join(type_declaration.type_specifiers)
+
+    def add_dimension(self, qualifiers, size=None):
+        self.dimensions.append((qualifiers, size))
+
+    def size_in_bytes(self):
+        if self.is_pointer:
+            # MIPS uses 4 bytes for a word (pointers are the size of a word)
+            return 4
+        else:
+            multiplier = 1
+            for qualifier, size in self.dimensions:
+                multiplier *= size
+
+            return multiplier * type_utils.type_size_in_bytes(self.type_specifiers)
+
+    def __str__(self):
+        if self.is_parameter:
+            return self.get_type_str() + ('' if self.identifier is '' else (' ' + self.identifier))
+        elif self.is_array:
+            dim_str = '[' + ']['.join([str(size) for (x, size) in self.dimensions]) + ']'
+            return '{} {}{}'.format(self.type_specifiers, self.identifier, dim_str)
+        else:
+            return '{}{} {}'.format(self.type_specifiers, '*' * len(self.dimensions), self.identifier)
 
 
 class FunctionSymbol(Symbol):
@@ -148,22 +157,17 @@ class FunctionSymbol(Symbol):
         self.return_type_pointer_modifiers = []
         self.return_type_specifiers = ''
 
-        self.activation_frame_size = 0  # the variables and params, doesn't count stored registers
+        # Size for variables and params
+        self.activation_frame_size = 0
 
-    @classmethod
-    def from_variable_symbol(cls, variable_symbol):
-        if not isinstance(variable_symbol, VariableSymbol):
-            raise Exception("Can't construct a FunctionSymbol from something that isn't a VariableSymbol")
-        return FunctionSymbol(variable_symbol.identifier, variable_symbol.lineno, variable_symbol.column)
+    def add_return_type_declaration(self, type_declaration):
+        self.return_type_specifiers = ' '.join(type_declaration.type_specifiers)
 
     def parameter_types_match(self, parameter_type_list):
         for signature_symbol, parameter_symbol in itertools.zip_longest(self.named_parameters, parameter_type_list):
             if signature_symbol.to_abstract_str() != parameter_symbol.to_abstract_str():
                 return False
         return True
-
-    def add_return_type_declaration(self, type_declaration):
-        self.return_type_specifiers = ' '.join(type_declaration.type_specifiers)
 
     def set_named_parameters(self, parameter_type_list):
         if self.finalized:
@@ -173,6 +177,7 @@ class FunctionSymbol(Symbol):
         for named_parameter in self.named_parameters:
             named_parameter.is_parameter = True
 
+    # TODO Fix to work with new system - Shubham (sg-array-symbol)
     def arguments_match_parameter_types(self, argument_list):
         if len(self.named_parameters) != len(argument_list):
             return False, 'Argument count does not match required count for function call.'
@@ -182,6 +187,7 @@ class FunctionSymbol(Symbol):
 
         for parameter, argument in itertools.zip_longest(self.named_parameters, argument_list):
 
+            # TODO SymbolNode no longer exists. Change to PointerSymbol. - Shubham (sg-array-symbol)
             if isinstance(argument, SymbolNode):
                 cast_result, message = type_utils.can_assign(parameter.get_resulting_type(), argument.symbol.get_resulting_type())
             else:
@@ -274,3 +280,36 @@ class TypeDeclaration(object):
 
     def __repr__(self):
         return str(self)
+
+
+def build_from_declarator(type_declaration, declarator):
+    identifier = declarator['identifier']
+    linecol = declarator['linecol']
+
+    if 'dimensions' in declarator:
+        dimensions = declarator['dimensions']
+        symbol = PointerSymbol(identifier, linecol[0], linecol[1])
+        symbol.add_type_declaration(type_declaration)
+
+        for dimension in dimensions:
+            symbol.add_dimension(None, dimension)
+
+    elif 'ptr_dimensions' in declarator:
+        ptr_dimensions = declarator['ptr_dimensions']
+        symbol = PointerSymbol(identifier, linecol[0], linecol[1])
+        symbol.add_type_declaration(type_declaration)
+
+        for dimension in ptr_dimensions:
+            symbol.add_dimension(dimension, None)
+
+    elif 'parameters' in declarator:
+        parameters = declarator['parameters']
+        symbol = FunctionSymbol(identifier, linecol[0], linecol[1])
+        symbol.add_return_type_declaration(type_declaration)
+        symbol.set_named_parameters(parameters)
+
+    else:
+        symbol = VariableSymbol(identifier, linecol[0], linecol[1])
+        symbol.add_type_declaration(type_declaration)
+
+    return symbol
