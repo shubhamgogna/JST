@@ -34,22 +34,17 @@ class ArrayDeclaration(BaseAstNode):
               thing should be recorded somewhere.
     """
 
-    def __init__(self, symbol, dimensions, initializers, **kwargs):
+    def __init__(self, symbol, dimensions, initializer, **kwargs):
         super(ArrayDeclaration, self).__init__(**kwargs)
 
-        if initializers is None:
-            initializers = []
-
-        self.dimensions = dimensions
-        self.initializers = initializers[:min(len(initializers), symbol.array_dims[0])]
-
         self.symbol = symbol
+        self.dimensions = dimensions
+
+        if symbol.is_array and initializer is not None and len(dimensions) is 1:
+            self.initializer = initializer[:min(len(initializer), symbol.dimensions[0][1])]
 
     def name(self, arg=None):
-        # raise NotImplementedError('Add the array dimensions and the Symbol to the array declaration node.')
-        array_dims = '[' + ']['.join([str(dimension) for dimension in self.dimensions]) + ']'
-        arg = self.symbol.type_str() + array_dims + ' ' + self.symbol.identifier
-        return super(ArrayDeclaration, self).name(arg)
+        return super(ArrayDeclaration, self).name(str(self.symbol))
 
     @property
     def children(self):
@@ -59,7 +54,7 @@ class ArrayDeclaration(BaseAstNode):
     def to_3ac(self, include_source=False):
         output = [SOURCE(self.linerange[0], self.linerange[1])]
 
-        if not self.initializers:
+        if not self.initializer:
             return {'3ac': output}
 
         # Get a new register for the offset
@@ -72,7 +67,7 @@ class ArrayDeclaration(BaseAstNode):
             output.append(ADDU(offset_reg, create_offset_reference(self.symbol.activation_frame_offset, FP), ZERO))
 
         # Loop through initializers and copy words
-        for item in self.initializers:
+        for item in self.initializer:
             item_tac = item.to_3ac(get_rval=True)
             if '3ac' in item_tac:
                 output.extend(item_tac['3ac'])
@@ -472,7 +467,7 @@ class Declaration(BaseAstNode):
         return type_utils.type_size_in_bytes(self.symbol.type_str())
 
     def name(self, arg=None):
-        arg = self.symbol.type_str() + ' ' + self.symbol.identifier
+        arg = self.symbol.get_type_str() + ' ' + self.symbol.identifier
         return super(Declaration, self).name(arg)
 
     @property

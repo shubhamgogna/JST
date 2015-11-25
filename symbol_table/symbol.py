@@ -78,9 +78,9 @@ class VariableSymbol(Symbol):
 
     def __str__(self):
         if self.is_parameter:
-            return self.get_type_str()
+            return self.get_type_str() + ('' if self.identifier is '' else (' ' + self.identifier))
         else:
-            return '{} {}'.format(self.type_specifiers, self.identifier)
+            return '{} {} {}'.format(' '.join(self.type_qualifiers), self.type_specifiers, self.identifier).strip(' ')
 
     def __repr__(self):
         return str(self)
@@ -106,8 +106,8 @@ class PointerSymbol(Symbol):
 
     @property
     def is_array(self):
-        for dim in self.dimensions:
-            if dim is None:
+        for qualifier, size in self.dimensions:
+            if size is None:
                 return False
         return True
 
@@ -132,19 +132,19 @@ class PointerSymbol(Symbol):
             return 4
         else:
             multiplier = 1
-            for dim in self.dimensions:
-                multiplier *= dim
+            for qualifier, size in self.dimensions:
+                multiplier *= size
 
             return multiplier * type_utils.type_size_in_bytes(self.type_specifiers)
 
     def __str__(self):
         if self.is_parameter:
-            return self.get_type_str()
+            return self.get_type_str() + ('' if self.identifier is '' else (' ' + self.identifier))
         elif self.is_array:
-            dim_str = '[' + ']['.join([size for (x, size) in self.dimensions]) + ']'
+            dim_str = '[' + ']['.join([str(size) for (x, size) in self.dimensions]) + ']'
             return '{} {}{}'.format(self.type_specifiers, self.identifier, dim_str)
         else:
-            return '{} {}{}'.format(self.type_specifiers, self.identifier, '*' * len(self.dimensions))
+            return '{}{} {}'.format(self.type_specifiers, '*' * len(self.dimensions), self.identifier)
 
 
 class FunctionSymbol(Symbol):
@@ -183,6 +183,7 @@ class FunctionSymbol(Symbol):
         for named_parameter in self.named_parameters:
             named_parameter.is_parameter = True
 
+    # TODO Fix to work with new system - Shubham (sg-array-symbol)
     def arguments_match_parameter_types(self, argument_list):
         if len(self.named_parameters) != len(argument_list):
             return False, 'Argument count does not match required count for function call.'
@@ -284,3 +285,36 @@ class TypeDeclaration(object):
 
     def __repr__(self):
         return str(self)
+
+
+def build_from_declarator(type_declaration, declarator):
+    identifier = declarator['identifier']
+    linecol = declarator['linecol']
+
+    if 'dimensions' in declarator:
+        dimensions = declarator['dimensions']
+        symbol = PointerSymbol(identifier, linecol[0], linecol[1])
+        symbol.add_type_declaration(type_declaration)
+
+        for dimension in dimensions:
+            symbol.add_dimension(None, dimension)
+
+    elif 'ptr_dimensions' in declarator:
+        ptr_dimensions = declarator['ptr_dimensions']
+        symbol = PointerSymbol(identifier, linecol[0], linecol[1])
+        symbol.add_type_declaration(type_declaration)
+
+        for dimension in ptr_dimensions:
+            symbol.add_dimension(dimension, None)
+
+    elif 'parameters' in declarator:
+        parameters = declarator['parameters']
+        symbol = FunctionSymbol(identifier, linecol[0], linecol[1])
+        symbol.add_return_type_declaration(type_declaration)
+        symbol.set_named_parameters(parameters)
+
+    else:
+        symbol = VariableSymbol(identifier, linecol[0], linecol[1])
+        symbol.add_type_declaration(type_declaration)
+
+    return symbol

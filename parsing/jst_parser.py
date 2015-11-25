@@ -23,7 +23,8 @@ from ast.ast_nodes import *
 from exceptions.compile_error import CompileError
 from scanning.jst_lexer import JSTLexer
 from symbol_table.scope import Scope
-from symbol_table.symbol import Symbol, VariableSymbol, FunctionSymbol, TypeDeclaration
+from symbol_table.symbol import Symbol, VariableSymbol, FunctionSymbol, TypeDeclaration, PointerSymbol, \
+    build_from_declarator
 
 
 # Parser Class
@@ -167,30 +168,31 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='function_definition -> declarator compound_statement')
 
-        symbol = t[1]
-        function_symbol = FunctionSymbol.from_variable_symbol(symbol)
+        function_symbol = FunctionSymbol(t[1]['identifier'], t[1]['linecol'][0], t[1]['linecol'][1])
 
-        result, existing = self.compiler_state.symbol_table.insert(symbol)
+        result, existing = self.compiler_state.symbol_table.insert(function_symbol)
         if result is Scope.INSERT_REDECL:
             if existing[0].finalized:
                 tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
-                raise CompileError('Reimplementation of function not allowed.', tup[0], tup[1], tup[2])
+                raise CompileError.from_tuple('Reimplementation of function not allowed.', tup)
             else:
-                existing[0].named_parameters = function_symbol.named_parameters
                 function_symbol = existing[0]
 
+        function_symbol.named_parameters = t[1]['parameters']
         type_declaration = TypeDeclaration()
         type_declaration.add_type_specifier('int')
         function_symbol.add_return_type_declaration(type_declaration)
         function_symbol.finalized = True
 
+        # Manually set the frame size and clear counter
         function_symbol.activation_frame_size = self.compiler_state.symbol_table.next_activation_frame_offset
         self.compiler_state.symbol_table.next_activation_frame_offset = 0
 
+        # Check if function is a definition of main
         if function_symbol.identifier == 'main':
             self.compiler_state.main_function = function_symbol
 
-        arguments = [SymbolNode(symbol) for symbol in symbol.named_parameters]
+        arguments = [SymbolNode(symbol) for symbol in function_symbol.named_parameters]
         t[0] = FunctionDefinition(function_symbol, function_symbol.identifier, arguments, t[3],
                                   linerange=(t.lineno(1), t.lineno(4)))
 
@@ -203,25 +205,27 @@ class JSTParser(object):
         is_type_valid, message = type_utils.is_valid_type(t[1])
         if not is_type_valid:
             tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
-            raise CompileError(message, tup[0], tup[1], tup[2])
+            raise CompileError.from_tuple(message, tup)
 
-        function_symbol = FunctionSymbol.from_variable_symbol(t[2]) if isinstance(t[2], VariableSymbol) else t[2]
+        function_symbol = FunctionSymbol(t[2]['identifier'], t[2]['linecol'][0], t[2]['linecol'][1])
 
         result, existing = self.compiler_state.symbol_table.insert(function_symbol)
         if result is Scope.INSERT_REDECL:
             if existing[0].finalized:
                 tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
-                raise CompileError('Reimplementation of function not allowed.', tup[0], tup[1], tup[2])
+                raise CompileError.from_tuple('Reimplementation of function not allowed.', tup)
             else:
-                existing[0].named_parameters = function_symbol.named_parameters
                 function_symbol = existing[0]
 
+        function_symbol.named_parameters = t[2]['parameters']
         function_symbol.add_return_type_declaration(t[1])
         function_symbol.finalized = True
 
+        # Manually set the frame size and clear counter
         function_symbol.activation_frame_size = self.compiler_state.symbol_table.next_activation_frame_offset
         self.compiler_state.symbol_table.next_activation_frame_offset = 0
 
+        # Check if function is a definition of main
         if function_symbol.identifier == 'main':
             self.compiler_state.main_function = function_symbol
 
@@ -263,64 +267,107 @@ class JSTParser(object):
             raise CompileError(message, tup[0], tup[1], tup[2])
 
         t[0] = []
-        for init_declarator_tuple in t[2]:
+        for init_declarator in t[2]:
 
-            identifier = init_declarator_tuple['identifier']
-            linecol = init_declarator_tuple['linecol']
-            initializer = init_declarator_tuple['initializer']
-
-            if 'dimensions' in init_declarator_tuple:
-                # TODO PointerSymbol
-                print(init_declarator_tuple['dimensions'])
-                pass
-            elif 'ptr_dimensions' in init_declarator_tuple:
-                # TODO PointerSymbol
-                pass
-
-
-
-            init_declarator, lineno, lexpos = init_declarator_tuple
-            symbol = init_declarator['declarator']
+            identifier = init_declarator['identifier']
+            linecol = init_declarator['linecol']
             initializer = init_declarator['initializer']
-            decl_ast = None
 
-            if isinstance(symbol, VariableSymbol):
-                symbol.add_type_declaration(type_declaration=t[1])
-                result, _ = self.compiler_state.symbol_table.insert(symbol)
+            if 'dimensions' in init_declarator:
+                dimensions = init_declarator['dimensions']
+                symbol = PointerSymbol(identifier, linecol[0], linecol[1])
+                symbol.add_type_declaration(t[1])
 
-                if result is Scope.INSERT_REDECL:
-                    tup = self.compiler_state.get_line_col_source(lineno, lexpos)
-                    raise CompileError('Variable is being redeclared.', tup[0], tup[1], tup[2])
-                elif result is Scope.INSERT_SHADOWED:
-                    tup = self.compiler_state.get_line_col_source(lineno, lexpos)
-                    self.warn_logger.warning(str(CompileError('Variable is being shadowed.', tup[0], tup[1], tup[2])))
+                for dimension in dimensions:
+                    symbol.add_dimension(None, dimension)
 
-                if len(symbol.array_dims) == 0:
-                    decl_ast = Declaration(symbol, initializer,
-                                           linerange=(t.lineno(1), t.lineno(3)))
-                else:
-                    decl_ast = ArrayDeclaration(symbol, symbol.array_dims, initializer,
-                                                linerange=(t.lineno(1), t.lineno(3)))
+                decl_ast = ArrayDeclaration(symbol, symbol.dimensions, initializer)
 
-            elif isinstance(symbol, FunctionSymbol):
-                if initializer:
-                    tup = self.compiler_state.get_line_col_source(lineno, lexpos)
-                    raise CompileError('Functions cannot have initializers.', tup[0], tup[1], tup[2])
+            elif 'ptr_dimensions' in init_declarator:
+                ptr_dimensions = init_declarator['ptr_dimensions']
+                symbol = PointerSymbol(identifier, linecol[0], linecol[1])
+                symbol.add_type_declaration(t[1])
 
+                for dimension in ptr_dimensions:
+                    symbol.add_dimension(dimension, None)
+
+                decl_ast = ArrayDeclaration(symbol, symbol.dimensions, initializer)
+
+            elif 'parameters' in init_declarator:
+                parameters = init_declarator['parameters']
+                symbol = FunctionSymbol(identifier, linecol[0], linecol[1])
                 symbol.add_return_type_declaration(t[1])
-                result, _ = self.compiler_state.symbol_table.insert(symbol)
-                if result is Scope.INSERT_REDECL:
-                    tup = self.compiler_state.get_line_col_source(lineno, lexpos)
-                    raise CompileError('Function is being redeclared.', tup[0], tup[1], tup[2])
+                symbol.set_named_parameters(parameters)
 
+                decl_ast = FunctionDeclaration(symbol, parameters)
 
+            else:
+                symbol = VariableSymbol(identifier, linecol[0], linecol[1])
+                symbol.add_type_declaration(t[1])
 
-                decl_ast = FunctionDeclaration(symbol,
-                                               [SymbolNode(sym) for sym in symbol.named_parameters],
-                                               linerange=(t.lineno(1), t.lineno(3)))
+                # TODO Type check to make sure the constant matches - Shubham
+                if initializer and isinstance(initializer, Constant):
+                    symbol.value = initializer.value
+
+                decl_ast = Declaration(symbol, initalizer=initializer)
+
+            result, _ = self.compiler_state.symbol_table.insert(symbol)
+            if result is Scope.INSERT_REDECL:
+                raise CompileError('Redeclaration of variable!', linecol[0], linecol[1],
+                                   self.compiler_state.source_lines[linecol[0] - 1])
+            elif result is Scope.INSERT_SHADOWED:
+                if isinstance(symbol, FunctionSymbol):
+                    raise CompileError('Redeclaration of function!', linecol[0], linecol[1],
+                                       self.compiler_state.source_lines[linecol[0] - 1])
+                else:
+                    self.warn_logger.warning(str(
+                        CompileError('Redeclaration of variable!', linecol[0], linecol[1],
+                                     self.compiler_state.source_lines[linecol[0] - 1])))
 
             if decl_ast:
                 t[0].append(decl_ast)
+            else:
+                raise Exception('Declaration AST is None!')
+
+            # init_declarator, lineno, lexpos = init_declarator_tuple
+            # symbol = init_declarator['declarator']
+            # initializer = init_declarator['initializer']
+            # decl_ast = None
+            #
+            # if isinstance(symbol, VariableSymbol):
+            #     symbol.add_type_declaration(type_declaration=t[1])
+            #     result, _ = self.compiler_state.symbol_table.insert(symbol)
+            #
+            #     if result is Scope.INSERT_REDECL:
+            #         tup = self.compiler_state.get_line_col_source(lineno, lexpos)
+            #         raise CompileError('Variable is being redeclared.', tup[0], tup[1], tup[2])
+            #     elif result is Scope.INSERT_SHADOWED:
+            #         tup = self.compiler_state.get_line_col_source(lineno, lexpos)
+            #         self.warn_logger.warning(str(CompileError('Variable is being shadowed.', tup[0], tup[1], tup[2])))
+            #
+            #     if len(symbol.array_dims) == 0:
+            #         decl_ast = Declaration(symbol, initializer,
+            #                                linerange=(t.lineno(1), t.lineno(3)))
+            #     else:
+            #         decl_ast = ArrayDeclaration(symbol, symbol.array_dims, initializer,
+            #                                     linerange=(t.lineno(1), t.lineno(3)))
+            #
+            # elif isinstance(symbol, FunctionSymbol):
+            #     if initializer:
+            #         tup = self.compiler_state.get_line_col_source(lineno, lexpos)
+            #         raise CompileError('Functions cannot have initializers.', tup[0], tup[1], tup[2])
+            #
+            #     symbol.add_return_type_declaration(t[1])
+            #     result, _ = self.compiler_state.symbol_table.insert(symbol)
+            #     if result is Scope.INSERT_REDECL:
+            #         tup = self.compiler_state.get_line_col_source(lineno, lexpos)
+            #         raise CompileError('Function is being redeclared.', tup[0], tup[1], tup[2])
+            #
+            #
+            #
+            #     decl_ast = FunctionDeclaration(symbol,
+            #                                    [SymbolNode(sym) for sym in symbol.named_parameters],
+            #                                    linerange=(t.lineno(1), t.lineno(3)))
 
     def p_declaration_2(self, t):
         """declaration : declaration_specifiers SEMI"""
@@ -640,11 +687,12 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='init_declarator_list -> init_declarator_list COMMA init_declarator')
 
-        if 'parameters' in t[1][0] or 'parameters' in t[3][0]:
+        if 'parameters' in t[1][0] or 'parameters' in t[3]:
             tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
             raise CompileError.from_tuple('Functions cannot be declared in a list.', tup)
 
-        t[0] = t[1].extend(t[3])
+        t[1].append(t[3])
+        t[0] = t[1]
 
     #
     # init-declarator
@@ -691,6 +739,10 @@ class JSTParser(object):
             if len(t[1]['dimensions']) is not 1 or (list in initializer_types):
                 tup = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
                 raise CompileError.from_tuple('Only 1D array initializers are allowed.', tup)
+
+            # Fill in the empty dimension
+            if t[1]['dimensions'][0] is None:
+                t[1]['dimensions'][0] = len(t[3])
 
         else:
             if 'dimensions' in t[1]:
@@ -840,9 +892,9 @@ class JSTParser(object):
             raise CompileError.from_tuple('Is this a function pointer? Not supported.', tup)
 
         if 'ptr_dimensions' not in t[2]:
-            t[2]['ptr_dimensions'] = [t[1]]
+            t[2]['ptr_dimensions'] = t[1]
         else:
-            t[2]['ptr_dimensions'].append(t[1])
+            t[2]['ptr_dimensions'].extend(t[1])
 
         # Don't forget to assign
         t[0] = t[2]
@@ -874,8 +926,8 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='direct_declarator -> direct_declarator LPAREN RPAREN')
 
-        result = self.compiler_state.get_line_col(t, 1)
-        t[0] = {'identifier': t[1], 'linecol': result, 'parameters': []}
+        t[1]['parameters'] = []
+        t[0] = t[1]
 
     def p_direct_declarator_3(self, t):
         """
@@ -888,8 +940,8 @@ class JSTParser(object):
             tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
             raise CompileError.from_tuple('Functions cannot have dimensions.', tup)
 
-        result = self.compiler_state.get_line_col(t, 1)
-        t[0] = {'identifier': t[1], 'linecol': result, 'parameters': t[3]}
+        t[1]['parameters'] = t[3]
+        t[0] = t[1]
 
     def p_direct_declarator_4(self, t):
         """
@@ -1029,14 +1081,16 @@ class JSTParser(object):
         is_type_valid, message = type_utils.is_valid_type(t[1])
         if not is_type_valid:
             tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
-            raise CompileError(message, tup[0], tup[1], tup[2])
+            raise CompileError.from_tuple(message, tup)
 
-        if isinstance(t[2], VariableSymbol):
-            t[2].add_type_declaration(t[1])
-            t[0] = t[2]
-        else:
+        symbol = build_from_declarator(t[1], t[2])
+
+        if not isinstance(symbol, (VariableSymbol, PointerSymbol)):
             tup = self.compiler_state.get_line_col_source(t.lineno(2), t.lexpos(2))
-            raise CompileError('Declarator can only be a variable.', tup[0], tup[1], tup[2])
+            raise CompileError.from_tuple('Cannot build a parameter from {}'.format(type(symbol)), tup)
+
+        # Don't forget to assign
+        t[0] = symbol
 
     def p_parameter_declaration_2(self, t):
         """parameter_declaration : declaration_specifiers abstract_declarator"""
@@ -1066,7 +1120,7 @@ class JSTParser(object):
         is_type_valid, message = type_utils.is_valid_type(t[1])
         if not is_type_valid:
             tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
-            raise CompileError(message, tup[0], tup[1], tup[2])
+            raise CompileError.from_tuple(message, tup)
 
         tup = self.compiler_state.get_line_col(t, 1)
         symbol = VariableSymbol('', tup[0], tup[1])
@@ -1769,6 +1823,7 @@ class JSTParser(object):
         if isinstance(t[1], SymbolNode):
 
             print('is it a symbol node?', t[1], type(t[1]))
+            # TODO Fix to work with new system - Shubham (sg-array-symbol)
             print(t[1].symbol.pointer_modifiers)
 
             if isinstance(t[1].symbol, FunctionSymbol):
@@ -2000,11 +2055,11 @@ class JSTParser(object):
         """
         self.prod_logger.info('Entering scope {}'.format(len(self.compiler_state.symbol_table.table)))
 
-        function_symbol = t[-1]
         self.compiler_state.symbol_table.push()
 
-        for named_parameter in function_symbol.named_parameters:
+        for named_parameter in t[-1]['parameters']:
             # TODO: may need to turn these into symbols
+            print(type(named_parameter))
             self.compiler_state.symbol_table.insert(named_parameter)
             assert(named_parameter.activation_frame_offset is not None)
             print('OFFSET', named_parameter.activation_frame_offset)
