@@ -21,6 +21,7 @@ from utils import type_utils
 
 
 class Symbol(object):
+
     def __init__(self, identifier, lineno, column):
         self.identifier = identifier
         self.lineno = lineno
@@ -37,6 +38,7 @@ class Symbol(object):
 
 
 class VariableSymbol(Symbol):
+
     def __init__(self, identifier, lineno, column):
         super(VariableSymbol, self).__init__(identifier, lineno, column)
 
@@ -85,6 +87,7 @@ class VariableSymbol(Symbol):
 
 
 class PointerSymbol(Symbol):
+
     def __init__(self, identifier, lineno, column):
         super(PointerSymbol, self).__init__(identifier, lineno, column)
         self.dimensions = []

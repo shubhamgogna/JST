@@ -815,81 +815,74 @@ class JSTParser(object):
         self.output_production(t, production_message='direct_declarator -> identifier')
 
         result = self.compiler_state.get_line_col(t, 1)
-        t[0] = VariableSymbol(t[1], result[0], result[1])
+        t[0] = {'identifier': t[1], 'linecol': result}
 
     def p_direct_declarator_2(self, t):
         """
-        direct_declarator : LPAREN declarator RPAREN
+        direct_declarator : direct_declarator LPAREN RPAREN
         """
-        self.output_production(t, production_message='direct_declarator -> LPAREN declarator RPAREN')
-        raise NotImplemented(str(t[2]))
+        self.output_production(t, production_message='direct_declarator -> direct_declarator LPAREN RPAREN')
+
+        result = self.compiler_state.get_line_col(t, 1)
+        t[0] = {'identifier': t[1], 'linecol': result, 'parameters': []}
 
     def p_direct_declarator_3(self, t):
-        """
-        direct_declarator : direct_declarator LBRACKET constant_expression_option RBRACKET
-        """
-        self.output_production(t, production_message=
-            'direct_declarator -> direct_declarator LBRACKET constant_expression_option RBRACKET')
-
-        # TODO To support string initialization, this check needs to be moved to the declaration
-        # TODO production where it can check dimensions of the initializer and compare/set
-        if t[3] is None:
-            result = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
-            # 'result[1] - 1' is a fix to get the column indicator to align correctly
-            raise CompileError('Value required for array dimension.', result[0], result[1] - 1, result[2])
-
-        if not Constant.is_integral_type(t[3]):
-            result = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
-            raise CompileError('Array dimension must be an integral type.', result[0], result[1], result[2])
-
-        if isinstance(t[1], VariableSymbol) and t[3].immutable:
-            if isinstance(t[3], SymbolNode) and isinstance(t[3].symbol, VariableSymbol):
-                t[1].add_array_dimension(t[3].symbol.value)
-            elif isinstance(t[3], Constant):
-                t[1].add_array_dimension(t[3].value)
-            t[0] = t[1]
-        elif isinstance(t[1], FunctionSymbol):
-            result = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
-            raise CompileError('Functions cannot have array dimensions.', result[0], result[1], result[2])
-        else:
-            raise Exception('Unknown type ' + str(type(t[1])))
-
-    def p_direct_declarator_4(self, t):
         """
         direct_declarator : direct_declarator LPAREN parameter_type_list RPAREN
         """
         self.output_production(t, production_message=
             'direct_declarator -> direct_declarator LPAREN parameter_type_list RPAREN')
 
-        if len(t[1].array_dims):
-            result = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
-            raise CompileError('Function cannot be declared with array dimensions.', result[0], result[1], result[2])
+        if 'dimensions' in t[1]:
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError.from_tuple('Functions cannot have dimensions.', tup)
 
-        function_symbol = FunctionSymbol(t[1].identifier, t[1].lineno, t[1].column)
-        function_symbol.set_named_parameters(t[3])
-        t[0] = function_symbol
+        result = self.compiler_state.get_line_col(t, 1)
+        t[0] = {'identifier': t[1], 'linecol': result, 'parameters': t[3]}
+
+    def p_direct_declarator_4(self, t):
+        """
+        direct_declarator : direct_declarator LBRACKET constant_expression_option RBRACKET
+        """
+        self.output_production(t, production_message=
+            'direct_declarator -> direct_declarator LBRACKET constant_expression_option RBRACKET')
+
+        if 'parameters' in t[1]:
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError.from_tuple('Functions cannot have dimensions.', tup)
+
+        if 'dimensions' not in t[1]:
+            # Dimensions are made of tuple(qualifiers, size)
+            t[1]['dimensions'] = []
+
+        if t[3] is not None:
+            if isinstance(t[3], VariableSymbol) and Constant.is_integral_type(t[3]) and t[3].immutable:
+                t[1]['dimensions'].append(('const', t[3].value))
+            if isinstance(t[3], Constant) and Constant.is_integral_type(t[3]):
+                t[1]['dimensions'].append(('const', t[3].value))
+            else:
+                tup = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
+                raise CompileError.from_tuple('Non-constant value provided for array dimension.', tup)
+        else:
+            t[1]['dimensions'].append(('const', None))
+
+        # Don't forget to assign
+        t[0] = t[1]
 
     def p_direct_declarator_5(self, t):
+        """
+        direct_declarator : LPAREN declarator RPAREN
+        """
+        self.output_production(t, production_message='direct_declarator -> LPAREN declarator RPAREN')
+        raise NotImplementedError('Unknown Production.')
+
+    def p_direct_declarator_6(self, t):
         """
         direct_declarator : direct_declarator LPAREN identifier_list RPAREN
         """
         self.output_production(t, production_message=
             'direct_declarator -> direct_declarator LPAREN identifier_list RPAREN')
-        raise NotImplemented('Looks like the production for a function call.')
-
-    def p_direct_declarator_6(self, t):
-        """
-        direct_declarator : direct_declarator LPAREN RPAREN
-        """
-        self.output_production(t, production_message='direct_declarator -> direct_declarator LPAREN RPAREN')
-
-        if len(t[1].array_dims):
-            result = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
-            raise CompileError('Function cannot be declared with array dimensions.', result[0], result[1], result[2])
-
-        function_symbol = FunctionSymbol(t[1].identifier, t[1].lineno, t[1].column)
-        function_symbol.set_named_parameters([])
-        t[0] = function_symbol
+        raise NotImplementedError('Unknown Production.')
 
     #
     # pointer:
