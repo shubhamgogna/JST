@@ -1577,8 +1577,8 @@ class JSTParser(object):
         self.output_production(t, production_message=
             'binary_expression -> binary_expression {} binary_expression'.format(t[2]))
 
-        # TODO: only do this if we are working with ints
-        if type(t[1]) is Constant and type(t[3]) is Constant:
+        # check to see if constant folding is possible
+        if JSTParser.compile_time_evaluable(t[1]) and JSTParser.compile_time_evaluable(t[3]):
             t[0] = JSTParser.perform_binary_operation(t[1], t[2], t[3])
         else:
             # not constant expression, so need binary operator node
@@ -2046,10 +2046,10 @@ class JSTParser(object):
     #
     # Output: Returns an object representing the (constant) result of the operation.
     @staticmethod
-    def perform_binary_operation(left: Constant, operator: str, right: Constant):
+    def perform_binary_operation(left, operator: str, right):
 
-        left_value = left.value if isinstance(left, Constant) else left
-        right_value = right.value if isinstance(right, Constant) else right
+        left_value = left if isinstance(left, int) else left.value
+        right_value = right if isinstance(right, int) else right.value
 
         # right now only returning the value i.e. int.
         # might need to change to return a const ast node instead.
@@ -2092,8 +2092,11 @@ class JSTParser(object):
         else:
             raise Exception('Improper operator provided: ' + operator)
 
+        first_line = min(left.linerange[0], right.linerange[0])
+        last_line = max(left.linerange[1], right.linerange[1])
+
         val_type = Constant.INTEGER if isinstance(result, int) else Constant.FLOAT
-        return Constant(val_type, result)
+        return Constant(val_type, result, linerange=(first_line, last_line))
 
     # Performs compile-time operations to evaluate unary (one-operand) constant expressions.
     # Called by production handling methods.

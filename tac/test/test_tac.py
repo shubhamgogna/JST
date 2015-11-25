@@ -22,7 +22,7 @@ from loggers.logger import Logger
 class TestTac(unittest.TestCase):
 
     def setUp(self):
-        self.compiler_state = CompilerState()
+        self.compiler_state = CompilerState(print_productions=True)
         self.enable_debug(False)
 
     def tearDown(self):
@@ -165,6 +165,19 @@ class TestTac(unittest.TestCase):
             {
                 int a[2][2];
                 a[0][0] = a[1][1];
+                return 0;
+            }
+            """
+        ast = self.compiler_state.parse(data)
+        ast.to_3ac()
+
+    def test_constant_folding(self):
+        data = """
+            const int a = 1 + 1;
+            const int b = a + 2;
+            int main()
+            {
+                int c = a + b;
                 return 0;
             }
             """

@@ -999,6 +999,13 @@ class SymbolNode(BaseAstNode):
         return self.symbol.immutable
 
     @property
+    def value(self):
+        if self.immutable:
+            return self.symbol.value
+        else:
+            raise Exception("DEBUG: non-const symbols don't maintain a value")
+
+    @property
     def children(self):
         children = []
         return tuple(children)
