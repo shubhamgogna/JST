@@ -264,6 +264,21 @@ class JSTParser(object):
 
         t[0] = []
         for init_declarator_tuple in t[2]:
+
+            identifier = init_declarator_tuple['identifier']
+            linecol = init_declarator_tuple['linecol']
+            initializer = init_declarator_tuple['initializer']
+
+            if 'dimensions' in init_declarator_tuple:
+                # TODO PointerSymbol
+                print(init_declarator_tuple['dimensions'])
+                pass
+            elif 'ptr_dimensions' in init_declarator_tuple:
+                # TODO PointerSymbol
+                pass
+
+
+
             init_declarator, lineno, lexpos = init_declarator_tuple
             symbol = init_declarator['declarator']
             initializer = init_declarator['initializer']
@@ -617,8 +632,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='init_declarator_list -> init_declarator')
 
-        # Create a list with a tuple of (string identifier, lineno, and lexpos)
-        t[0] = [(t[1], t.lineno(1), t.lexpos(1))]
+        t[0] = [t[1]]
 
     def p_init_declarator_list_2(self, t):
         """
@@ -626,8 +640,11 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='init_declarator_list -> init_declarator_list COMMA init_declarator')
 
-        # Concat the new init_declarator to the existing list
-        t[0] = t[1] + [(t[3], t.lineno(3), t.lexpos(3))]
+        if 'parameters' in t[1][0] or 'parameters' in t[3][0]:
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError.from_tuple('Functions cannot be declared in a list.', tup)
+
+        t[0] = t[1].extend(t[3])
 
     #
     # init-declarator
@@ -638,7 +655,15 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='init_declarator -> declarator')
 
-        t[0] = {"declarator": t[1], "initializer": None}
+        if 'dimensions' in t[1]:
+            for dimension in t[1]['dimensions']:
+                if dimension is None:
+                    tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+                    raise CompileError.from_tuple('All dimensions in an array declaration must be'
+                                                  ' specified if an initializer is not provided.', tup)
+
+        t[1]['initializer'] = None
+        t[0] = t[1]
 
     def p_init_declarator_2(self, t):
         """
@@ -646,19 +671,34 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='init_declarator -> declarator EQUALS initializer')
 
+        if 'parameters' in t[1]:
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError.from_tuple('Functions cannot have initializers.', tup)
+
+        if 'dimensions' in t[1]:
+            for dimension in t[1]['dimensions'][1:]:
+                if dimension is None:
+                    tup = self.compiler_state.get_line_col_source(t.linepos(1), t.lexpos(1))
+                    raise CompileError.from_tuple('Only the first dimension in an array declaration can be empty.', tup)
+
         if isinstance(t[3], list):
+            if 'dimensions' not in t[1]:
+                tup = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
+                raise CompileError.from_tuple('Array initializer provided for non-array symbol.', tup)
+
             initializer_types = [type(item) for item in t[3]]
 
-            if len(t[1].array_dims) is 1 and isinstance(t[3], list) and (list not in initializer_types):
-                t[0] = {"declarator": t[1], "initializer": t[3]}
-            else:
+            if len(t[1]['dimensions']) is not 1 or (list in initializer_types):
                 tup = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
-                message = 'Only 1D array initializers for array variables are accepted. Initializer ignored.'
-                self.prod_logger.info(str(CompileError(message, tup[0], tup[1], tup[2])))
-                t[0] = {"declarator": t[1], "initializer": None}
+                raise CompileError.from_tuple('Only 1D array initializers are allowed.', tup)
 
         else:
-            t[0] = {"declarator": t[1], "initializer": t[3]}
+            if 'dimensions' in t[1]:
+                tup = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
+                raise CompileError.from_tuple('Non-array initializer provided for array symbol.', tup)
+
+        t[1]['initializer'] = t[3]
+        t[0] = t[1]
 
     #
     # struct-declaration:
@@ -791,11 +831,21 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='declarator -> pointer direct_declarator')
 
-        if isinstance(t[2], VariableSymbol):
-            t[2].add_pointer_level(t[1])
-            t[0] = t[2]
+        if 'dimensions' in t[2]:
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError.from_tuple('Arrays of pointers are not supported.', tup)
+
+        if 'parameters' in t[2]:
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError.from_tuple('Is this a function pointer? Not supported.', tup)
+
+        if 'ptr_dimensions' not in t[2]:
+            t[2]['ptr_dimensions'] = [t[1]]
         else:
-            raise Exception('Not currently supported')
+            t[2]['ptr_dimensions'].append(t[1])
+
+        # Don't forget to assign
+        t[0] = t[2]
 
     def p_declarator_2(self, t):
         """
@@ -803,6 +853,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='declarator -> direct_declarator')
 
+        # Don't forget to assign
         t[0] = t[1]
 
     #
@@ -852,19 +903,18 @@ class JSTParser(object):
             raise CompileError.from_tuple('Functions cannot have dimensions.', tup)
 
         if 'dimensions' not in t[1]:
-            # Dimensions are made of tuple(qualifiers, size)
             t[1]['dimensions'] = []
 
         if t[3] is not None:
             if isinstance(t[3], VariableSymbol) and Constant.is_integral_type(t[3]) and t[3].immutable:
-                t[1]['dimensions'].append(('const', t[3].value))
+                t[1]['dimensions'].append(t[3].value)
             if isinstance(t[3], Constant) and Constant.is_integral_type(t[3]):
-                t[1]['dimensions'].append(('const', t[3].value))
+                t[1]['dimensions'].append(t[3].value)
             else:
                 tup = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
                 raise CompileError.from_tuple('Non-constant value provided for array dimension.', tup)
         else:
-            t[1]['dimensions'].append(('const', None))
+            t[1]['dimensions'].append(None)
 
         # Don't forget to assign
         t[0] = t[1]
@@ -930,12 +980,15 @@ class JSTParser(object):
     def p_type_qualifier_list_1(self, t):
         """type_qualifier_list : type_qualifier"""
         self.output_production(t, production_message='type_qualifier_list -> type_qualifier')
-        raise NotImplemented()
+
+        t[0] = set(t[1])
 
     def p_type_qualifier_list_2(self, t):
         """type_qualifier_list : type_qualifier_list type_qualifier"""
         self.output_production(t, production_message='type_qualifier_list -> type_qualifier_list type_qualifier')
-        raise NotImplemented()
+
+        t[1].add(t[2])
+        t[0] = t[1]
 
     #
     # parameter-type-list:
