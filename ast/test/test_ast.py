@@ -16,6 +16,7 @@
 import unittest
 
 from compiler.compiler_state import CompilerState
+from ticket_counting.ticket_counters import UUID_TICKETS, FLOAT_REGISTER_TICKETS, INT_REGISTER_TICKETS, LABEL_TICKETS
 from loggers.logger import Logger
 
 
@@ -24,6 +25,10 @@ class TestAst(unittest.TestCase):
     def setUp(self):
         self.compiler_state = CompilerState()
         self.enable_debug(False)
+        UUID_TICKETS.next_value = 0
+        INT_REGISTER_TICKETS.next_value = 0
+        FLOAT_REGISTER_TICKETS.next_value = 0
+        LABEL_TICKETS.next_value = 0
 
     def tearDown(self):
         self.compiler_state.teardown()
@@ -97,12 +102,11 @@ class TestAst(unittest.TestCase):
         print(ast.to_graph_viz_str())
 
         solution = 'digraph {\n' \
-                   '\t"FileAST\\n00012" -> {"FunctionDefinition: signed_int_main\\n00011"};\n' \
-                   '\t"FunctionDefinition: signed_int_main\\n00011" -> {"CompoundStatement\\n00010"};\n' \
-                   '\t"CompoundStatement\\n00010" -> {"ArrayDeclaration: signed_int[5] i\\n00009"};\n' \
-                   '\t"ArrayDeclaration: signed_int[5] i\\n00009" -> {};\n' \
+                   '\t"FileAST\\n00004" -> {"FunctionDefinition\\nint main\\n00003"};\n' \
+                   '\t"FunctionDefinition\\nint main\\n00003" -> {"CompoundStatement\\n00002"};\n' \
+                   '\t"CompoundStatement\\n00002" -> {"ArrayDeclaration\\nint i[5]\\n00001"};\n' \
+                   '\t"ArrayDeclaration\\nint i[5]\\n00001" -> {};\n' \
                    '}'
-
 
         self.maxDiff = None
         self.assertEqual(solution, ast.to_graph_viz_str())
@@ -228,7 +232,6 @@ class TestAst(unittest.TestCase):
             """
         ast = self.compiler_state.parse(data)
         print(ast.to_graph_viz_str())
-
 
     def test_array_simple_assign(self):
         data = """

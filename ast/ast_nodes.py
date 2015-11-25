@@ -104,16 +104,14 @@ class ArrayReference(BaseAstNode):
         """
         For interface compliance with the other expression nodes.
         """
-        type_str = self.symbol.get_type_str()
-        first_open_bracket = type_str.index('[')
-        return type_str[:first_open_bracket]
+        return self.symbol.get_type_str()
 
     @property
     def immutable(self):
         return self.symbol.immutable
 
     def check_subscripts(self):
-        if len(self.symbol.array_dims) != len(self.subscripts):
+        if len(self.symbol.dimensions) != len(self.subscripts):
             return False, 'Symbol has {} dimensions, but only {} were provided.'\
                 .format(len(self.symbol.array_dims), len(self.subscripts))
         return True, None

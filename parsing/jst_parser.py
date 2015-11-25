@@ -1822,30 +1822,25 @@ class JSTParser(object):
         tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
         if isinstance(t[1], SymbolNode):
 
-            print('is it a symbol node?', t[1], type(t[1]))
-            # TODO Fix to work with new system - Shubham (sg-array-symbol)
-            print(t[1].symbol.pointer_modifiers)
-
             if isinstance(t[1].symbol, FunctionSymbol):
-                raise CompileError('Functions cannot be accessed like arrays.', tup[0], tup[1], tup[2])
+                raise CompileError.from_tuple('Functions cannot be indexed like arrays.', tup)
 
             if isinstance(t[1].symbol, VariableSymbol):
-                if len(t[1].symbol.array_dims) > 0 or len(t[1].symbol.pointer_modifiers) > 0:
-                    t[0] = ArrayReference(t[1].symbol, [t[3]], linerange=(t.lineno(1), t.lineno(4)))
-                else:
-                    raise CompileError('Symbol is not an array.', tup[0], tup[1], tup[2])
+                raise CompileError.from_tuple('Non-array variables cannot be indexed like arrays.', tup)
+
+            if isinstance(t[1].symbol, PointerSymbol):
+                t[0] = ArrayReference(t[1].symbol, [t[3]], linerange=(t.lineno(1), t.lineno(4)))
 
         elif isinstance(t[1], ArrayReference):
 
-            if len(t[1].subscripts) < len(t[1].symbol.array_dims):
+            if len(t[1].subscripts) < len(t[1].symbol.dimensions):
                 t[1].subscripts.append(t[3])
                 t[0] = t[1]
             else:
-                raise CompileError('Symbol only has {} dimensions.'.format(len(t[1].symbol.array_dims)),
-                                   tup[0], tup[1], tup[2])
+                raise CompileError.from_tuple('Symbol only has {} dimensions.'.format(len(t[1].symbol.dimensions)), tup)
 
         else:
-            raise CompileError('Unknown postfix expression {}'.format(type(t[1])), tup[0], tup[1], tup[2])
+            raise CompileError.from_tuple('Unknown postfix expression {}'.format(type(t[1])), tup)
 
     def p_postfix_expression_to_parameterized_function_call(self, t):
         """
