@@ -192,6 +192,7 @@ class JSTParser(object):
         if function_symbol.identifier == 'main':
             self.compiler_state.main_function = function_symbol
 
+        # TODO SymbolNode no longer exists. - Shubham (sg-array-symbol)
         arguments = [SymbolNode(symbol) for symbol in function_symbol.named_parameters]
         t[0] = FunctionDefinition(function_symbol, function_symbol.identifier, arguments, t[3],
                                   linerange=(t.lineno(1), t.lineno(4)))
@@ -229,6 +230,7 @@ class JSTParser(object):
         if function_symbol.identifier == 'main':
             self.compiler_state.main_function = function_symbol
 
+        # TODO SymbolNode no longer exists. - Shubham (sg-array-symbol)
         arguments = [SymbolNode(symbol) for symbol in function_symbol.named_parameters]
         t[0] = FunctionDefinition(function_symbol, function_symbol.identifier, arguments, t[4],
                                   linerange=(t.lineno(1), t.lineno(5)))
@@ -1574,6 +1576,7 @@ class JSTParser(object):
             line, column, source_code = self.compiler_state.get_line_col_source(t.lineno(2), t.lexpos(2))
             raise CompileError("Assignment to immutable types is not allowed", line, column, source_code)
 
+        # TODO SymbolNode no longer exists. - Shubham (sg-array-symbol)
         if isinstance(t[1], SymbolNode) and isinstance(t[1].symbol, FunctionSymbol):
             tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
             raise CompileError('The assignment operator cannot be applied to functions.', tup[0], tup[1], tup[2])
@@ -1820,6 +1823,7 @@ class JSTParser(object):
         # TODO t[3] is an integral type
 
         tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+        # TODO SymbolNode no longer exists. - Shubham (sg-array-symbol)
         if isinstance(t[1], SymbolNode):
 
             if isinstance(t[1].symbol, FunctionSymbol):
@@ -1848,6 +1852,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='postfix_expression -> postfix_expression LPAREN argument_expression_list RPAREN')
 
+        # TODO SymbolNode no longer exists. - Shubham (sg-array-symbol)
         if isinstance(t[1], SymbolNode) and isinstance(t[1].symbol, FunctionSymbol):
             function_symbol = t[1].symbol
             matched, message = function_symbol.arguments_match_parameter_types(t[3])
@@ -1864,6 +1869,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='postfix_expression -> postfix_expression LPAREN RPAREN')
 
+        # TODO SymbolNode no longer exists. - Shubham (sg-array-symbol)
         if isinstance(t[1], SymbolNode) and isinstance(t[1].symbol, FunctionSymbol):
             function_symbol = t[1].symbol
             matched, message = function_symbol.arguments_match_parameter_types([])
@@ -1920,6 +1926,7 @@ class JSTParser(object):
             result = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
             raise CompileError('Use of variable before declaration.', result[0], result[1], result[2])
         else:
+            # TODO SymbolNode no longer exists. - Shubham (sg-array-symbol)
             t[0] = SymbolNode(symbol, linerange=(t.lineno(1), t.lineno(1)))
 
     def p_primary_expression_constant(self, t):

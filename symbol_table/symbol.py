@@ -16,7 +16,6 @@
 import copy
 import itertools
 
-from ast.ast_nodes import SymbolNode
 from utils import type_utils
 
 
@@ -158,22 +157,17 @@ class FunctionSymbol(Symbol):
         self.return_type_pointer_modifiers = []
         self.return_type_specifiers = ''
 
-        self.activation_frame_size = 0  # the variables and params, doesn't count stored registers
+        # Size for variables and params
+        self.activation_frame_size = 0
 
-    @classmethod
-    def from_variable_symbol(cls, variable_symbol):
-        if not isinstance(variable_symbol, VariableSymbol):
-            raise Exception("Can't construct a FunctionSymbol from something that isn't a VariableSymbol")
-        return FunctionSymbol(variable_symbol.identifier, variable_symbol.lineno, variable_symbol.column)
+    def add_return_type_declaration(self, type_declaration):
+        self.return_type_specifiers = ' '.join(type_declaration.type_specifiers)
 
     def parameter_types_match(self, parameter_type_list):
         for signature_symbol, parameter_symbol in itertools.zip_longest(self.named_parameters, parameter_type_list):
             if signature_symbol.to_abstract_str() != parameter_symbol.to_abstract_str():
                 return False
         return True
-
-    def add_return_type_declaration(self, type_declaration):
-        self.return_type_specifiers = ' '.join(type_declaration.type_specifiers)
 
     def set_named_parameters(self, parameter_type_list):
         if self.finalized:
@@ -193,6 +187,7 @@ class FunctionSymbol(Symbol):
 
         for parameter, argument in itertools.zip_longest(self.named_parameters, argument_list):
 
+            # TODO SymbolNode no longer exists. Change to PointerSymbol. - Shubham (sg-array-symbol)
             if isinstance(argument, SymbolNode):
                 cast_result, message = type_utils.can_assign(parameter.get_resulting_type(), argument.symbol.get_resulting_type())
             else:
