@@ -278,7 +278,7 @@ class JSTParser(object):
                 symbol.add_return_type_declaration(t[1])
                 symbol.set_named_parameters(parameters)
 
-                ast_node = FunctionDeclaration(symbol, parameters)
+                ast_node = FunctionDeclaration(symbol, parameters, linerange=linecol)
 
             else:
                 symbol = VariableSymbol(identifier, linecol[0], linecol[1])
@@ -290,7 +290,10 @@ class JSTParser(object):
                 if 'pointer_dims' in init_declarator:
                     symbol.set_pointer_dims(init_declarator['pointer_dims'])
 
-                ast_node = Declaration(symbol, initializer)
+                if symbol.immutable and isinstance(initializer, Constant):
+                    symbol.value = initializer.value
+
+                ast_node = Declaration(symbol, initializer, linerange=linecol)
 
             # Attempt to insert newly created symbol into the table
             result, _ = self.compiler_state.symbol_table.insert(symbol)
@@ -912,7 +915,7 @@ class JSTParser(object):
         if t[3] is not None:
             if isinstance(t[3], VariableSymbol) and Constant.is_integral_type(t[3]) and t[3].immutable:
                 t[1]['array_dims'].append(t[3].value)
-            if isinstance(t[3], Constant) and Constant.is_integral_type(t[3]):
+            elif isinstance(t[3], Constant) and Constant.is_integral_type(t[3]):
                 t[1]['array_dims'].append(t[3].value)
             else:
                 tup = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))

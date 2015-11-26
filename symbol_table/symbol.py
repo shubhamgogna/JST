@@ -16,7 +16,8 @@
 import copy
 import itertools
 
-from ticket_counting.ticket_counters import UUID_TICKETS
+from tac.tac_generation import SOURCE, LOAD, ADD, FP, create_offset_reference, ZERO
+from ticket_counting.ticket_counters import UUID_TICKETS, FLOAT_REGISTER_TICKETS, INT_REGISTER_TICKETS
 from utils import type_utils
 
 
@@ -62,6 +63,20 @@ class VariableSymbol(Symbol):
     def immutable(self):
         return type_utils.CONST in self.type_qualifiers
 
+    @property
+    def is_array(self):
+        return len(self.array_dims) > 0
+
+    @property
+    def array_size(self):
+        if self.is_array:
+            multiplier = 1
+            for dim in self.array_dims:
+                multiplier *= dim
+            return multiplier
+        else:
+            raise Exception('VariableSymbol is not an array.')
+
     def add_type_declaration(self, type_declaration):
         self.storage_classes = type_declaration.storage_classes
         self.type_qualifiers = type_declaration.type_qualifiers
@@ -84,26 +99,19 @@ class VariableSymbol(Symbol):
         if len(self.array_dims) > 0:
             self.array_dims = [self.EMPTY_ARRAY_DIM] * len(self.array_dims)
 
-    # Note: MIPS uses 4 bytes for a word
+    # Computes the size in bytes for the VariableSymbol. Pointers will always be 4 bytes (MIPS uses 4 bytes
+    # for a word which is always the size of a pointer). VariableSymbols that are arrays will return the
+    # size in bytes of one element.
+    #
+    # @return Size in bytes
     def size_in_bytes(self):
-        if self.is_parameter and len(self.array_dims) > 0:
-            # 1 word for base address
-            # X words for each array dimension
-            return 4 * (len(self.array_dims) + 1)
-
-        multiplier = 1
-        for dim in self.array_dims:
-            multiplier *= dim
-
         if len(self.pointer_dims) > 0:
-            # MIPS uses 4 bytes for a word (pointers are the size of a word)
-            return multiplier * 4
+            return 4
         else:
-            return multiplier * type_utils.type_size_in_bytes(self.type_specifiers)
+            return int(type_utils.type_size_in_bytes(self.type_specifiers))
 
     def __str__(self):
         qualifier_str = ' '.join(self.type_qualifiers)
-
         if len(self.array_dims) > 0:
             array_dim_list = [str(size) if size is not self.EMPTY_ARRAY_DIM
                               else '' for size in self.array_dims]
@@ -129,6 +137,29 @@ class VariableSymbol(Symbol):
     # Defined for GraphViz string generation interface compliance
     def to_graph_viz_str(self):
         return '\t{} -> {{}};\n'.format(self.name())
+
+    # Defined for 3AC generation interface compliance
+    def to_3ac(self, get_rval=True, include_source=False):
+        output = [SOURCE(self.lineno, self.column)]
+
+        # Get ticket to copy memory location
+        if type_utils.is_floating_point_type(self.get_resulting_type()):
+            reg = FLOAT_REGISTER_TICKETS.get()
+        else:
+            reg = INT_REGISTER_TICKETS.get()
+
+        if self.global_memory_location:
+            address = self.global_memory_location
+        else:
+            address = create_offset_reference(self.activation_frame_offset, FP)
+
+        if get_rval:
+            output.append(LOAD(reg, address, self.size_in_bytes()))
+            return {'3ac': output, 'rvalue': reg}
+
+        else:
+            output.append(ADD(reg, address, ZERO))
+            return {'3ac': output, 'lvalue': reg}
 
 
 class FunctionSymbol(Symbol):
