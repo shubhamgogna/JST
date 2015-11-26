@@ -100,7 +100,6 @@ class TestParser(unittest.TestCase):
         self.assertEqual(4, j_symbol.activation_frame_offset)
         self.assertEqual(8, k_symbol.activation_frame_offset)
 
-
     def test_modify_primitive_variable(self):
         self.enable_parser_debugging()
 
@@ -130,7 +129,7 @@ class TestParser(unittest.TestCase):
         self.compiler_state.parse(data)
         symbol_table_clone = self.compiler_state.cloned_tables[0]
 
-        self.check_correct_element(symbol_table_clone, 'i', 2, 'int* i')
+        self.check_correct_element(symbol_table_clone, 'i', 2, 'int * i')
 
     def test_declare_deep_pointer_variable(self):
         data = """
@@ -145,7 +144,7 @@ class TestParser(unittest.TestCase):
 
         print(symbol_table_clone)
 
-        self.check_correct_element(symbol_table_clone, 'i', 2, 'int*** i')
+        self.check_correct_element(symbol_table_clone, 'i', 2, 'int *** i')
 
     def test_declare_global_constant(self):
         self.enable_parser_debugging()
@@ -443,7 +442,7 @@ class TestParser(unittest.TestCase):
         self.compiler_state.parse(data)
         symbol_table_clone = self.compiler_state.cloned_tables[0]
 
-        self.check_correct_element(symbol_table_clone, 'literal_string', 0, 'char* literal_string')
+        self.check_correct_element(symbol_table_clone, 'literal_string', 0, 'char * literal_string')
 
     def test_declare_string_as_array(self):
         self.enable_parser_debugging()
@@ -473,7 +472,7 @@ class TestParser(unittest.TestCase):
         self.compiler_state.parse(data)
         symbol_table_clone = self.compiler_state.cloned_tables[0]
 
-        self.check_correct_element(symbol_table_clone, 'literal_string', 0, 'char* literal_string')
+        self.check_correct_element(symbol_table_clone, 'literal_string', 0, 'char * literal_string')
 
     def test_bubble_sort(self):
         # TODO: this test is failing because we are not handling pointers as though they were arrays and vice versa

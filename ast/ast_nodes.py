@@ -909,30 +909,6 @@ class Label(BaseAstNode):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
 
-class PointerDeclaration(BaseAstNode):
-    """
-    Not sure if this should remain an AST node, but rather an info collection class that gets disassembled and
-    absorbed by the Symbol this contributes to.
-    """
-    def __init__(self, qualifiers=None, type_=None, **kwargs):
-        super(PointerDeclaration, self).__init__(**kwargs)
-
-        self.qualifiers = qualifiers if qualifiers else []
-        self.type = type_  # TODO: what does this do/hold?
-
-    def add_qualifiers(self, qualifiers):
-        pass
-
-    @property
-    def children(self):
-        children = []
-        children.append(self.type)
-        return tuple(children)
-
-    def to_3ac(self, include_source=False):
-        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
-
-
 class Return(BaseAstNode):
     """
     Requires: An appropriately initialized register containing information on where to jump to at the return of the
@@ -988,7 +964,7 @@ class SymbolNode(BaseAstNode):
         """
         For interface compliance with the other expression nodes.
         """
-        return self.symbol.get_type_str()
+        return self.symbol.get_resulting_type()
 
     def name(self, arg=None):
         arg = self.symbol.get_type_str() + '_' + self.symbol.identifier

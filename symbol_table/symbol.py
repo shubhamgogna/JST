@@ -53,7 +53,8 @@ class VariableSymbol(Symbol):
         # Contains qualifiers for pointer dimensions
         self.pointer_dims = []
 
-        self.constant_value = None
+        # Constant literal value if VariableSymbol is constant
+        self.value = None
         self.is_parameter = False
 
     @property
@@ -71,11 +72,8 @@ class VariableSymbol(Symbol):
     def set_pointer_dims(self, dims):
         self.pointer_dims = dims
 
-    def add_array_dimension(self, dimension):
-        self.array_dims.append(dimension)
-
     def get_resulting_type(self):
-        return '{} {} {}'.format(self.type_specifiers,
+        return '{} {}{}'.format(self.type_specifiers,
                                  '*' * len(self.pointer_dims),
                                  '[]' * len(self.array_dims)).strip()
 
@@ -92,11 +90,20 @@ class VariableSymbol(Symbol):
 
     def __str__(self):
         qualifier_str = ' '.join(self.type_qualifiers)
-        return '{} {} {} {} {}'.format(qualifier_str,
-                                       self.type_specifiers,
-                                       '*' * len(self.pointer_dims),
-                                       self.identifier,
-                                       '[]' * len(self.array_dims)).strip()
+
+        if len(self.array_dims) > 0:
+            array_dim_list = [str(size) if size else '' for size in self.array_dims]
+            array_dim_str = '[' + ']['.join(array_dim_list) + ']'
+        else:
+            array_dim_str = ''
+
+        pointer_dim_str = '*' * len(self.pointer_dims)
+
+        return '{} {}{} {}{}'.format(qualifier_str,
+                                     self.type_specifiers,
+                                     (' ' + pointer_dim_str) if pointer_dim_str != '' else '',
+                                     self.identifier,
+                                     array_dim_str).strip()
 
     def __repr__(self):
         return str(self)
@@ -106,6 +113,10 @@ class FunctionSymbol(Symbol):
 
     def __init__(self, identifier, lineno, column):
         super(FunctionSymbol, self).__init__(identifier, lineno, column)
+
+        # Initialize as incomplete symbol
+        self.finalized = False
+
         # Defines what parameters this function takes
         # It is a list of VariableSymbols that may or may not have identifiers
         self.named_parameters = []
