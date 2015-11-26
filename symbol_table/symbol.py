@@ -16,7 +16,6 @@
 import copy
 import itertools
 
-from ast.ast_nodes import SymbolNode
 from ticket_counting.ticket_counters import UUID_TICKETS
 from utils import type_utils
 
@@ -99,14 +98,22 @@ class VariableSymbol(Symbol):
 
         pointer_dim_str = '*' * len(self.pointer_dims)
 
-        return '{} {}{} {}{}'.format(qualifier_str,
-                                     self.type_specifiers,
-                                     (' ' + pointer_dim_str) if pointer_dim_str != '' else '',
-                                     self.identifier,
-                                     array_dim_str).strip()
+        return '{} {}{}{}{}'.format(qualifier_str,
+                                    self.type_specifiers,
+                                    (' ' + pointer_dim_str + ' ') if pointer_dim_str != '' else ' ',
+                                    self.identifier,
+                                    array_dim_str).strip()
 
     def __repr__(self):
         return str(self)
+
+    # Defined for GraphViz string generation interface compliance
+    def name(self):
+        return '"{}\\n{}"'.format(str(self), self.uuid)
+
+    # Defined for GraphViz string generation interface compliance
+    def to_graph_viz_str(self):
+        return '\t{} -> {{}};\n'.format(self.name())
 
 
 class FunctionSymbol(Symbol):
@@ -158,11 +165,7 @@ class FunctionSymbol(Symbol):
 
         for parameter, argument in itertools.zip_longest(self.named_parameters, argument_list):
 
-            if isinstance(argument, SymbolNode):
-                cast_result, message = type_utils.can_assign(parameter.get_resulting_type(), argument.symbol.get_resulting_type())
-            else:
-                cast_result, message = type_utils.can_assign(parameter.get_resulting_type(), argument.get_resulting_type())
-
+            cast_result, message = type_utils.can_assign(parameter.get_resulting_type(), argument.get_resulting_type())
             if cast_result == type_utils.INCOMPATIBLE_TYPES:
                 raise Exception(message)
 

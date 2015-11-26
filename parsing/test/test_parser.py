@@ -457,12 +457,11 @@ class TestParser(unittest.TestCase):
         self.compiler_state.parse(data)
         symbol_table_clone = self.compiler_state.cloned_tables[0]
 
-        self.check_correct_element(symbol_table_clone, 'array_string', 1, 'char array_string[]')
+        self.check_correct_element(symbol_table_clone, 'array_string', 2, 'char array_string[4]')
 
     def test_declare_segmented_string_literal(self):
-        print('segmented')
         data = """
-            char* literal_string = "hello "
+            char literal_string[] = "hello "
                                    "world";
             !!C
             int main() {
@@ -472,7 +471,7 @@ class TestParser(unittest.TestCase):
         self.compiler_state.parse(data)
         symbol_table_clone = self.compiler_state.cloned_tables[0]
 
-        self.check_correct_element(symbol_table_clone, 'literal_string', 0, 'char * literal_string')
+        self.check_correct_element(symbol_table_clone, 'literal_string', 0, 'char literal_string[12]')
 
     def test_bubble_sort(self):
         # TODO: this test is failing because we are not handling pointers as though they were arrays and vice versa

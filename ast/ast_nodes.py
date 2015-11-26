@@ -109,9 +109,10 @@ class ArrayReference(BaseAstNode):
         """
         For interface compliance with the other expression nodes.
         """
-        type_str = self.symbol.get_type_str()
+        type_str = self.symbol.get_resulting_type()
+        # TODO figure out the resulting type after subscripting - Shubham (sg-variable-symbol)
         first_open_bracket = type_str.index('[')
-        return type_str[:first_open_bracket]
+        return type_str[:first_open_bracket - 1]
 
     @property
     def immutable(self):
@@ -472,7 +473,7 @@ class Declaration(BaseAstNode):
         return type_utils.type_size_in_bytes(self.symbol.type_str())
 
     def name(self, arg=None):
-        arg = self.symbol.type_str() + ' ' + self.symbol.identifier
+        arg = self.symbol.get_resulting_type() + ' ' + self.symbol.identifier
         return super(Declaration, self).name(arg)
 
     @property
@@ -946,77 +947,77 @@ class Return(BaseAstNode):
         return {'3ac': output}
 
 
-class SymbolNode(BaseAstNode):
-    """
-    ** I'm not sure about this design, feel free to disagree. **
-    Requires: The info contained here, especially memory where this stuff is declared.
-    Output:   No direct output, but should contain the runtime information of the symbol.
-    """
-    def __init__(self, symbol, **kwargs):
-        super(SymbolNode, self).__init__(**kwargs)
-
-        if symbol:
-            self.symbol = symbol
-        else:
-            raise ValueError('SymbolNode cannot have a \'None\' symbol.')
-
-    def get_resulting_type(self):
-        """
-        For interface compliance with the other expression nodes.
-        """
-        return self.symbol.get_resulting_type()
-
-    def name(self, arg=None):
-        arg = self.symbol.get_type_str() + '_' + self.symbol.identifier
-        return super(SymbolNode, self).name(arg)
-
-    @property
-    def immutable(self):
-        return self.symbol.immutable
-
-    @property
-    def value(self):
-        if self.immutable:
-            return self.symbol.value
-        else:
-            raise Exception("DEBUG: non-const symbols don't maintain a value")
-
-    @property
-    def children(self):
-        children = []
-        return tuple(children)
-
-    def to_3ac(self, get_rval=True, include_source=False):
-
-        output = [SOURCE(self.linerange[0], self.linerange[1])]
-
-        # get ticket to copy memory location
-        if type_utils.is_floating_point_type(self.symbol.get_resulting_type()):
-            reg = FLOAT_REGISTER_TICKETS.get()
-        else:
-            reg = INT_REGISTER_TICKETS.get()
-
-        if self.symbol.global_memory_location:
-
-            if get_rval:
-                # return {'register': 'Global_{}'.format(self.symbol.global_memory_location)}
-                output.append(LW(reg,self.symbol.global_memory_location))
-                return {'3ac': output, 'rvalue': reg}
-
-            else:
-                output.append(ADD(reg, self.symbol.global_memory_location))
-                return {'3ac': output, 'lvalue': reg}
-
-        else:
-            # return {'register': 'Frame_{}'.format(self.symbol.activation_frame_offset)}
-
-            if get_rval:
-                output.append(LW(reg, str(self.symbol.activation_frame_offset) + '($fp)'))
-                return {'3ac': output, 'rvalue': reg}
-
-            else:
-                output.append(ADDI(reg, str(self.symbol.activation_frame_offset) + '($fp)', 0))
-                return {'3ac': output, 'lvalue': reg}
+# class SymbolNode(BaseAstNode):
+#     """
+#     ** I'm not sure about this design, feel free to disagree. **
+#     Requires: The info contained here, especially memory where this stuff is declared.
+#     Output:   No direct output, but should contain the runtime information of the symbol.
+#     """
+#     def __init__(self, symbol, **kwargs):
+#         super(SymbolNode, self).__init__(**kwargs)
+#
+#         if symbol:
+#             self.symbol = symbol
+#         else:
+#             raise ValueError('SymbolNode cannot have a \'None\' symbol.')
+#
+#     def get_resulting_type(self):
+#         """
+#         For interface compliance with the other expression nodes.
+#         """
+#         return self.symbol.get_resulting_type()
+#
+#     def name(self, arg=None):
+#         arg = self.symbol.get_type_str() + '_' + self.symbol.identifier
+#         return super(SymbolNode, self).name(arg)
+#
+#     @property
+#     def immutable(self):
+#         return self.symbol.immutable
+#
+#     @property
+#     def value(self):
+#         if self.immutable:
+#             return self.symbol.value
+#         else:
+#             raise Exception("DEBUG: non-const symbols don't maintain a value")
+#
+#     @property
+#     def children(self):
+#         children = []
+#         return tuple(children)
+#
+#     def to_3ac(self, get_rval=True, include_source=False):
+#
+#         output = [SOURCE(self.linerange[0], self.linerange[1])]
+#
+#         # get ticket to copy memory location
+#         if type_utils.is_floating_point_type(self.symbol.get_resulting_type()):
+#             reg = FLOAT_REGISTER_TICKETS.get()
+#         else:
+#             reg = INT_REGISTER_TICKETS.get()
+#
+#         if self.symbol.global_memory_location:
+#
+#             if get_rval:
+#                 # return {'register': 'Global_{}'.format(self.symbol.global_memory_location)}
+#                 output.append(LW(reg,self.symbol.global_memory_location))
+#                 return {'3ac': output, 'rvalue': reg}
+#
+#             else:
+#                 output.append(ADD(reg, self.symbol.global_memory_location))
+#                 return {'3ac': output, 'lvalue': reg}
+#
+#         else:
+#             # return {'register': 'Frame_{}'.format(self.symbol.activation_frame_offset)}
+#
+#             if get_rval:
+#                 output.append(LW(reg, str(self.symbol.activation_frame_offset) + '($fp)'))
+#                 return {'3ac': output, 'rvalue': reg}
+#
+#             else:
+#                 output.append(ADDI(reg, str(self.symbol.activation_frame_offset) + '($fp)', 0))
+#                 return {'3ac': output, 'lvalue': reg}
 
 
 class UnaryOperator(BaseAstNode):

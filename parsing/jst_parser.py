@@ -192,7 +192,7 @@ class JSTParser(object):
         if function_symbol.identifier == 'main':
             self.compiler_state.main_function = function_symbol
 
-        arguments = [SymbolNode(symbol) for symbol in function_symbol.named_parameters]
+        arguments = function_symbol.named_parameters
         t[0] = FunctionDefinition(function_symbol, function_symbol.identifier, arguments, t[3],
                                   linerange=(t.lineno(1), t.lineno(4)))
 
@@ -230,7 +230,7 @@ class JSTParser(object):
         if function_symbol.identifier == 'main':
             self.compiler_state.main_function = function_symbol
 
-        arguments = [SymbolNode(symbol) for symbol in function_symbol.named_parameters]
+        arguments = function_symbol.named_parameters
         t[0] = FunctionDefinition(function_symbol, function_symbol.identifier, arguments, t[4],
                                   linerange=(t.lineno(1), t.lineno(5)))
 
@@ -1113,7 +1113,13 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='initializer -> assignment_expression')
 
-        t[0] = t[1]
+        # If the initializer is a string
+        if isinstance(t[1], str):
+            t[0] = [x for x in t[1]]
+            t[0][-1] = '\0'
+            t[0] = t[0][1:]
+        else:
+            t[0] = t[1]
 
     def p_initializer_2(self, t):
         """
@@ -1524,7 +1530,6 @@ class JSTParser(object):
 
         t[0] = t[1]
 
-
     def p_assignment_expression_2(self, t):
         """
         assignment_expression : unary_expression assignment_operator assignment_expression
@@ -1536,22 +1541,21 @@ class JSTParser(object):
             line, column, source_code = self.compiler_state.get_line_col_source(t.lineno(2), t.lexpos(2))
             raise CompileError("Assignment to immutable types is not allowed", line, column, source_code)
 
-        if isinstance(t[1], SymbolNode) and isinstance(t[1].symbol, FunctionSymbol):
+        if isinstance(t[1], FunctionSymbol):
             tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
-            raise CompileError('The assignment operator cannot be applied to functions.', tup[0], tup[1], tup[2])
+            raise CompileError.from_tuple('The assignment operator cannot be applied to functions.', tup)
 
         if isinstance(t[1], ArrayReference):  # LEFT side
             valid, message = t[1].check_subscripts()
             if not valid:
                 tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
-                raise CompileError(message, tup[0], tup[1], tup[2])
+                raise CompileError.from_tuple(message, tup)
 
         if isinstance(t[3], ArrayReference):  # RIGHT side
             valid, message = t[3].check_subscripts()
             if not valid:
                 tup = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
-                raise CompileError(message, tup[0], tup[1], tup[2])
-
+                raise CompileError.from_tuple(message, tup)
 
         cast_result, message = type_utils.can_assign(t[1].get_resulting_type(), t[3].get_resulting_type())
         if cast_result != type_utils.INCOMPATIBLE_TYPES:
@@ -1777,36 +1781,33 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='postfix_expression -> postfix_expression LBRACKET expression RBRACKET')
 
-        # For array stuff:
-        # TODO Expression t[3] can be multiple values. GCC takes the value of the last expression.
-        # TODO t[3] is an integral type
+        if isinstance(t[1], FunctionSymbol):
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError.from_tuple('Functions cannot be accessed like arrays.', tup)
 
-        tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
-        if isinstance(t[1], SymbolNode):
+        if isinstance(t[1], VariableSymbol):
 
-            print('is it a symbol node?', t[1], type(t[1]))
-            print(t[1].symbol.pointer_modifiers)
-
-            if isinstance(t[1].symbol, FunctionSymbol):
-                raise CompileError('Functions cannot be accessed like arrays.', tup[0], tup[1], tup[2])
-
-            if isinstance(t[1].symbol, VariableSymbol):
-                if len(t[1].symbol.array_dims) > 0 or len(t[1].symbol.pointer_modifiers) > 0:
-                    t[0] = ArrayReference(t[1].symbol, [t[3]], linerange=(t.lineno(1), t.lineno(4)))
-                else:
-                    raise CompileError('Symbol is not an array.', tup[0], tup[1], tup[2])
+            if len(t[1].array_dims) > 0 or len(t[1].pointer_dims) > 0:
+                # TODO Convert to VariableDereference to support pointers? - Shubham (sg-variable-symbol)
+                t[0] = ArrayReference(t[1], [t[3]], linerange=(t.lineno(1), t.lineno(4)))
+                return
+            else:
+                tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+                raise CompileError.from_tuple('Symbol is not an array.', tup)
 
         elif isinstance(t[1], ArrayReference):
 
-            if len(t[1].subscripts) < len(t[1].symbol.array_dims):
+            if len(t[1].subscripts) < (len(t[1].symbol.array_dims) + len(t[1].symbol.pointer_dims)):
                 t[1].subscripts.append(t[3])
                 t[0] = t[1]
             else:
-                raise CompileError('Symbol only has {} dimensions.'.format(len(t[1].symbol.array_dims)),
-                                   tup[0], tup[1], tup[2])
+                tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+                raise CompileError.from_tuple('Too many subscripts. Symbol does not have that many dimensions.', tup)
 
         else:
-            raise CompileError('Unknown postfix expression {}'.format(type(t[1])), tup[0], tup[1], tup[2])
+
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError.from_tuple('Unknown postfix expression {}'.format(type(t[1])), tup)
 
     def p_postfix_expression_to_parameterized_function_call(self, t):
         """
@@ -1814,15 +1815,17 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='postfix_expression -> postfix_expression LPAREN argument_expression_list RPAREN')
 
-        if isinstance(t[1], SymbolNode) and isinstance(t[1].symbol, FunctionSymbol):
-            function_symbol = t[1].symbol
-            matched, message = function_symbol.arguments_match_parameter_types(t[3])
+        if isinstance(t[1], FunctionSymbol):
+            matched, message = t[1].arguments_match_parameter_types(t[3])
 
             if matched:
-                t[0] = FunctionCall(function_symbol, t[3], linerange=(t.lineno(1), t.lineno(4)))
+                t[0] = FunctionCall(t[1], t[3], linerange=(t.lineno(1), t.lineno(4)))
             else:
                 tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
-                raise CompileError(message, tup[0], tup[1], tup[2])
+                raise CompileError.from_tuple(message, tup)
+        else:
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError.from_tuple('Unknown postfix_expression ({})'.format(type(t[1])), tup)
 
     def p_postfix_expression_to_function_call(self, t):
         """
@@ -1830,15 +1833,17 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='postfix_expression -> postfix_expression LPAREN RPAREN')
 
-        if isinstance(t[1], SymbolNode) and isinstance(t[1].symbol, FunctionSymbol):
-            function_symbol = t[1].symbol
-            matched, message = function_symbol.arguments_match_parameter_types([])
+        if isinstance(t[1], FunctionSymbol):
+            matched, message = t[1].arguments_match_parameter_types([])
 
             if matched:
-                t[0] = FunctionCall(function_symbol, None, linerange=(t.lineno(1), t.lineno(3)))
+                t[0] = FunctionCall(t[1], None, linerange=(t.lineno(1), t.lineno(3)))
             else:
                 tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
-                raise CompileError(message, tup[0], tup[1], tup[2])
+                raise CompileError.from_tuple(message, tup)
+        else:
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError.from_tuple('Unknown postfix_expression ({})'.format(type(t[1])), tup)
 
     def p_postfix_expression_to_struct_member_access(self, t):
         """
@@ -1883,10 +1888,11 @@ class JSTParser(object):
 
         symbol, _ = self.compiler_state.symbol_table.find(t[1])
         if symbol is None:
-            result = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
-            raise CompileError('Use of variable before declaration.', result[0], result[1], result[2])
-        else:
-            t[0] = SymbolNode(symbol, linerange=(t.lineno(1), t.lineno(1)))
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError('Use of variable before declaration.', tup)
+
+        # Don't forget to assign
+        t[0] = symbol
 
     def p_primary_expression_constant(self, t):
         """
