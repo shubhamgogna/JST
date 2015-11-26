@@ -17,6 +17,7 @@ import copy
 import itertools
 
 from ast.ast_nodes import SymbolNode
+from ticket_counting.ticket_counters import UUID_TICKETS
 from utils import type_utils
 
 
@@ -29,7 +30,8 @@ class Symbol(object):
         self.global_memory_location = None
         self.activation_frame_offset = None
 
-        self.finalized = False
+        # UUID for AST
+        self.uuid = UUID_TICKETS.get()
 
     def clone(self):
         # TODO Verify this is actually a deepcopy
@@ -39,99 +41,62 @@ class Symbol(object):
 class VariableSymbol(Symbol):
     def __init__(self, identifier, lineno, column):
         super(VariableSymbol, self).__init__(identifier, lineno, column)
-        self.array_dims = []
-        self.pointer_modifiers = []
 
+        # In GCC, qualifiers and classes are idempotent
         self.storage_classes = set()
-        # In GCC, qualifiers are idempotent
         self.type_qualifiers = set()
         self.type_specifiers = ''
 
-        self.value = None
+        # Contains size information for array dimensions
+        self.array_dims = []
 
+        # Contains qualifiers for pointer dimensions
+        self.pointer_dims = []
+
+        self.constant_value = None
         self.is_parameter = False
-
-    def finalize(self):
-        # TODO:
-        # check the type specifiers for correctness
-        # check the pointers for correctness
-        # check the array dims for correctness
-        # allocate the memory space
-        self.finalized = True
 
     @property
     def immutable(self):
         return type_utils.CONST in self.type_qualifiers
-
-    def get_type_str(self):
-        pointer_str = '*' * len(self.pointer_modifiers) if self.pointer_modifiers else ''
-        array_str = '[' + ']['.join([str(d) for d in self.array_dims]) + ']' if self.array_dims else ''
-
-        return '{}{}{}'.format(self.type_specifiers, pointer_str, array_str)
 
     def add_type_declaration(self, type_declaration):
         self.storage_classes = type_declaration.storage_classes
         self.type_qualifiers = type_declaration.type_qualifiers
         self.type_specifiers = ' '.join(type_declaration.type_specifiers)
 
-    def add_pointer_level(self, pointer_declarations):
-        self.pointer_modifiers.extend(pointer_declarations)
+    def set_array_dims(self, dims):
+        self.array_dims = dims
+
+    def set_pointer_dims(self, dims):
+        self.pointer_dims = dims
 
     def add_array_dimension(self, dimension):
         self.array_dims.append(dimension)
 
     def get_resulting_type(self):
-        return self.get_type_str()
-
-    # Basically the same as __str__ but doesn't include the identifier
-    def to_abstract_str(self):
-        pointer_str = '*' * len(self.pointer_modifiers)
-        # TODO (Shubham) Fix since type_declaration is no longer a class member
-        decl_str = str(self.type_declaration) if self.type_declaration else 'void'
-
-        array_str = ''
-        for dim in self.array_dims:
-            array_str += '[{}]'.format(dim if dim else '')
-
-        return '{}{}{}'.format(decl_str, pointer_str, array_str)
-
-    def type_str(self):
-        array_suffix = '[' + ']['.join([str(dimension) for dimension in self.array_dims]) + ']' if len(self.array_dims) > 0 else ''
-        return '{}{}{}'.format(self.type_specifiers, '*' * len(self.pointer_modifiers), array_suffix)
+        return '{} {} {}'.format(self.type_specifiers,
+                                 '*' * len(self.pointer_dims),
+                                 '[]' * len(self.array_dims)).strip()
 
     def size_in_bytes(self):
-        if self.is_parameter and len(self.array_dims) > 0:
-            return 4  # pointer size
-
         multiplier = 1
         for dim in self.array_dims:
             multiplier *= dim
 
-        if len(self.pointer_modifiers) > 0:
+        if len(self.pointer_dims) > 0:
             # MIPS uses 4 bytes for a word (pointers are the size of a word)
             return multiplier * 4
         else:
             return multiplier * type_utils.type_size_in_bytes(self.type_specifiers)
 
     def __str__(self):
-        if self.identifier == '':  # a case like when the symbol is part of a function signature
-            self_str = self.to_abstract_str()
-        else:
-            pointer_str = len(self.pointer_modifiers) * '*' if len(self.pointer_modifiers) > 0 else ''
-
-            storage_class_str = ' '.join(self.storage_classes) + ' ' if self.storage_classes else ''
-            qualifier_str = ' '.join(self.type_qualifiers) + ' ' if self.type_qualifiers else ''
-            specifier_str = self.type_specifiers
-            base_type_str = '{}{}{}'.format(storage_class_str, qualifier_str, specifier_str)
-
-            type_str = '{}{}'.format(base_type_str, pointer_str)
-            array_str = ''
-            for dim in self.array_dims:
-                array_str += '[{}]'.format(dim if dim else '')
-
-            self_str = '{} {}{}'.format(type_str, self.identifier, array_str)
-
-        return self_str
+        qualifier_str = ' '.join(self.type_qualifiers)
+        return '{} {} {} {} {}'.format(qualifier_str,
+                                       self.type_specifiers,
+                                       '*' * len(self.pointer_dims),
+                                       self.identifier,
+                                       '[]' * len(self.array_dims)).strip()
 
     def __repr__(self):
         return str(self)

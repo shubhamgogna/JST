@@ -844,7 +844,7 @@ class JSTParser(object):
 
         if isinstance(t[1], VariableSymbol) and t[3].immutable:
             if isinstance(t[3], SymbolNode) and isinstance(t[3].symbol, VariableSymbol):
-                t[1].add_array_dimension(t[3].symbol.value)
+                t[1].add_array_dimension(t[3].symbol.constant_value)
             elif isinstance(t[3], Constant):
                 t[1].add_array_dimension(t[3].value)
             t[0] = t[1]
