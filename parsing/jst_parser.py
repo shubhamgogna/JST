@@ -216,7 +216,7 @@ class JSTParser(object):
                 tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
                 raise CompileError.from_tuple('Reimplementation of function not allowed.', tup)
             else:
-                existing[0].set_named_parameters(t[1]['parameters'])
+                existing[0].set_named_parameters(t[2]['parameters'])
                 function_symbol = existing[0]
 
         function_symbol.add_return_type_declaration(t[1])
@@ -918,7 +918,7 @@ class JSTParser(object):
                 tup = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
                 raise CompileError.from_tuple('Non-constant value provided for array dimension.', tup)
         else:
-            t[1]['array_dims'].append(None)
+            t[1]['array_dims'].append(VariableSymbol.EMPTY_ARRAY_DIM)
 
         # Don't forget to assign
         t[0] = t[1]
@@ -1028,7 +1028,25 @@ class JSTParser(object):
     # parameter-declaration:
     #
     def p_parameter_declaration_1(self, t):
-        """parameter_declaration : declaration_specifiers declarator"""
+        """
+        parameter_declaration : declaration_specifiers
+        """
+        self.output_production(t, production_message='parameter_declaration -> declaration_specifiers')
+
+        is_type_valid, message = type_utils.is_valid_type(t[1])
+        if not is_type_valid:
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError.from_tuple(message, tup)
+
+        tup = self.compiler_state.get_line_col(t, 1)
+        symbol = VariableSymbol('', tup[0], tup[1])
+        symbol.add_type_declaration(t[1])
+        t[0] = symbol
+
+    def p_parameter_declaration_2(self, t):
+        """
+        parameter_declaration : declaration_specifiers declarator
+        """
         self.output_production(t, production_message='parameter_declaration -> declaration_specifiers declarator')
 
         is_type_valid, message = type_utils.is_valid_type(t[1])
@@ -1054,52 +1072,29 @@ class JSTParser(object):
         # Don't forget to assign
         t[0] = symbol
 
-    def p_parameter_declaration_2(self, t):
-        """parameter_declaration : declaration_specifiers abstract_declarator"""
+    def p_parameter_declaration_3(self, t):
+        """
+        parameter_declaration : declaration_specifiers abstract_declarator
+        """
         self.output_production(t, production_message='parameter_declaration -> declaration_specifiers abstract_declarator')
 
-        # Note: abstract_declarator is things like pointers and array dims
-        # parameter_declaration = Symbol(identifier='')  # Symbol can hold all of the necessary info, might not go into the
-        #                                                # table
-        #
-        # parameter_declaration.type = t[1]
-        # abstract_declarator = t[2]
-        # if abstract_declarator:
-        #     if abstract_declarator.get('pointer_modifiers', None):
-        #         parameter_declaration.add_pointer_level(abstract_declarator['pointer_modifiers'])
-        #     if abstract_declarator.get('array_dims', None):
-        #         # clean up when we have time
-        #         for dim in abstract_declarator['array_dims']:
-        #             parameter_declaration.add_array_dimension(dim)
-        #
-        # t[0] = parameter_declaration
-        raise Exception('Needs fixing')
-
-    def p_parameter_declaration_3(self, t):
-        """parameter_declaration : declaration_specifiers"""
-        self.output_production(t, production_message='parameter_declaration -> declaration_specifiers')
-
-        is_type_valid, message = type_utils.is_valid_type(t[1])
-        if not is_type_valid:
-            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
-            raise CompileError.from_tuple(message, tup)
-
-        tup = self.compiler_state.get_line_col(t, 1)
-        symbol = VariableSymbol('', tup[0], tup[1])
-        symbol.add_type_declaration(t[1])
-        t[0] = symbol
+        raise NotImplementedError('parameter_declaration : declaration_specifiers abstract_declarator')
 
     #
     # identifier-list:
     #
     def p_identifier_list_1(self, t):
-        """identifier_list : identifier"""
+        """
+        identifier_list : identifier
+        """
         self.output_production(t, production_message='identifier_list -> identifier')
 
         t[0] = [t[1]]
 
     def p_identifier_list_2(self, t):
-        """identifier_list : identifier_list COMMA identifier"""
+        """
+        identifier_list : identifier_list COMMA identifier
+        """
         self.output_production(t, production_message='identifier_list -> identifier_list COMMA identifier')
 
         t[0] = t[1].append(t[3])
@@ -1141,13 +1136,17 @@ class JSTParser(object):
     # initializer-list:
     #
     def p_initializer_list_1(self, t):
-        """initializer_list : initializer"""
+        """
+        initializer_list : initializer
+        """
         self.output_production(t, production_message='initializer_list -> initializer')
 
         t[0] = [t[1]]
 
     def p_initializer_list_2(self, t):
-        """initializer_list : initializer_list COMMA initializer"""
+        """
+        initializer_list : initializer_list COMMA initializer
+        """
         self.output_production(t, production_message='initializer_list -> initializer_list COMMA initializer')
 
         t[1].append(t[3])
@@ -1157,12 +1156,16 @@ class JSTParser(object):
     # type-name:
     #
     def p_type_name_1(self, t):
-        """type_name : specifier_qualifier_list abstract_declarator"""
+        """
+        type_name : specifier_qualifier_list abstract_declarator
+        """
         self.output_production(t, production_message='type_name -> specifier_qualifier_list abstract_declarator')
         raise NotImplemented()
 
     def p_type_name_2(self, t):
-        """type_name : specifier_qualifier_list"""
+        """
+        type_name : specifier_qualifier_list
+        """
         self.output_production(t, production_message='type_name -> specifier_qualifier_list')
 
         t[0] = t[1].get_type_str()
@@ -1199,33 +1202,31 @@ class JSTParser(object):
         self.output_production(t, production_message='direct_abstract_declarator -> LPAREN abstract_declarator RPAREN')
 
         t[0] = t[1]
+        raise NotImplementedError('Unknown production.')
 
     def p_direct_abstract_declarator_2(self, t):
         """direct_abstract_declarator : direct_abstract_declarator LBRACKET constant_expression_option RBRACKET"""
         self.output_production(t, production_message=
             'direct_abstract_declarator -> direct_abstract_declarator LBRACKET constant_expression_option RBRACKET')
 
-        if t[1].get('array_dims', None):
+        if 'array_dims' not in t[1]:
             t[1]['array_dims'] = []
 
-        t[1]['array_dims'] += [t[3].value if t[3] else Symbol.EMPTY_ARRAY_DIM]
-
+        t[1]['array_dims'] += [t[3]]
         t[0] = t[1]
-        raise Exception('TODO Fix')
 
     def p_direct_abstract_declarator_3(self, t):
         """direct_abstract_declarator : LBRACKET constant_expression_option RBRACKET"""
         self.output_production(t, production_message='direct_abstract_declarator -> LBRACKET constant_expression_option RBRACKET')
 
-        t[0] = {'array_dims': [t[1].value if t[2] else Symbol.EMPTY_ARRAY_DIM]}
-        raise Exception('TODO Fix')
+        t[0] = {'array_dims': [t[2]]}
 
     def p_direct_abstract_declarator_4(self, t):
         """direct_abstract_declarator : direct_abstract_declarator LPAREN parameter_type_list_option RPAREN"""
         self.output_production(t, production_message=
             'direct_abstract_declarator -> direct_abstract_declarator LPAREN parameter_type_list_option RPAREN')
 
-        # for ~~function_pointers
+        raise NotImplementedError('Unknown production. Possibly for function pointers.')
 
     def p_direct_abstract_declarator_5(self, t):
         """
@@ -1233,19 +1234,23 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='direct_abstract_declarator -> LPAREN parameter_type_list_option RPAREN')
 
-        # for ~~function pointers
+        raise NotImplementedError('Unknown production. Possibly for function pointers.')
 
     #
     # Optional fields in abstract declarators
     #
     def p_constant_expression_option_to_empty(self, t):
-        """constant_expression_option : empty"""
+        """
+        constant_expression_option : empty
+        """
         self.output_production(t, production_message='constant_expression_option -> empty')
 
         t[0] = None
 
     def p_constant_expression_option_to_constant_expression(self, t):
-        """constant_expression_option : constant_expression"""
+        """
+        constant_expression_option : constant_expression
+        """
         self.output_production(t, production_message='constant_expression_option -> constant_expression')
 
         t[0] = t[1]
@@ -1614,7 +1619,7 @@ class JSTParser(object):
         self.output_production(t, production_message=
             'conditional_expression -> binary_expression CONDOP expression COLON conditional_expression')
 
-        # raise NotImplemented('Ternary operator')
+        raise NotImplementedError('Ternary operator')
 
     #
     # binary-expression
@@ -1643,11 +1648,12 @@ class JSTParser(object):
         self.output_production(t, production_message=
             'binary_expression -> binary_expression {} binary_expression'.format(t[2]))
 
-        # check to see if constant folding is possible
+        # If constant folding is possible
         if JSTParser.compile_time_evaluable(t[1]) and JSTParser.compile_time_evaluable(t[3]):
             t[0] = JSTParser.perform_binary_operation(t[1], t[2], t[3])
+
+        # Else, binary operator node needed
         else:
-            # not constant expression, so need binary operator node
             t[0] = BinaryOperator(t[2], t[1], t[3], linerange=(t.lineno(1), t.lineno(3)))
 
     def p_binary_expression_to_cast_expression(self, t):
@@ -1675,9 +1681,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='cast_expression -> LPAREN type_name RPAREN cast_expression')
 
-        # TODO: might need to change this
-        t[0] = Cast(t[2],t[4], linerange=(t.lineno(1), t.lineno(4)))
-        # t[0] = Cast(to_type=t[2], expression=t[4])
+        t[0] = Cast(t[2], t[4], linerange=(t.lineno(1), t.lineno(4)))
 
     #
     # unary_expression:
@@ -1696,7 +1700,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='unary_expression -> PLUSPLUS unary_expression')
 
-        t[0] = UnaryOperator(t[1], t[2], linerange=(t.lineno(1), t.lineno(2)))
+        t[0] = UnaryOperator(operator=t[1], pre=True, expression=t[2], linerange=(t.lineno(1), t.lineno(2)))
 
     def p_unary_expression_pre_minus_minus(self, t):
         """
@@ -1704,7 +1708,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='unary_expression -> MINUSMINUS unary_expression')
 
-        t[0] = UnaryOperator(t[1], t[2], linerange=(t.lineno(1), t.lineno(2)))
+        t[0] = UnaryOperator(operator=t[1], pre=True, expression=t[2], linerange=(t.lineno(1), t.lineno(2)))
 
     def p_unary_expression_to_unary_operator_and_cast(self, t):
         """
@@ -1788,7 +1792,7 @@ class JSTParser(object):
         if isinstance(t[1], VariableSymbol):
 
             if len(t[1].array_dims) > 0 or len(t[1].pointer_dims) > 0:
-                # TODO Convert to VariableDereference to support pointers? - Shubham (sg-variable-symbol)
+                # TODO Convert to VariableDereference to support pointer dereference? - Shubham (sg-variable-symbol)
                 t[0] = ArrayReference(t[1], [t[3]], linerange=(t.lineno(1), t.lineno(4)))
                 return
             else:
@@ -1821,7 +1825,7 @@ class JSTParser(object):
             if matched:
                 t[0] = FunctionCall(t[1], t[3], linerange=(t.lineno(1), t.lineno(4)))
             else:
-                tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+                tup = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
                 raise CompileError.from_tuple(message, tup)
         else:
             tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
@@ -1865,7 +1869,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='postfix_expression -> postfix_expression PLUSPLUS')
 
-        # TODO This should have another node or a flag that says the increment occurs AFTER
+        # Pre set to false will increment AFTER
         t[0] = UnaryOperator(operator=t[2], pre=False, expression=t[1], linerange=(t.lineno(1), t.lineno(2)))
 
     def p_postfix_expression_to_post_decrement(self, t):
@@ -1874,7 +1878,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='postfix_expression -> postfix_expression MINUSMINUS')
 
-        # TODO This should have another node or a flag that says the decrement occurs AFTER
+        # Pre set to false will increment AFTER
         t[0] = UnaryOperator(operator=t[2], pre=False, expression=t[1], linerange=(t.lineno(1), t.lineno(2)))
 
     #
@@ -1889,7 +1893,7 @@ class JSTParser(object):
         symbol, _ = self.compiler_state.symbol_table.find(t[1])
         if symbol is None:
             tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
-            raise CompileError('Use of variable before declaration.', tup)
+            raise CompileError.from_tuple('Use of variable before declaration.', tup)
 
         # Don't forget to assign
         t[0] = symbol
@@ -2064,10 +2068,10 @@ class JSTParser(object):
         """
         self.prod_logger.info('Entering lookup mode.')
 
-        self.insert_mode = False
+        self.compiler_state.insert_mode = False
 
-
-    ## Handles any designated output (other than standard compiler output and warnings).
+    # Handles any designated output (other than standard compiler output and warnings).
+    #
     # @param self The object pointer
     # @param t The production item with info about the production, including line numbers.
     # @param production_message The production to write. Defaults to 'No Production'.
@@ -2097,11 +2101,9 @@ class JSTParser(object):
         valid_types = (Constant, int, float)
         return isinstance(item, valid_types)
 
-
     @staticmethod
     def compile_time_evaluable(item):
         return item.immutable and type_utils.is_integral_type(item.get_resulting_type())
-
 
     # Performs compile-time operations to evaluate binary (two-operand) constant expressions.
     # Called by production handling methods.

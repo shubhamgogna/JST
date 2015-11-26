@@ -194,10 +194,12 @@ class TestParser(unittest.TestCase):
         self.check_correct_element(symbol_table_clone, 'wtf_result', 3, 'int wtf_result')
 
     def test_ternary_operator(self):
-        data = 'int main(int argc, char** argv) {\n' \
-               '  return 0 == 0 ? 1 : 0;\n' \
-               '}\n' \
-               ''
+        data = """
+            int main(int argc, char** argv)
+            {
+               return 0 == 0 ? 1 : 0;
+            }
+           """
         self.compiler_state.parse(data)
         self.assertTrue(True, "No exceptions means a successful parse.")
 
@@ -435,7 +437,8 @@ class TestParser(unittest.TestCase):
             char* literal_string = "hello there";
             !!C
 
-            int main() {
+            int main()
+            {
               return 0;
             }
         """
@@ -478,22 +481,24 @@ class TestParser(unittest.TestCase):
         # TODO: perhaps we should change our test case? Maybe this is why Fred said pointers were hard...
 
         data = """
-            void print( int* list, int size);
-            void bubbleSort(int* list, int size);
+            void print(int list[], int size);
+            void bubbleSort(int list[], int size);
 
-            int main() {
+            int main()
+            {
                int list[10];
                int i;
                //srand(time(NULL));
 
                // create list
-               for(i =0; i<10;i++) {
+               for(i =0; i<10;i++)
+               {
                    //list[i] = rand() % 10 + 1;
                }
                print(list, 10);
 
                // bubble sort
-               bubbleSort( list, 10 );
+               bubbleSort(list, 10 );
 
                //printf( "Sorted " );
                print(list, 10);
@@ -505,18 +510,22 @@ class TestParser(unittest.TestCase):
 
             }
 
-            void bubbleSort(int* list, int size) {
+            void bubbleSort(int list[], int size)
+            {
                int i, j;
                int temp;
                int swapped;
 
-               for( i = 0; i < size; i++) {
+               for( i = 0; i < size; i++)
+               {
 
                   // swapped is false
                   swapped = 0;
 
-                  for( j = 0; j < size - 1; j++) {
-                     if(list[j+1] < list[j]) {
+                  for( j = 0; j < size - 1; j++)
+                  {
+                     if(list[j+1] < list[j])
+                     {
                         temp = list[j];
                         list[j] = list[j+1];
                         list[j+1] = temp;
@@ -524,17 +533,20 @@ class TestParser(unittest.TestCase):
                      }
                   }
 
-                  if (swapped == 0) {
+                  if (swapped == 0)
+                  {
                      break;
                   }
                }
             }
 
-            void print(int* list, int size) {
+            void print(int list[], int size)
+            {
                int i;
                //printf("List is: ");
 
-               for(i =0; i < size; i++) {
+               for(i =0; i < size; i++)
+               {
                   //printf( "%d ", list[i] );
                }
                //printf("");
@@ -750,7 +762,7 @@ class TestParser(unittest.TestCase):
 
             void do_stuff(int* array)
             {
-                int i;
+                int* i;
                 do_stuff(i);
             }
         """
@@ -760,9 +772,7 @@ class TestParser(unittest.TestCase):
         symbol_table = self.compiler_state.cloned_tables[0]
         print(symbol_table)
         x, y = symbol_table.find('do_stuff')
-        # print(x)
-        # print(x.signature[0].pointer_modifiers)
-        self.check_correct_element(symbol_table,'do_stuff', 0, 'void do_stuff(int* array)')
+        self.check_correct_element(symbol_table, 'do_stuff', 0, 'void do_stuff(int * array)')
 
     def test_super_memory_allocation(self):
         data = """

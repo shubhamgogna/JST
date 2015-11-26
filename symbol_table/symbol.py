@@ -38,6 +38,8 @@ class Symbol(object):
 
 
 class VariableSymbol(Symbol):
+    EMPTY_ARRAY_DIM = None
+
     def __init__(self, identifier, lineno, column):
         super(VariableSymbol, self).__init__(identifier, lineno, column)
 
@@ -73,14 +75,14 @@ class VariableSymbol(Symbol):
 
     def get_resulting_type(self):
         return '{} {}{}'.format(self.type_specifiers,
-                                 '*' * len(self.pointer_dims),
-                                 '[]' * len(self.array_dims)).strip()
+                                '*' * len(self.pointer_dims),
+                                '[]' * len(self.array_dims)).strip()
 
     def set_as_parameter(self):
         self.is_parameter = True
 
         if len(self.array_dims) > 0:
-            self.array_dims = [None] * len(self.array_dims)
+            self.array_dims = [self.EMPTY_ARRAY_DIM] * len(self.array_dims)
 
     # Note: MIPS uses 4 bytes for a word
     def size_in_bytes(self):
@@ -103,7 +105,8 @@ class VariableSymbol(Symbol):
         qualifier_str = ' '.join(self.type_qualifiers)
 
         if len(self.array_dims) > 0:
-            array_dim_list = [str(size) if size else '' for size in self.array_dims]
+            array_dim_list = [str(size) if size is not self.EMPTY_ARRAY_DIM
+                              else '' for size in self.array_dims]
             array_dim_str = '[' + ']['.join(array_dim_list) + ']'
         else:
             array_dim_str = ''
@@ -147,13 +150,6 @@ class FunctionSymbol(Symbol):
         # Doesn't count stored registers
         self.activation_frame_size = 0
 
-    def parameter_types_match(self, parameter_type_list):
-        print('>>>', parameter_type_list)
-        for signature_symbol, parameter_symbol in itertools.zip_longest(self.named_parameters, parameter_type_list):
-            if signature_symbol.to_abstract_str() != parameter_symbol.to_abstract_str():
-                return False
-        return True
-
     def add_return_type_declaration(self, type_declaration):
         self.return_type_specifiers = ' '.join(type_declaration.type_specifiers)
 
@@ -161,9 +157,6 @@ class FunctionSymbol(Symbol):
         if self.finalized:
             raise Exception('Attempted redefinition of function {}.'.format(self.identifier))
         self.named_parameters = parameter_type_list
-        #
-        # for named_parameter in self.named_parameters:
-        #     named_parameter.is_parameter = True
 
     def arguments_match_parameter_types(self, argument_list):
         if len(self.named_parameters) != len(argument_list):
@@ -176,7 +169,7 @@ class FunctionSymbol(Symbol):
 
             cast_result, message = type_utils.can_assign(parameter.get_resulting_type(), argument.get_resulting_type())
             if cast_result == type_utils.INCOMPATIBLE_TYPES:
-                raise Exception(message)
+                return False, message + ' for parameter {}'.format(parameter.identifier)
 
         return True, None
 
@@ -184,13 +177,11 @@ class FunctionSymbol(Symbol):
         return self.return_type_specifiers
 
     def __str__(self):
-        decl_str = str(self.return_type_specifiers) if self.return_type_specifiers != '' else 'void'
         args_as_strings = ''
-
         if self.named_parameters:
             args_as_strings = ', '.join([str(symbol) for symbol in self.named_parameters])
 
-        return '{} {}({})'.format(decl_str, self.identifier, args_as_strings)
+        return '{} {}({})'.format(self.return_type_specifiers, self.identifier, args_as_strings)
 
     def __repr__(self):
         return str(self)

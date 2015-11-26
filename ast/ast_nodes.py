@@ -379,6 +379,10 @@ class Cast(BaseAstNode):
         self.to_type = to_type
         self.expression = expression
 
+    @property
+    def immutable(self):
+        return False
+
     def get_resulting_type(self):
         return self.to_type
 

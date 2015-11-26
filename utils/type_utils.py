@@ -168,7 +168,7 @@ def can_assign(left_type, right_type):
             else:
                 return CAST_RIGHT_DOWN, None
     else:
-        return INCOMPATIBLE_TYPES, "Unable to assign type {} to variable of type {}".format(right_type, left_type)
+        return INCOMPATIBLE_TYPES, "Unable to assign type ({}) to variable of type ({})".format(right_type, left_type)
 
 
 def get_promoted_type(left_type, right_type):
