@@ -76,7 +76,19 @@ class VariableSymbol(Symbol):
                                  '*' * len(self.pointer_dims),
                                  '[]' * len(self.array_dims)).strip()
 
+    def set_as_parameter(self):
+        self.is_parameter = True
+
+        if len(self.array_dims) > 0:
+            self.array_dims = [None] * len(self.array_dims)
+
+    # Note: MIPS uses 4 bytes for a word
     def size_in_bytes(self):
+        if self.is_parameter and len(self.array_dims) > 0:
+            # 1 word for base address
+            # X words for each array dimension
+            return 4 * (len(self.array_dims) + 1)
+
         multiplier = 1
         for dim in self.array_dims:
             multiplier *= dim
@@ -131,15 +143,12 @@ class FunctionSymbol(Symbol):
         self.return_type_pointer_modifiers = []
         self.return_type_specifiers = ''
 
-        self.activation_frame_size = 0  # the variables and params, doesn't count stored registers
-
-    @classmethod
-    def from_variable_symbol(cls, variable_symbol):
-        if not isinstance(variable_symbol, VariableSymbol):
-            raise Exception("Can't construct a FunctionSymbol from something that isn't a VariableSymbol")
-        return FunctionSymbol(variable_symbol.identifier, variable_symbol.lineno, variable_symbol.column)
+        # Size in bytes of all variables and params
+        # Doesn't count stored registers
+        self.activation_frame_size = 0
 
     def parameter_types_match(self, parameter_type_list):
+        print('>>>', parameter_type_list)
         for signature_symbol, parameter_symbol in itertools.zip_longest(self.named_parameters, parameter_type_list):
             if signature_symbol.to_abstract_str() != parameter_symbol.to_abstract_str():
                 return False
@@ -152,9 +161,9 @@ class FunctionSymbol(Symbol):
         if self.finalized:
             raise Exception('Attempted redefinition of function {}.'.format(self.identifier))
         self.named_parameters = parameter_type_list
-
-        for named_parameter in self.named_parameters:
-            named_parameter.is_parameter = True
+        #
+        # for named_parameter in self.named_parameters:
+        #     named_parameter.is_parameter = True
 
     def arguments_match_parameter_types(self, argument_list):
         if len(self.named_parameters) != len(argument_list):

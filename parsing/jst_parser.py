@@ -168,7 +168,7 @@ class JSTParser(object):
         self.output_production(t, production_message='function_definition -> declarator compound_statement')
 
         function_symbol = FunctionSymbol(t[1]['identifier'], t[1]['linecol'][0], t[1]['linecol'][1])
-        function_symbol.named_parameters = t[1]['parameters']       # TODO Setting parameters is required so that the function memory offset works correctly
+        function_symbol.set_named_parameters(t[1]['parameters'])       # TODO Setting parameters is required so that the function memory offset works correctly
 
         result, existing = self.compiler_state.symbol_table.insert(function_symbol)
         if result is Scope.INSERT_REDECL:
@@ -176,9 +176,9 @@ class JSTParser(object):
                 tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
                 raise CompileError.from_tuple('Reimplementation of function not allowed.', tup)
             else:
+                existing[0].set_named_parameters(t[1]['parameters'])
                 function_symbol = existing[0]
 
-        function_symbol.named_parameters = t[1]['parameters']
         type_declaration = TypeDeclaration()
         type_declaration.add_type_specifier('int')
         function_symbol.add_return_type_declaration(type_declaration)
@@ -208,7 +208,7 @@ class JSTParser(object):
             raise CompileError.from_tuple(message, tup)
 
         function_symbol = FunctionSymbol(t[2]['identifier'], t[2]['linecol'][0], t[2]['linecol'][1])
-        function_symbol.named_parameters = t[2]['parameters']       # TODO Setting parameters is required so that the function memory offset works correctly
+        function_symbol.set_named_parameters(t[2]['parameters'])       # TODO Setting parameters is required so that the function memory offset works correctly
 
         result, existing = self.compiler_state.symbol_table.insert(function_symbol)
         if result is Scope.INSERT_REDECL:
@@ -216,9 +216,9 @@ class JSTParser(object):
                 tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
                 raise CompileError.from_tuple('Reimplementation of function not allowed.', tup)
             else:
+                existing[0].set_named_parameters(t[1]['parameters'])
                 function_symbol = existing[0]
 
-        function_symbol.named_parameters = t[2]['parameters']
         function_symbol.add_return_type_declaration(t[1])
         function_symbol.finalized = True
 
@@ -2025,10 +2025,9 @@ class JSTParser(object):
         self.compiler_state.symbol_table.push()
 
         for named_parameter in t[-1]['parameters']:
-            # TODO: may need to turn these into symbols
+            named_parameter.set_as_parameter()
             self.compiler_state.symbol_table.insert(named_parameter)
-            assert(named_parameter.activation_frame_offset is not None)
-            print('OFFSET', named_parameter.activation_frame_offset)
+            print('OFFSET', named_parameter.activation_frame_offset, named_parameter.size_in_bytes())
 
     def p_enter_scope(self, t):
         """
