@@ -31,6 +31,7 @@ def main():
     your_c_program = """
       // your program here!
       int main() {
+        int my_3d_array[1][2][3][4];
         return 0;
       }
     """

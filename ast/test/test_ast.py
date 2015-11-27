@@ -94,18 +94,23 @@ class TestAst(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        print(ast.to_graph_viz_str())
+        result = ast.to_graph_viz_str()
+        print(result)
 
-        solution = 'digraph {\n' \
-                   '\t"FileAST\\n00012" -> {"FunctionDefinition: signed_int_main\\n00011"};\n' \
-                   '\t"FunctionDefinition: signed_int_main\\n00011" -> {"CompoundStatement\\n00010"};\n' \
-                   '\t"CompoundStatement\\n00010" -> {"ArrayDeclaration: signed_int[5] i\\n00009"};\n' \
-                   '\t"ArrayDeclaration: signed_int[5] i\\n00009" -> {};\n' \
-                   '}'
+        import re
 
+        expected_solution = \
+            'digraph {\n' \
+                '\t"FileAST\\\\n\d\d\d\d\d" -> {"FunctionDefinition\\\\nint main\\\\n\d\d\d\d\d"};\n' \
+                '\t"FunctionDefinition\\\\nint main\\\\n\d\d\d\d\d" -> {"CompoundStatement\\\\n\d\d\d\d\d"};\n' \
+                '\t"CompoundStatement\\\\n\d\d\d\d\d" -> {"ArrayDeclaration\\\\nint\[5\]\[5\] i\\\\n\d\d\d\d\d"};\n' \
+                '\t"ArrayDeclaration\\\\nint\[5\]\[5\] i\\\\n\d\d\d\d\d" -> {};\n' \
+            '}'
 
-        self.maxDiff = None
-        self.assertEqual(solution, ast.to_graph_viz_str())
+        m = re.match(expected_solution, result)
+        print(m)
+        self.assertTrue(True if m else False)
+
 
     def test_2d_array_declaration(self):
         data = """

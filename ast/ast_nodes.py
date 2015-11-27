@@ -18,7 +18,8 @@ import itertools
 from ast.base_ast_node import BaseAstNode
 from utils import type_utils
 from utils import operator_utils
-from ticket_counting.ticket_counters import LABEL_TICKETS
+from ticket_counting.ticket_counters import LABEL_TICKETS, LOOP_CONDITION_TICKETS, LOOP_BODY_TICKETS, LOOP_EXIT_TICKETS, \
+    IF_TRUE_TICKETS, ENDIF_TICKETS, IF_FALSE_TICKETS
 from ticket_counting.ticket_counters import INT_REGISTER_TICKETS
 from ticket_counting.ticket_counters import FLOAT_REGISTER_TICKETS
 from tac.tac_generation import *
@@ -754,8 +755,9 @@ class If(BaseAstNode):
         output = [SOURCE(self.linerange[0], self.linerange[1])]
 
         # Get two labels
-        lTrue = LABEL_TICKETS.get()
-        lEnd = LABEL_TICKETS.get()
+        if_true_label = IF_TRUE_TICKETS.get()
+        if_false_label = IF_FALSE_TICKETS.get()
+        endif_label = ENDIF_TICKETS.get()
 
         # Gen 3ac for conditional
         result = self.conditional.to_3ac()
@@ -763,7 +765,7 @@ class If(BaseAstNode):
 
         # Branch based on the contents of the result register of the conditional
         reg = result['rvalue']
-        output.append(BRNE(lTrue, reg, ZERO))
+        output.append(BRNE(if_true_label, reg, ZERO))
 
         # Gen 3AC for false branch
         if self.if_false:
@@ -771,16 +773,16 @@ class If(BaseAstNode):
             output.extend(result['3ac'])
 
         # Add jump to end of conditional
-        output.append(BR(lEnd))
+        output.append(BR(endif_label))
 
         # Gen 3AC for true branch
-        output.append(LABEL(lTrue))
+        output.append(LABEL(if_true_label))
         if self.if_true:
             result = self.if_true.to_3ac()
             output.extend(result['3ac'])
 
         # Dump end label
-        output.append(LABEL(lEnd))
+        output.append(LABEL(endif_label))
 
         return {'3ac': output}
 
@@ -838,9 +840,9 @@ class IterationNode(BaseAstNode):
 
     def to_3ac(self, include_source=False):
         output = [SOURCE(self.linerange[0], self.linerange[1])]
-        condition_check_label = LABEL_TICKETS.get()
-        condition_ok_label = LABEL_TICKETS.get()
-        loop_exit_label = LABEL_TICKETS.get()
+        condition_check_label = LOOP_CONDITION_TICKETS.get()
+        condition_ok_label = LOOP_BODY_TICKETS.get()
+        loop_exit_label = LOOP_EXIT_TICKETS.get()
 
         # Check for pre-test loop
         if not self.is_pre_test_loop:

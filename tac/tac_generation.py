@@ -38,12 +38,12 @@ class TacInstruction(object):
         __str__ is supposed to be "human readable, so this method will produce a more concise string that will fit in
         the terminal better for debugging.
         """
-        # ret = ''
-        # if self.instruction == instructions.COMMENT:
-        #     ret = '{}: {}'.format(instructions.COMMENT, self.dest)
-        # else:
-        #     ret = '{}, {}, {}, {}'.format(self.instruction, self.dest, self.src1, self.src2)
-        #
+        ret = ''
+        if self.instruction == instructions.COMMENT:
+            ret = '{}: {}'.format(instructions.COMMENT, self.dest)
+        else:
+            ret = '{}, {}, {}, {}'.format(self.instruction, self.dest, self.src1, self.src2)
+
         # return ret
         return repr(self)
 
@@ -62,7 +62,7 @@ class TacInstruction(object):
         else:
             ret = '{:<15}, {:<15}, {:<15}, {:<15}'.format(self.instruction,
                                                           self.dest if self.dest is not TacInstruction.NULL else '-',
-                                                     self.src1 if self.src1 is not TacInstruction.NULL else '-',
+                                                          self.src1 if self.src1 is not TacInstruction.NULL else '-',
                                                           self.src2 if self.src2 is not TacInstruction.NULL else '-')
 
         return ret
