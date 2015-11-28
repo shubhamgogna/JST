@@ -20,7 +20,8 @@ from assembler.register_management import MipsRegisterUseTable, OutOfSpillMemory
 from ticket_counting.ticket_counters import INT_REGISTER_TICKETS
 
 
-SPILL = 'spill'
+SPILL_MEM_LABEL = 'spill'
+
 
 class TestRegisterUseTable(unittest.TestCase):
     """
@@ -29,10 +30,12 @@ class TestRegisterUseTable(unittest.TestCase):
                  parameters be modified, all of the tests should be revisited to ensure they are performing their
                  tests correctly.
     """
+
     def setUp(self):
         registers_to_use = (mips.T0, mips.T1)
-
-        self.register_use_table = MipsRegisterUseTable(registers_to_use, SPILL, 8)
+        enough_bytes_to_store_two_registers_and_have_a_swap_space = 12
+        self.register_use_table = MipsRegisterUseTable(registers_to_use, SPILL_MEM_LABEL,
+                                                       enough_bytes_to_store_two_registers_and_have_a_swap_space)
 
     def tearDown(self):
         pass
@@ -64,7 +67,7 @@ class TestRegisterUseTable(unittest.TestCase):
 
         self.assertSequenceEqual([], self.register_use_table.available_registers, 'the registers should be used up')
 
-        expected_result = {'register': mips.T0, 'code': [assembler.SW(mips.T0, assembler.offset_from_label(SPILL, 0))]}
+        expected_result = {'register': mips.T0, 'code': [assembler.SW(mips.T0, assembler.offset_from_label(SPILL_MEM_LABEL, 0))]}
         result = self.register_use_table.acquire(pseudo_registers[2])
         self.assertEqual(expected_result, result)
 
@@ -76,40 +79,106 @@ class TestRegisterUseTable(unittest.TestCase):
 
         self.assertSequenceEqual([], self.register_use_table.available_registers, 'the registers should be used up')
 
-        expected_result = {'register': mips.T0, 'code': [assembler.SW(mips.T0, assembler.offset_from_label(SPILL, 0))]}
+        expected_result = {'register': mips.T0, 'code': [assembler.SW(mips.T0, assembler.offset_from_label(SPILL_MEM_LABEL, 0))]}
         result = self.register_use_table.acquire(pseudo_registers[2])
         self.assertEqual(expected_result, result)
 
         # recovering a spilled register's value from memory should not only get the register, but also provide the
         # assembler code that swaps the values for the temporaries using the spill memory
-        expected_result = {
-            'register': mips.T1,
-            'code': [
-                assembler.SW(mips.T1, assembler.offset_from_label(SPILL, 4)),
-                assembler.LW(mips.T1, assembler.offset_from_label(SPILL, 0))
-            ]
-        }
+        expected_result = {'register': mips.T1, 'code': [assembler.SW(mips.T1, assembler.offset_from_label(SPILL_MEM_LABEL, 4)),
+                                                         assembler.LW(mips.T1, assembler.offset_from_label(SPILL_MEM_LABEL, 0))]}
         result = self.register_use_table.acquire(pseudo_registers[0])
         self.assertEqual(expected_result, result)
 
     def test_overrun_of_spill_memory_fails(self):
         with self.assertRaises(OutOfSpillMemoryException):
-            # 5 is precisely enough to run out of spill memory
-            pseudo_registers = [INT_REGISTER_TICKETS.get() for _ in range(0,5)]
+            # 6 is precisely enough to run out of spill memory
+            pseudo_registers = [INT_REGISTER_TICKETS.get() for _ in range(0, 6)]
             for pseudo_register in pseudo_registers:
                 self.register_use_table.acquire(pseudo_register)
 
     def test_multiple_spills(self):
-        self.fail()
+        spilled_1 = 'ireg_1'
+        spilled_2 = 'ireg_2'
+        spiller_1 = 'ireg_3'
+        spiller_2 = 'ireg_4'
+
+        self.register_use_table.acquire(spilled_1)
+        self.register_use_table.acquire(spilled_2)
+        self.register_use_table.acquire(spiller_1)
+        self.register_use_table.acquire(spiller_2)
+
+        self.assertTrue(
+            spilled_1 in self.register_use_table.spilled_registers.keys() and spilled_2 in
+            self.register_use_table.spilled_registers.keys())
 
     def test_multiple_recoveries(self):
-        self.fail()
+        spilled_1 = 'ireg_1'
+        spilled_2 = 'ireg_2'
+        spiller_1 = 'ireg_3'
+        spiller_2 = 'ireg_4'
+
+        self.register_use_table.acquire(spilled_1)
+        self.register_use_table.acquire(spilled_2)
+        self.register_use_table.acquire(spiller_1)
+        self.register_use_table.acquire(spiller_2)
+
+        self.assertTrue(
+            spilled_1 in self.register_use_table.spilled_registers.keys() and spilled_2 in
+            self.register_use_table.spilled_registers.keys())
+
+        result = self.register_use_table.acquire(spilled_2)
+        expected_result = {'register': mips.T0, 'code': [assembler.SW(mips.T0, assembler.offset_from_label(SPILL_MEM_LABEL, 8)),
+                                                         assembler.LW(mips.T0, assembler.offset_from_label(SPILL_MEM_LABEL, 4))]}
+        self.assertEqual(expected_result, result)
+
+        result = self.register_use_table.acquire(spilled_1)
+        expected_result = {'register': mips.T1, 'code': [assembler.SW(mips.T1, assembler.offset_from_label(SPILL_MEM_LABEL, 4)),
+                                                         assembler.LW(mips.T1, assembler.offset_from_label(SPILL_MEM_LABEL, 0))]}
+        self.assertEqual(expected_result, result)
 
     def test_release_one_register(self):
-        self.fail()
+        spilled_1 = 'ireg_1'
+        spilled_2 = 'ireg_2'
+        spiller_1 = 'ireg_3'
+        spiller_2 = 'ireg_4'
+
+        self.register_use_table.acquire(spilled_1)
+        self.register_use_table.acquire(spilled_2)
+        self.register_use_table.acquire(spiller_1)
+        self.register_use_table.acquire(spiller_2)
+
+        # test normal release
+        self.register_use_table.release(spiller_2)
+        self.assertFalse(spiller_2 in self.register_use_table.lru_cache)
+        self.assertFalse(spiller_2 in self.register_use_table.spilled_registers)
+        self.assertTrue(mips.T1 in self.register_use_table.available_registers)
+
+        # test spilled register release
+        self.register_use_table.release(spilled_1)
+        self.assertFalse(spiller_2 in self.register_use_table.lru_cache)
+        self.assertFalse(spiller_2 in self.register_use_table.spilled_registers)
+        self.assertTrue(0 in self.register_use_table.available_spill_memory_words)
 
     def test_release_all_registers(self):
-        self.fail()
+        spilled_1 = 'ireg_1'
+        spilled_2 = 'ireg_2'
+        spiller_1 = 'ireg_3'
+        spiller_2 = 'ireg_4'
+
+        self.register_use_table.acquire(spilled_1)
+        self.register_use_table.acquire(spilled_2)
+        self.register_use_table.acquire(spiller_1)
+        self.register_use_table.acquire(spiller_2)
+
+        self.register_use_table.release_all()
+        self.assertTrue(mips.T0 in self.register_use_table.available_registers)
+        self.assertTrue(mips.T1 in self.register_use_table.available_registers)
+        self.assertTrue(0 in self.register_use_table.available_spill_memory_words)
+        self.assertTrue(4 in self.register_use_table.available_spill_memory_words)
+        self.assertTrue(8 in self.register_use_table.available_spill_memory_words)
+        self.assertSequenceEqual([], list(self.register_use_table.lru_cache.keys()))
+        self.assertSequenceEqual([], list(self.register_use_table.spilled_registers.keys()))
 
     def test_double_register_use(self):
         self.fail("We aren't supporting two registers for double word purposes yet, cuz it's hard.")

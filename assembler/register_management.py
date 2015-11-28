@@ -104,7 +104,7 @@ class MipsRegisterUseTable(object):
 
         :return:
         """
-        for pseudo_register in itertools.chain(self.lru_cache.keys(), self.spilled_registers.keys()):
+        for pseudo_register in itertools.chain(list(self.lru_cache.keys()), list(self.spilled_registers.keys())):
             self.release(pseudo_register)
 
     def _spill(self, pseudo_register, physical_register):
