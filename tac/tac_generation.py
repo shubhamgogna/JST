@@ -74,8 +74,7 @@ class TacInstruction(object):
 
         parts = tac_str.split(',')
 
-        return cls(instruction=parts[0].trim(),
-                   dest=parts[1].trim() if parts[1] != '-' else TacInstruction.NULL,
+        return cls(instruction=parts[0].trim(), dest=parts[1].trim() if parts[1] != '-' else TacInstruction.NULL,
                    src1=parts[2].trim() if parts[2] != '-' else TacInstruction.NULL,
                    src2=parts[3].trim() if parts[3] != '-' else TacInstruction.NULL)
 
@@ -764,6 +763,7 @@ def CALL(function_name, size):
 
     """
     return TacInstruction(instructions.CALL, function_name, size)
+
 
 def LLAC(size):
     """
