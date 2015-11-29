@@ -22,20 +22,29 @@ class OutOfSpillMemoryException(Exception):
     pass
 
 
-class MipsRegisterUseTable(object):
+class RegisterUseTable(object):
     """ A class for doing the book-keeping of physical register allocation.
 
-    Handles stuff.
+    Uses a sequence of registers that are allowed for general use and a labeled range of bytes in order to manage
+    register use in a MIPS program. In the event that more registers are needed than are available, registers can be
+    'spilled' into the given memory location, for retrieval later if needed. This class maintains a mapping between
+    pseudo-registers (aka "temporaries") and real/physical MIPS registers or spill memory.
+
+    Currently, only single register use is supported. That means no 'doubles' or 'long longs'!
     """
 
     def __init__(self, available_registers, spill_memory_base_label, spill_memory_size, word_size=4):
-        """
+        """ The constructor.
 
-        :param working_register:
-        :param available_registers:
-        :param spill_memory_size:
-        :word_size:
-        :return:
+        Creates a RegisterUseTable with it's allowed set of registers and available spill memory. Arbitrarily sized
+        words are allowed, but (sensible) 4 byte words are used by default.
+
+        :param available_registers: A sequence (preferably set or tuple) of the registers the table is allowed to use
+                                    without reservation.
+        :spill_memory_base_label: The MIPS label where the spill memory is located.
+        :param spill_memory_size: The amount of spill memory available in bytes.
+        :word_size: The size of a word (register capacity) in bytes.
+        :return: A constructed RegisterUseTable object.
         """
 
         self.spill_mem_base_label = spill_memory_base_label
@@ -57,8 +66,9 @@ class MipsRegisterUseTable(object):
         instructions necessary to make use of the register. Everything is returned as a dictionary containing 'register'
         and 'code' keys.
 
-        :param pseudo_register:
-        :return:
+        :param pseudo_register: The name of the pseudo-register.
+        :return: A dictionary containing the MIPS register available for use for the pseudo register and a list of
+                 MIPS code that was used if spilling occurred.
         """
 
         physical_register = None
@@ -85,8 +95,10 @@ class MipsRegisterUseTable(object):
     def release(self, pseudo_register):
         """ Releases any resources held for a pseudo/temporary register (physical register, memory).
 
-        :param pseudo_register:
-        :return:
+        This method should be called whenever possible to free resources for future use.
+
+        :param pseudo_register: The name of the pseudo-register that will no longer be used.
+        :return: None.
         """
 
         if pseudo_register in self.lru_cache:
@@ -102,17 +114,25 @@ class MipsRegisterUseTable(object):
     def release_all(self):
         """ Releases all resources (physical registers, memory) for future use.
 
-        :return:
+        Essentially a clear method for the entire table, as opposed to for a single pseudo-register.
+
+        :return: None.
         """
         for pseudo_register in itertools.chain(list(self.lru_cache.keys()), list(self.spilled_registers.keys())):
             self.release(pseudo_register)
 
     def _spill(self, pseudo_register, physical_register):
-        """ Handles all of the logic for spilling the contents of a physical register into memory.
+        """ A private method for handling the logic for spilling the contents of a physical register into memory.
 
-        :param pseudo_register:
-        :physical_register:
-        :return:
+        Since this method is used as a callback, it cannot return things in the traditional sense. Because of this, the
+        "returned" code and physical register are set to two private class variables, so the programmer must take care
+        to manage these variables appropriately.
+
+        :param pseudo_register: The name of the pseudo-register to be spilled. Aka 'key' for the purposes of the
+                                pylru.lrucache callback.
+        :physical_register: The name of the physical register to be freed/reused. Aka 'value' for the purposes of the
+                                pylru.lrucache callback.
+        :return: None.
         """
 
         self._spill_code = []
@@ -131,8 +151,9 @@ class MipsRegisterUseTable(object):
     def _recover(self, pseudo_register):
         """ Handles the logic for reversing the spilling of a register.
 
-        :param pseudo_register:
-        :return:
+        :param pseudo_register: The name of the pseudo-register whose spilled value is being recovered.
+        :return: A tuple containing the physical register and a list of the MIPS code required to free the physical
+                 register for use.
         """
 
         spill_offset = self.spilled_registers.pop(pseudo_register)
@@ -142,6 +163,7 @@ class MipsRegisterUseTable(object):
         if self.available_registers:
             physical_register = self.available_registers.pop()
             self.lru_cache[pseudo_register] = physical_register
+
         else:
             self.lru_cache[pseudo_register] = None
             physical_register = self._freed_physical_register
@@ -158,7 +180,14 @@ class MipsRegisterUseTable(object):
         return physical_register, code
 
     def __str__(self):
+        """ A method for convenient representation of the table.
 
+        Concatenates the informative members of the class together to summarize the state of the RegisterUseTable. The
+        string does neglect some of the finer details, but should be sufficient for most necessary insights to the
+        table.
+
+        :return: A string representing the state of the RegisterUseTable.
+        """
         lru_cache_str = '{' + ', '.join([str(item[0] +': ' + str(item[1])) for item in self.lru_cache.items()]) + '}'
 
         ret = 'lru cache:             {}\n' \
@@ -171,4 +200,8 @@ class MipsRegisterUseTable(object):
         return ret
 
     def __repr__(self):
+        """ See __str__.
+
+        :return: The result of the __str__ method.
+        """
         return str(self)

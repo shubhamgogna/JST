@@ -16,7 +16,7 @@
 import unittest
 import assembler.mips_registers as mips
 import assembler.mips_instructions as assembler
-from assembler.register_management import MipsRegisterUseTable, OutOfSpillMemoryException
+from assembler.register_management import RegisterUseTable, OutOfSpillMemoryException
 from ticket_counting.ticket_counters import INT_REGISTER_TICKETS
 
 
@@ -32,10 +32,10 @@ class TestRegisterUseTable(unittest.TestCase):
     """
 
     def setUp(self):
-        registers_to_use = (mips.T0, mips.T1)
+        self.registers_to_use = (mips.T0, mips.T1)
         enough_bytes_to_store_two_registers_and_have_a_swap_space = 12
-        self.register_use_table = MipsRegisterUseTable(registers_to_use, SPILL_MEM_LABEL,
-                                                       enough_bytes_to_store_two_registers_and_have_a_swap_space)
+        self.register_use_table = RegisterUseTable(self.registers_to_use, SPILL_MEM_LABEL,
+                                                   enough_bytes_to_store_two_registers_and_have_a_swap_space)
 
     def tearDown(self):
         pass
