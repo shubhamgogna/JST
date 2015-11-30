@@ -571,12 +571,12 @@ def ASSIGN(result, lvalue, rvalue):
 #
 # Memory Access
 #
-def LW(result, address):
-    return TacInstruction(instructions.LW, result, address)
+def LOAD(result, address, size_in_bytes):
+    return TacInstruction(instructions.LOAD, result, address, size_in_bytes)
 
 
-def SW(result, address):
-    return TacInstruction(instructions.SW, result, address)
+def STORE(result, address, size_in_bytes):
+    return TacInstruction(instructions.STORE, result, address, size_in_bytes)
 
 
 def LA(result, address):

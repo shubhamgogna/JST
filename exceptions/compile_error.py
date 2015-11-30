@@ -29,3 +29,7 @@ class CompileError(Exception):
 
         return "{}\nLine {}, Column {}\n{}\n{}".\
             format(self.message, self.line_num, self.token_col, self.source_line, pointer_to_error)
+
+    @classmethod
+    def from_tuple(cls, message, line_col_source):
+        return CompileError(message, line_col_source[0], line_col_source[1], line_col_source[2])

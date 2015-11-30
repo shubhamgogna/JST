@@ -15,6 +15,7 @@
 
 import unittest
 
+from ticket_counting.ticket_counters import UUID_TICKETS, LABEL_TICKETS, INT_REGISTER_TICKETS, FLOAT_REGISTER_TICKETS
 from compiler.compiler_state import CompilerState
 from loggers.logger import Logger
 
@@ -24,6 +25,10 @@ class TestAst(unittest.TestCase):
     def setUp(self):
         self.compiler_state = CompilerState()
         self.enable_debug(False)
+        UUID_TICKETS.next_value = 0
+        LABEL_TICKETS.next_value = 0
+        INT_REGISTER_TICKETS.next_value = 0
+        FLOAT_REGISTER_TICKETS.next_value = 0
 
     def tearDown(self):
         self.compiler_state.teardown()
@@ -110,7 +115,6 @@ class TestAst(unittest.TestCase):
         m = re.match(expected_solution, result)
         print(m)
         self.assertTrue(True if m else False)
-
 
     def test_2d_array_declaration(self):
         data = """

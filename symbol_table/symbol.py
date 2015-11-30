@@ -16,7 +16,8 @@
 import copy
 import itertools
 
-from ast.ast_nodes import SymbolNode
+from tac.tac_generation import SOURCE, LOAD, ADD, FP, create_offset_reference, ZERO
+from ticket_counting.ticket_counters import UUID_TICKETS, FLOAT_REGISTER_TICKETS, INT_REGISTER_TICKETS
 from utils import type_utils
 
 
@@ -29,7 +30,8 @@ class Symbol(object):
         self.global_memory_location = None
         self.activation_frame_offset = None
 
-        self.finalized = False
+        # UUID for AST
+        self.uuid = UUID_TICKETS.get()
 
     def clone(self):
         # TODO Verify this is actually a deepcopy
@@ -37,110 +39,137 @@ class Symbol(object):
 
 
 class VariableSymbol(Symbol):
+    EMPTY_ARRAY_DIM = None
+
     def __init__(self, identifier, lineno, column):
         super(VariableSymbol, self).__init__(identifier, lineno, column)
-        self.array_dims = []
-        self.pointer_modifiers = []
 
+        # In GCC, qualifiers and classes are idempotent
         self.storage_classes = set()
-        # In GCC, qualifiers are idempotent
         self.type_qualifiers = set()
         self.type_specifiers = ''
 
+        # Contains size information for array dimensions
+        self.array_dims = []
+
+        # Contains qualifiers for pointer dimensions
+        self.pointer_dims = []
+
+        # Constant literal value if VariableSymbol is constant
         self.value = None
-
         self.is_parameter = False
-
-    def finalize(self):
-        # TODO:
-        # check the type specifiers for correctness
-        # check the pointers for correctness
-        # check the array dims for correctness
-        # allocate the memory space
-        self.finalized = True
 
     @property
     def immutable(self):
         return type_utils.CONST in self.type_qualifiers
 
-    def get_type_str(self):
-        pointer_str = '*' * len(self.pointer_modifiers) if self.pointer_modifiers else ''
-        array_str = '[' + ']['.join([str(d) for d in self.array_dims]) + ']' if self.array_dims else ''
+    @property
+    def is_array(self):
+        return len(self.array_dims) > 0
 
-        return '{}{}{}'.format(self.type_specifiers, pointer_str, array_str)
+    @property
+    def array_size(self):
+        if self.is_array:
+            multiplier = 1
+            for dim in self.array_dims:
+                multiplier *= dim
+            return multiplier
+        else:
+            raise Exception('VariableSymbol is not an array.')
 
     def add_type_declaration(self, type_declaration):
         self.storage_classes = type_declaration.storage_classes
         self.type_qualifiers = type_declaration.type_qualifiers
         self.type_specifiers = ' '.join(type_declaration.type_specifiers)
 
-    def add_pointer_level(self, pointer_declarations):
-        self.pointer_modifiers.extend(pointer_declarations)
+    def set_array_dims(self, dims):
+        self.array_dims = dims
 
-    def add_array_dimension(self, dimension):
-        self.array_dims.append(dimension)
+    def set_pointer_dims(self, dims):
+        self.pointer_dims = dims
 
     def get_resulting_type(self):
-        return self.get_type_str()
+        return '{} {}{}'.format(self.type_specifiers,
+                                '*' * len(self.pointer_dims),
+                                '[]' * len(self.array_dims)).strip()
 
-    # Basically the same as __str__ but doesn't include the identifier
-    def to_abstract_str(self):
-        pointer_str = '*' * len(self.pointer_modifiers)
-        # TODO (Shubham) Fix since type_declaration is no longer a class member
-        decl_str = str(self.type_declaration) if self.type_declaration else 'void'
+    def set_as_parameter(self):
+        self.is_parameter = True
 
-        array_str = ''
-        for dim in self.array_dims:
-            array_str += '[{}]'.format(dim if dim else '')
+        if len(self.array_dims) > 0:
+            self.array_dims = [self.EMPTY_ARRAY_DIM] * len(self.array_dims)
 
-        return '{}{}{}'.format(decl_str, pointer_str, array_str)
-
-    def type_str(self):
-        array_suffix = '[' + ']['.join([str(dimension) for dimension in self.array_dims]) + ']' if len(self.array_dims) > 0 else ''
-        return '{}{}{}'.format(self.type_specifiers, '*' * len(self.pointer_modifiers), array_suffix)
-
+    # Computes the size in bytes for the VariableSymbol. Pointers will always be 4 bytes (MIPS uses 4 bytes
+    # for a word which is always the size of a pointer). VariableSymbols that are arrays will return the
+    # size in bytes of one element.
+    #
+    # @return Size in bytes
     def size_in_bytes(self):
-        if self.is_parameter and len(self.array_dims) > 0:
-            return 4  # pointer size
-
-        multiplier = 1
-        for dim in self.array_dims:
-            multiplier *= dim
-
-        if len(self.pointer_modifiers) > 0:
-            # MIPS uses 4 bytes for a word (pointers are the size of a word)
-            return multiplier * 4
+        if len(self.pointer_dims) > 0:
+            return 4
         else:
-            return multiplier * type_utils.type_size_in_bytes(self.type_specifiers)
+            return int(type_utils.type_size_in_bytes(self.type_specifiers))
 
     def __str__(self):
-        if self.identifier == '':  # a case like when the symbol is part of a function signature
-            self_str = self.to_abstract_str()
+        qualifier_str = ' '.join(self.type_qualifiers)
+        if len(self.array_dims) > 0:
+            array_dim_list = [str(size) if size is not self.EMPTY_ARRAY_DIM
+                              else '' for size in self.array_dims]
+            array_dim_str = '[' + ']['.join(array_dim_list) + ']'
         else:
-            pointer_str = len(self.pointer_modifiers) * '*' if len(self.pointer_modifiers) > 0 else ''
+            array_dim_str = ''
 
-            storage_class_str = ' '.join(self.storage_classes) + ' ' if self.storage_classes else ''
-            qualifier_str = ' '.join(self.type_qualifiers) + ' ' if self.type_qualifiers else ''
-            specifier_str = self.type_specifiers
-            base_type_str = '{}{}{}'.format(storage_class_str, qualifier_str, specifier_str)
+        pointer_dim_str = '*' * len(self.pointer_dims)
 
-            type_str = '{}{}'.format(base_type_str, pointer_str)
-            array_str = ''
-            for dim in self.array_dims:
-                array_str += '[{}]'.format(dim if dim else '')
-
-            self_str = '{} {}{}'.format(type_str, self.identifier, array_str)
-
-        return self_str
+        return '{} {}{}{}{}'.format(qualifier_str,
+                                    self.type_specifiers,
+                                    (' ' + pointer_dim_str + ' ') if pointer_dim_str != '' else ' ',
+                                    self.identifier,
+                                    array_dim_str).strip()
 
     def __repr__(self):
         return str(self)
+
+    # Defined for GraphViz string generation interface compliance
+    def name(self):
+        return '"{}\\n{}"'.format(str(self), self.uuid)
+
+    # Defined for GraphViz string generation interface compliance
+    def to_graph_viz_str(self):
+        return '\t{} -> {{}};\n'.format(self.name())
+
+    # Defined for 3AC generation interface compliance
+    def to_3ac(self, get_rval=True, include_source=False):
+        output = [SOURCE(self.lineno, self.column)]
+
+        # Get ticket to copy memory location
+        if type_utils.is_floating_point_type(self.get_resulting_type()):
+            reg = FLOAT_REGISTER_TICKETS.get()
+        else:
+            reg = INT_REGISTER_TICKETS.get()
+
+        if self.global_memory_location:
+            address = self.global_memory_location
+        else:
+            address = create_offset_reference(self.activation_frame_offset, FP)
+
+        if get_rval:
+            output.append(LOAD(reg, address, self.size_in_bytes()))
+            return {'3ac': output, 'rvalue': reg}
+
+        else:
+            output.append(ADD(reg, address, ZERO))
+            return {'3ac': output, 'lvalue': reg}
 
 
 class FunctionSymbol(Symbol):
 
     def __init__(self, identifier, lineno, column):
         super(FunctionSymbol, self).__init__(identifier, lineno, column)
+
+        # Initialize as incomplete symbol
+        self.finalized = False
+
         # Defines what parameters this function takes
         # It is a list of VariableSymbols that may or may not have identifiers
         self.named_parameters = []
@@ -148,19 +177,9 @@ class FunctionSymbol(Symbol):
         self.return_type_pointer_modifiers = []
         self.return_type_specifiers = ''
 
-        self.activation_frame_size = 0  # the variables and params, doesn't count stored registers
-
-    @classmethod
-    def from_variable_symbol(cls, variable_symbol):
-        if not isinstance(variable_symbol, VariableSymbol):
-            raise Exception("Can't construct a FunctionSymbol from something that isn't a VariableSymbol")
-        return FunctionSymbol(variable_symbol.identifier, variable_symbol.lineno, variable_symbol.column)
-
-    def parameter_types_match(self, parameter_type_list):
-        for signature_symbol, parameter_symbol in itertools.zip_longest(self.named_parameters, parameter_type_list):
-            if signature_symbol.to_abstract_str() != parameter_symbol.to_abstract_str():
-                return False
-        return True
+        # Size in bytes of all variables and params
+        # Doesn't count stored registers
+        self.activation_frame_size = 0
 
     def add_return_type_declaration(self, type_declaration):
         self.return_type_specifiers = ' '.join(type_declaration.type_specifiers)
@@ -169,9 +188,6 @@ class FunctionSymbol(Symbol):
         if self.finalized:
             raise Exception('Attempted redefinition of function {}.'.format(self.identifier))
         self.named_parameters = parameter_type_list
-
-        for named_parameter in self.named_parameters:
-            named_parameter.is_parameter = True
 
     def arguments_match_parameter_types(self, argument_list):
         if len(self.named_parameters) != len(argument_list):
@@ -182,13 +198,9 @@ class FunctionSymbol(Symbol):
 
         for parameter, argument in itertools.zip_longest(self.named_parameters, argument_list):
 
-            if isinstance(argument, SymbolNode):
-                cast_result, message = type_utils.can_assign(parameter.get_resulting_type(), argument.symbol.get_resulting_type())
-            else:
-                cast_result, message = type_utils.can_assign(parameter.get_resulting_type(), argument.get_resulting_type())
-
+            cast_result, message = type_utils.can_assign(parameter.get_resulting_type(), argument.get_resulting_type())
             if cast_result == type_utils.INCOMPATIBLE_TYPES:
-                raise Exception(message)
+                return False, message + ' for parameter {}'.format(parameter.identifier)
 
         return True, None
 
@@ -196,13 +208,11 @@ class FunctionSymbol(Symbol):
         return self.return_type_specifiers
 
     def __str__(self):
-        decl_str = str(self.return_type_specifiers) if self.return_type_specifiers != '' else 'void'
         args_as_strings = ''
-
         if self.named_parameters:
             args_as_strings = ', '.join([str(symbol) for symbol in self.named_parameters])
 
-        return '{} {}({})'.format(decl_str, self.identifier, args_as_strings)
+        return '{} {}({})'.format(self.return_type_specifiers, self.identifier, args_as_strings)
 
     def __repr__(self):
         return str(self)

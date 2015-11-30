@@ -22,7 +22,7 @@ from loggers.logger import Logger
 class TestTac(unittest.TestCase):
 
     def setUp(self):
-        self.compiler_state = CompilerState(print_productions=True)
+        self.compiler_state = CompilerState(print_productions=False)
         self.enable_debug(False)
 
     def tearDown(self):

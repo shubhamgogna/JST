@@ -26,68 +26,6 @@ from tac.tac_generation import *
 
 
 ##
-# Node for the declaration of an array using the symbol, dimensions, and qualifiers.
-##
-class ArrayDeclaration(BaseAstNode):
-    """
-    Requires: Type and dimensional information from the symbol build in the symbol table.
-    Output:   Probably no direct output in the form of temporary registers, but the memory assigned for the
-              thing should be recorded somewhere.
-    """
-
-    def __init__(self, symbol, dimensions, initializers, **kwargs):
-        super(ArrayDeclaration, self).__init__(**kwargs)
-
-        if initializers is None:
-            initializers = []
-
-        self.dimensions = dimensions
-        self.initializers = initializers[:min(len(initializers), symbol.array_dims[0])]
-
-        self.symbol = symbol
-
-    def name(self, arg=None):
-        # raise NotImplementedError('Add the array dimensions and the Symbol to the array declaration node.')
-        array_dims = '[' + ']['.join([str(dimension) for dimension in self.dimensions]) + ']'
-        arg = self.symbol.type_str() + array_dims + ' ' + self.symbol.identifier
-        return super(ArrayDeclaration, self).name(arg)
-
-    @property
-    def children(self):
-        children = []
-        return tuple(children)
-
-    def to_3ac(self, include_source=False):
-        output = [SOURCE(self.linerange[0], self.linerange[1])]
-
-        if not self.initializers:
-            return {'3ac': output}
-
-        # Get a new register for the offset
-        offset_reg = INT_REGISTER_TICKETS.get()
-
-        # Initialize offset with base address
-        if self.symbol.global_memory_location:
-            output.append(ADDU(offset_reg, self.symbol.global_memory_location, ZERO))
-        else:
-            output.append(ADDU(offset_reg, create_offset_reference(self.symbol.activation_frame_offset, FP), ZERO))
-
-        # Loop through initializers and copy words
-        for item in self.initializers:
-            item_tac = item.to_3ac(get_rval=True)
-            if '3ac' in item_tac:
-                output.extend(item_tac['3ac'])
-
-            # Store the value into memory
-            output.append(SW(offset_reg, item_tac['rvalue']))
-
-            # Move to the next word
-            output.append(ADDIU(offset_reg, offset_reg, 4))
-
-        return {'3ac': output}
-
-
-##
 # Node for referencing an array through subscripts.
 ##
 class ArrayReference(BaseAstNode):
@@ -110,9 +48,10 @@ class ArrayReference(BaseAstNode):
         """
         For interface compliance with the other expression nodes.
         """
-        type_str = self.symbol.get_type_str()
+        type_str = self.symbol.get_resulting_type()
+        # TODO figure out the resulting type after subscripting - Shubham (sg-variable-symbol)
         first_open_bracket = type_str.index('[')
-        return type_str[:first_open_bracket]
+        return type_str[:first_open_bracket - 1]
 
     @property
     def immutable(self):
@@ -145,13 +84,16 @@ class ArrayReference(BaseAstNode):
         if '3ac' in subscript_tac:
             output.extend(subscript_tac['3ac'])
 
-        # Create a new register to hold the offset value
-        offset_reg = INT_REGISTER_TICKETS.get()
-        output.append(ADDU(offset_reg, 0, subscript_tac['rvalue']))
+        # The first subscript is the initial value for the subscript
+        offset_reg = subscript_tac['rvalue']
 
         # range(a,b) is (inclusive, exclusive)
         for i in range(0, dim_count - 1):
-            output.append(MULIU(offset_reg, offset_reg, self.symbol.array_dims[i + 1]))
+            if self.symbol.is_parameter:
+                output.append(MUL(offset_reg, offset_reg,
+                                  create_offset_reference(self.symbol.activation_frame_offset + i + 2, FP)))
+            else:
+                output.append(MULIU(offset_reg, offset_reg, self.symbol.array_dims[i + 1]))
 
             subscript_tac = self.subscripts[i + 1].to_3ac(get_rval=True)
             if '3ac' in subscript_tac:
@@ -160,30 +102,36 @@ class ArrayReference(BaseAstNode):
             output.append(ADDU(offset_reg, offset_reg, subscript_tac['rvalue']))
 
         # Offset by symbol size
-        output.append(MULIU(offset_reg, offset_reg, type_utils.get_bit_size(self.symbol.type_specifiers) // 8))
+        output.append(MULIU(offset_reg, offset_reg, self.symbol.size_in_bytes()))
 
-        # Add offset to symbol base address
-        base_address = 0
-        end_address = 0
-        size_of_element = 4  # word size for now cuz I'm lazy
+        # Check bounds
+        if self.symbol.is_parameter:
 
-        product = 1
-        for dim in self.symbol.array_dims:
-            product *= dim
+            base_address_reg = INT_REGISTER_TICKETS.get()
+            end_address_reg = INT_REGISTER_TICKETS.get()
+            output.append(LOAD(base_address_reg,
+                               create_offset_reference(self.symbol.activation_frame_offset, FP), 4))
+            output.append(LOAD(end_address_reg,
+                               create_offset_reference(self.symbol.activation_frame_offset + 1, FP), 4))
+            output.append(BOUND(offset_reg, base_address_reg, end_address_reg))
 
-        if self.symbol.global_memory_location:
-            base_address = self.symbol.global_memory_location
-            end_address = base_address + (product * size_of_element)
-            output.append(ADDU(offset_reg, offset_reg, self.symbol.global_memory_location))
         else:
-            base_address = create_offset_reference(self.symbol.activation_frame_offset, FP)
-            end_address =  create_offset_reference(self.symbol.activation_frame_offset + (product * size_of_element), FP)
-            output.append(ADDU(offset_reg, offset_reg, create_offset_reference(self.symbol.activation_frame_offset , FP)))
 
-        output.append(BOUND(offset_reg, base_address, end_address))
+            array_size_in_bytes = self.symbol.array_size * self.symbol.size_in_bytes()
+
+            if self.symbol.global_memory_location:
+                base_address = self.symbol.global_memory_location
+                end_address = base_address + array_size_in_bytes
+                output.append(ADDIU(offset_reg, offset_reg, self.symbol.global_memory_location))
+            else:
+                base_address = create_offset_reference(self.symbol.activation_frame_offset, FP)
+                end_address = create_offset_reference(self.symbol.activation_frame_offset + array_size_in_bytes, FP)
+                output.append(ADDU(offset_reg, offset_reg, base_address))
+
+            output.append(BOUND(offset_reg, base_address, end_address))
 
         if get_rval:
-            output.append(LW(offset_reg, offset_reg))
+            output.append(LOAD(offset_reg, offset_reg, self.symbol.size_in_bytes()))
             return {'3ac': output, 'rvalue': offset_reg}
         else:
             return {'3ac': output, 'lvalue': offset_reg}
@@ -379,6 +327,10 @@ class Cast(BaseAstNode):
         self.to_type = to_type
         self.expression = expression
 
+    @property
+    def immutable(self):
+        return False
+
     def get_resulting_type(self):
         return self.to_type
 
@@ -440,16 +392,17 @@ class CompoundStatement(BaseAstNode):
     def to_3ac(self, include_source=False):
         output = [SOURCE(self.linerange[0], self.linerange[1])]
 
-        # gen 3ac for declaration_list
+        # Gen 3ac for declaration_list
         if self.declaration_list is not None:
             for item in self.declaration_list:
                 result = item.to_3ac()
                 output.extend(result['3ac'])
 
-        # gen 3ac for statement_list
-        for item in self.statement_list:
-            result = item.to_3ac()
-            output.extend(result['3ac'])
+        # Gen 3ac for statement_list
+        if self.statement_list is not None:
+            for item in self.statement_list:
+                result = item.to_3ac()
+                output.extend(result['3ac'])
 
         return {'3ac': output}
 
@@ -466,14 +419,8 @@ class Declaration(BaseAstNode):
         self.symbol = symbol
         self.initializer = initializer
 
-        if self.symbol.immutable and isinstance(initializer, Constant):
-            self.symbol.value = initializer.value
-
-    def sizeof(self):
-        return type_utils.type_size_in_bytes(self.symbol.type_str())
-
     def name(self, arg=None):
-        arg = self.symbol.type_str() + ' ' + self.symbol.identifier
+        arg = self.symbol.get_resulting_type() + ' ' + self.symbol.identifier
         return super(Declaration, self).name(arg)
 
     @property
@@ -486,16 +433,40 @@ class Declaration(BaseAstNode):
     def to_3ac(self, include_source=False):
         output = [SOURCE(self.linerange[0], self.linerange[1])]
 
-        if self.initializer:
+        if self.initializer is None:
+            return {'3ac': output}
+
+        if self.symbol.global_memory_location:
+            base_address = self.symbol.global_memory_location
+        else:
+            base_address = create_offset_reference(self.symbol.activation_frame_offset, FP)
+
+        if isinstance(self.initializer, list):
+
+            # Initialize offset with base address
+            offset_reg = INT_REGISTER_TICKETS.get()
+            output.append(ADDU(offset_reg, base_address, ZERO))
+
+            # Loop through initializer and store
+            self.initializer = self.initializer[:min(len(self.initializer), self.symbol.array_dims[0])]
+            for item in self.initializer:
+
+                # Load the value
+                item_tac = item.to_3ac(get_rval=True)
+                if '3ac' in item_tac:
+                    output.extend(item_tac['3ac'])
+
+                # Store the value into memory and move to next
+                output.append(STORE(offset_reg, item_tac['rvalue'], self.symbol.size_in_bytes()))
+                output.append(ADDIU(offset_reg, offset_reg, self.symbol.size_in_bytes()))
+
+        else:
+
             item_tac = self.initializer.to_3ac(get_rval=True)
             if '3ac' in item_tac:
                 output.extend(item_tac['3ac'])
 
-            # Store the value into memory
-            if self.symbol.global_memory_location:
-                output.append(SW(self.symbol.global_memory_location, item_tac['rvalue']))
-            else:
-                output.append(SW(create_offset_reference(self.symbol.activation_frame_offset, FP), item_tac['rvalue']))
+            output.append(STORE(base_address, item_tac['rvalue'], self.symbol.size_in_bytes()))
 
         return {'3ac': output}
 
@@ -602,10 +573,10 @@ class FunctionCall(BaseAstNode):
         return_type = self.function_symbol.get_resulting_type()
         rvalue = INT_REGISTER_TICKETS.get() if type_utils.is_integral_type(return_type) else FLOAT_REGISTER_TICKETS.get()
 
-        # call the prologue macro
+        # Call the prologue macro
         _3ac.append(CALL(self.function_symbol.identifier, self.function_symbol.activation_frame_size))
 
-        # copy the argument values into
+        # Copy the argument values into
         for parameter_template, argument in itertools.zip_longest(self.function_symbol.named_parameters, self.arguments):
             # evaluate the argument expression
             # get register with value of arg
@@ -631,12 +602,12 @@ class FunctionCall(BaseAstNode):
             # store value at memory location indicated by parameter_template
             offset = parameter_template.activation_frame_offset
 
-            if isinstance(argument, SymbolNode) and len(argument.symbol.array_dims) > 0:
+            if len(argument.array_dims) > 0:
                 array_base = INT_REGISTER_TICKETS.get()
-                _3ac.append(LA(array_base, create_offset_reference(argument.symbol.activation_frame_offset, SP)))
+                _3ac.append(LA(array_base, create_offset_reference(argument.activation_frame_offset, SP)))
                 arg_rvalue = array_base
 
-            _3ac.append(SW(arg_rvalue, create_offset_reference(offset, FP)))
+            _3ac.append(STORE(arg_rvalue, create_offset_reference(offset, FP), 4))
 
         # jump to function body
         _3ac.append(JAL(self.function_symbol.identifier))
@@ -645,9 +616,8 @@ class FunctionCall(BaseAstNode):
 
         # copy the return value before it gets obliterated
 
-
+        # Call the epilogue macro
         _3ac.append(LLAC(self.function_symbol.activation_frame_size))
-
 
         return {'3ac': _3ac, 'rvalue': rvalue}
 
@@ -706,27 +676,16 @@ class FunctionDefinition(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        _3ac = [SOURCE(self.linerange[0], self.linerange[1])]
+        _tac = [SOURCE(self.linerange[0], self.linerange[1]), LABEL(self.function_symbol.identifier)]
 
-        # dump label
-        _3ac.append(LABEL(self.function_symbol.identifier))
+        # Generate 3AC for body (always a compound statement)
+        if self.body:
+            result = self.body.to_3ac()
+            _tac.extend(result['3ac'])
 
-        # get 3ac for arguments
-        # for item in self.arguments:
-        #     _3ac.extend(item.to_3ac())
-
-        # gen 3ac for body
-        # body will always be a compound statement.
-        result = self.body.to_3ac()
-        _3ac.extend(result['3ac'])
-        # for item in self.body:
-        #     output.append(item.to_3ac())
-        #     # print(output)
-
-        # jump back the caller
-        _3ac.append(JR(RA))
-
-        return {'3ac': _3ac}
+        # Jump back the caller
+        _tac.append(JR(RA))
+        return {'3ac': _tac}
 
 
 class If(BaseAstNode):
@@ -755,9 +714,8 @@ class If(BaseAstNode):
         output = [SOURCE(self.linerange[0], self.linerange[1])]
 
         # Get two labels
-        if_true_label = IF_TRUE_TICKETS.get()
-        if_false_label = IF_FALSE_TICKETS.get()
-        endif_label = ENDIF_TICKETS.get()
+        label_true = LABEL_TICKETS.get()
+        label_end = LABEL_TICKETS.get()
 
         # Gen 3ac for conditional
         result = self.conditional.to_3ac()
@@ -765,7 +723,7 @@ class If(BaseAstNode):
 
         # Branch based on the contents of the result register of the conditional
         reg = result['rvalue']
-        output.append(BRNE(if_true_label, reg, ZERO))
+        output.append(BRNE(label_true, reg, ZERO))
 
         # Gen 3AC for false branch
         if self.if_false:
@@ -773,16 +731,16 @@ class If(BaseAstNode):
             output.extend(result['3ac'])
 
         # Add jump to end of conditional
-        output.append(BR(endif_label))
+        output.append(BR(label_end))
 
         # Gen 3AC for true branch
-        output.append(LABEL(if_true_label))
+        output.append(LABEL(label_true))
         if self.if_true:
             result = self.if_true.to_3ac()
             output.extend(result['3ac'])
 
         # Dump end label
-        output.append(LABEL(endif_label))
+        output.append(LABEL(label_end))
 
         return {'3ac': output}
 
@@ -911,30 +869,6 @@ class Label(BaseAstNode):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
 
-class PointerDeclaration(BaseAstNode):
-    """
-    Not sure if this should remain an AST node, but rather an info collection class that gets disassembled and
-    absorbed by the Symbol this contributes to.
-    """
-    def __init__(self, qualifiers=None, type_=None, **kwargs):
-        super(PointerDeclaration, self).__init__(**kwargs)
-
-        self.qualifiers = qualifiers if qualifiers else []
-        self.type = type_  # TODO: what does this do/hold?
-
-    def add_qualifiers(self, qualifiers):
-        pass
-
-    @property
-    def children(self):
-        children = []
-        children.append(self.type)
-        return tuple(children)
-
-    def to_3ac(self, include_source=False):
-        raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
-
-
 class Return(BaseAstNode):
     """
     Requires: An appropriately initialized register containing information on where to jump to at the return of the
@@ -972,79 +906,6 @@ class Return(BaseAstNode):
         return {'3ac': output}
 
 
-class SymbolNode(BaseAstNode):
-    """
-    ** I'm not sure about this design, feel free to disagree. **
-    Requires: The info contained here, especially memory where this stuff is declared.
-    Output:   No direct output, but should contain the runtime information of the symbol.
-    """
-    def __init__(self, symbol, **kwargs):
-        super(SymbolNode, self).__init__(**kwargs)
-
-        if symbol:
-            self.symbol = symbol
-        else:
-            raise ValueError('SymbolNode cannot have a \'None\' symbol.')
-
-    def get_resulting_type(self):
-        """
-        For interface compliance with the other expression nodes.
-        """
-        return self.symbol.get_type_str()
-
-    def name(self, arg=None):
-        arg = self.symbol.get_type_str() + '_' + self.symbol.identifier
-        return super(SymbolNode, self).name(arg)
-
-    @property
-    def immutable(self):
-        return self.symbol.immutable
-
-    @property
-    def value(self):
-        if self.immutable:
-            return self.symbol.value
-        else:
-            raise Exception("DEBUG: non-const symbols don't maintain a value")
-
-    @property
-    def children(self):
-        children = []
-        return tuple(children)
-
-    def to_3ac(self, get_rval=True, include_source=False):
-
-        output = [SOURCE(self.linerange[0], self.linerange[1])]
-
-        # get ticket to copy memory location
-        if type_utils.is_floating_point_type(self.symbol.get_resulting_type()):
-            reg = FLOAT_REGISTER_TICKETS.get()
-        else:
-            reg = INT_REGISTER_TICKETS.get()
-
-        if self.symbol.global_memory_location:
-
-            if get_rval:
-                # return {'register': 'Global_{}'.format(self.symbol.global_memory_location)}
-                output.append(LW(reg,self.symbol.global_memory_location))
-                return {'3ac': output, 'rvalue': reg}
-
-            else:
-                output.append(ADD(reg, self.symbol.global_memory_location))
-                return {'3ac': output, 'lvalue': reg}
-
-        else:
-            # return {'register': 'Frame_{}'.format(self.symbol.activation_frame_offset)}
-
-            if get_rval:
-                output.append(LW(reg, str(self.symbol.activation_frame_offset) + '($fp)'))
-                return {'3ac': output, 'rvalue': reg}
-
-            else:
-                output.append(ADDI(reg, str(self.symbol.activation_frame_offset) + '($fp)', 0))
-                return {'3ac': output, 'lvalue': reg}
-
-
 class UnaryOperator(BaseAstNode):
     """
     Requires: An lvalue for the operation to operate on.
@@ -1074,14 +935,14 @@ class UnaryOperator(BaseAstNode):
         output = [SOURCE(self.linerange[0], self.linerange[1])]
 
         # get memory location of expression by calling to3ac function
-        result = (self.expression.to_3ac(get_rval = False))
+        result = (self.expression.to_3ac(get_rval=False))
         if '3ac' in result:
             output.extend(result['3ac'])
         value_reg = result['lvalue']
 
         # get the rvalue
         rvalue = INT_REGISTER_TICKETS.get()
-        output.append(LW(rvalue, value_reg))
+        output.append(LOAD(rvalue, value_reg, 4))
 
         # make 2 variables: 1 to point to the register this function returns, 1 to point to the register where the ++
         # will happen
@@ -1103,7 +964,7 @@ class UnaryOperator(BaseAstNode):
              output.append(SUBI(rvalue, rvalue, 1))
 
         # store updated value
-        output.append(SW(value_reg, rvalue))
+        output.append(STORE(value_reg, rvalue, 4))
 
         return {'3ac': output, 'rvalue': return_reg}
 
