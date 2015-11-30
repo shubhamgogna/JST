@@ -14,9 +14,9 @@
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
-import assembler.mips_registers as mips
-import assembler.mips_instructions as assembler
-from assembler.register_management import RegisterUseTable, OutOfSpillMemoryException
+import mips.registers as mips
+import mips.instructions as assembler
+from mips.register_management import RegisterUseTable, OutOfSpillMemoryException
 from ticket_counting.ticket_counters import INT_REGISTER_TICKETS
 
 
@@ -84,7 +84,7 @@ class TestRegisterUseTable(unittest.TestCase):
         self.assertEqual(expected_result, result)
 
         # recovering a spilled register's value from memory should not only get the register, but also provide the
-        # assembler code that swaps the values for the temporaries using the spill memory
+        # mips code that swaps the values for the temporaries using the spill memory
         expected_result = {'register': mips.T1, 'code': [assembler.SW(mips.T1, assembler.offset_from_label(SPILL_MEM_LABEL, 4)),
                                                          assembler.LW(mips.T1, assembler.offset_from_label(SPILL_MEM_LABEL, 0))]}
         result = self.register_use_table.acquire(pseudo_registers[0])

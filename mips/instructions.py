@@ -21,11 +21,11 @@ def offset_from_label(label, offset):
 class MipsInstruction(object):
     NULL = None
 
-    def __init__(self, instruction: str, dest: str = NULL, src1: str = NULL, src2: str = NULL):
+    def __init__(self, instruction: str, slot_0: str = NULL, slot_1: str = NULL, slot_2: str = NULL):
         self.instruction = instruction
-        self.dest = dest
-        self.src1 = src1
-        self.src2 = src2
+        self.slot_0 = slot_0
+        self.slot_1 = slot_1
+        self.slot_2 = slot_2
 
     def __str__(self):
         return repr(self)
@@ -38,15 +38,33 @@ class MipsInstruction(object):
         ret = ''
         if self.instruction:  # TODO: fill in with custom logic for "non-instructions" like comment
             ret = '{:<15} {:<15}, {:<15}, {:<15}'.format(self.instruction,
-                                                         self.dest if self.dest is not MipsInstruction.NULL else '-',
-                                                         self.src1 if self.src1 is not MipsInstruction.NULL else '-',
-                                                         self.src2 if self.src2 is not MipsInstruction.NULL else '-')
+                                                         self.slot_0 if self.slot_0 is not MipsInstruction.NULL else '-',
+                                                         self.slot_1 if self.slot_1 is not MipsInstruction.NULL else '-',
+                                                         self.slot_2 if self.slot_2 is not MipsInstruction.NULL else '-')
 
         return ret
 
     def __eq__(self, other):
-        return self.instruction == other.instruction and self.dest == other.dest and self.src1 == other.src1 and \
-               self.src2 == other.src2
+        return self.instruction == other.instruction and self.slot_0 == other.slot_0 and self.slot_1 == other.slot_1 and \
+               self.slot_2 == other.slot_2
+
+
+
+#
+# ADMINISTRATIVE
+#
+class COMMENT(MipsInstruction):
+    def __init__(self, text):
+        super(COMMENT, self).__init__(instruction='comment', slot_0=text)
+
+class SOURCE(MipsInstruction):
+    def __init__(self, start_line, end_line):
+        super(SOURCE, self).__init__(instruction='source', slot_0=start_line, slot_1=end_line)
+
+class TAC(MipsInstruction):
+    def __init__(self, tac_str):
+        super(TAC, self).__init__(instruction='comment', slot_0=tac_str)
+
 
 
 #

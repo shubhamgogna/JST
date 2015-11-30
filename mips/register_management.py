@@ -15,7 +15,7 @@
 
 import itertools
 import pylru
-import assembler.mips_instructions as assembler
+import mips.instructions as assembler
 
 
 class OutOfSpillMemoryException(Exception):

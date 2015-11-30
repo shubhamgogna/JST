@@ -10,7 +10,7 @@ class OutOfSpillMemoryException(Exception):
 
 
 class MipsRegisterUseTable(object):
-    def __init__(self, available_registers: typing.Sequence[str], spill_memory_base_label: str, spill_memory_size: int,
+    def __init__(self, available_registers: typing.Tuple[str], spill_memory_base_label: str, spill_memory_size: int,
                  word_size: int = 4): ...
 
     def acquire(self, pseudo_register: str) -> dict: ...
