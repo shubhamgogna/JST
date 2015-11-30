@@ -38,12 +38,12 @@ class TacInstruction(object):
         __str__ is supposed to be "human readable, so this method will produce a more concise string that will fit in
         the terminal better for debugging.
         """
-        # ret = ''
-        # if self.instruction == instructions.COMMENT:
-        #     ret = '{}: {}'.format(instructions.COMMENT, self.dest)
-        # else:
-        #     ret = '{}, {}, {}, {}'.format(self.instruction, self.dest, self.src1, self.src2)
-        #
+        ret = ''
+        if self.instruction == instructions.COMMENT:
+            ret = '{}: {}'.format(instructions.COMMENT, self.dest)
+        else:
+            ret = '{}, {}, {}, {}'.format(self.instruction, self.dest, self.src1, self.src2)
+
         # return ret
         return repr(self)
 
@@ -62,7 +62,7 @@ class TacInstruction(object):
         else:
             ret = '{:<15}, {:<15}, {:<15}, {:<15}'.format(self.instruction,
                                                           self.dest if self.dest is not TacInstruction.NULL else '-',
-                                                     self.src1 if self.src1 is not TacInstruction.NULL else '-',
+                                                          self.src1 if self.src1 is not TacInstruction.NULL else '-',
                                                           self.src2 if self.src2 is not TacInstruction.NULL else '-')
 
         return ret
@@ -74,8 +74,7 @@ class TacInstruction(object):
 
         parts = tac_str.split(',')
 
-        return cls(instruction=parts[0].trim(),
-                   dest=parts[1].trim() if parts[1] != '-' else TacInstruction.NULL,
+        return cls(instruction=parts[0].trim(), dest=parts[1].trim() if parts[1] != '-' else TacInstruction.NULL,
                    src1=parts[2].trim() if parts[2] != '-' else TacInstruction.NULL,
                    src2=parts[3].trim() if parts[3] != '-' else TacInstruction.NULL)
 
@@ -764,6 +763,7 @@ def CALL(function_name, size):
 
     """
     return TacInstruction(instructions.CALL, function_name, size)
+
 
 def LLAC(size):
     """

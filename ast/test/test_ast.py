@@ -99,17 +99,22 @@ class TestAst(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        print(ast.to_graph_viz_str())
+        result = ast.to_graph_viz_str()
+        print(result)
 
-        solution = 'digraph {\n' \
-                   '\t"FileAST\\n00006" -> {"FunctionDefinition\\nint main\\n00005"};\n' \
-                   '\t"FunctionDefinition\\nint main\\n00005" -> {"CompoundStatement\\n00003"};\n' \
-                   '\t"CompoundStatement\\n00003" -> {"Declaration\\nint [] i\\n00002"};\n' \
-                   '\t"Declaration\\nint [] i\\n00002" -> {};\n' \
-                   '}'
+        import re
 
-        self.maxDiff = None
-        self.assertEqual(solution, ast.to_graph_viz_str())
+        expected_solution = \
+            'digraph {\n' \
+                '\t"FileAST\\\\n\d\d\d\d\d" -> {"FunctionDefinition\\\\nint main\\\\n\d\d\d\d\d"};\n' \
+                '\t"FunctionDefinition\\\\nint main\\\\n\d\d\d\d\d" -> {"CompoundStatement\\\\n\d\d\d\d\d"};\n' \
+                '\t"CompoundStatement\\\\n\d\d\d\d\d" -> {"ArrayDeclaration\\\\nint\[5\]\[5\] i\\\\n\d\d\d\d\d"};\n' \
+                '\t"ArrayDeclaration\\\\nint\[5\]\[5\] i\\\\n\d\d\d\d\d" -> {};\n' \
+            '}'
+
+        m = re.match(expected_solution, result)
+        print(m)
+        self.assertTrue(True if m else False)
 
     def test_2d_array_declaration(self):
         data = """

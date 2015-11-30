@@ -18,7 +18,8 @@ import itertools
 from ast.base_ast_node import BaseAstNode
 from utils import type_utils
 from utils import operator_utils
-from ticket_counting.ticket_counters import LABEL_TICKETS
+from ticket_counting.ticket_counters import LABEL_TICKETS, LOOP_CONDITION_TICKETS, LOOP_BODY_TICKETS, LOOP_EXIT_TICKETS, \
+    IF_TRUE_TICKETS, ENDIF_TICKETS, IF_FALSE_TICKETS
 from ticket_counting.ticket_counters import INT_REGISTER_TICKETS
 from ticket_counting.ticket_counters import FLOAT_REGISTER_TICKETS
 from tac.tac_generation import *
@@ -797,9 +798,9 @@ class IterationNode(BaseAstNode):
 
     def to_3ac(self, include_source=False):
         output = [SOURCE(self.linerange[0], self.linerange[1])]
-        condition_check_label = LABEL_TICKETS.get()
-        condition_ok_label = LABEL_TICKETS.get()
-        loop_exit_label = LABEL_TICKETS.get()
+        condition_check_label = LOOP_CONDITION_TICKETS.get()
+        condition_ok_label = LOOP_BODY_TICKETS.get()
+        loop_exit_label = LOOP_EXIT_TICKETS.get()
 
         # Check for pre-test loop
         if not self.is_pre_test_loop:
