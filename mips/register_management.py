@@ -146,7 +146,7 @@ class RegisterUseTable(object):
         self.spilled_registers[pseudo_register] = spill_offset
 
         self._spill_code = [
-            assembler.SW(physical_register, assembler.offset_from_label(self.spill_mem_base_label, spill_offset))]
+            assembler.SW(physical_register, assembler.offset_label_immediate(self.spill_mem_base_label, spill_offset))]
 
     def _recover(self, pseudo_register):
         """ Handles the logic for reversing the spilling of a register.
@@ -173,7 +173,7 @@ class RegisterUseTable(object):
             self.lru_cache[pseudo_register] = physical_register
 
             code.append(
-                assembler.LW(physical_register, assembler.offset_from_label(self.spill_mem_base_label, spill_offset)))
+                assembler.LW(physical_register, assembler.offset_label_immediate(self.spill_mem_base_label, spill_offset)))
 
         self.available_spill_memory_words.append(spill_offset)
 

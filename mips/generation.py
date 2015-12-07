@@ -13,18 +13,22 @@
 # You should have received a copy of the GNU General Public License
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
 import sys
-
 import mips.register_management as mrm
 import mips.registers as mr
 import mips.instructions as mi
 from tac.tac_generation import TacInstruction
+import tac.tac_generation as tac_gen
 import tac.instructions as taci
+import mips.macros as mm
 
 
-DEFAULT_TEMPROARY_REGISTER_SET = {mr.T0, mr.T1, mr.T2, mr.T3, mr.T4, mr.T5, mr.T6, mr.T7, mr.T8, mr.T9}
+WORD_SIZE = 4
+
+DEFAULT_TEMPROARY_REGISTER_SET = (mr.T0, mr.T1, mr.T2, mr.T3, mr.T4, mr.T5, mr.T6, mr.T7, mr.T8, mr.T9)
 
 DEFAULT_SPILL_MEMORY_LABEL = 'SPILL_MEMORY'
 DEFUALT_SPILL_MEMORY_SIZE = 128  # bytes
+
 
 
 class MipsGenerator(object):
@@ -32,6 +36,7 @@ class MipsGenerator(object):
 
     This object conducts the translation from 3AC to MIPS and contains the results within itself.
     """
+
     def __init__(self, compiler_state=None, temporary_registers=DEFAULT_TEMPROARY_REGISTER_SET,
                  spill_mem_label=DEFAULT_SPILL_MEMORY_LABEL, spill_mem_size=DEFUALT_SPILL_MEMORY_SIZE):
         """ The constructor.
@@ -96,32 +101,196 @@ class MipsGenerator(object):
 
         :return: None.
         """
+
+        self.mips_output.extend(mm.SAVE_REGISTER_MACRO.definition())
+        self.mips_output.extend(mm.RESTORE_REGISTER_MACRO.definition())
+        self.mips_output.extend(mm.FUNCTION_PROLOGUE_MACRO.definition())
+        self.mips_output.extend(mm.FUNCTION_EPILOGUE_MACRO.definition())
+
         for instruction in self.source_tac:
             assert (isinstance(instruction, TacInstruction))
             if instruction.instruction == taci.SOURCE:
-                self.source(instruction)
+                self._source(instruction)
             elif instruction.instruction == taci.COMMENT:
-                self.comment(instruction)
+                self._comment(instruction)
             else:
-                self.mips_output.append(mi.TAC(str(instruction)))
+                self.mips_output.append(mi.TAC(str(instruction)))  # TODO: make it configurable to disable this
 
-                if instruction.instruction == taci.LW:
-                    self.load_word(instruction)
+                if instruction.instruction == taci.DATA:
+                    self._data_section(instruction)
 
-    def source(self, t):
+                elif instruction.instruction == taci.TEXT:
+                    self._text_section(instruction)
+
+                elif instruction.instruction == taci.LABEL:
+                    self._label(instruction)
+
+                elif instruction.instruction == taci.CALL_PROC:
+                    self._call_procedure(instruction)
+
+                elif instruction.instruction == taci.BEGIN_PROC:
+
+                    pass
+
+                    self._begin_procedure(instruction)
+
+                elif instruction.instruction == taci.END_PROC:
+
+                    pass
+
+                    self._end_procedure(instruction)
+
+                elif instruction.instruction == taci.LI:
+                    self._load_immediate(instruction)
+
+                elif instruction.instruction == taci.LW:
+                    self._load_word(instruction)
+
+                elif instruction.instruction == taci.SW:
+                    self._store_word(instruction)
+
+                elif instruction.instruction == taci.BR:
+                    self._branch(instruction)
+
+                # elif instruction.instruction == taci.BRNE:
+
+                elif instruction.instruction == taci.JR:
+                    self._jump_to_register_value(instruction)
+
+                elif instruction.instruction == taci.ADDIU:
+                    self._add_immediate_unsigned(instruction)
+
+
+                elif instruction.instruction == taci.RETURN:
+                    self._return(instruction)
+
+
+                # elif instruction.instruction == taci.LT:
+
+                else:
+                    raise NotImplementedError("{} 3AC -> MIPS is not implemented!".format(instruction.instruction))
+
+    def _source(self, t):
         self.mips_output.append(mi.SOURCE(start_line=t.dest, end_line=t.src1))
 
-    def comment(self, t):
+    def _comment(self, t):
         self.mips_output.append(mi.COMMENT(text=t.dest))
 
-    def load_word(self, t):
+    def _data_section(self, t):
+        self.mips_output.append(mi.DATA())
+
+    def _text_section(self, t):
+        self.mips_output.append(mi.TEXT())
+
+    def _label(self, t):
+        self.mips_output.append(mi.LABEL(t.dest))
+
+    def _call_procedure(self, t):
+        # push the temporary registers on the stack
+        self.mips_output.append(mm.SAVE_REGISTER_MACRO.call())
+
+        # load the argument registers
+        # (likely unnecessary since we have decided to include arguments in our frame)
+
+        # jump and link to the procedure
+        self.mips_output.append(mi.JAL(t.dest))
+
+        # retake the registers that were stored after the call
+        self.mips_output.append(mm.RESTORE_REGISTER_MACRO.call())
+
+    def _begin_procedure(self, t):
+        # raise NotImplementedError
+        pass
+
+    def _end_procedure(self, t):
+        # raise NotImplementedError()
+        pass
+
+    def _load_immediate(self, t):
+        result = self.register_table.acquire(t.dest)
+        self.mips_output.extend(result['code'])
+        self.mips_output.append(mi.LI(result['register'], t.src1))
+
+    def _load_word(self, t):
         # do a register/argument check
 
         # generate the mips code
 
         raise NotImplementedError()
 
-    def load_address(self, t):
+    def _store_word(self, t):
+        dest_register = None
+
+        result = self.register_table.acquire(t.dest)
+        self.mips_output.extend(result['code'])
+        dest_register = result['register']
+
+        self.mips_output.append(mi.SW(dest_register, memory_address=t.src1))
+        # TODO: ensure that the address is handled for all of the variants
+        # ($t2), 100($t2), 100, label, label + immediate, label($t2), label + immediate($t2)
+
+    def _load_address(self, t):
         raise NotImplementedError()
 
-        # one of these methods for every 3AC instruction we made
+    def _add_immediate_unsigned(self, t):
+        dest_register = None
+        src1_register = None
+        src2_register = None
+
+        result = self.register_table.acquire(t.dest)
+        self.mips_output.extend(result['code'])
+        dest_register = result['register']
+
+        if t.src1 not in tac_gen.CONSTANT_REGISTERS:
+            result = self.register_table.acquire(t.src1)
+            self.mips_output.extend(result['code'])
+            src1_register = result['register']
+        else:
+            src1_register = self.tac_special_register_to_mips(t.src1)
+
+        # if t.src2 in tac_gen.CONSTANT_REGISTERS:
+        #     result = self.register_table.acquire(t.src2)
+        #     self.mips_output.extend(result['code'])
+        #     src2_register = result['register']
+
+        self.mips_output.append(mi.ADDIU(dest_register, src1_register, t.src2))
+
+    def _branch(self, t):
+        self.mips_output.append(mi.J(t.dest))
+
+    def _jump_to_register_value(self, t):
+        result = self.register_table.acquire(t.dest)
+        self.mips_output.extend(result['code'])
+        self.mips_output.append(mi.JR(result['register']))
+
+    def _return(self, t):
+        result = self.register_table.acquire(t.dest)
+        self.mips_output.extend(result['code'])
+        register = result['register']
+        self.mips_output.append(mi.ADD(mr.V0, register, mr.ZERO))
+
+        # TODO: the parameter needs to be the size of the function's variables
+        self.mips_output.append(mm.FUNCTION_EPILOGUE_MACRO.call(mr.ZERO))
+
+    @staticmethod
+    def tac_special_register_to_mips(tac_register):
+        if tac_register == tac_gen.ZERO:
+            return mr.ZERO
+
+        elif tac_register == tac_gen.GP:
+            return mr.GP
+
+        elif tac_register == tac_gen.FP:
+            return mr.FP
+
+        elif tac_register == tac_gen.SP:
+            return mr.SP
+
+        elif tac_register == tac_gen.RA:
+            return mr.RA
+
+        elif tac_register == tac_gen.V0:
+            return mr.V0
+
+        else:
+            raise Exception('No MIPS equivalent for 3AC register {}'.format(tac_register))

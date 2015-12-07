@@ -79,7 +79,7 @@ class ArrayDeclaration(BaseAstNode):
                 output.extend(item_tac['3ac'])
 
             # Store the value into memory
-            output.append(SW(offset_reg, item_tac['rvalue']))
+            output.append(SW(item_tac['rvalue'], offset_reg))
 
             # Move to the next word
             output.append(ADDIU(offset_reg, offset_reg, 4))
@@ -493,9 +493,9 @@ class Declaration(BaseAstNode):
 
             # Store the value into memory
             if self.symbol.global_memory_location:
-                output.append(SW(self.symbol.global_memory_location, item_tac['rvalue']))
+                output.append(SW(item_tac['rvalue'], self.symbol.global_memory_location))
             else:
-                output.append(SW(create_offset_reference(self.symbol.activation_frame_offset, FP), item_tac['rvalue']))
+                output.append(SW(item_tac['rvalue'], create_offset_reference(self.symbol.activation_frame_offset, FP)))
 
         return {'3ac': output}
 
@@ -540,7 +540,7 @@ class FileAST(BaseAstNode):
 
         output.append(TEXT())
         # insert the call to main
-        output.append(CALL(self.compiler_state.main_function.identifier, self.compiler_state.main_function.activation_frame_size))
+        output.append(CALL_PROC(self.compiler_state.main_function.identifier, self.compiler_state.main_function.activation_frame_size))
         # if we did the argc, argv versions, that stuff would go here
 
         output.append(LLAC(self.compiler_state.main_function.activation_frame_size))
@@ -603,7 +603,7 @@ class FunctionCall(BaseAstNode):
         rvalue = INT_REGISTER_TICKETS.get() if type_utils.is_integral_type(return_type) else FLOAT_REGISTER_TICKETS.get()
 
         # call the prologue macro
-        _3ac.append(CALL(self.function_symbol.identifier, self.function_symbol.activation_frame_size))
+        _3ac.append(CALL_PROC(self.function_symbol.identifier, self.function_symbol.activation_frame_size))
 
         # copy the argument values into
         for parameter_template, argument in itertools.zip_longest(self.function_symbol.named_parameters, self.arguments):
@@ -1103,7 +1103,7 @@ class UnaryOperator(BaseAstNode):
              output.append(SUBI(rvalue, rvalue, 1))
 
         # store updated value
-        output.append(SW(value_reg, rvalue))
+        output.append(SW(rvalue, value_reg))
 
         return {'3ac': output, 'rvalue': return_reg}
 
@@ -1152,7 +1152,7 @@ class Constant(BaseAstNode):
         output = [SOURCE(self.linerange[0], self.linerange[1])]
 
         reg = INT_REGISTER_TICKETS.get()
-        output.append(ADDIU(reg, ZERO, self.value))
+        output.append(LI(reg, self.value))
 
         # Since value is constant, an rvalue is always returned
         return {'3ac': output, 'rvalue': reg}

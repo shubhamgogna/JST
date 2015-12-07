@@ -17,11 +17,14 @@ import tac.instructions as instructions
 
 
 # Special Registers
-ZERO = '$zero'
+ZERO = '$ZERO'
+GP = '$GP'
 FP = '$FP'
 SP = '$SP'
 RA = '$RA'
 V0 = '$v0'
+
+CONSTANT_REGISTERS = {ZERO}
 
 
 class TacInstruction(object):
@@ -583,6 +586,10 @@ def LA(result, address):
     return TacInstruction(instructions.LA, result, address)
 
 
+def LI(result, immediate):
+    return TacInstruction(instructions.LI, result, immediate)
+
+
 #
 # PROGRAM FLOW
 #
@@ -754,7 +761,7 @@ def VALOUT(arg):
 
 
 # CALL and LLAC will be defined as macros in the actual MIPS
-def CALL(function_name, size):
+def CALL_PROC(function_name, size):
     """
     args:
         function_name: the label of the function definition
@@ -762,7 +769,7 @@ def CALL(function_name, size):
     function:
 
     """
-    return TacInstruction(instructions.CALL, function_name, size)
+    return TacInstruction(instructions.CALL_PROC, function_name, size)
 
 
 def LLAC(size):
@@ -773,7 +780,7 @@ def LLAC(size):
     function:
 
     """
-    return TacInstruction(instructions.LLAC, size)
+    return TacInstruction(instructions.END_PROC, size)
 
 
 def PROCENTRY(op1, op2, op3):

@@ -67,7 +67,7 @@ class TestRegisterUseTable(unittest.TestCase):
 
         self.assertSequenceEqual([], self.register_use_table.available_registers, 'the registers should be used up')
 
-        expected_result = {'register': mips.T0, 'code': [assembler.SW(mips.T0, assembler.offset_from_label(SPILL_MEM_LABEL, 0))]}
+        expected_result = {'register': mips.T0, 'code': [assembler.SW(mips.T0, assembler.offset_label_immediate(SPILL_MEM_LABEL, 0))]}
         result = self.register_use_table.acquire(pseudo_registers[2])
         self.assertEqual(expected_result, result)
 
@@ -79,14 +79,14 @@ class TestRegisterUseTable(unittest.TestCase):
 
         self.assertSequenceEqual([], self.register_use_table.available_registers, 'the registers should be used up')
 
-        expected_result = {'register': mips.T0, 'code': [assembler.SW(mips.T0, assembler.offset_from_label(SPILL_MEM_LABEL, 0))]}
+        expected_result = {'register': mips.T0, 'code': [assembler.SW(mips.T0, assembler.offset_label_immediate(SPILL_MEM_LABEL, 0))]}
         result = self.register_use_table.acquire(pseudo_registers[2])
         self.assertEqual(expected_result, result)
 
         # recovering a spilled register's value from memory should not only get the register, but also provide the
         # mips code that swaps the values for the temporaries using the spill memory
-        expected_result = {'register': mips.T1, 'code': [assembler.SW(mips.T1, assembler.offset_from_label(SPILL_MEM_LABEL, 4)),
-                                                         assembler.LW(mips.T1, assembler.offset_from_label(SPILL_MEM_LABEL, 0))]}
+        expected_result = {'register': mips.T1, 'code': [assembler.SW(mips.T1, assembler.offset_label_immediate(SPILL_MEM_LABEL, 4)),
+                                                         assembler.LW(mips.T1, assembler.offset_label_immediate(SPILL_MEM_LABEL, 0))]}
         result = self.register_use_table.acquire(pseudo_registers[0])
         self.assertEqual(expected_result, result)
 
@@ -128,13 +128,13 @@ class TestRegisterUseTable(unittest.TestCase):
             self.register_use_table.spilled_registers.keys())
 
         result = self.register_use_table.acquire(spilled_2)
-        expected_result = {'register': mips.T0, 'code': [assembler.SW(mips.T0, assembler.offset_from_label(SPILL_MEM_LABEL, 8)),
-                                                         assembler.LW(mips.T0, assembler.offset_from_label(SPILL_MEM_LABEL, 4))]}
+        expected_result = {'register': mips.T0, 'code': [assembler.SW(mips.T0, assembler.offset_label_immediate(SPILL_MEM_LABEL, 8)),
+                                                         assembler.LW(mips.T0, assembler.offset_label_immediate(SPILL_MEM_LABEL, 4))]}
         self.assertEqual(expected_result, result)
 
         result = self.register_use_table.acquire(spilled_1)
-        expected_result = {'register': mips.T1, 'code': [assembler.SW(mips.T1, assembler.offset_from_label(SPILL_MEM_LABEL, 4)),
-                                                         assembler.LW(mips.T1, assembler.offset_from_label(SPILL_MEM_LABEL, 0))]}
+        expected_result = {'register': mips.T1, 'code': [assembler.SW(mips.T1, assembler.offset_label_immediate(SPILL_MEM_LABEL, 4)),
+                                                         assembler.LW(mips.T1, assembler.offset_label_immediate(SPILL_MEM_LABEL, 0))]}
         self.assertEqual(expected_result, result)
 
     def test_release_one_register(self):

@@ -14,11 +14,17 @@
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
 
-def offset_from_label(label, offset):
-    return '{} + {}'.format(label, offset)
+def offset_label_immediate(label, offset=0):
+    return '{}{}'.format(label, ' + ' + str(offset) if offset != 0 else '')
+
+def offset_register_immediate(register, offset=0):
+    return '{}({})'.format(offset if offset != 0 else '', register)
 
 
-class MipsInstruction(object):
+
+
+
+class BaseMipsInstruction(object):
     NULL = None
 
     def __init__(self, instruction: str, slot_0: str = NULL, slot_1: str = NULL, slot_2: str = NULL):
@@ -35,12 +41,16 @@ class MipsInstruction(object):
         __repr__ is supposed to be "unambiguous," but it gets called on all contained objects when you stringify a
         container, so this will be the method that produces the fixed field format string representing the instruction.
         """
-        ret = ''
-        if self.instruction:  # TODO: fill in with custom logic for "non-instructions" like comment
-            ret = '{:<15} {:<15}, {:<15}, {:<15}'.format(self.instruction,
-                                                         self.slot_0 if self.slot_0 is not MipsInstruction.NULL else '-',
-                                                         self.slot_1 if self.slot_1 is not MipsInstruction.NULL else '-',
-                                                         self.slot_2 if self.slot_2 is not MipsInstruction.NULL else '-')
+        field_format = '{:>8}'
+        fmt = '{:<8}'
+        if self.slot_0 is not BaseMipsInstruction.NULL:
+            fmt += field_format
+        if self.slot_1 is not BaseMipsInstruction.NULL:
+            fmt += ', ' + field_format
+        if self.slot_2 is not BaseMipsInstruction.NULL:
+            fmt += ', ' + field_format
+
+        ret = fmt.format(self.instruction, self.slot_0, self.slot_1, self.slot_2)
 
         return ret
 
@@ -49,21 +59,129 @@ class MipsInstruction(object):
                self.slot_2 == other.slot_2
 
 
+#
+# ABSTRACT MIPS INSTRUCTION TYPES
+#
+class Comment(BaseMipsInstruction):
+    def __init__(self, instruction, message):
+        super(Comment, self).__init__(instruction, message)
+
+    def __str__(self):
+        return "## {:^6} ## {}".format(self.instruction, self.slot_0)
+
+
+class Directive(BaseMipsInstruction):
+    def __init__(self, instruction, label=None):
+        super(Directive, self).__init__(instruction)
+        self.label = label
+
+    def __str__(self):
+        return '{}.{}'.format(
+            self.label + ': ' if self.label else '',
+            type(self).__name__.lower())
+
+
 
 #
-# ADMINISTRATIVE
+# INFORMATION
 #
-class COMMENT(MipsInstruction):
+class COMMENT(Comment):
     def __init__(self, text):
-        super(COMMENT, self).__init__(instruction='comment', slot_0=text)
+        super(COMMENT, self).__init__('COMMENT', text)
 
-class SOURCE(MipsInstruction):
+    def __str__(self):
+        return '# {}'.format(self.slot_0)
+
+class SOURCE(Comment):
     def __init__(self, start_line, end_line):
-        super(SOURCE, self).__init__(instruction='source', slot_0=start_line, slot_1=end_line)
+        super(SOURCE, self).__init__('SOURCE', (start_line, end_line))
 
-class TAC(MipsInstruction):
+class TAC(Comment):
     def __init__(self, tac_str):
-        super(TAC, self).__init__(instruction='comment', slot_0=tac_str)
+        super(TAC, self).__init__('3AC', tac_str)
+
+
+#
+# MACROS
+#
+def macro_arg(arg):
+    return '%' + str(arg)
+
+
+class BEGIN_MACRO(object):
+    def __init__(self, name, args=None):
+        self.name = name
+        self.args = args if args else []
+
+    def __str__(self):
+        arg_list = ' (' + ', '.join([macro_arg(arg) for arg in self.args]) + ')' if self.args else ''
+        return '.macro {}{}'.format(self.name, arg_list)
+
+    def __repr__(self):
+        return str(self)
+
+class END_MACRO(object):
+    def __init__(self):
+        pass
+
+    def __str__(self):
+        return '.end_macro'
+
+    def __repr__(self):
+        return str(self)
+
+class CALL_MACRO(object):
+    def __init__(self, macro, call_arguments=None):
+        self.macro = macro
+        self.call_arguments = call_arguments if call_arguments else []
+
+    def __str__(self):
+        arg_list = '(' + ', '.join([str(arg) for arg in self.call_arguments]) + ')'
+        return '{}{}'.format(self.macro, arg_list)
+
+
+
+
+#
+# PROGRAM SECTION LABELS
+#
+class DATA(Directive):
+    def __init__(self):
+        super(DATA, self).__init__('data')
+
+
+class TEXT(Directive):
+    def __init__(self):
+        super(TEXT, self).__init__('data')
+
+
+#
+# MEMORY STORAGE DIRECTIVES
+#
+class SPACE(Directive):
+    def __init__(self, label, n_bytes):
+        """
+
+        :param label: Use none if this is anonymously reserved space (i.e. no label is given).
+        :param n_bytes:
+        :return:
+        """
+        super(SPACE, self).__init__(instruction='spill', label=label)
+        self.n_bytes = n_bytes
+
+    def __str__(self):
+        return super(SPACE, self).__str__() + ' ' + str(self.n_bytes)
+
+
+#
+# LABEL
+#
+class LABEL(BaseMipsInstruction):
+    def __init__(self, label):
+        super(LABEL, self).__init__('label', label)
+
+    def __str__(self):
+        return '{}:'.format(self.slot_0)
 
 
 
@@ -76,22 +194,22 @@ sw = 'sw'
 la = 'la'
 
 
-class LI(MipsInstruction):
+class LI(BaseMipsInstruction):
     def __init__(self, register, immediate):
-        super(LI, self).__init__(lw, register, immediate)
+        super(LI, self).__init__(li, register, immediate)
 
 
-class LW(MipsInstruction):
+class LW(BaseMipsInstruction):
     def __init__(self, register, memory_address):
         super(LW, self).__init__(lw, register, memory_address)
 
 
-class SW(MipsInstruction):
+class SW(BaseMipsInstruction):
     def __init__(self, register, memory_address):
-        super(SW, self).__init__(lw, register, memory_address)
+        super(SW, self).__init__(sw, register, memory_address)
 
 
-class LA(MipsInstruction):
+class LA(BaseMipsInstruction):
     def __init__(self, register, memory_address):
         super(LA, self).__init__(lw, register, memory_address)
 
@@ -102,12 +220,46 @@ class LA(MipsInstruction):
 add = 'add'
 
 
-class ADD(MipsInstruction):
+class ADD(BaseMipsInstruction):
     def __init__(self, sum, addend, augend):
         super(ADD, self).__init__(add, sum, addend, augend)
 
 
+class ADDIU(BaseMipsInstruction):
+    def __init__(self, sum, addend, augend_immediate):
+        super(ADDIU, self).__init__('addiu', sum, addend, augend_immediate)
+
+
+class SUB(BaseMipsInstruction):
+    def __init__(self, difference, minuend, subtrahend):
+        super(SUB, self).__init__('sub', difference, minuend, subtrahend)
+
+class SUBIU(BaseMipsInstruction):
+    def __init__(self, difference, minuend, subtrahend_immediate):
+        super(SUBIU, self).__init__('subiu', difference, minuend, subtrahend_immediate)
+
+class MULU(BaseMipsInstruction):
+    def __init__(self, product, multiplicand, multiplier):
+        super(MULU, self).__init__('mulu', product, multiplicand, multiplier)
+
+
 #
-# if __name__ == '__main__':
-#     l = LW('$t0', '0x10010000')
-#     print(l)
+# BRANCHING
+#
+class J(BaseMipsInstruction):
+    def __init__(self, target):
+        super(J, self).__init__('j', target)
+
+class JAL(BaseMipsInstruction):
+    def __init__(self, target):
+        super(JAL, self).__init__('jal', target)
+
+class JR(BaseMipsInstruction):
+    def __init__(self, register):
+        super(JR, self).__init__('jr', register)
+
+
+
+if __name__ == '__main__':
+    data = DATA()
+    print(str(data))
