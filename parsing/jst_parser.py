@@ -167,16 +167,16 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='function_definition -> declarator compound_statement')
 
-        symbol = t[1]
-        function_symbol = FunctionSymbol.from_variable_symbol(symbol)
+        function_symbol = FunctionSymbol(t[1]['identifier'], t[1]['linecol'][0], t[1]['linecol'][1])
+        function_symbol.set_named_parameters(t[1]['parameters'])       # TODO Setting parameters is required so that the function memory offset works correctly
 
-        result, existing = self.compiler_state.symbol_table.insert(symbol)
+        result, existing = self.compiler_state.symbol_table.insert(function_symbol)
         if result is Scope.INSERT_REDECL:
             if existing[0].finalized:
                 tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
-                raise CompileError('Reimplementation of function not allowed.', tup[0], tup[1], tup[2])
+                raise CompileError.from_tuple('Reimplementation of function not allowed.', tup)
             else:
-                existing[0].named_parameters = function_symbol.named_parameters
+                existing[0].set_named_parameters(t[1]['parameters'])
                 function_symbol = existing[0]
 
         type_declaration = TypeDeclaration()
@@ -184,13 +184,15 @@ class JSTParser(object):
         function_symbol.add_return_type_declaration(type_declaration)
         function_symbol.finalized = True
 
+        # Manually set the frame size and clear counter
         function_symbol.activation_frame_size = self.compiler_state.symbol_table.next_activation_frame_offset
         self.compiler_state.symbol_table.next_activation_frame_offset = 0
 
+        # Check if function is a definition of main
         if function_symbol.identifier == 'main':
             self.compiler_state.main_function = function_symbol
 
-        arguments = [SymbolNode(symbol) for symbol in symbol.named_parameters]
+        arguments = function_symbol.named_parameters
         t[0] = FunctionDefinition(function_symbol, function_symbol.identifier, arguments, t[3],
                                   linerange=(t.lineno(1), t.lineno(4)))
 
@@ -203,29 +205,32 @@ class JSTParser(object):
         is_type_valid, message = type_utils.is_valid_type(t[1])
         if not is_type_valid:
             tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
-            raise CompileError(message, tup[0], tup[1], tup[2])
+            raise CompileError.from_tuple(message, tup)
 
-        function_symbol = FunctionSymbol.from_variable_symbol(t[2]) if isinstance(t[2], VariableSymbol) else t[2]
+        function_symbol = FunctionSymbol(t[2]['identifier'], t[2]['linecol'][0], t[2]['linecol'][1])
+        function_symbol.set_named_parameters(t[2]['parameters'])       # TODO Setting parameters is required so that the function memory offset works correctly
 
         result, existing = self.compiler_state.symbol_table.insert(function_symbol)
         if result is Scope.INSERT_REDECL:
             if existing[0].finalized:
                 tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
-                raise CompileError('Reimplementation of function not allowed.', tup[0], tup[1], tup[2])
+                raise CompileError.from_tuple('Reimplementation of function not allowed.', tup)
             else:
-                existing[0].named_parameters = function_symbol.named_parameters
+                existing[0].set_named_parameters(t[2]['parameters'])
                 function_symbol = existing[0]
 
         function_symbol.add_return_type_declaration(t[1])
         function_symbol.finalized = True
 
+        # Manually set the frame size and clear counter
         function_symbol.activation_frame_size = self.compiler_state.symbol_table.next_activation_frame_offset
         self.compiler_state.symbol_table.next_activation_frame_offset = 0
 
+        # Check if function is a definition of main
         if function_symbol.identifier == 'main':
             self.compiler_state.main_function = function_symbol
 
-        arguments = [SymbolNode(symbol) for symbol in function_symbol.named_parameters]
+        arguments = function_symbol.named_parameters
         t[0] = FunctionDefinition(function_symbol, function_symbol.identifier, arguments, t[4],
                                   linerange=(t.lineno(1), t.lineno(5)))
 
@@ -236,8 +241,7 @@ class JSTParser(object):
         self.output_production(t, production_message=
             'function_definition -> declaration_specifiers declarator declaration_list compound_statement')
 
-        raise Exception('We may want to enforce that these types of functions be invalid. '
-                        'int foo(a, b) int a, b; { ... }')
+        raise NotImplementedError('Unsupported form of function definition')
 
     def p_function_definition_4(self, t):
         """
@@ -245,8 +249,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='function_definition -> declarator declaration_list compound_statement')
 
-        raise Exception('We may want to enforce that these types of functions be invalid. '
-                        'int foo(a, b) int a, b; { ... }')
+        raise NotImplementedError('Unsupported form of function definition')
 
     #
     # declaration:
@@ -260,63 +263,71 @@ class JSTParser(object):
         is_type_valid, message = type_utils.is_valid_type(t[1])
         if not is_type_valid:
             tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
-            raise CompileError(message, tup[0], tup[1], tup[2])
+            raise CompileError.from_tuple(message, tup)
 
         t[0] = []
-        for init_declarator_tuple in t[2]:
-            init_declarator, lineno, lexpos = init_declarator_tuple
-            symbol = init_declarator['declarator']
+        for init_declarator in t[2]:
+
+            identifier = init_declarator['identifier']
+            linecol = init_declarator['linecol']
             initializer = init_declarator['initializer']
-            decl_ast = None
 
-            if isinstance(symbol, VariableSymbol):
-                symbol.add_type_declaration(type_declaration=t[1])
-                result, _ = self.compiler_state.symbol_table.insert(symbol)
-
-                if result is Scope.INSERT_REDECL:
-                    tup = self.compiler_state.get_line_col_source(lineno, lexpos)
-                    raise CompileError('Variable is being redeclared.', tup[0], tup[1], tup[2])
-                elif result is Scope.INSERT_SHADOWED:
-                    tup = self.compiler_state.get_line_col_source(lineno, lexpos)
-                    self.warn_logger.warning(str(CompileError('Variable is being shadowed.', tup[0], tup[1], tup[2])))
-
-                if len(symbol.array_dims) == 0:
-                    decl_ast = Declaration(symbol, initializer,
-                                           linerange=(t.lineno(1), t.lineno(3)))
-                else:
-                    decl_ast = ArrayDeclaration(symbol, symbol.array_dims, initializer,
-                                                linerange=(t.lineno(1), t.lineno(3)))
-
-            elif isinstance(symbol, FunctionSymbol):
-                if initializer:
-                    tup = self.compiler_state.get_line_col_source(lineno, lexpos)
-                    raise CompileError('Functions cannot have initializers.', tup[0], tup[1], tup[2])
-
+            if 'parameters' in init_declarator:
+                parameters = init_declarator['parameters']
+                symbol = FunctionSymbol(identifier, linecol[0], linecol[1])
                 symbol.add_return_type_declaration(t[1])
-                result, _ = self.compiler_state.symbol_table.insert(symbol)
-                if result is Scope.INSERT_REDECL:
-                    tup = self.compiler_state.get_line_col_source(lineno, lexpos)
-                    raise CompileError('Function is being redeclared.', tup[0], tup[1], tup[2])
+                symbol.set_named_parameters(parameters)
 
+                ast_node = FunctionDeclaration(symbol, parameters, linerange=linecol)
 
+            else:
+                symbol = VariableSymbol(identifier, linecol[0], linecol[1])
+                symbol.add_type_declaration(t[1])
 
-                decl_ast = FunctionDeclaration(symbol,
-                                               [SymbolNode(sym) for sym in symbol.named_parameters],
-                                               linerange=(t.lineno(1), t.lineno(3)))
+                if 'array_dims' in init_declarator:
+                    symbol.set_array_dims(init_declarator['array_dims'])
 
-            if decl_ast:
-                t[0].append(decl_ast)
+                if 'pointer_dims' in init_declarator:
+                    symbol.set_pointer_dims(init_declarator['pointer_dims'])
+
+                if symbol.immutable and isinstance(initializer, Constant):
+                    symbol.value = initializer.value
+
+                ast_node = Declaration(symbol, initializer, linerange=linecol)
+
+            # Attempt to insert newly created symbol into the table
+            result, _ = self.compiler_state.symbol_table.insert(symbol)
+            if result is Scope.INSERT_REDECL:
+                raise CompileError('Redeclaration of variable!', linecol[0], linecol[1],
+                                   self.compiler_state.source_lines[linecol[0] - 1])
+            elif result is Scope.INSERT_SHADOWED:
+                if isinstance(symbol, FunctionSymbol):
+                    raise CompileError('Redeclaration of function!', linecol[0], linecol[1],
+                                       self.compiler_state.source_lines[linecol[0] - 1])
+                else:
+                    self.warn_logger.warning(str(
+                        CompileError('Redeclaration of variable!', linecol[0], linecol[1],
+                                     self.compiler_state.source_lines[linecol[0] - 1])))
+
+            if ast_node:
+                t[0].append(ast_node)
+            else:
+                raise Exception('Declaration AST is None!')
 
     def p_declaration_2(self, t):
-        """declaration : declaration_specifiers SEMI"""
+        """
+        declaration : declaration_specifiers SEMI
+        """
         self.output_production(t, production_message='declaration -> declaration_specifiers SEMI')
-        raise Exception('Unknown usage')
+        raise NotImplementedError('Unknown production.')
 
     #
     # declaration-list:
     #
     def p_declaration_list_1(self, t):
-        """declaration_list : declaration"""
+        """
+        declaration_list : declaration
+        """
         self.output_production(t, production_message='declaration_list -> declaration')
 
         t[0] = []
@@ -617,8 +628,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='init_declarator_list -> init_declarator')
 
-        # Create a list with a tuple of (string identifier, lineno, and lexpos)
-        t[0] = [(t[1], t.lineno(1), t.lexpos(1))]
+        t[0] = [t[1]]
 
     def p_init_declarator_list_2(self, t):
         """
@@ -626,8 +636,12 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='init_declarator_list -> init_declarator_list COMMA init_declarator')
 
-        # Concat the new init_declarator to the existing list
-        t[0] = t[1] + [(t[3], t.lineno(3), t.lexpos(3))]
+        if 'parameters' in t[1][0] or 'parameters' in t[3]:
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError.from_tuple('Functions cannot be declared in a list.', tup)
+
+        t[1].append(t[3])
+        t[0] = t[1]
 
     #
     # init-declarator
@@ -638,7 +652,15 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='init_declarator -> declarator')
 
-        t[0] = {"declarator": t[1], "initializer": None}
+        if 'array_dims' in t[1]:
+            for dimension in t[1]['array_dims']:
+                if dimension is None:
+                    tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+                    raise CompileError.from_tuple('All dimensions in an array declaration must be'
+                                                  ' specified if an initializer is not provided.', tup)
+
+        t[1]['initializer'] = None
+        t[0] = t[1]
 
     def p_init_declarator_2(self, t):
         """
@@ -646,19 +668,38 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='init_declarator -> declarator EQUALS initializer')
 
+        if 'parameters' in t[1]:
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError.from_tuple('Functions cannot have initializers.', tup)
+
+        if 'array_dims' in t[1]:
+            for dimension in t[1]['array_dims'][1:]:
+                if dimension is None:
+                    tup = self.compiler_state.get_line_col_source(t.linepos(1), t.lexpos(1))
+                    raise CompileError.from_tuple('Only the first dimension in an array declaration can be empty.', tup)
+
         if isinstance(t[3], list):
+            if 'array_dims' not in t[1]:
+                tup = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
+                raise CompileError.from_tuple('Array initializer provided for non-array symbol.', tup)
+
             initializer_types = [type(item) for item in t[3]]
 
-            if len(t[1].array_dims) is 1 and isinstance(t[3], list) and (list not in initializer_types):
-                t[0] = {"declarator": t[1], "initializer": t[3]}
-            else:
+            if len(t[1]['array_dims']) is not 1 or (list in initializer_types):
                 tup = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
-                message = 'Only 1D array initializers for array variables are accepted. Initializer ignored.'
-                self.prod_logger.info(str(CompileError(message, tup[0], tup[1], tup[2])))
-                t[0] = {"declarator": t[1], "initializer": None}
+                raise CompileError.from_tuple('Only 1D array initializers are allowed.', tup)
+
+            # Fill in the empty dimension
+            if t[1]['array_dims'][0] is None:
+                t[1]['array_dims'][0] = len(t[3])
 
         else:
-            t[0] = {"declarator": t[1], "initializer": t[3]}
+            if 'array_dims' in t[1]:
+                tup = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
+                raise CompileError.from_tuple('Non-array initializer provided for array symbol.', tup)
+
+        t[1]['initializer'] = t[3]
+        t[0] = t[1]
 
     #
     # struct-declaration:
@@ -791,11 +832,17 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='declarator -> pointer direct_declarator')
 
-        if isinstance(t[2], VariableSymbol):
-            t[2].add_pointer_level(t[1])
-            t[0] = t[2]
+        if 'parameters' in t[2]:
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError.from_tuple('Is this a function pointer? Not supported.', tup)
+
+        if 'pointer_dims' not in t[2]:
+            t[2]['pointer_dims'] = t[1]
         else:
-            raise Exception('Not currently supported')
+            t[2]['pointer_dims'].extend(t[1])
+
+        # Don't forget to assign
+        t[0] = t[2]
 
     def p_declarator_2(self, t):
         """
@@ -803,6 +850,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='declarator -> direct_declarator')
 
+        # Don't forget to assign
         t[0] = t[1]
 
     #
@@ -815,81 +863,83 @@ class JSTParser(object):
         self.output_production(t, production_message='direct_declarator -> identifier')
 
         result = self.compiler_state.get_line_col(t, 1)
-        t[0] = VariableSymbol(t[1], result[0], result[1])
+        t[0] = {'identifier': t[1], 'linecol': result}
 
     def p_direct_declarator_2(self, t):
         """
-        direct_declarator : LPAREN declarator RPAREN
+        direct_declarator : direct_declarator LPAREN RPAREN
         """
-        self.output_production(t, production_message='direct_declarator -> LPAREN declarator RPAREN')
-        raise NotImplemented(str(t[2]))
+        self.output_production(t, production_message='direct_declarator -> direct_declarator LPAREN RPAREN')
+
+        if 'parameters' in t[1]:
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError.from_tuple('Parameters have already been set.', tup)
+        if 'array_dims' in t[1]:
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError.from_tuple('Functions cannot have dimensions.', tup)
+
+        t[1]['parameters'] = []
+        t[0] = t[1]
 
     def p_direct_declarator_3(self, t):
-        """
-        direct_declarator : direct_declarator LBRACKET constant_expression_option RBRACKET
-        """
-        self.output_production(t, production_message=
-            'direct_declarator -> direct_declarator LBRACKET constant_expression_option RBRACKET')
-
-        # TODO To support string initialization, this check needs to be moved to the declaration
-        # TODO production where it can check dimensions of the initializer and compare/set
-        if t[3] is None:
-            result = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
-            # 'result[1] - 1' is a fix to get the column indicator to align correctly
-            raise CompileError('Value required for array dimension.', result[0], result[1] - 1, result[2])
-
-        if not Constant.is_integral_type(t[3]):
-            result = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
-            raise CompileError('Array dimension must be an integral type.', result[0], result[1], result[2])
-
-        if isinstance(t[1], VariableSymbol) and t[3].immutable:
-            if isinstance(t[3], SymbolNode) and isinstance(t[3].symbol, VariableSymbol):
-                t[1].add_array_dimension(t[3].symbol.value)
-            elif isinstance(t[3], Constant):
-                t[1].add_array_dimension(t[3].value)
-            t[0] = t[1]
-        elif isinstance(t[1], FunctionSymbol):
-            result = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
-            raise CompileError('Functions cannot have array dimensions.', result[0], result[1], result[2])
-        else:
-            raise Exception('Unknown type ' + str(type(t[1])))
-
-    def p_direct_declarator_4(self, t):
         """
         direct_declarator : direct_declarator LPAREN parameter_type_list RPAREN
         """
         self.output_production(t, production_message=
             'direct_declarator -> direct_declarator LPAREN parameter_type_list RPAREN')
 
-        if len(t[1].array_dims):
-            result = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
-            raise CompileError('Function cannot be declared with array dimensions.', result[0], result[1], result[2])
+        if 'parameters' in t[1]:
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError.from_tuple('Parameters have already been set.', tup)
+        if 'array_dims' in t[1]:
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError.from_tuple('Functions cannot have dimensions.', tup)
 
-        function_symbol = FunctionSymbol(t[1].identifier, t[1].lineno, t[1].column)
-        function_symbol.set_named_parameters(t[3])
-        t[0] = function_symbol
+        t[1]['parameters'] = t[3]
+        t[0] = t[1]
+
+    def p_direct_declarator_4(self, t):
+        """
+        direct_declarator : direct_declarator LBRACKET constant_expression_option RBRACKET
+        """
+        self.output_production(t, production_message=
+            'direct_declarator -> direct_declarator LBRACKET constant_expression_option RBRACKET')
+
+        if 'parameters' in t[1]:
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError.from_tuple('Functions cannot have dimensions.', tup)
+
+        if 'array_dims' not in t[1]:
+            t[1]['array_dims'] = []
+
+        if t[3] is not None:
+            if isinstance(t[3], VariableSymbol) and Constant.is_integral_type(t[3]) and t[3].immutable:
+                t[1]['array_dims'].append(t[3].value)
+            elif isinstance(t[3], Constant) and Constant.is_integral_type(t[3]):
+                t[1]['array_dims'].append(t[3].value)
+            else:
+                tup = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
+                raise CompileError.from_tuple('Non-constant value provided for array dimension.', tup)
+        else:
+            t[1]['array_dims'].append(VariableSymbol.EMPTY_ARRAY_DIM)
+
+        # Don't forget to assign
+        t[0] = t[1]
 
     def p_direct_declarator_5(self, t):
+        """
+        direct_declarator : LPAREN declarator RPAREN
+        """
+        self.output_production(t, production_message='direct_declarator -> LPAREN declarator RPAREN')
+        raise NotImplementedError('Unknown production.')
+
+    def p_direct_declarator_6(self, t):
         """
         direct_declarator : direct_declarator LPAREN identifier_list RPAREN
         """
         self.output_production(t, production_message=
             'direct_declarator -> direct_declarator LPAREN identifier_list RPAREN')
-        raise NotImplemented('Looks like the production for a function call.')
-
-    def p_direct_declarator_6(self, t):
-        """
-        direct_declarator : direct_declarator LPAREN RPAREN
-        """
-        self.output_production(t, production_message='direct_declarator -> direct_declarator LPAREN RPAREN')
-
-        if len(t[1].array_dims):
-            result = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
-            raise CompileError('Function cannot be declared with array dimensions.', result[0], result[1], result[2])
-
-        function_symbol = FunctionSymbol(t[1].identifier, t[1].lineno, t[1].column)
-        function_symbol.set_named_parameters([])
-        t[0] = function_symbol
+        raise NotImplementedError('Unknown production.')
 
     #
     # pointer:
@@ -900,9 +950,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='pointer -> TIMES type_qualifier_list')
 
-        pointer_declaration = PointerDeclaration()
-        pointer_declaration.add_qualifiers(t[2])
-        t[0] = [pointer_declaration]
+        t[0] = [t[2]]
 
     def p_pointer_2(self, t):
         """
@@ -910,7 +958,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='pointer -> TIMES')
 
-        t[0] = [PointerDeclaration()]
+        t[0] = [set()]
 
     def p_pointer_3(self, t):
         """
@@ -918,10 +966,8 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='pointer -> TIMES type_qualifier_list pointer')
 
-        first_pointer = PointerDeclaration()
-        first_pointer.add_qualifiers(t[2])
-
-        t[0] = [first_pointer] + t[3]
+        t[3].extend(t[2])
+        t[0] = t[3]
 
     def p_pointer_4(self, t):
         """
@@ -929,20 +975,28 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='pointer -> TIMES pointer')
 
-        t[0] = [PointerDeclaration()] + t[2]
+        t[2].extend([set()])
+        t[0] = t[2]
 
     #
     # type-qualifier-list:
     #
     def p_type_qualifier_list_1(self, t):
-        """type_qualifier_list : type_qualifier"""
+        """
+        type_qualifier_list : type_qualifier
+        """
         self.output_production(t, production_message='type_qualifier_list -> type_qualifier')
-        raise NotImplemented()
+
+        t[0] = set(t[1])
 
     def p_type_qualifier_list_2(self, t):
-        """type_qualifier_list : type_qualifier_list type_qualifier"""
+        """
+        type_qualifier_list : type_qualifier_list type_qualifier
+        """
         self.output_production(t, production_message='type_qualifier_list -> type_qualifier_list type_qualifier')
-        raise NotImplemented()
+
+        t[1].add(t[2])
+        t[0] = t[1]
 
     #
     # parameter-type-list:
@@ -977,67 +1031,73 @@ class JSTParser(object):
     # parameter-declaration:
     #
     def p_parameter_declaration_1(self, t):
-        """parameter_declaration : declaration_specifiers declarator"""
-        self.output_production(t, production_message='parameter_declaration -> declaration_specifiers declarator')
-
-        is_type_valid, message = type_utils.is_valid_type(t[1])
-        if not is_type_valid:
-            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
-            raise CompileError(message, tup[0], tup[1], tup[2])
-
-        if isinstance(t[2], VariableSymbol):
-            t[2].add_type_declaration(t[1])
-            t[0] = t[2]
-        else:
-            tup = self.compiler_state.get_line_col_source(t.lineno(2), t.lexpos(2))
-            raise CompileError('Declarator can only be a variable.', tup[0], tup[1], tup[2])
-
-    def p_parameter_declaration_2(self, t):
-        """parameter_declaration : declaration_specifiers abstract_declarator"""
-        self.output_production(t, production_message='parameter_declaration -> declaration_specifiers abstract_declarator')
-
-        # Note: abstract_declarator is things like pointers and array dims
-        # parameter_declaration = Symbol(identifier='')  # Symbol can hold all of the necessary info, might not go into the
-        #                                                # table
-        #
-        # parameter_declaration.type = t[1]
-        # abstract_declarator = t[2]
-        # if abstract_declarator:
-        #     if abstract_declarator.get('pointer_modifiers', None):
-        #         parameter_declaration.add_pointer_level(abstract_declarator['pointer_modifiers'])
-        #     if abstract_declarator.get('array_dims', None):
-        #         # clean up when we have time
-        #         for dim in abstract_declarator['array_dims']:
-        #             parameter_declaration.add_array_dimension(dim)
-        #
-        # t[0] = parameter_declaration
-        raise Exception('Needs fixing')
-
-    def p_parameter_declaration_3(self, t):
-        """parameter_declaration : declaration_specifiers"""
+        """
+        parameter_declaration : declaration_specifiers
+        """
         self.output_production(t, production_message='parameter_declaration -> declaration_specifiers')
 
         is_type_valid, message = type_utils.is_valid_type(t[1])
         if not is_type_valid:
             tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
-            raise CompileError(message, tup[0], tup[1], tup[2])
+            raise CompileError.from_tuple(message, tup)
 
         tup = self.compiler_state.get_line_col(t, 1)
         symbol = VariableSymbol('', tup[0], tup[1])
         symbol.add_type_declaration(t[1])
         t[0] = symbol
 
+    def p_parameter_declaration_2(self, t):
+        """
+        parameter_declaration : declaration_specifiers declarator
+        """
+        self.output_production(t, production_message='parameter_declaration -> declaration_specifiers declarator')
+
+        is_type_valid, message = type_utils.is_valid_type(t[1])
+        if not is_type_valid:
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError.from_tuple(message, tup)
+
+        if 'parameters' in t[2]:
+            tup = self.compiler_state.get_line_col_source(t.lineno(2), t.lexpos(2))
+            raise CompileError.from_tuple(message, tup)
+
+        identifier = t[2]['identifier']
+        linecol = t[2]['linecol']
+        symbol = VariableSymbol(identifier, linecol[0], linecol[1])
+        symbol.add_type_declaration(t[1])
+
+        if 'array_dims' in t[2]:
+            symbol.set_array_dims(t[2]['array_dims'])
+
+        if 'pointer_dims' in t[2]:
+            symbol.set_pointer_dims(t[2]['pointer_dims'])
+
+        # Don't forget to assign
+        t[0] = symbol
+
+    def p_parameter_declaration_3(self, t):
+        """
+        parameter_declaration : declaration_specifiers abstract_declarator
+        """
+        self.output_production(t, production_message='parameter_declaration -> declaration_specifiers abstract_declarator')
+
+        raise NotImplementedError('parameter_declaration : declaration_specifiers abstract_declarator')
+
     #
     # identifier-list:
     #
     def p_identifier_list_1(self, t):
-        """identifier_list : identifier"""
+        """
+        identifier_list : identifier
+        """
         self.output_production(t, production_message='identifier_list -> identifier')
 
         t[0] = [t[1]]
 
     def p_identifier_list_2(self, t):
-        """identifier_list : identifier_list COMMA identifier"""
+        """
+        identifier_list : identifier_list COMMA identifier
+        """
         self.output_production(t, production_message='identifier_list -> identifier_list COMMA identifier')
 
         t[0] = t[1].append(t[3])
@@ -1051,7 +1111,13 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='initializer -> assignment_expression')
 
-        t[0] = t[1]
+        # If the initializer is a string
+        if isinstance(t[1], str):
+            t[0] = [x for x in t[1]]
+            t[0][-1] = '\0'
+            t[0] = t[0][1:]
+        else:
+            t[0] = t[1]
 
     def p_initializer_2(self, t):
         """
@@ -1073,13 +1139,17 @@ class JSTParser(object):
     # initializer-list:
     #
     def p_initializer_list_1(self, t):
-        """initializer_list : initializer"""
+        """
+        initializer_list : initializer
+        """
         self.output_production(t, production_message='initializer_list -> initializer')
 
         t[0] = [t[1]]
 
     def p_initializer_list_2(self, t):
-        """initializer_list : initializer_list COMMA initializer"""
+        """
+        initializer_list : initializer_list COMMA initializer
+        """
         self.output_production(t, production_message='initializer_list -> initializer_list COMMA initializer')
 
         t[1].append(t[3])
@@ -1089,12 +1159,16 @@ class JSTParser(object):
     # type-name:
     #
     def p_type_name_1(self, t):
-        """type_name : specifier_qualifier_list abstract_declarator"""
+        """
+        type_name : specifier_qualifier_list abstract_declarator
+        """
         self.output_production(t, production_message='type_name -> specifier_qualifier_list abstract_declarator')
         raise NotImplemented()
 
     def p_type_name_2(self, t):
-        """type_name : specifier_qualifier_list"""
+        """
+        type_name : specifier_qualifier_list
+        """
         self.output_production(t, production_message='type_name -> specifier_qualifier_list')
 
         t[0] = t[1].get_type_str()
@@ -1131,33 +1205,31 @@ class JSTParser(object):
         self.output_production(t, production_message='direct_abstract_declarator -> LPAREN abstract_declarator RPAREN')
 
         t[0] = t[1]
+        raise NotImplementedError('Unknown production.')
 
     def p_direct_abstract_declarator_2(self, t):
         """direct_abstract_declarator : direct_abstract_declarator LBRACKET constant_expression_option RBRACKET"""
         self.output_production(t, production_message=
             'direct_abstract_declarator -> direct_abstract_declarator LBRACKET constant_expression_option RBRACKET')
 
-        if t[1].get('array_dims', None):
+        if 'array_dims' not in t[1]:
             t[1]['array_dims'] = []
 
-        t[1]['array_dims'] += [t[3].value if t[3] else Symbol.EMPTY_ARRAY_DIM]
-
+        t[1]['array_dims'] += [t[3]]
         t[0] = t[1]
-        raise Exception('TODO Fix')
 
     def p_direct_abstract_declarator_3(self, t):
         """direct_abstract_declarator : LBRACKET constant_expression_option RBRACKET"""
         self.output_production(t, production_message='direct_abstract_declarator -> LBRACKET constant_expression_option RBRACKET')
 
-        t[0] = {'array_dims': [t[1].value if t[2] else Symbol.EMPTY_ARRAY_DIM]}
-        raise Exception('TODO Fix')
+        t[0] = {'array_dims': [t[2]]}
 
     def p_direct_abstract_declarator_4(self, t):
         """direct_abstract_declarator : direct_abstract_declarator LPAREN parameter_type_list_option RPAREN"""
         self.output_production(t, production_message=
             'direct_abstract_declarator -> direct_abstract_declarator LPAREN parameter_type_list_option RPAREN')
 
-        # for ~~function_pointers
+        raise NotImplementedError('Unknown production. Possibly for function pointers.')
 
     def p_direct_abstract_declarator_5(self, t):
         """
@@ -1165,19 +1237,23 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='direct_abstract_declarator -> LPAREN parameter_type_list_option RPAREN')
 
-        # for ~~function pointers
+        raise NotImplementedError('Unknown production. Possibly for function pointers.')
 
     #
     # Optional fields in abstract declarators
     #
     def p_constant_expression_option_to_empty(self, t):
-        """constant_expression_option : empty"""
+        """
+        constant_expression_option : empty
+        """
         self.output_production(t, production_message='constant_expression_option -> empty')
 
         t[0] = None
 
     def p_constant_expression_option_to_constant_expression(self, t):
-        """constant_expression_option : constant_expression"""
+        """
+        constant_expression_option : constant_expression
+        """
         self.output_production(t, production_message='constant_expression_option -> constant_expression')
 
         t[0] = t[1]
@@ -1462,7 +1538,6 @@ class JSTParser(object):
 
         t[0] = t[1]
 
-
     def p_assignment_expression_2(self, t):
         """
         assignment_expression : unary_expression assignment_operator assignment_expression
@@ -1474,22 +1549,21 @@ class JSTParser(object):
             line, column, source_code = self.compiler_state.get_line_col_source(t.lineno(2), t.lexpos(2))
             raise CompileError("Assignment to immutable types is not allowed", line, column, source_code)
 
-        if isinstance(t[1], SymbolNode) and isinstance(t[1].symbol, FunctionSymbol):
+        if isinstance(t[1], FunctionSymbol):
             tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
-            raise CompileError('The assignment operator cannot be applied to functions.', tup[0], tup[1], tup[2])
+            raise CompileError.from_tuple('The assignment operator cannot be applied to functions.', tup)
 
         if isinstance(t[1], ArrayReference):  # LEFT side
             valid, message = t[1].check_subscripts()
             if not valid:
                 tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
-                raise CompileError(message, tup[0], tup[1], tup[2])
+                raise CompileError.from_tuple(message, tup)
 
         if isinstance(t[3], ArrayReference):  # RIGHT side
             valid, message = t[3].check_subscripts()
             if not valid:
                 tup = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
-                raise CompileError(message, tup[0], tup[1], tup[2])
-
+                raise CompileError.from_tuple(message, tup)
 
         cast_result, message = type_utils.can_assign(t[1].get_resulting_type(), t[3].get_resulting_type())
         if cast_result != type_utils.INCOMPATIBLE_TYPES:
@@ -1548,7 +1622,7 @@ class JSTParser(object):
         self.output_production(t, production_message=
             'conditional_expression -> binary_expression CONDOP expression COLON conditional_expression')
 
-        # raise NotImplemented('Ternary operator')
+        raise NotImplementedError('Ternary operator')
 
     #
     # binary-expression
@@ -1577,11 +1651,12 @@ class JSTParser(object):
         self.output_production(t, production_message=
             'binary_expression -> binary_expression {} binary_expression'.format(t[2]))
 
-        # check to see if constant folding is possible
+        # If constant folding is possible
         if JSTParser.compile_time_evaluable(t[1]) and JSTParser.compile_time_evaluable(t[3]):
             t[0] = JSTParser.perform_binary_operation(t[1], t[2], t[3])
+
+        # Else, binary operator node needed
         else:
-            # not constant expression, so need binary operator node
             t[0] = BinaryOperator(t[2], t[1], t[3], linerange=(t.lineno(1), t.lineno(3)))
 
     def p_binary_expression_to_cast_expression(self, t):
@@ -1609,9 +1684,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='cast_expression -> LPAREN type_name RPAREN cast_expression')
 
-        # TODO: might need to change this
-        t[0] = Cast(t[2],t[4], linerange=(t.lineno(1), t.lineno(4)))
-        # t[0] = Cast(to_type=t[2], expression=t[4])
+        t[0] = Cast(t[2], t[4], linerange=(t.lineno(1), t.lineno(4)))
 
     #
     # unary_expression:
@@ -1630,7 +1703,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='unary_expression -> PLUSPLUS unary_expression')
 
-        t[0] = UnaryOperator(t[1], t[2], linerange=(t.lineno(1), t.lineno(2)))
+        t[0] = UnaryOperator(operator=t[1], pre=True, expression=t[2], linerange=(t.lineno(1), t.lineno(2)))
 
     def p_unary_expression_pre_minus_minus(self, t):
         """
@@ -1638,7 +1711,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='unary_expression -> MINUSMINUS unary_expression')
 
-        t[0] = UnaryOperator(t[1], t[2], linerange=(t.lineno(1), t.lineno(2)))
+        t[0] = UnaryOperator(operator=t[1], pre=True, expression=t[2], linerange=(t.lineno(1), t.lineno(2)))
 
     def p_unary_expression_to_unary_operator_and_cast(self, t):
         """
@@ -1715,36 +1788,33 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='postfix_expression -> postfix_expression LBRACKET expression RBRACKET')
 
-        # For array stuff:
-        # TODO Expression t[3] can be multiple values. GCC takes the value of the last expression.
-        # TODO t[3] is an integral type
+        if isinstance(t[1], FunctionSymbol):
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError.from_tuple('Functions cannot be accessed like arrays.', tup)
 
-        tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
-        if isinstance(t[1], SymbolNode):
+        if isinstance(t[1], VariableSymbol):
 
-            print('is it a symbol node?', t[1], type(t[1]))
-            print(t[1].symbol.pointer_modifiers)
-
-            if isinstance(t[1].symbol, FunctionSymbol):
-                raise CompileError('Functions cannot be accessed like arrays.', tup[0], tup[1], tup[2])
-
-            if isinstance(t[1].symbol, VariableSymbol):
-                if len(t[1].symbol.array_dims) > 0 or len(t[1].symbol.pointer_modifiers) > 0:
-                    t[0] = ArrayReference(t[1].symbol, [t[3]], linerange=(t.lineno(1), t.lineno(4)))
-                else:
-                    raise CompileError('Symbol is not an array.', tup[0], tup[1], tup[2])
+            if len(t[1].array_dims) > 0 or len(t[1].pointer_dims) > 0:
+                # TODO Convert to VariableDereference to support pointer dereference? - Shubham (sg-variable-symbol)
+                t[0] = ArrayReference(t[1], [t[3]], linerange=(t.lineno(1), t.lineno(4)))
+                return
+            else:
+                tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+                raise CompileError.from_tuple('Symbol is not an array.', tup)
 
         elif isinstance(t[1], ArrayReference):
 
-            if len(t[1].subscripts) < len(t[1].symbol.array_dims):
+            if len(t[1].subscripts) < (len(t[1].symbol.array_dims) + len(t[1].symbol.pointer_dims)):
                 t[1].subscripts.append(t[3])
                 t[0] = t[1]
             else:
-                raise CompileError('Symbol only has {} dimensions.'.format(len(t[1].symbol.array_dims)),
-                                   tup[0], tup[1], tup[2])
+                tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+                raise CompileError.from_tuple('Too many subscripts. Symbol does not have that many dimensions.', tup)
 
         else:
-            raise CompileError('Unknown postfix expression {}'.format(type(t[1])), tup[0], tup[1], tup[2])
+
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError.from_tuple('Unknown postfix expression {}'.format(type(t[1])), tup)
 
     def p_postfix_expression_to_parameterized_function_call(self, t):
         """
@@ -1752,15 +1822,17 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='postfix_expression -> postfix_expression LPAREN argument_expression_list RPAREN')
 
-        if isinstance(t[1], SymbolNode) and isinstance(t[1].symbol, FunctionSymbol):
-            function_symbol = t[1].symbol
-            matched, message = function_symbol.arguments_match_parameter_types(t[3])
+        if isinstance(t[1], FunctionSymbol):
+            matched, message = t[1].arguments_match_parameter_types(t[3])
 
             if matched:
-                t[0] = FunctionCall(function_symbol, t[3], linerange=(t.lineno(1), t.lineno(4)))
+                t[0] = FunctionCall(t[1], t[3], linerange=(t.lineno(1), t.lineno(4)))
             else:
-                tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
-                raise CompileError(message, tup[0], tup[1], tup[2])
+                tup = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
+                raise CompileError.from_tuple(message, tup)
+        else:
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError.from_tuple('Unknown postfix_expression ({})'.format(type(t[1])), tup)
 
     def p_postfix_expression_to_function_call(self, t):
         """
@@ -1768,15 +1840,17 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='postfix_expression -> postfix_expression LPAREN RPAREN')
 
-        if isinstance(t[1], SymbolNode) and isinstance(t[1].symbol, FunctionSymbol):
-            function_symbol = t[1].symbol
-            matched, message = function_symbol.arguments_match_parameter_types([])
+        if isinstance(t[1], FunctionSymbol):
+            matched, message = t[1].arguments_match_parameter_types([])
 
             if matched:
-                t[0] = FunctionCall(function_symbol, None, linerange=(t.lineno(1), t.lineno(3)))
+                t[0] = FunctionCall(t[1], None, linerange=(t.lineno(1), t.lineno(3)))
             else:
                 tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
-                raise CompileError(message, tup[0], tup[1], tup[2])
+                raise CompileError.from_tuple(message, tup)
+        else:
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError.from_tuple('Unknown postfix_expression ({})'.format(type(t[1])), tup)
 
     def p_postfix_expression_to_struct_member_access(self, t):
         """
@@ -1798,7 +1872,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='postfix_expression -> postfix_expression PLUSPLUS')
 
-        # TODO This should have another node or a flag that says the increment occurs AFTER
+        # Pre set to false will increment AFTER
         t[0] = UnaryOperator(operator=t[2], pre=False, expression=t[1], linerange=(t.lineno(1), t.lineno(2)))
 
     def p_postfix_expression_to_post_decrement(self, t):
@@ -1807,7 +1881,7 @@ class JSTParser(object):
         """
         self.output_production(t, production_message='postfix_expression -> postfix_expression MINUSMINUS')
 
-        # TODO This should have another node or a flag that says the decrement occurs AFTER
+        # Pre set to false will increment AFTER
         t[0] = UnaryOperator(operator=t[2], pre=False, expression=t[1], linerange=(t.lineno(1), t.lineno(2)))
 
     #
@@ -1821,10 +1895,11 @@ class JSTParser(object):
 
         symbol, _ = self.compiler_state.symbol_table.find(t[1])
         if symbol is None:
-            result = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
-            raise CompileError('Use of variable before declaration.', result[0], result[1], result[2])
-        else:
-            t[0] = SymbolNode(symbol, linerange=(t.lineno(1), t.lineno(1)))
+            tup = self.compiler_state.get_line_col_source(t.lineno(1), t.lexpos(1))
+            raise CompileError.from_tuple('Use of variable before declaration.', tup)
+
+        # Don't forget to assign
+        t[0] = symbol
 
     def p_primary_expression_constant(self, t):
         """
@@ -1954,14 +2029,12 @@ class JSTParser(object):
         """
         self.prod_logger.info('Entering scope {}'.format(len(self.compiler_state.symbol_table.table)))
 
-        function_symbol = t[-1]
         self.compiler_state.symbol_table.push()
 
-        for named_parameter in function_symbol.named_parameters:
-            # TODO: may need to turn these into symbols
+        for named_parameter in t[-1]['parameters']:
+            named_parameter.set_as_parameter()
             self.compiler_state.symbol_table.insert(named_parameter)
-            assert(named_parameter.activation_frame_offset is not None)
-            print('OFFSET', named_parameter.activation_frame_offset)
+            print('OFFSET', named_parameter.activation_frame_offset, named_parameter.size_in_bytes())
 
     def p_enter_scope(self, t):
         """
@@ -1998,10 +2071,10 @@ class JSTParser(object):
         """
         self.prod_logger.info('Entering lookup mode.')
 
-        self.insert_mode = False
+        self.compiler_state.insert_mode = False
 
-
-    ## Handles any designated output (other than standard compiler output and warnings).
+    # Handles any designated output (other than standard compiler output and warnings).
+    #
     # @param self The object pointer
     # @param t The production item with info about the production, including line numbers.
     # @param production_message The production to write. Defaults to 'No Production'.
@@ -2031,12 +2104,10 @@ class JSTParser(object):
         valid_types = (Constant, int, float)
         return isinstance(item, valid_types)
 
-
     @staticmethod
     def compile_time_evaluable(item):
         return isinstance(item, (Constant, Symbol, SymbolNode)) and item.immutable and \
                type_utils.is_integral_type(item.get_resulting_type())
-
 
     # Performs compile-time operations to evaluate binary (two-operand) constant expressions.
     # Called by production handling methods.

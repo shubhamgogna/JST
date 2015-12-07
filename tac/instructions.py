@@ -75,8 +75,8 @@ CVTWS = 'CVTWS'
 ASSIGN = 'ASSIGN'
 
 # Memory Accesses
-LW = 'LW'
-SW = 'SW'
+LOAD = 'LOAD'
+STORE = 'STORE'
 LA = 'LA'
 LI = 'LI'
 
