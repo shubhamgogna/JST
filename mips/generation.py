@@ -206,6 +206,15 @@ class MipsGenerator(object):
         # raise NotImplementedError()
         pass
 
+    def _return(self, t):
+        result = self.register_table.acquire(t.dest)
+        self.mips_output.extend(result['code'])
+        register = result['register']
+        self.mips_output.append(mi.ADD(mr.V0, register, mr.ZERO))
+
+        # TODO: the parameter needs to be the size of the function's variables
+        self.mips_output.append(mm.FUNCTION_EPILOGUE_MACRO.call(mr.ZERO))
+
     def _load_immediate(self, t):
         result = self.register_table.acquire(t.dest)
         self.mips_output.extend(result['code'])
@@ -263,14 +272,6 @@ class MipsGenerator(object):
         self.mips_output.extend(result['code'])
         self.mips_output.append(mi.JR(result['register']))
 
-    def _return(self, t):
-        result = self.register_table.acquire(t.dest)
-        self.mips_output.extend(result['code'])
-        register = result['register']
-        self.mips_output.append(mi.ADD(mr.V0, register, mr.ZERO))
-
-        # TODO: the parameter needs to be the size of the function's variables
-        self.mips_output.append(mm.FUNCTION_EPILOGUE_MACRO.call(mr.ZERO))
 
     @staticmethod
     def tac_special_register_to_mips(tac_register):
