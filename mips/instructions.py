@@ -17,7 +17,7 @@
 def offset_label_immediate(label, offset=0):
     return '{}{}'.format(label, ' + ' + str(offset) if offset != 0 else '')
 
-def offset_register_immediate(register, offset=0):
+def offset_from_register_with_immediate(register, offset=0):
     return '{}({})'.format(offset if offset != 0 else '', register)
 
 

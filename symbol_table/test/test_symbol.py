@@ -15,7 +15,6 @@
 
 import unittest
 
-from ast.ast_nodes import PointerDeclaration
 from symbol_table.symbol import Symbol, FunctionSymbol, TypeDeclaration, VariableSymbol
 
 
