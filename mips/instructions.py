@@ -192,6 +192,8 @@ li = 'li'
 lw = 'lw'
 sw = 'sw'
 la = 'la'
+# TODO: Added move, Don't know if this is right
+move = 'move'
 
 
 class LI(BaseMipsInstruction):
@@ -212,6 +214,11 @@ class SW(BaseMipsInstruction):
 class LA(BaseMipsInstruction):
     def __init__(self, register, memory_address):
         super(LA, self).__init__(lw, register, memory_address)
+
+class MOVE(BaseMipsInstruction):
+    def __init__(self, dest_reg, source_reg):
+        super(MOVE, self).__init__(move, dest_reg, source_reg)
+
 
 
 #
