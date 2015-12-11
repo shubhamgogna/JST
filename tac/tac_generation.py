@@ -104,12 +104,27 @@ def DUP(clone, original):
 def SOURCE(line_start, line_end):
     """
     args:
-        start_line
+        line_start
+        line_end
 
     function:
         Instruction that gets filtered in the output and converted to the actual source from the program.
     """
     return TacInstruction(instructions.SOURCE, line_start, line_end)
+
+
+#
+# THE ALMIGHTY SOURCE
+#
+def KICK(register_name):
+    """
+    args:
+        register_name
+
+    function:
+        Instruction that marks temporaries as "dead" for the register allocation table.
+    """
+    return TacInstruction(instructions.KICK, register_name)
 
 
 #
