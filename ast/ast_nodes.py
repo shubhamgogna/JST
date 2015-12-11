@@ -726,6 +726,7 @@ class If(BaseAstNode):
 
         # Get two labels
         label_true = IF_TRUE_TICKETS.get()
+        label_false = IF_FALSE_TICKETS.get()
         label_end = ENDIF_TICKETS.get()
 
         # Gen 3ac for conditional
@@ -735,6 +736,7 @@ class If(BaseAstNode):
         # Branch based on the contents of the result register of the conditional
         reg = result['rvalue']
         output.append(BRNE(label_true, reg, ZERO))
+        output.append(LABEL(label_false))
 
         # Gen 3AC for false branch
         if self.if_false:

@@ -1,0 +1,17 @@
+SOURCE: 
+SOURCE:             int main()
+SOURCE:             {
+SOURCE:                 int i;
+SOURCE:                 if (i == 1)
+SOURCE:                 {
+SOURCE:                     i = 7;
+SOURCE:                 }
+SOURCE:                 else if(i == 2)
+SOURCE:                 {
+SOURCE:                     i = 8;
+SOURCE:                 }
+SOURCE:                 else
+SOURCE:                 {
+SOURCE:                     i = 9;
+SOURCE:                 }
+SOURCE:             }
