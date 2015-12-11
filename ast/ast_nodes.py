@@ -964,6 +964,7 @@ class UnaryOperator(BaseAstNode):
         if not self.pre:
             return_reg = INT_REGISTER_TICKETS.get()
             output.append(ADD(return_reg, rvalue, '$zero'))
+
         else:  # in the case of pre plusplus, we will be returning a register with the updated value
             return_reg = rvalue
 

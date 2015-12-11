@@ -146,6 +146,9 @@ class MipsGenerator(object):
                 elif instruction.instruction == taci.LOAD:
                     self._load_word(instruction)
 
+                elif instruction.instruction == taci.LA:
+                    self._load_address(instruction)
+
                 elif instruction.instruction == taci.STORE:
                     self._store_word(instruction)
 
@@ -244,7 +247,21 @@ class MipsGenerator(object):
         # ($t2), 100($t2), 100, label, label + immediate, label($t2), label + immediate($t2)
 
     def _load_address(self, t):
-        raise NotImplementedError()
+        dest_register = None
+        src1_register = None
+
+        result = self.register_table.acquire(t.dest)
+        self.mips_output.extend(result['code'])
+        dest_register = result['register']
+
+        if t.src1 not in tac_gen.CONSTANT_REGISTERS:
+            result = self.register_table.acquire(t.src1)
+            self.mips_output.extend(result['code'])
+            src1_register = result['register']
+        else:
+            src1_register = self.tac_special_register_to_mips(t.src1)
+
+        self.mips_output.append(mi.LA(dest_register, src1_register))
 
     def _assign(self, t):
         dest_register = None

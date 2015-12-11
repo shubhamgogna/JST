@@ -16,7 +16,7 @@
 import copy
 import itertools
 
-from tac.tac_generation import SOURCE, LOAD, ADD, FP, create_offset_reference, ZERO
+from tac.tac_generation import SOURCE, LOAD, LA, FP, create_offset_reference, ZERO
 from ticket_counting.ticket_counters import UUID_TICKETS, FLOAT_REGISTER_TICKETS, INT_REGISTER_TICKETS
 from utils import type_utils
 
@@ -158,7 +158,8 @@ class VariableSymbol(Symbol):
             return {'3ac': output, 'rvalue': reg}
 
         else:
-            output.append(ADD(reg, address, ZERO))
+            # output.append(ADD(reg, address, ZERO))
+            output.append(LA(reg, address))
             return {'3ac': output, 'lvalue': reg}
 
 
