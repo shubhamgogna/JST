@@ -170,8 +170,14 @@ class MipsGenerator(object):
                 elif instruction.instruction == taci.ADDIU:
                     self._add_immediate_unsigned(instruction)
 
+                elif instruction.instruction == taci.ADDU:
+                    self._add_unsigned(instruction)
+
                 elif instruction.instruction == taci.ADD:
                     self._add(instruction)
+
+                # elif instruction.instruction == taci.MULTU:
+                #     self._multiply_unsigned(instruction)
 
                 elif instruction.instruction == taci.EQ:
                     self._equality(instruction)
@@ -322,6 +328,31 @@ class MipsGenerator(object):
 
         self.mips_output.append(mi.ADDIU(dest_register, src1_register, t.src2))
 
+    def _add_unsigned(self, t):
+        dest_register = None
+        src1_register = None
+        src2_register = None
+
+        result = self.register_table.acquire(t.dest)
+        self.mips_output.extend(result['code'])
+        dest_register = result['register']
+
+        if t.src1 not in tac_gen.CONSTANT_REGISTERS:
+            result = self.register_table.acquire(t.src1)
+            self.mips_output.extend(result['code'])
+            src1_register = result['register']
+        else:
+            src1_register = self.tac_special_register_to_mips(t.src1)
+
+        if t.src2 not in tac_gen.CONSTANT_REGISTERS:
+            result = self.register_table.acquire(t.src2)
+            self.mips_output.extend(result['code'])
+            src2_register = result['register']
+        else:
+            src2_register = self.tac_special_register_to_mips(t.src2)
+
+        self.mips_output.append(mi.ADDU(dest_register, src1_register, src2_register))
+
     def _add(self, t):
         dest_register = None
         src1_register = None
@@ -345,7 +376,33 @@ class MipsGenerator(object):
         else:
             src2_register = self.tac_special_register_to_mips(t.src2)
 
-        self.mips_output.append(mi.ADDIU(dest_register, src1_register, src2_register))
+        self.mips_output.append(mi.ADD(dest_register, src1_register, src2_register))
+
+    def _multiply_unsigned(self, t):
+        dest_register = None
+        src1_register = None
+        src2_register = None
+
+        result = self.register_table.acquire(t.dest)
+        self.mips_output.extend(result['code'])
+        dest_register = result['register']
+
+        if t.src1 not in tac_gen.CONSTANT_REGISTERS:
+            result = self.register_table.acquire(t.src1)
+            self.mips_output.extend(result['code'])
+            src1_register = result['register']
+        else:
+            src1_register = self.tac_special_register_to_mips(t.src1)
+
+        if t.src2 not in tac_gen.CONSTANT_REGISTERS:
+            result = self.register_table.acquire(t.src2)
+            self.mips_output.extend(result['code'])
+            src2_register = result['register']
+        else:
+            src2_register = self.tac_special_register_to_mips(t.src2)
+
+        self.mips_output.append(mi.MULU(dest_register, src1_register, src2_register))
+
 
     def _equality(self, t):
         dest_register = None
