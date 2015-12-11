@@ -260,15 +260,19 @@ class MipsGenerator(object):
         # TODO: ensure that the address is handled for all of the variants
         # ($t2), 100($t2), 100, label, label + immediate, label($t2), label + immediate($t2)
         content_reg = self.register_table.acquire(t.dest)
-        address_ref = self.register_table.acquire(t.src1)
+        address_reg = self.register_table.acquire(t.src1)
+
+        self.mips_output.append(content_reg['code'])
+        self.mips_output.append(address_reg['code'])
 
         # Content and then address
         if t.src2 is 1:
-            self.mips_output.append(mi.SB(content_reg, address_ref))
+
+            self.mips_output.append(mi.SB(content_reg['register'], address_reg['register']))
         elif t.src2 is 2:
-            self.mips_output.append(mi.SHW(content_reg, address_ref))
+            self.mips_output.append(mi.SHW(content_reg['register'], address_reg['register']))
         elif t.src2 is 4:
-            self.mips_output.append(mi.SW(content_reg, address_ref))
+            self.mips_output.append(mi.SW(content_reg['register'], address_reg['register']))
 
     def _load_address(self, t):
         result = self.register_table.acquire(t.dest)
