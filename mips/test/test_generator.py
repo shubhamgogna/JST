@@ -52,6 +52,8 @@ class TestMipsGenerator(unittest.TestCase):
         ast = self.compiler_state.parse(data)
         source_tac = ast.to_3ac()
 
+        print('---------------------------')
+
         self.generator.load(source_tac)
         self.generator.translate_tac_to_mips()
         print(self.generator.dumps())
@@ -66,7 +68,7 @@ class TestMipsGenerator(unittest.TestCase):
             """
         ast = self.compiler_state.parse(data)
         source_tac = ast.to_3ac()
-        print(source_tac)
+        # print(source_tac)
         print('---------------------------')
 
         self.generator.load(source_tac)

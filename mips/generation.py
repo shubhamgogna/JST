@@ -160,6 +160,8 @@ class MipsGenerator(object):
                 elif instruction.instruction == taci.ADDIU:
                     self._add_immediate_unsigned(instruction)
 
+                elif instruction.instruction == taci.ADD:
+                    self._add(instruction)
 
                 elif instruction.instruction == taci.RETURN:
                     self._return(instruction)
@@ -263,6 +265,32 @@ class MipsGenerator(object):
         #     src2_register = result['register']
 
         self.mips_output.append(mi.ADDIU(dest_register, src1_register, t.src2))
+
+    def _add(self, t):
+        dest_register = None
+        src1_register = None
+        src2_register = None
+
+        result = self.register_table.acquire(t.dest)
+        self.mips_output.extend(result['code'])
+        dest_register = result['register']
+
+        if t.src1 not in tac_gen.CONSTANT_REGISTERS:
+            result = self.register_table.acquire(t.src1)
+            self.mips_output.extend(result['code'])
+            src1_register = result['register']
+        else:
+            src1_register = self.tac_special_register_to_mips(t.src1)
+
+        if t.src2 not in tac_gen.CONSTANT_REGISTERS:
+            result = self.register_table.acquire(t.src2)
+            self.mips_output.extend(result['code'])
+            src2_register = result['register']
+        else:
+            src2_register = self.tac_special_register_to_mips(t.src2)
+
+        self.mips_output.append(mi.ADDIU(dest_register, src1_register, src2_register))
+
 
     def _branch(self, t):
         self.mips_output.append(mi.J(t.dest))
