@@ -571,19 +571,19 @@ def CVTSW(result, operand):
 
 
 #
-# ASSIGNMENT
+# # ASSIGNMENT
+# #
+# def ASSIGN(result, lvalue, rvalue):
+#     """
+#     args:
+#         sum: the register where the addition result is stored.
+#         augend: the left operand of the addition.
+#         addend: the right operand of the addition.
 #
-def ASSIGN(result, lvalue, rvalue):
-    """
-    args:
-        sum: the register where the addition result is stored.
-        augend: the left operand of the addition.
-        addend: the right operand of the addition.
-
-    function:
-        Performs basic addition.
-    """
-    return TacInstruction(instructions.ASSIGN, result, lvalue, rvalue)
+#     function:
+#         Performs basic addition.
+#     """
+#     return TacInstruction(instructions.ASSIGN, result, lvalue, rvalue)
 
 
 #

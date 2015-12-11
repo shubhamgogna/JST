@@ -157,8 +157,8 @@ class MipsGenerator(object):
 
                 # elif instruction.instruction == taci.BRNE:
 
-                elif instruction.instruction == taci.ASSIGN:
-                    self._assign(instruction)
+                # elif instruction.instruction == taci.ASSIGN:
+                #     self._assign(instruction)
 
                 elif instruction.instruction == taci.JR:
                     self._jump_to_register_value(instruction)
@@ -262,23 +262,23 @@ class MipsGenerator(object):
             src1_register = self.tac_special_register_to_mips(t.src1)
 
         self.mips_output.append(mi.LA(dest_register, src1_register))
-
-    def _assign(self, t):
-        dest_register = None
-        src1_register = None
-
-        result = self.register_table.acquire(t.src1)
-        self.mips_output.extend(result['code'])
-        dest_register = result['register']
-
-        if t.src1 not in tac_gen.CONSTANT_REGISTERS:
-            result = self.register_table.acquire(t.src2)
-            self.mips_output.extend(result['code'])
-            src1_register = result['register']
-        else:
-            src1_register = self.tac_special_register_to_mips(t.src2)
-
-        self.mips_output.append(mi.MOVE(dest_register, src1_register))
+    #
+    # def _assign(self, t):
+    #     dest_register = None
+    #     src1_register = None
+    #
+    #     result = self.register_table.acquire(t.src1)
+    #     self.mips_output.extend(result['code'])
+    #     dest_register = result['register']
+    #
+    #     if t.src1 not in tac_gen.CONSTANT_REGISTERS:
+    #         result = self.register_table.acquire(t.src2)
+    #         self.mips_output.extend(result['code'])
+    #         src1_register = result['register']
+    #     else:
+    #         src1_register = self.tac_special_register_to_mips(t.src2)
+    #
+    #     self.mips_output.append(mi.SW(dest_register, src1_register))
 
 
     def _add_immediate_unsigned(self, t):

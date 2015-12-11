@@ -73,7 +73,7 @@ CVTSW = 'CVTSW'
 CVTWS = 'CVTWS'
 
 # Assignment
-ASSIGN = 'ASSIGN'
+# ASSIGN = 'ASSIGN'
 
 # Memory Accesses
 LOAD = 'LOAD'

@@ -196,7 +196,8 @@ class Assignment(BaseAstNode):
         # call 3ac instruction to load value of rval's reg to lval's memory location
         # Note: not sure how this assign thing is supposed to be used....
         #       right now both are registers, should the rvalue be the actual value? I don't think so but not sure
-        output.append(ASSIGN(rval, lval, rval))
+        size = self.lvalue.size_in_bytes()
+        output.append(STORE(lval, rval, size))
 
         return {'3ac': output, 'rvalue': rval}
 
