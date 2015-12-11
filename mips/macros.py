@@ -55,7 +55,7 @@ SAVE_SPILL_MEM_MACRO = Macro(name='SAVE_SPILL_MEM', args=None, body=__save_spill
 
 
 __restore_spill_mem_macro_body = [
-
+    mi.COMMENT('')
 ]
 RESTORE_SPILL_MEM_MACRO = Macro(name='RESTORE_SPILL_MEM', args=None, body=__restore_spill_mem_macro_body)
 
