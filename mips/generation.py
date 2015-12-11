@@ -143,10 +143,10 @@ class MipsGenerator(object):
                 elif instruction.instruction == taci.LI:
                     self._load_immediate(instruction)
 
-                elif instruction.instruction == taci.LW:
+                elif instruction.instruction == taci.LOAD:
                     self._load_word(instruction)
 
-                elif instruction.instruction == taci.SW:
+                elif instruction.instruction == taci.STORE:
                     self._store_word(instruction)
 
                 elif instruction.instruction == taci.BR:

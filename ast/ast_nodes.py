@@ -100,6 +100,7 @@ class ArrayReference(BaseAstNode):
                 output.extend(subscript_tac['3ac'])
 
             output.append(ADDU(offset_reg, offset_reg, subscript_tac['rvalue']))
+            output.append(KICK(subscript_tac['rvalue']))
 
         # Offset by symbol size
         output.append(MULIU(offset_reg, offset_reg, self.symbol.size_in_bytes()))
@@ -114,6 +115,8 @@ class ArrayReference(BaseAstNode):
             output.append(LOAD(end_address_reg,
                                create_offset_reference(self.symbol.activation_frame_offset + 1, FP), 4))
             output.append(BOUND(offset_reg, base_address_reg, end_address_reg))
+            output.append(KICK(base_address_reg))
+            output.append(KICK(end_address_reg))
 
         else:
 
@@ -312,6 +315,9 @@ class BinaryOperator(BaseAstNode):
         # TODO: since don't have the value since not calculating anything, can't store it to the table yet
         # register_allocation_table[reg] = value
 
+        # Kick the temporaries
+        output.append(KICK(lval))
+        output.append(KICK(rval))
         return {'3ac': output, 'rvalue': reg}
 
 
@@ -456,9 +462,13 @@ class Declaration(BaseAstNode):
                 if '3ac' in item_tac:
                     output.extend(item_tac['3ac'])
 
-                # Store the value into memory and move to next
+                # Store the value into memory, kick the register, and move to next
                 output.append(STORE(offset_reg, item_tac['rvalue'], self.symbol.size_in_bytes()))
+                output.append(KICK(item_tac['rvalue']))
                 output.append(ADDIU(offset_reg, offset_reg, self.symbol.size_in_bytes()))
+
+            # Kick the offset register
+            output.append(KICK(offset_reg))
 
         else:
 
@@ -714,8 +724,8 @@ class If(BaseAstNode):
         output = [SOURCE(self.linerange[0], self.linerange[1])]
 
         # Get two labels
-        label_true = LABEL_TICKETS.get()
-        label_end = LABEL_TICKETS.get()
+        label_true = IF_TRUE_TICKETS.get()
+        label_end = ENDIF_TICKETS.get()
 
         # Gen 3ac for conditional
         result = self.conditional.to_3ac()
@@ -741,6 +751,7 @@ class If(BaseAstNode):
 
         # Dump end label
         output.append(LABEL(label_end))
+        output.append(KICK(reg))
 
         return {'3ac': output}
 
