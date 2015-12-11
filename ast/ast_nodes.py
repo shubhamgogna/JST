@@ -16,6 +16,7 @@
 import itertools
 
 from ast.base_ast_node import BaseAstNode
+from symbol_table.symbol import VariableSymbol
 from utils import type_utils
 from utils import operator_utils
 from ticket_counting.ticket_counters import LABEL_TICKETS, LOOP_CONDITION_TICKETS, LOOP_BODY_TICKETS, LOOP_EXIT_TICKETS, \
@@ -613,7 +614,7 @@ class FunctionCall(BaseAstNode):
             # store value at memory location indicated by parameter_template
             offset = parameter_template.activation_frame_offset
 
-            if len(argument.array_dims) > 0:
+            if isinstance(argument, VariableSymbol) and argument.is_array:
                 array_base = INT_REGISTER_TICKETS.get()
                 _3ac.append(LA(array_base, create_offset_reference(argument.activation_frame_offset, SP)))
                 arg_rvalue = array_base
@@ -979,7 +980,7 @@ class UnaryOperator(BaseAstNode):
              output.append(SUBI(rvalue, rvalue, 1))
 
         # store updated value
-        output.append(SW(rvalue, value_reg))
+        output.append(STORE(rvalue, value_reg, 4))
 
         return {'3ac': output, 'rvalue': return_reg}
 

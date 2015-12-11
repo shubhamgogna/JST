@@ -2164,8 +2164,20 @@ class JSTParser(object):
         else:
             raise Exception('Improper operator provided: ' + operator)
 
-        first_line = min(left.linerange[0], right.linerange[0])
-        last_line = max(left.linerange[1], right.linerange[1])
+        if isinstance(left, VariableSymbol):
+            left_start = left_end = left.lineno
+        else:
+            left_start = left.linerange[0]
+            left_end = left.linerange[1]
+
+        if isinstance(right, VariableSymbol):
+            right_start = right_end = right.lineno
+        else:
+            right_start = right.linerange[0]
+            right_end = right.linerange[1]
+
+        first_line = min(left_start, right_start)
+        last_line = max(left_end, right_end)
 
         val_type = Constant.INTEGER if isinstance(result, int) else Constant.FLOAT
         return Constant(val_type, result, linerange=(first_line, last_line))
