@@ -104,8 +104,8 @@ class MipsGenerator(object):
 
         self.mips_output.extend(mm.SAVE_REGISTER_MACRO.definition())
         self.mips_output.extend(mm.RESTORE_REGISTER_MACRO.definition())
-        self.mips_output.extend(mm.FUNCTION_PROLOGUE_MACRO.definition())
-        self.mips_output.extend(mm.FUNCTION_EPILOGUE_MACRO.definition())
+        self.mips_output.extend(mm.CALLEE_FUNCTION_PROLOGUE_MACRO.definition())
+        self.mips_output.extend(mm.CALLEE_FUNCTION_EPILOGUE_MACRO.definition())
 
         for instruction in self.source_tac:
             assert (isinstance(instruction, TacInstruction))
@@ -215,7 +215,7 @@ class MipsGenerator(object):
         self.mips_output.append(mi.ADD(mr.V0, register, mr.ZERO))
 
         # TODO: the parameter needs to be the size of the function's variables
-        self.mips_output.append(mm.FUNCTION_EPILOGUE_MACRO.call(mr.ZERO))
+        self.mips_output.append(mm.CALLEE_FUNCTION_EPILOGUE_MACRO.call(mr.ZERO))
 
     def _load_immediate(self, t):
         result = self.register_table.acquire(t.dest)

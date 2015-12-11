@@ -16,6 +16,7 @@
 # General
 DUP = 'DUP'
 SOURCE = 'SOURCE'
+KICK = 'KICK'
 
 # Program Sections
 DATA = 'DATA'
