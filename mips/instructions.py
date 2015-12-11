@@ -272,7 +272,13 @@ class SEQ(BaseMipsInstruction):
     def __init__(self, result, src1, src2):
         super(SEQ, self).__init__('seq', result, src1, src2)
 
+class SLT(BaseMipsInstruction):
+    def __init__(self, result, src1, src2):
+        super(SLT, self).__init__('slt', result, src1, src2)
 
+class SGT(BaseMipsInstruction):
+    def __init__(self, result, src1, src2):
+        super(SGT, self).__init__('sgt', result, src1, src2)
 #
 # BRANCHING
 #
@@ -288,6 +294,9 @@ class JR(BaseMipsInstruction):
     def __init__(self, register):
         super(JR, self).__init__('jr', register)
 
+class BNE(BaseMipsInstruction):
+    def __init__(self, target, src1, src2):
+        super(BNE, self).__init__('bne', target, src1, src2)
 
 
 if __name__ == '__main__':

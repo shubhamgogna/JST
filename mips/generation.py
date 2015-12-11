@@ -158,7 +158,8 @@ class MipsGenerator(object):
                 elif instruction.instruction == taci.BR:
                     self._branch(instruction)
 
-                # elif instruction.instruction == taci.BRNE:
+                elif instruction.instruction == taci.BRNE:
+                    self._branch_not_equal(instruction)
 
                 # elif instruction.instruction == taci.ASSIGN:
                 #     self._assign(instruction)
@@ -174,6 +175,12 @@ class MipsGenerator(object):
 
                 elif instruction.instruction == taci.EQ:
                     self._equality(instruction)
+
+                elif instruction.instruction == taci.LT:
+                    self._less_than(instruction)
+
+                elif instruction.instruction == taci.GT:
+                    self._greater_than(instruction)
 
                 elif instruction.instruction == taci.RETURN:
                     self._return(instruction)
@@ -358,9 +365,85 @@ class MipsGenerator(object):
 
         self.mips_output.append(mi.SEQ(dest_register, src1_register, src2_register))
 
+    def _less_than(self, t):
+        dest_register = None
+        src1_register = None
+        src2_register = None
+
+        result = self.register_table.acquire(t.dest)
+        self.mips_output.extend(result['code'])
+        dest_register = result['register']
+
+        if t.src1 not in tac_gen.CONSTANT_REGISTERS:
+            result = self.register_table.acquire(t.src1)
+            self.mips_output.extend(result['code'])
+            src1_register = result['register']
+        else:
+            src1_register = self.tac_special_register_to_mips(t.src1)
+
+        if t.src2 not in tac_gen.CONSTANT_REGISTERS:
+            result = self.register_table.acquire(t.src2)
+            self.mips_output.extend(result['code'])
+            src2_register = result['register']
+        else:
+            src2_register = self.tac_special_register_to_mips(t.src2)
+
+        self.mips_output.append(mi.SLT(dest_register, src1_register, src2_register))
+
+    def _greater_than(self, t):
+        dest_register = None
+        src1_register = None
+        src2_register = None
+
+        result = self.register_table.acquire(t.dest)
+        self.mips_output.extend(result['code'])
+        dest_register = result['register']
+
+        if t.src1 not in tac_gen.CONSTANT_REGISTERS:
+            result = self.register_table.acquire(t.src1)
+            self.mips_output.extend(result['code'])
+            src1_register = result['register']
+        else:
+            src1_register = self.tac_special_register_to_mips(t.src1)
+
+        if t.src2 not in tac_gen.CONSTANT_REGISTERS:
+            result = self.register_table.acquire(t.src2)
+            self.mips_output.extend(result['code'])
+            src2_register = result['register']
+        else:
+            src2_register = self.tac_special_register_to_mips(t.src2)
+
+        self.mips_output.append(mi.SGT(dest_register, src1_register, src2_register))
+
 
     def _branch(self, t):
         self.mips_output.append(mi.J(t.dest))
+
+    def _branch_not_equal(self, t):
+        dest_register = None
+        src1_register = None
+        src2_register = None
+
+        # result = self.register_table.acquire(t.dest)
+        # self.mips_output.extend(result['code'])
+        # dest_register = result['register']
+
+        if t.src1 not in tac_gen.CONSTANT_REGISTERS:
+            result = self.register_table.acquire(t.src1)
+            self.mips_output.extend(result['code'])
+            src1_register = result['register']
+        else:
+            src1_register = self.tac_special_register_to_mips(t.src1)
+
+        if t.src2 not in tac_gen.CONSTANT_REGISTERS:
+            result = self.register_table.acquire(t.src2)
+            self.mips_output.extend(result['code'])
+            src2_register = result['register']
+        else:
+            src2_register = self.tac_special_register_to_mips(t.src2)
+
+        self.mips_output.append(mi.BNE(t.dest, src1_register, src2_register))
+
 
     def _jump_to_register_value(self, t):
         # result = self.register_table.acquire(t.dest)
