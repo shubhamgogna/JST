@@ -2106,7 +2106,7 @@ class JSTParser(object):
 
     @staticmethod
     def compile_time_evaluable(item):
-        return isinstance(item, (Constant, Symbol, SymbolNode)) and item.immutable and \
+        return isinstance(item, (Constant, Symbol)) and item.immutable and \
                type_utils.is_integral_type(item.get_resulting_type())
 
     # Performs compile-time operations to evaluate binary (two-operand) constant expressions.
