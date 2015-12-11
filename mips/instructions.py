@@ -189,11 +189,15 @@ class LABEL(BaseMipsInstruction):
 # MEMORY
 #
 li = 'li'
-lw = 'lw'
-sw = 'sw'
 la = 'la'
-# TODO: Added move, Don't know if this is right
-move = 'move'
+
+lb = 'lb'
+lhw = 'lhw'
+lw = 'lw'
+
+sb = 'sb'
+shw = 'shw'
+sw = 'sw'
 
 
 class LI(BaseMipsInstruction):
@@ -201,24 +205,39 @@ class LI(BaseMipsInstruction):
         super(LI, self).__init__(li, register, immediate)
 
 
+class LA(BaseMipsInstruction):
+    def __init__(self, register, memory_address):
+        super(LA, self).__init__(la, register, memory_address)
+
+
+class LB(BaseMipsInstruction):
+    def __init__(self, register, memory_address):
+        super(LB, self).__init__(lw, register, memory_address)
+
+
+class LHW(BaseMipsInstruction):
+    def __init__(self, register, memory_address):
+        super(LHW, self).__init__(lw, register, memory_address)
+
+
 class LW(BaseMipsInstruction):
     def __init__(self, register, memory_address):
         super(LW, self).__init__(lw, register, memory_address)
 
 
+class SB(BaseMipsInstruction):
+    def __init__(self, register, memory_address):
+        super(SB, self).__init__(sw, register, memory_address)
+
+
+class SHW(BaseMipsInstruction):
+    def __init__(self, register, memory_address):
+        super(SHW, self).__init__(sw, register, memory_address)
+
+
 class SW(BaseMipsInstruction):
     def __init__(self, register, memory_address):
         super(SW, self).__init__(sw, register, memory_address)
-
-
-class LA(BaseMipsInstruction):
-    def __init__(self, register, memory_address):
-        super(LA, self).__init__(lw, register, memory_address)
-
-class MOVE(BaseMipsInstruction):
-    def __init__(self, dest_reg, source_reg):
-        super(MOVE, self).__init__(move, dest_reg, source_reg)
-
 
 
 #
