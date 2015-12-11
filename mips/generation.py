@@ -125,6 +125,9 @@ class MipsGenerator(object):
                 elif instruction.instruction == taci.LABEL:
                     self._label(instruction)
 
+                elif instruction.instruction == taci.KICK:
+                    self._kick(instruction)
+
                 elif instruction.instruction == taci.CALL_PROC:
                     self._call_procedure(instruction)
 
@@ -144,13 +147,13 @@ class MipsGenerator(object):
                     self._load_immediate(instruction)
 
                 elif instruction.instruction == taci.LOAD:
-                    self._load_word(instruction)
+                    self._load(instruction)
 
                 elif instruction.instruction == taci.LA:
                     self._load_address(instruction)
 
                 elif instruction.instruction == taci.STORE:
-                    self._store_word(instruction)
+                    self._store(instruction)
 
                 elif instruction.instruction == taci.BR:
                     self._branch(instruction)
@@ -193,6 +196,9 @@ class MipsGenerator(object):
     def _label(self, t):
         self.mips_output.append(mi.LABEL(t.dest))
 
+    def _kick(self, instruction):
+        self.register_table.release(instruction.dest)
+
     def _call_procedure(self, t):
         # push the temporary registers on the stack
         self.mips_output.append(mm.SAVE_REGISTER_MACRO.call())
@@ -228,40 +234,35 @@ class MipsGenerator(object):
         self.mips_output.extend(result['code'])
         self.mips_output.append(mi.LI(result['register'], t.src1))
 
-    def _load_word(self, t):
-        # do a register/argument check
-
-        # generate the mips code
-
-        raise NotImplementedError()
-
-    def _store_word(self, t):
-        dest_register = None
-
+    def _load(self, t):
         result = self.register_table.acquire(t.dest)
         self.mips_output.extend(result['code'])
         dest_register = result['register']
 
-        self.mips_output.append(mi.SW(dest_register, memory_address=t.src1))
+        if t.src2 is 1:
+            self.mips_output.append(mi.LB(dest_register, t.src1))
+        elif t.src2 is 2:
+            self.mips_output.append(mi.LHW(dest_register, t.src1))
+        elif t.src2 is 4:
+            self.mips_output.append(mi.LW(dest_register, t.src1))
+
+    def _store(self, t):
         # TODO: ensure that the address is handled for all of the variants
         # ($t2), 100($t2), 100, label, label + immediate, label($t2), label + immediate($t2)
 
-    def _load_address(self, t):
-        dest_register = None
-        src1_register = None
+        if t.src2 is 1:
+            self.mips_output.append(mi.SB(t.dest, t.src1))
+        elif t.src2 is 2:
+            self.mips_output.append(mi.SHW(t.dest, t.src1))
+        elif t.src2 is 4:
+            self.mips_output.append(mi.SW(t.dest, t.src1))
 
+    def _load_address(self, t):
         result = self.register_table.acquire(t.dest)
         self.mips_output.extend(result['code'])
         dest_register = result['register']
 
-        if t.src1 not in tac_gen.CONSTANT_REGISTERS:
-            result = self.register_table.acquire(t.src1)
-            self.mips_output.extend(result['code'])
-            src1_register = result['register']
-        else:
-            src1_register = self.tac_special_register_to_mips(t.src1)
-
-        self.mips_output.append(mi.LA(dest_register, src1_register))
+        self.mips_output.append(mi.LA(dest_register, t.src1))
     #
     # def _assign(self, t):
     #     dest_register = None
