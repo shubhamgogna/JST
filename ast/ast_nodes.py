@@ -54,6 +54,12 @@ class ArrayReference(BaseAstNode):
         first_open_bracket = type_str.index('[')
         return type_str[:first_open_bracket - 1]
 
+    def size_in_bytes(self):
+        if len(self.symbol.array_dims) != len(self.subscripts):
+            raise Exception("Attempt to get size in bytes of a not-fully dereferenced array.")
+        else:
+            return self.symbol.size_in_bytes()
+
     @property
     def immutable(self):
         return self.symbol.immutable
