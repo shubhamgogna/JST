@@ -112,33 +112,37 @@ class ArrayReference(BaseAstNode):
         # Offset by symbol size
         output.append(MULIU(offset_reg, offset_reg, self.symbol.size_in_bytes()))
 
+        # Allocate two new registers
+        base_address_reg = INT_REGISTER_TICKETS.get()
+        end_address_reg = INT_REGISTER_TICKETS.get()
+
         # Check bounds
         if self.symbol.is_parameter:
 
-            base_address_reg = INT_REGISTER_TICKETS.get()
-            end_address_reg = INT_REGISTER_TICKETS.get()
             output.append(LOAD(base_address_reg,
                                create_offset_reference(self.symbol.activation_frame_offset, FP), 4))
             output.append(LOAD(end_address_reg,
                                create_offset_reference(self.symbol.activation_frame_offset + 1, FP), 4))
             output.append(BOUND(offset_reg, base_address_reg, end_address_reg))
-            output.append(KICK(base_address_reg))
-            output.append(KICK(end_address_reg))
 
         else:
 
             array_size_in_bytes = self.symbol.array_size * self.symbol.size_in_bytes()
 
             if self.symbol.global_memory_location:
-                base_address = self.symbol.global_memory_location
-                end_address = base_address + array_size_in_bytes
+                output.append(LI(base_address_reg, self.symbol.global_memory_location))
+                output.append(LI(end_address_reg, self.symbol.global_memory_location + array_size_in_bytes))
                 output.append(ADDIU(offset_reg, offset_reg, self.symbol.global_memory_location))
             else:
-                base_address = create_offset_reference(self.symbol.activation_frame_offset, FP)
-                end_address = create_offset_reference(self.symbol.activation_frame_offset + array_size_in_bytes, FP)
-                output.append(ADDU(offset_reg, offset_reg, base_address))
+                output.append(LA(base_address_reg, create_offset_reference(self.symbol.activation_frame_offset, FP)))
+                output.append(LA(end_address_reg, create_offset_reference(self.symbol.activation_frame_offset + array_size_in_bytes, FP)))
+                output.append(ADD(offset_reg, offset_reg, base_address_reg))
 
-            output.append(BOUND(offset_reg, base_address, end_address))
+            output.append(BOUND(offset_reg, base_address_reg, end_address_reg))
+
+        # Kick the temporaries
+        output.append(KICK(base_address_reg))
+        output.append(KICK(end_address_reg))
 
         if get_rval:
             output.append(LOAD(offset_reg, offset_reg, self.symbol.size_in_bytes()))
