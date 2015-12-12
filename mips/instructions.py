@@ -270,6 +270,10 @@ class MULU(BaseMipsInstruction):
     def __init__(self, product, multiplicand, multiplier):
         super(MULU, self).__init__('mulu', product, multiplicand, multiplier)
 
+class MUL(BaseMipsInstruction):
+    def __init__(self, product, multiplicand, multiplier):
+        super(MUL, self).__init__('mul', product, multiplicand, multiplier)
+
 class SEQ(BaseMipsInstruction):
     def __init__(self, result, src1, src2):
         super(SEQ, self).__init__('seq', result, src1, src2)

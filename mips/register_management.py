@@ -189,7 +189,7 @@ class RegisterUseTable(object):
 
         :return: A string representing the state of the RegisterUseTable.
         """
-        lru_cache_str = '{' + ', '.join([str(item[0] +': ' + str(item[1])) for item in self.lru_cache.items()]) + '}'
+        lru_cache_str = '{' + ', '.join([str(item[0]) + ': ' + str(item[1]) for item in self.lru_cache.items()]) + '}'
 
         ret = 'lru cache:             {}\n' \
               'spilled registers:     {}\n' \
