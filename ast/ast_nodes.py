@@ -701,7 +701,16 @@ class FunctionDefinition(BaseAstNode):
     def to_3ac(self, include_source=False):
         _tac = [SOURCE(self.linerange[0], self.linerange[1]), LABEL(self.function_symbol.identifier)]
 
-        _tac.append(ENTER_PROC(None))
+        WORD_SIZE = 4
+
+        parameter_size = 0
+        for symbol in self.function_symbol.named_parameters:
+            if symbol.is_array():
+                parameter_size += WORD_SIZE * (1 + 1 + len(symbol.array_dims))
+            else:
+                parameter_size += symbol.size_in_bytes()
+
+        _tac.append(ENTER_PROC(local_variable_size=  self.function_symbol.activation_frame_size - parameter_size   ))
 
         # Generate 3AC for body (always a compound statement)
         if self.body:
