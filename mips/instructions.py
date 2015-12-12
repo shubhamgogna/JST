@@ -250,11 +250,13 @@ class ADD(BaseMipsInstruction):
     def __init__(self, sum, addend, augend):
         super(ADD, self).__init__(add, sum, addend, augend)
 
-
 class ADDIU(BaseMipsInstruction):
     def __init__(self, sum, addend, augend_immediate):
         super(ADDIU, self).__init__('addiu', sum, addend, augend_immediate)
 
+class ADDU(BaseMipsInstruction):
+    def __init__(self, sum, addend, augend_immediate):
+        super(ADDU, self).__init__('addu', sum, addend, augend_immediate)
 
 class SUB(BaseMipsInstruction):
     def __init__(self, difference, minuend, subtrahend):
