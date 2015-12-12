@@ -533,10 +533,11 @@ class FileAST(BaseAstNode):
 
         output.append(TEXT())
         # insert the call to main
-        output.append(CALL_PROC(self.compiler_state.main_function.identifier, self.compiler_state.main_function.activation_frame_size))
+        output.append(JAL(self.compiler_state.main_function.identifier))
+        # output.append(CALL_PROC(self.compiler_state.main_function.identifier, self.compiler_state.main_function.activation_frame_size))
         # if we did the argc, argv versions, that stuff would go here
 
-        output.append(CORP_LLAC(self.compiler_state.main_function.activation_frame_size))
+        # output.append(CORP_LLAC(self.compiler_state.main_function.activation_frame_size))
         output.append(BR('PROG_END'))
 
         for function_definition in function_definitions:
