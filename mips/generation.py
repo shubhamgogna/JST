@@ -103,6 +103,10 @@ class MipsGenerator(object):
 
         self.mips_output.extend(mm.SAVE_REGISTER_MACRO.definition())
         self.mips_output.extend(mm.RESTORE_REGISTER_MACRO.definition())
+
+        self.mips_output.extend(mm.SAVE_SPILL_MEM_MACRO.definition())
+        self.mips_output.extend(mm.RESTORE_SPILL_MEM_MACRO.definition())
+
         self.mips_output.extend(mm.CALLEE_FUNCTION_PROLOGUE_MACRO.definition())
         self.mips_output.extend(mm.CALLEE_FUNCTION_EPILOGUE_MACRO.definition())
 
@@ -135,20 +139,20 @@ class MipsGenerator(object):
 
                     pass
 
-                    self._begin_procedure(instruction)
+                    self._enter_procedure(instruction)
 
                 elif instruction.instruction == taci.EXIT_PROC:
 
                     pass
 
-                    self._begin_procedure(instruction)
+                    self._exit_procedure(instruction)
 
 
                 elif instruction.instruction == taci.CORP_LLAC:
 
                     pass
 
-                    self._end_procedure(instruction)
+                    self.take_control_back_from_procedure_call(instruction)
 
                 elif instruction.instruction == taci.LI:
                     self._load_immediate(instruction)
@@ -236,24 +240,19 @@ class MipsGenerator(object):
 
     def _call_procedure(self, t):
         # push the temporary registers on the stack
-        self.mips_output.append(mm.SAVE_REGISTER_MACRO.call())
+        self.mips_output.append(mm.CALLER_FUNCTION_PROLOGUE_MACRO.call())
 
-        # load the argument registers
-        # (likely unnecessary since we have decided to include arguments in our frame)
+        # the function call AST node will handle pushing arguments onto the stack and jumping and linking to the
+        # function
 
-        # jump and link to the procedure
-        self.mips_output.append(mi.JAL(t.dest))
+    def _enter_procedure(self, t):
+        self.mips_output.append(mm.CALLEE_FUNCTION_PROLOGUE_MACRO.call(t.dest))
 
-        # retake the registers that were stored after the call
-        self.mips_output.append(mm.RESTORE_REGISTER_MACRO.call())
+    def _exit_procedure(self, t):
+        self.mips_output.append(mm.CALLEE_FUNCTION_EPILOGUE_MACRO.call())
 
-    def _begin_procedure(self, t):
-        # raise NotImplementedError
-        pass
-
-    def _end_procedure(self, t):
-        # raise NotImplementedError()
-        pass
+    def take_control_back_from_procedure_call(self, t):
+        self.mips_output.append(mm.CALLER_FUNCTION_EPILOGUE_MACRO.call())
 
     def _return(self, t):
         result = self.register_table.acquire(t.dest)
@@ -261,8 +260,8 @@ class MipsGenerator(object):
         register = result['register']
         self.mips_output.append(mi.ADD(mr.V0, register, mr.ZERO))
 
-        # TODO: the parameter needs to be the size of the function's variables
-        self.mips_output.append(mm.CALLEE_FUNCTION_EPILOGUE_MACRO.call(mr.ZERO))
+        # TODO: we are considering have returns jump to the code that actually exits a function, this is good for now
+        self.mips_output.append(mm.CALLEE_FUNCTION_EPILOGUE_MACRO.call())
 
     def _load_immediate(self, t):
         result = self.register_table.acquire(t.dest)
@@ -287,8 +286,8 @@ class MipsGenerator(object):
         content_reg = self.register_table.acquire(t.dest)
         address_reg = self.register_table.acquire(t.src1)
 
-        self.mips_output.append(content_reg['code'])
-        self.mips_output.append(address_reg['code'])
+        self.mips_output.extend(content_reg['code'])
+        self.mips_output.extend(address_reg['code'])
 
         # Content and then address
         if t.src2 is 1:

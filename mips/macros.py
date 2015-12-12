@@ -51,7 +51,7 @@ RESTORE_REGISTER_MACRO = Macro(name='RESTORE_T_REGISTERS', args=None, body=__res
 
 __save_spill_mem_macro_body = [mi.COMMENT("brace yourself for a long, unrolled loop...")]
 for i in range(0, config.SPILL_MEM_SIZE, mr.WORD_SIZE):
-    __save_register_macro_instructions.extend([
+    __save_spill_mem_macro_body.extend([
         mi.SUBIU(mr.SP, mr.SP, mr.WORD_SIZE),
         mi.LW(mr.A3, mi.offset_label_immediate('SPILL_MEMORY', i)),
         mi.SW(mr.A3, mi.offset_from_register_with_immediate(mr.SP))
@@ -60,8 +60,8 @@ SAVE_SPILL_MEM_MACRO = Macro(name='SAVE_SPILL_MEM', args=None, body=__save_spill
 
 
 __restore_spill_mem_macro_body = [mi.COMMENT("brace yourself for a long, unrolled loop...")]
-for i in range(config.SPILL_MEM_SIZE, 0, mr.WORD_SIZE):
-    __save_register_macro_instructions.extend([
+for i in range(config.SPILL_MEM_SIZE, 0, -mr.WORD_SIZE):
+    __restore_spill_mem_macro_body.extend([
         mi.LW(mr.A3, mi.offset_from_register_with_immediate(mr.SP)),
         mi.SW(mr.A3, mi.offset_label_immediate('SPILL_MEMORY', i)),
         mi.ADDIU(mr.SP, mr.SP, mr.WORD_SIZE),
@@ -84,7 +84,7 @@ __caller_function_prologue_body = [
 CALLER_FUNCTION_PROLOGUE_MACRO = Macro(name='CALLER_FUNCTION_PROLOGUE', args=None, body=__caller_function_prologue_body)
 
 
-__function_prologue_body = [
+__callee_function_prologue_body = [
     mi.COMMENT("initialize the new frame pointer $fp = $sp - space for variables"),
     mi.LI(mr.A0, mr.WORD_SIZE),
     mi.MULU(mr.A1, mr.A0, mi.macro_arg('variable_size')),
@@ -92,7 +92,7 @@ __function_prologue_body = [
 ]
 CALLEE_FUNCTION_PROLOGUE_MACRO = Macro(name='CALLEE_FUNCTION_PROLOGUE',
                                        args=['variable_size'],
-                                       body=__function_prologue_body)
+                                       body=__callee_function_prologue_body)
 
 
 __callee_function_epilogue_body = [
@@ -103,7 +103,7 @@ __callee_function_epilogue_body = [
 ]
 CALLEE_FUNCTION_EPILOGUE_MACRO = Macro(name='CALLEE_FUNCTION_EPILOGUE',
                                        args=['variable_size'],
-                                       body=None)
+                                       body=__callee_function_epilogue_body)
 
 __caller_function_epilogue_body = [
     mi.COMMENT("recover the spill memory and the stored registers"),
@@ -117,4 +117,4 @@ __caller_function_epilogue_body = [
 ]
 CALLER_FUNCTION_EPILOGUE_MACRO = Macro(name='CALLER_FUNCTION_EPILOGUE',
                                        args=['variable_size'],
-                                       body=None)
+                                       body=__caller_function_epilogue_body)

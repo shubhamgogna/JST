@@ -546,10 +546,11 @@ class FileAST(BaseAstNode):
 
         output.append(TEXT())
         # insert the call to main
-        output.append(CALL_PROC(self.compiler_state.main_function.identifier, self.compiler_state.main_function.activation_frame_size))
+        output.append(JAL(self.compiler_state.main_function.identifier))
+        # output.append(CALL_PROC(self.compiler_state.main_function.identifier, self.compiler_state.main_function.activation_frame_size))
         # if we did the argc, argv versions, that stuff would go here
 
-        output.append(CORP_LLAC(self.compiler_state.main_function.activation_frame_size))
+        # output.append(CORP_LLAC(self.compiler_state.main_function.activation_frame_size))
         output.append(BR('PROG_END'))
 
         for function_definition in function_definitions:
@@ -714,7 +715,16 @@ class FunctionDefinition(BaseAstNode):
     def to_3ac(self, include_source=False):
         _tac = [SOURCE(self.linerange[0], self.linerange[1]), LABEL(self.function_symbol.identifier)]
 
-        _tac.append(ENTER_PROC(None))
+        WORD_SIZE = 4
+
+        parameter_size = 0
+        for symbol in self.function_symbol.named_parameters:
+            if symbol.is_array:
+                parameter_size += WORD_SIZE * (1 + 1 + len(symbol.array_dims))
+            else:
+                parameter_size += symbol.size_in_bytes()
+
+        _tac.append(ENTER_PROC(local_variable_size=  self.function_symbol.activation_frame_size - parameter_size   ))
 
         # Generate 3AC for body (always a compound statement)
         if self.body:

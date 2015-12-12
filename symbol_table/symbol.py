@@ -69,6 +69,7 @@ class VariableSymbol(Symbol):
 
     @property
     def array_size(self):
+        # the array size in number of elements
         if self.is_array:
             multiplier = 1
             for dim in self.array_dims:

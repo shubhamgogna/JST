@@ -14,11 +14,17 @@
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
 import itertools
+import re
+
 import pylru
 import mips.instructions as assembler
 
 
 class OutOfSpillMemoryException(Exception):
+    pass
+
+
+class InvalidRegisterNameException(Exception):
     pass
 
 
@@ -70,6 +76,9 @@ class RegisterUseTable(object):
         :return: A dictionary containing the MIPS register available for use for the pseudo register and a list of
                  MIPS code that was used if spilling occurred.
         """
+
+        if re.match('(i|f)reg_\d\d\d\d\d', pseudo_register) is None:
+            raise InvalidRegisterNameException()
 
         physical_register = None
         code = []
