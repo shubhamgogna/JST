@@ -139,6 +139,7 @@ class RegisterUseTable(object):
         self._freed_physical_register = physical_register
 
         if not self.available_spill_memory_words:
+            print(self)
             raise OutOfSpillMemoryException()
 
         spill_offset = self.available_spill_memory_words.pop()

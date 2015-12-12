@@ -697,7 +697,7 @@ class FunctionDefinition(BaseAstNode):
     def to_3ac(self, include_source=False):
         _tac = [SOURCE(self.linerange[0], self.linerange[1]), LABEL(self.function_symbol.identifier)]
 
-        _tac.append(ENTER_PROC(None, None, None))
+        _tac.append(ENTER_PROC(None))
 
         # Generate 3AC for body (always a compound statement)
         if self.body:
