@@ -110,6 +110,9 @@ class MipsGenerator(object):
         self.mips_output.extend(mm.CALLEE_FUNCTION_PROLOGUE_MACRO.definition())
         self.mips_output.extend(mm.CALLEE_FUNCTION_EPILOGUE_MACRO.definition())
 
+        self.mips_output.extend(mm.CALLER_FUNCTION_PROLOGUE_MACRO.definition())
+        self.mips_output.extend(mm.CALLER_FUNCTION_EPILOGUE_MACRO.definition())
+
         for instruction in self.source_tac:
             assert (isinstance(instruction, TacInstruction))
             if instruction.instruction == taci.SOURCE:
@@ -246,6 +249,7 @@ class MipsGenerator(object):
         # function
 
     def _enter_procedure(self, t):
+        self.register_table.release_all()
         self.mips_output.append(mm.CALLEE_FUNCTION_PROLOGUE_MACRO.call(t.dest))
 
     def _exit_procedure(self, t):
@@ -283,20 +287,26 @@ class MipsGenerator(object):
     def _store(self, t):
         # TODO: ensure that the address is handled for all of the variants
         # ($t2), 100($t2), 100, label, label + immediate, label($t2), label + immediate($t2)
-        content_reg = self.register_table.acquire(t.dest)
+
+        content = None
+        address = None
+
+        result = self.register_table.acquire(t.dest)
+        self.mips_output.extend(result['code'])
+        content = result['register']
+
+
         address_reg = self.register_table.acquire(t.src1)
 
-        self.mips_output.extend(content_reg['code'])
         self.mips_output.extend(address_reg['code'])
 
         # Content and then address
         if t.src2 is 1:
-
-            self.mips_output.append(mi.SB(content_reg['register'], address_reg['register']))
+            self.mips_output.append(mi.SB(content, address_reg['register']))
         elif t.src2 is 2:
-            self.mips_output.append(mi.SHW(content_reg['register'], address_reg['register']))
+            self.mips_output.append(mi.SHW(content, address_reg['register']))
         elif t.src2 is 4:
-            self.mips_output.append(mi.SW(content_reg['register'], address_reg['register']))
+            self.mips_output.append(mi.SW(content, address_reg['register']))
 
     def _load_address(self, t):
         result = self.register_table.acquire(t.dest)

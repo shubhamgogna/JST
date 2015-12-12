@@ -565,7 +565,7 @@ class FileAST(BaseAstNode):
 
         output.append(TEXT())
         # insert the call to main
-        output.append(JAL(self.compiler_state.main_function.identifier))
+        output.append(JAL(self.compiler_state.main_function.identifier))  # TODO: craft a function call node and use that
         # output.append(CALL_PROC(self.compiler_state.main_function.identifier, self.compiler_state.main_function.activation_frame_size))
         # if we did the argc, argv versions, that stuff would go here
 
