@@ -22,7 +22,7 @@ from loggers.logger import Logger
 
 class TestMipsGenerator(unittest.TestCase):
     def setUp(self):
-        self.compiler_state = CompilerState(print_productions=True)
+        self.compiler_state = CompilerState(print_productions=False)
         self.enable_debug(False)
 
         self.generator = mips.generation.MipsGenerator(self.compiler_state)

@@ -209,6 +209,7 @@ class Assignment(BaseAstNode):
         #       right now both are registers, should the rvalue be the actual value? I don't think so but not sure
         size = self.lvalue.size_in_bytes()
         output.append(STORE(lval, rval, size))
+        output.append(KICK(lval))
 
         return {'3ac': output, 'rvalue': rval}
 
@@ -416,11 +417,23 @@ class CompoundStatement(BaseAstNode):
                 result = item.to_3ac()
                 output.extend(result['3ac'])
 
+                # Since the result is unused after this point, kick it out
+                if 'rvalue' in result:
+                    output.append(KICK(result['rvalue']))
+                if 'lvalue' in result:
+                    output.append(KICK(result['lvalue']))
+
         # Gen 3ac for statement_list
         if self.statement_list is not None:
             for item in self.statement_list:
                 result = item.to_3ac()
                 output.extend(result['3ac'])
+
+                # Since the result is unused after this point, kick it out
+                if 'rvalue' in result:
+                    output.append(KICK(result['rvalue']))
+                if 'lvalue' in result:
+                    output.append(KICK(result['lvalue']))
 
         return {'3ac': output}
 
@@ -853,6 +866,12 @@ class IterationNode(BaseAstNode):
             result = self.initialization_expression.to_3ac()
             output.extend(result['3ac'])
 
+            # Since the result is unused after this point, kick it out
+            if 'rvalue' in result:
+                output.append(KICK(result['rvalue']))
+            if 'lvalue' in result:
+                output.append(KICK(result['lvalue']))
+
         # Add condition check label
         output.append(LABEL(condition_check_label))
 
@@ -877,6 +896,12 @@ class IterationNode(BaseAstNode):
         if self.increment_expression:
             result = self.increment_expression.to_3ac()
             output.extend(result['3ac'])
+
+            # Since the result is unused after this point, kick it out
+            if 'rvalue' in result:
+                output.append(KICK(result['rvalue']))
+            if 'lvalue' in result:
+                output.append(KICK(result['lvalue']))
 
         # Add loop instruction
         output.append(BR(condition_check_label))
@@ -976,40 +1001,51 @@ class UnaryOperator(BaseAstNode):
     def to_3ac(self, include_source=False):
         output = [SOURCE(self.linerange[0], self.linerange[1])]
 
-        # get memory location of expression by calling to3ac function
+        # Get memory location of expression by calling to3ac function
         result = (self.expression.to_3ac(get_rval=False))
         if '3ac' in result:
             output.extend(result['3ac'])
-        value_reg = result['lvalue']
+        lvalue = result['lvalue']
 
-        # get the rvalue
+        # Get the rvalue
         rvalue = INT_REGISTER_TICKETS.get()
-        output.append(LOAD(rvalue, value_reg, 4))
-
-        # make 2 variables: 1 to point to the register this function returns, 1 to point to the register where the ++
-        # will happen
-        return_reg = None
+        output.append(LOAD(rvalue, lvalue, 4))
 
         # if this is a post-increment, copy the register with the current value of the register so we can return that
         # before the plusplus happens
         if not self.pre:
-            return_reg = INT_REGISTER_TICKETS.get()
-            output.append(ADD(return_reg, rvalue, ZERO))
 
-        else:  # in the case of pre plusplus, we will be returning a register with the updated value
-            return_reg = rvalue
+            # Copy the contents of the rvalue before the operator is applied
+            # It will be returned while the actual variable is updated
+            rvalue_copy = INT_REGISTER_TICKETS.get()
+            output.append(ADD(rvalue_copy, rvalue, '$zero'))
 
+            # Determine correct operator and apply to register
+            if self.operator == '++':
+                 output.append(ADDIU(rvalue, rvalue, 1))
+            if self.operator == '--':
+                 output.append(SUBI(rvalue, rvalue, 1))
 
-        # determine correct operator and apply to register
-        if self.operator == '++':
-             output.append(ADDIU(rvalue, rvalue, 1))
-        if self.operator == '--':
-             output.append(SUBI(rvalue, rvalue, 1))
+            # Store updated value and kick the lvalue & rvalue
+            output.append(STORE(rvalue, lvalue, 4))
+            output.append(KICK(lvalue))
+            output.append(KICK(rvalue))
 
-        # store updated value
-        output.append(STORE(rvalue, value_reg, 4))
+            return {'3ac': output, 'rvalue': rvalue_copy}
 
-        return {'3ac': output, 'rvalue': return_reg}
+        else:
+
+            # Determine correct operator and apply to register
+            if self.operator == '++':
+                 output.append(ADDIU(rvalue, rvalue, 1))
+            if self.operator == '--':
+                 output.append(SUBI(rvalue, rvalue, 1))
+
+            # Store updated value and kick the lvalue
+            output.append(STORE(rvalue, lvalue, 4))
+            output.append(KICK(lvalue))
+
+            return {'3ac': output, 'rvalue': rvalue}
 
 
 class Constant(BaseAstNode):
