@@ -532,7 +532,7 @@ class FileAST(BaseAstNode):
         output.append(CALL_PROC(self.compiler_state.main_function.identifier, self.compiler_state.main_function.activation_frame_size))
         # if we did the argc, argv versions, that stuff would go here
 
-        output.append(LLAC(self.compiler_state.main_function.activation_frame_size))
+        output.append(CORP_LLAC(self.compiler_state.main_function.activation_frame_size))
         output.append(BR('PROG_END'))
 
         for function_definition in function_definitions:
@@ -633,9 +633,10 @@ class FunctionCall(BaseAstNode):
         # the function will jump back to this address at this point
 
         # copy the return value before it gets obliterated
+        _3ac.append(ADD(rvalue, V0, ZERO))  # TODO: handle double word returns if we get there
 
         # Call the epilogue macro
-        _3ac.append(LLAC(self.function_symbol.activation_frame_size))
+        _3ac.append(CORP_LLAC(self.function_symbol.activation_frame_size))
 
         return {'3ac': _3ac, 'rvalue': rvalue}
 
@@ -696,13 +697,16 @@ class FunctionDefinition(BaseAstNode):
     def to_3ac(self, include_source=False):
         _tac = [SOURCE(self.linerange[0], self.linerange[1]), LABEL(self.function_symbol.identifier)]
 
+        _tac.append(ENTER_PROC(None, None, None))
+
         # Generate 3AC for body (always a compound statement)
         if self.body:
             result = self.body.to_3ac()
             _tac.extend(result['3ac'])
 
         # Jump back the caller
-        _tac.append(JR(RA))
+        _tac.append(EXIT_PROC())
+
         return {'3ac': _tac}
 
 

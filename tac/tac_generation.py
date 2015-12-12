@@ -780,14 +780,14 @@ def CALL_PROC(function_name, size):
     """
     args:
         function_name: the label of the function definition
-        size: the size of the portion of the activation frame to be dedicated to argument and parameter values
+        size: the size of the portion of the activation frame to be dedicated to argument/parameter values
     function:
 
     """
     return TacInstruction(instructions.CALL_PROC, function_name, size)
 
 
-def LLAC(size):
+def CORP_LLAC(size):
     """
     args:
         function_name: the label of the function definition
@@ -795,10 +795,10 @@ def LLAC(size):
     function:
 
     """
-    return TacInstruction(instructions.END_PROC, size)
+    return TacInstruction(instructions.CORP_LLAC, size)
 
 
-def PROCENTRY(op1, op2, op3):
+def ENTER_PROC(local_variable_size):
     """
     args:
         sum: the register where the addition result is stored.
@@ -808,10 +808,10 @@ def PROCENTRY(op1, op2, op3):
     function:
         Performs basic addition.
     """
-    return TacInstruction(instructions.PROCENTRY, op1, op2, op3)
+    return TacInstruction(instructions.ENTER_PROC, local_variable_size)
 
 
-def ENDPROC():
+def EXIT_PROC():
     """
     args:
         sum: the register where the addition result is stored.
@@ -821,7 +821,7 @@ def ENDPROC():
     function:
         Performs basic addition.
     """
-    return TacInstruction(instructions.ENDPROC)
+    return TacInstruction(instructions.EXIT_PROC)
 
 
 def RETURN(rvalue='$zero'):
