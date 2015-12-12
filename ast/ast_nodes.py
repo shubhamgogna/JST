@@ -705,7 +705,7 @@ class FunctionDefinition(BaseAstNode):
 
         parameter_size = 0
         for symbol in self.function_symbol.named_parameters:
-            if symbol.is_array():
+            if symbol.is_array:
                 parameter_size += WORD_SIZE * (1 + 1 + len(symbol.array_dims))
             else:
                 parameter_size += symbol.size_in_bytes()
@@ -990,7 +990,7 @@ class UnaryOperator(BaseAstNode):
         # before the plusplus happens
         if not self.pre:
             return_reg = INT_REGISTER_TICKETS.get()
-            output.append(ADD(return_reg, rvalue, '$zero'))
+            output.append(ADD(return_reg, rvalue, ZERO))
 
         else:  # in the case of pre plusplus, we will be returning a register with the updated value
             return_reg = rvalue
