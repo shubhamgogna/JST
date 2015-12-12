@@ -281,6 +281,15 @@ class SLT(BaseMipsInstruction):
 class SGT(BaseMipsInstruction):
     def __init__(self, result, src1, src2):
         super(SGT, self).__init__('sgt', result, src1, src2)
+
+class TLT(BaseMipsInstruction):
+    def __init__(self, src1, src2):
+        super(TLT, self).__init__('tlt', src1, src2)
+
+class TGE(BaseMipsInstruction):
+    def __init__(self, src1, src2):
+        super(TGE, self).__init__('tge', src1, src2)
+
 #
 # BRANCHING
 #
