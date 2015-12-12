@@ -20,6 +20,7 @@ from tac.tac_generation import TacInstruction
 import tac.tac_generation as tac_gen
 import tac.instructions as taci
 import mips.macros as mm
+import mips.configurations as config
 
 
 WORD_SIZE = 4
@@ -27,8 +28,6 @@ WORD_SIZE = 4
 DEFAULT_TEMPROARY_REGISTER_SET = (mr.T0, mr.T1, mr.T2, mr.T3, mr.T4, mr.T5, mr.T6, mr.T7, mr.T8, mr.T9)
 
 DEFAULT_SPILL_MEMORY_LABEL = 'SPILL_MEMORY'
-DEFUALT_SPILL_MEMORY_SIZE = 128  # bytes
-
 
 
 class MipsGenerator(object):
@@ -38,7 +37,7 @@ class MipsGenerator(object):
     """
 
     def __init__(self, compiler_state=None, temporary_registers=DEFAULT_TEMPROARY_REGISTER_SET,
-                 spill_mem_label=DEFAULT_SPILL_MEMORY_LABEL, spill_mem_size=DEFUALT_SPILL_MEMORY_SIZE):
+                 spill_mem_label=DEFAULT_SPILL_MEMORY_LABEL, spill_mem_size=config.SPILL_MEM_SIZE):
         """ The constructor.
 
         Constructs the MipsGenerator object.
@@ -137,7 +136,7 @@ class MipsGenerator(object):
 
                     self._begin_procedure(instruction)
 
-                elif instruction.instruction == taci.END_PROC:
+                elif instruction.instruction == taci.CORP_LLAC:
 
                     pass
 

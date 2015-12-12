@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
+import mips.configurations as config
 import mips.registers as mr
 import mips.instructions as mi
 
@@ -33,14 +34,14 @@ class Macro(object):
 __T_REGISTERS = (mr.T0, mr.T1, mr.T2, mr.T3, mr.T4, mr.T5, mr.T6, mr.T7, mr.T8, mr.T9)
 
 
-__save_register_macro_instructions = []
+__save_register_macro_instructions = [mi.COMMENT("brace yourself for a long, unrolled loop...")]
 for __temp_register in __T_REGISTERS:
     __save_register_macro_instructions.append(mi.SUBIU(mr.SP, mr.SP, mr.WORD_SIZE))
     __save_register_macro_instructions.append(mi.SW(__temp_register, mi.offset_from_register_with_immediate(mr.SP)))
 SAVE_REGISTER_MACRO = Macro(name='SAVE_T_REGISTERS', args=None, body=__save_register_macro_instructions)
 
 
-__restore_register_macro_instructions = []
+__restore_register_macro_instructions = [mi.COMMENT("brace yourself for a long, unrolled loop...")]
 for __temp_register in __T_REGISTERS:
     __restore_register_macro_instructions.append(mi.LW(__temp_register, mi.offset_from_register_with_immediate(mr.SP)))
     __restore_register_macro_instructions.append(mi.ADDIU(mr.SP, mr.SP, mr.WORD_SIZE))
@@ -48,17 +49,24 @@ RESTORE_REGISTER_MACRO = Macro(name='RESTORE_T_REGISTERS', args=None, body=__res
 
 
 
-__save_spill_mem_macro_body = [
-
-]
+__save_spill_mem_macro_body = [mi.COMMENT("brace yourself for a long, unrolled loop...")]
+for i in range(0, config.SPILL_MEM_SIZE, mr.WORD_SIZE):
+    __save_register_macro_instructions.extend([
+        mi.SUBIU(mr.SP, mr.SP, mr.WORD_SIZE),
+        mi.LW(mr.A3, mi.offset_label_immediate('SPILL_MEMORY', i)),
+        mi.SW(mr.A3, mi.offset_from_register_with_immediate(mr.SP))
+    ])
 SAVE_SPILL_MEM_MACRO = Macro(name='SAVE_SPILL_MEM', args=None, body=__save_spill_mem_macro_body)
 
 
-__restore_spill_mem_macro_body = [
-    mi.COMMENT('')
-]
+__restore_spill_mem_macro_body = [mi.COMMENT("brace yourself for a long, unrolled loop...")]
+for i in range(config.SPILL_MEM_SIZE, 0, mr.WORD_SIZE):
+    __save_register_macro_instructions.extend([
+        mi.LW(mr.A3, mi.offset_from_register_with_immediate(mr.SP)),
+        mi.SW(mr.A3, mi.offset_label_immediate('SPILL_MEMORY', i)),
+        mi.ADDIU(mr.SP, mr.SP, mr.WORD_SIZE),
+    ])
 RESTORE_SPILL_MEM_MACRO = Macro(name='RESTORE_SPILL_MEM', args=None, body=__restore_spill_mem_macro_body)
-
 
 
 __caller_function_prologue_body = [

@@ -125,7 +125,7 @@ class END_MACRO(object):
         pass
 
     def __str__(self):
-        return '.end_macro'
+        return '.end_macro\n'
 
     def __repr__(self):
         return str(self)
