@@ -467,16 +467,20 @@ class Declaration(BaseAstNode):
         if self.initializer is None:
             return {'3ac': output}
 
+        # Load the base address
+        base_reg = INT_REGISTER_TICKETS.get()
         if self.symbol.global_memory_location:
             base_address = self.symbol.global_memory_location
+            output.append(LI(base_reg, base_address))
         else:
             base_address = create_offset_reference(self.symbol.activation_frame_offset, FP)
+            output.append(LA(base_reg, base_address))
 
         if isinstance(self.initializer, list):
 
             # Initialize offset with base address
             offset_reg = INT_REGISTER_TICKETS.get()
-            output.append(ADDU(offset_reg, base_address, ZERO))
+            output.append(ADDU(offset_reg, base_reg, ZERO))
 
             # Loop through initializer and store
             self.initializer = self.initializer[:min(len(self.initializer), self.symbol.array_dims[0])]
@@ -487,12 +491,19 @@ class Declaration(BaseAstNode):
                 if '3ac' in item_tac:
                     output.extend(item_tac['3ac'])
 
+                    # Since the result is unused after this point, kick it out
+                    if 'rvalue' in item_tac:
+                        output.append(KICK(item_tac['rvalue']))
+                    if 'lvalue' in item_tac:
+                        output.append(KICK(item_tac['lvalue']))
+
                 # Store the value into memory, kick the register, and move to next
                 output.append(STORE(offset_reg, item_tac['rvalue'], self.symbol.size_in_bytes()))
                 output.append(KICK(item_tac['rvalue']))
                 output.append(ADDIU(offset_reg, offset_reg, self.symbol.size_in_bytes()))
 
-            # Kick the offset register
+            # Kick the offset and base address register
+            output.append(KICK(base_reg))
             output.append(KICK(offset_reg))
 
         else:
@@ -501,8 +512,16 @@ class Declaration(BaseAstNode):
             if '3ac' in item_tac:
                 output.extend(item_tac['3ac'])
 
-            output.append(STORE(base_address, item_tac['rvalue'], self.symbol.size_in_bytes()))
+                # Since the result is unused after this point, kick it out
+                if 'rvalue' in item_tac:
+                    output.append(KICK(item_tac['rvalue']))
+                if 'lvalue' in item_tac:
+                    output.append(KICK(item_tac['lvalue']))
 
+            output.append(STORE(base_reg, item_tac['rvalue'], self.symbol.size_in_bytes()))
+
+        # Kick the base address
+        output.append(KICK(base_reg))
         return {'3ac': output}
 
 
