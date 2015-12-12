@@ -77,8 +77,8 @@ class RegisterUseTable(object):
                  MIPS code that was used if spilling occurred.
         """
 
-        if re.match('(i|f)reg_\d\d\d\d\d', pseudo_register) is None:
-            raise InvalidRegisterNameException()
+        if re.match('(i|f)reg_\d\d\d\d\d', str(pseudo_register)) is None:
+            raise InvalidRegisterNameException('{} is not a valid psuedo-register name'.format(pseudo_register))
 
         physical_register = None
         code = []

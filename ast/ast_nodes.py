@@ -488,7 +488,10 @@ class Declaration(BaseAstNode):
             if '3ac' in item_tac:
                 output.extend(item_tac['3ac'])
 
-            output.append(STORE(base_address, item_tac['rvalue'], self.symbol.size_in_bytes()))
+
+            offset_reg = INT_REGISTER_TICKETS.get()
+            output.append(LA(offset_reg, base_address))
+            output.append(STORE(offset_reg, item_tac['rvalue'], self.symbol.size_in_bytes()))
 
         return {'3ac': output}
 
@@ -533,7 +536,7 @@ class FileAST(BaseAstNode):
 
         output.append(TEXT())
         # insert the call to main
-        output.append(JAL(self.compiler_state.main_function.identifier))
+        output.append(JAL(self.compiler_state.main_function.identifier))  # TODO: craft a function call node and use that
         # output.append(CALL_PROC(self.compiler_state.main_function.identifier, self.compiler_state.main_function.activation_frame_size))
         # if we did the argc, argv versions, that stuff would go here
 

@@ -85,10 +85,10 @@ CALLER_FUNCTION_PROLOGUE_MACRO = Macro(name='CALLER_FUNCTION_PROLOGUE', args=Non
 
 
 __callee_function_prologue_body = [
-    mi.COMMENT("initialize the new frame pointer $fp = $sp - space for variables"),
+    mi.COMMENT("allocate stack space for variables ($sp = $sp - space for variables)"),
     mi.LI(mr.A0, mr.WORD_SIZE),
     mi.MULU(mr.A1, mr.A0, mi.macro_arg('variable_size')),
-    mi.SUB(mr.FP, mr.SP, mr.A1)
+    mi.SUB(mr.SP, mr.SP, mr.A1)
 ]
 CALLEE_FUNCTION_PROLOGUE_MACRO = Macro(name='CALLEE_FUNCTION_PROLOGUE',
                                        args=['variable_size'],
