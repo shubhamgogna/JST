@@ -15,7 +15,7 @@
 
 import unittest
 
-import mips.generation
+import mips.generation as generation
 from compiler.compiler_state import CompilerState
 from loggers.logger import Logger
 
@@ -25,7 +25,7 @@ class TestMipsGenerator(unittest.TestCase):
         self.compiler_state = CompilerState(print_productions=False)
         self.enable_debug(False)
 
-        self.generator = mips.generation.MipsGenerator(self.compiler_state)
+        self.generator = generation.MipsGenerator(self.compiler_state, inject_source = True, inject_3ac=True)
 
     def tearDown(self):
         self.compiler_state.teardown()

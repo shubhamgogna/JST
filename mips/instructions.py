@@ -92,9 +92,12 @@ class COMMENT(Comment):
     def __str__(self):
         return '# {}'.format(self.slot_0)
 
+
 class SOURCE(Comment):
-    def __init__(self, start_line, end_line):
-        super(SOURCE, self).__init__('SOURCE', (start_line, end_line))
+    def __init__(self, lineno, source_text):
+        print(source_text)
+        super(SOURCE, self).__init__('SOURCE', '{}: {}'.format(lineno, source_text))
+
 
 class TAC(Comment):
     def __init__(self, tac_str):

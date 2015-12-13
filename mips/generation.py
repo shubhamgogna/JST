@@ -37,8 +37,9 @@ class MipsGenerator(object):
     This object conducts the translation from 3AC to MIPS and contains the results within itself.
     """
 
-    def __init__(self, compiler_state=None, temporary_registers=DEFAULT_TEMPROARY_REGISTER_SET,
-                 spill_mem_label=DEFAULT_SPILL_MEMORY_LABEL, spill_mem_size=config.SPILL_MEM_SIZE):
+    def __init__(self, compiler_state, temporary_registers=DEFAULT_TEMPROARY_REGISTER_SET,
+                 spill_mem_label=DEFAULT_SPILL_MEMORY_LABEL, spill_mem_size=config.SPILL_MEM_SIZE, inject_source=False,
+                 inject_3ac=False, inject_comments=False):
         """ The constructor.
 
         Constructs the MipsGenerator object.
@@ -51,6 +52,10 @@ class MipsGenerator(object):
         """
 
         self.compiler_state = compiler_state
+        self.next_source_line_to_inject = 0
+        self.inject_source = inject_source
+        self.inject_3ac = inject_3ac
+        self.inject_comments = inject_comments
 
         self.source_tac = []
         self.mips_output = []
@@ -117,11 +122,15 @@ class MipsGenerator(object):
         for instruction in self.source_tac:
             assert (isinstance(instruction, TacInstruction))
             if instruction.instruction == taci.SOURCE:
-                self._source(instruction)
+                self._source(instruction.dest)
+
             elif instruction.instruction == taci.COMMENT:
-                self._comment(instruction)
+                if self.inject_comments:
+                    self._comment(instruction)
+
             else:
-                self.mips_output.append(mi.TAC(str(instruction)))  # TODO: make it configurable to disable this
+                if self.inject_3ac:
+                    self.mips_output.append(mi.TAC(str(instruction)))
 
                 if instruction.instruction == taci.DATA:
                     self._data_section(instruction)
@@ -214,11 +223,15 @@ class MipsGenerator(object):
                 else:
                     raise NotImplementedError("{} 3AC -> MIPS is not implemented!".format(instruction.instruction))
 
+        # slip in anything else that was missed/not included by 3AC
+        end_of_program_label = self.mips_output.pop()
+
+        self._source(len(self.compiler_state.source_lines))
+
         ## Add any pre-defined library functions here ##
         # This is a really crappy way of doing things, but it will have to do since our compiler only handles
         # 'single file' programs. The declarations (prototypes) must be added to the symbol table in the Parser, in a
         # dummy production "setup_for_program" to allow calls to these functions.
-        end_of_program_label = self.mips_output.pop()
 
         self.mips_output.extend(library_functions.PrintIntDefinition.get_mips())
         self.mips_output.extend(library_functions.PrintStringDefinition.get_mips())
@@ -226,8 +239,17 @@ class MipsGenerator(object):
 
         self.mips_output.append(end_of_program_label)
 
-    def _source(self, t):
-        self.mips_output.append(mi.SOURCE(start_line=t.dest, end_line=t.src1))
+    def _source(self, last_line):
+        if self.inject_source:
+
+            if last_line > self.next_source_line_to_inject:
+                for line in range(self.next_source_line_to_inject, last_line):
+                    if line < len(self.compiler_state.source_lines):
+                        source_line = self.compiler_state.source_lines[line]
+                        self.mips_output.append(mi.SOURCE(line, source_line))
+
+                self.next_source_line_to_inject = last_line
+
 
     def _comment(self, t):
         self.mips_output.append(mi.COMMENT(text=t.dest))
@@ -298,7 +320,6 @@ class MipsGenerator(object):
         self.mips_output.extend(result['code'])
         content = result['register']
 
-
         address_reg = self.register_table.acquire(t.src1)
 
         self.mips_output.extend(address_reg['code'])
@@ -317,6 +338,7 @@ class MipsGenerator(object):
         dest_register = result['register']
 
         self.mips_output.append(mi.LA(dest_register, t.src1))
+
     #
     # def _assign(self, t):
     #     dest_register = None
@@ -434,7 +456,6 @@ class MipsGenerator(object):
 
         self.mips_output.append(mi.SUB(dest_register, src1_register, src2_register))
 
-
     def _multiply_unsigned(self, t):
         dest_register = None
         src1_register = None
@@ -484,7 +505,6 @@ class MipsGenerator(object):
             src2_register = self.tac_special_register_to_mips(t.src2)
 
         self.mips_output.append(mi.MUL(dest_register, src1_register, src2_register))
-
 
     def _equality(self, t):
         dest_register = None
@@ -587,8 +607,6 @@ class MipsGenerator(object):
         self.mips_output.append(mi.TLT(dest_register, src1_register))
         self.mips_output.append(mi.TGE(dest_register, src2_register))
 
-
-
     def _branch(self, t):
         self.mips_output.append(mi.J(t.dest))
 
@@ -624,7 +642,6 @@ class MipsGenerator(object):
 
     def _jump_and_link(self, t):
         self.mips_output.append(mi.JAL(t.dest))
-
 
     @staticmethod
     def tac_special_register_to_mips(tac_register):
