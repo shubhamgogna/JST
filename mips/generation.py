@@ -21,6 +21,7 @@ import tac.tac_generation as tac_gen
 import tac.instructions as taci
 import mips.macros as mm
 import mips.configurations as config
+import mips.library_functions as library_functions
 
 
 WORD_SIZE = 4
@@ -139,22 +140,12 @@ class MipsGenerator(object):
 
 
                 elif instruction.instruction == taci.ENTER_PROC:
-
-                    pass
-
                     self._enter_procedure(instruction)
 
                 elif instruction.instruction == taci.EXIT_PROC:
-
-                    pass
-
                     self._exit_procedure(instruction)
 
-
                 elif instruction.instruction == taci.CORP_LLAC:
-
-                    pass
-
                     self.take_control_back_from_procedure_call(instruction)
 
                 elif instruction.instruction == taci.LI:
@@ -222,6 +213,14 @@ class MipsGenerator(object):
 
                 else:
                     raise NotImplementedError("{} 3AC -> MIPS is not implemented!".format(instruction.instruction))
+
+        ## Add any pre-defined library functions here ##
+        # This is a really crappy way of doing things, but it will have to do since our compiler only handles
+        # 'single file' programs. The declarations (prototypes) must be added to the symbol table in the CompilerState
+        # parse() method to allow calls to these functions.
+        self.mips_output.extend(library_functions.PrintIntDefinition.get_mips())
+        self.mips_output.extend(library_functions.PrintStringDefinition.get_mips())
+        self.mips_output.extend(library_functions.PrintFloatDefinition.get_mips())
 
     def _source(self, t):
         self.mips_output.append(mi.SOURCE(start_line=t.dest, end_line=t.src1))

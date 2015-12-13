@@ -75,6 +75,22 @@ class TestMipsGenerator(unittest.TestCase):
         self.generator.translate_tac_to_mips()
         print(self.generator.dumps())
 
+    def test_print_int(self):
+        data = """
+            int main() {
+              print_int(777);
+              return 0;
+            }
+            """
+        ast = self.compiler_state.parse(data)
+        source_tac = ast.to_3ac()
+        # print(source_tac)
+        print('---------------------------')
+
+        self.generator.load(source_tac)
+        self.generator.translate_tac_to_mips()
+        print(self.generator.dumps())
+
     def test_declarations(self):
         data = """
             int main()

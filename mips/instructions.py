@@ -184,6 +184,13 @@ class LABEL(BaseMipsInstruction):
         return '{}:'.format(self.slot_0)
 
 
+#
+# SYSCALL
+#
+class SYSCALL(BaseMipsInstruction):
+    def __init__(self):
+        super(SYSCALL, self).__init__('syscall')
+
 
 #
 # MEMORY
@@ -223,6 +230,10 @@ class LHW(BaseMipsInstruction):
 class LW(BaseMipsInstruction):
     def __init__(self, register, memory_address):
         super(LW, self).__init__(lw, register, memory_address)
+
+class LWC1(BaseMipsInstruction):
+    def __init__(self, register, memory_address):
+        super(LWC1, self).__init__('lwc1', register, memory_address)
 
 
 class SB(BaseMipsInstruction):

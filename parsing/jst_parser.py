@@ -25,14 +25,14 @@ from scanning.jst_lexer import JSTLexer
 from symbol_table.scope import Scope
 from symbol_table.symbol import Symbol, VariableSymbol, FunctionSymbol, TypeDeclaration
 
+import mips.library_functions as library_functions
+
 
 # Parser Class
 #
 # This class is responsible for working in tandem with the Lexer to parse the given C program input and then
 # constructing the Abstract Syntax Tree that corresponds to the program. Compile time checking is done by this class.
 #
-
-
 class JSTParser(object):
 
     # IMPORTANT: Tokens must be imported from the JSTLexer so PLY can build the table
@@ -105,9 +105,9 @@ class JSTParser(object):
 
     def p_program(self, t):
         """
-        program : enter_scope translation_unit_opt leave_scope
+        program : enter_scope setup_for_program translation_unit_opt leave_scope
         """
-        t[0] = t[2]
+        t[0] = t[3]
 
     #
     # translation-unit:
@@ -2023,6 +2023,17 @@ class JSTParser(object):
     #
     # dummy utility productions
     #
+    def p_setup_for_program(self, t):
+        """
+        setup_for_program : empty
+        """
+
+        ## Insert library function declarations (prototypes) here ##
+        # Super crappy, but it has to be done, blah, blah, blah
+        self.compiler_state.symbol_table.insert(library_functions.PrintIntDeclaration)
+        self.compiler_state.symbol_table.insert(library_functions.PrintStringDeclaration)
+        self.compiler_state.symbol_table.insert(library_functions.PrintFloatDeclaration)
+
     def p_enter_function_scope(self, t):
         """
         enter_function_scope : empty

@@ -102,7 +102,7 @@ __callee_function_epilogue_body = [
     mi.JR(mr.RA)
 ]
 CALLEE_FUNCTION_EPILOGUE_MACRO = Macro(name='CALLEE_FUNCTION_EPILOGUE',
-                                       args=['variable_size'],
+                                       args=None,
                                        body=__callee_function_epilogue_body)
 
 __caller_function_epilogue_body = [
@@ -116,5 +116,5 @@ __caller_function_epilogue_body = [
     mi.ADDIU(mr.SP, mr.SP, mr.WORD_SIZE),
 ]
 CALLER_FUNCTION_EPILOGUE_MACRO = Macro(name='CALLER_FUNCTION_EPILOGUE',
-                                       args=['variable_size'],
+                                       args=None,
                                        body=__caller_function_epilogue_body)
