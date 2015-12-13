@@ -216,11 +216,15 @@ class MipsGenerator(object):
 
         ## Add any pre-defined library functions here ##
         # This is a really crappy way of doing things, but it will have to do since our compiler only handles
-        # 'single file' programs. The declarations (prototypes) must be added to the symbol table in the CompilerState
-        # parse() method to allow calls to these functions.
+        # 'single file' programs. The declarations (prototypes) must be added to the symbol table in the Parser, in a
+        # dummy production "setup_for_program" to allow calls to these functions.
+        end_of_program_label = self.mips_output.pop()
+
         self.mips_output.extend(library_functions.PrintIntDefinition.get_mips())
         self.mips_output.extend(library_functions.PrintStringDefinition.get_mips())
         self.mips_output.extend(library_functions.PrintFloatDefinition.get_mips())
+
+        self.mips_output.append(end_of_program_label)
 
     def _source(self, t):
         self.mips_output.append(mi.SOURCE(start_line=t.dest, end_line=t.src1))
