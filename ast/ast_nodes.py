@@ -14,16 +14,17 @@
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
 import itertools
-
 from ast.base_ast_node import BaseAstNode
 from symbol_table.symbol import VariableSymbol
 from utils import type_utils
 from utils import operator_utils
-from ticket_counting.ticket_counters import LABEL_TICKETS, LOOP_CONDITION_TICKETS, LOOP_BODY_TICKETS, LOOP_EXIT_TICKETS, \
-    IF_TRUE_TICKETS, ENDIF_TICKETS, IF_FALSE_TICKETS
-from ticket_counting.ticket_counters import INT_REGISTER_TICKETS
-from ticket_counting.ticket_counters import FLOAT_REGISTER_TICKETS
+import ticket_counting.ticket_counters as tickets
 from tac.tac_generation import *
+import tac.instructions as taci
+import tac.registers as tacr
+
+
+EXPECTED_WORD_SIZE = 4
 
 
 ##
@@ -66,8 +67,8 @@ class ArrayReference(BaseAstNode):
 
     def check_subscripts(self):
         if len(self.symbol.array_dims) != len(self.subscripts):
-            return False, 'Symbol has {} dimensions, but only {} were provided.'\
-                .format(len(self.symbol.array_dims), len(self.subscripts))
+            return False, 'Symbol has {} dimensions, but only {} were provided.'.format(len(self.symbol.array_dims),
+                                                                                        len(self.subscripts))
         return True, None
 
     def name(self, arg=None):
@@ -98,7 +99,8 @@ class ArrayReference(BaseAstNode):
         for i in range(0, dim_count - 1):
             if self.symbol.is_parameter:
                 output.append(MUL(offset_reg, offset_reg,
-                                  create_offset_reference(self.symbol.activation_frame_offset + i + 2, FP)))
+                                  taci.Address(int_literal=self.symbol.activation_frame_offset + i + 2,
+                                               register=tacr.FP)))
             else:
                 output.append(MULIU(offset_reg, offset_reg, self.symbol.array_dims[i + 1]))
 
@@ -113,16 +115,18 @@ class ArrayReference(BaseAstNode):
         output.append(MULIU(offset_reg, offset_reg, self.symbol.size_in_bytes()))
 
         # Allocate two new registers
-        base_address_reg = INT_REGISTER_TICKETS.get()
-        end_address_reg = INT_REGISTER_TICKETS.get()
+        base_address_reg = tickets.INT_REGISTER_TICKETS.get()
+        end_address_reg = tickets.INT_REGISTER_TICKETS.get()
 
         # Check bounds
         if self.symbol.is_parameter:
 
-            output.append(LOAD(base_address_reg,
-                               create_offset_reference(self.symbol.activation_frame_offset, FP), 4))
+            output.append(
+                LOAD(base_address_reg, taci.Address(int_literal=self.symbol.activation_frame_offset, register=tacr.FP),
+                     EXPECTED_WORD_SIZE))
             output.append(LOAD(end_address_reg,
-                               create_offset_reference(self.symbol.activation_frame_offset + 1, FP), 4))
+                               taci.Address(int_literal=self.symbol.activation_frame_offset + 1, register=tacr.FP),
+                               EXPECTED_WORD_SIZE))
             output.append(BOUND(offset_reg, base_address_reg, end_address_reg))
 
         else:
@@ -134,8 +138,11 @@ class ArrayReference(BaseAstNode):
                 output.append(LI(end_address_reg, self.symbol.global_memory_location + array_size_in_bytes))
                 output.append(ADDIU(offset_reg, offset_reg, self.symbol.global_memory_location))
             else:
-                output.append(LA(base_address_reg, create_offset_reference(self.symbol.activation_frame_offset, FP)))
-                output.append(LA(end_address_reg, create_offset_reference(self.symbol.activation_frame_offset + array_size_in_bytes, FP)))
+                output.append(
+                    LA(base_address_reg, create_offset_reference(self.symbol.activation_frame_offset, tacr.FP)))
+                output.append(LA(end_address_reg,
+                                 create_offset_reference(self.symbol.activation_frame_offset + array_size_in_bytes,
+                                                         tacr.FP)))
                 output.append(ADD(offset_reg, offset_reg, base_address_reg))
 
             output.append(BOUND(offset_reg, base_address_reg, end_address_reg))
@@ -145,7 +152,7 @@ class ArrayReference(BaseAstNode):
         output.append(KICK(end_address_reg))
 
         if get_rval:
-            output.append(LOAD(offset_reg, offset_reg, self.symbol.size_in_bytes()))
+            output.append(LOAD(offset_reg, taci.Address(register=offset_reg), self.symbol.size_in_bytes()))
             return {'3ac': output, 'rvalue': offset_reg}
         else:
             return {'3ac': output, 'lvalue': offset_reg}
@@ -158,6 +165,7 @@ class Assignment(BaseAstNode):
     Output:   A temporary rvalue register that contains the value that was assigned. Perhaps a slight optimization would
               be to just return that rvalue register that the RHS gave this node to start with?
     """
+
     def __init__(self, operator, lvalue, rvalue, **kwargs):
         super(Assignment, self).__init__(**kwargs)
 
@@ -173,9 +181,7 @@ class Assignment(BaseAstNode):
 
     @property
     def children(self):
-        children = []
-        children.append(self.lvalue)
-        children.append(self.rvalue)
+        children = [self.lvalue, self.rvalue]
         return tuple(children)
 
     def to_3ac(self, get_rval=True, include_source=False):
@@ -195,9 +201,6 @@ class Assignment(BaseAstNode):
 
         # if values aren't the same type, get cast node. new value will be in rval.
 
-
-
-
         # TODO: Fix this??
         # # load rvalue into register - does this need to happen or not?
         # is there a 3ac command for this?
@@ -208,7 +211,7 @@ class Assignment(BaseAstNode):
         # Note: not sure how this assign thing is supposed to be used....
         #       right now both are registers, should the rvalue be the actual value? I don't think so but not sure
         size = self.lvalue.size_in_bytes()
-        output.append(STORE(lval, rval, size))
+        output.append(STORE(taci.Register(rval), taci.Address(register=lval), size))
         output.append(KICK(lval))
 
         return {'3ac': output, 'rvalue': rval}
@@ -219,6 +222,7 @@ class BinaryOperator(BaseAstNode):
     Requires: Two rvalue registers that contain the values to be operated on.
     Output:   An rvalue register containing the value of the result of the operation.
     """
+
     def __init__(self, operator, lvalue, rvalue, **kwargs):
         super(BinaryOperator, self).__init__(**kwargs)
 
@@ -270,60 +274,73 @@ class BinaryOperator(BaseAstNode):
 
         # get temporary register
         # TODO: Add in checking for int or float so can pull correct ticket
-        reg = INT_REGISTER_TICKETS.get()
+        reg = tickets.INT_REGISTER_TICKETS.get()
 
-        #TODO: NEED TO ADD IN OPTIONS BASED ON TYPE OF TICKET PULLED HERE
+        # TODO: NEED TO ADD IN OPTIONS BASED ON TYPE OF TICKET PULLED HERE
         # determine operator type and call correct 3ac instruction with registers
         if self.operator == '+':
             output.append(ADD(reg, lval, rval))
-        if self.operator == '-':
+
+        elif self.operator == '-':
             output.append(SUB(reg, lval, rval))
-        if self.operator == '*':
+
+        elif self.operator == '*':
             output.append(MUL(reg, lval, rval))
-        if self.operator == '/':
+
+        elif self.operator == '/':
             output.append(DIV(reg, lval, rval))
-        if self.operator == '%':
+
+        elif self.operator == '%':
             output.append(MOD(reg, lval, rval))
-        if self.operator == '>>':
+
+        elif self.operator == '>>':
             # output.append(   (reg, lval, rval))
             # TODO: what function is this?
-             raise NotImplementedError('Please implement the {} binary operator to3ac method.'.format(self.operator))
-        if self.operator == '<<':
+            raise NotImplementedError('Please implement the {} binary operator to3ac method.'.format(self.operator))
+
+        elif self.operator == '<<':
             # output.append(   (reg, lval, rval))
             # TODO: what function is this?
-             raise NotImplementedError('Please implement the {} binary operator to3ac method.'.format(self.operator))
-        if self.operator == '<':
+            raise NotImplementedError('Please implement the {} binary operator to3ac method.'.format(self.operator))
+
+        elif self.operator == '<':
             output.append(LT(reg, lval, rval))
-        if self.operator == '<=':
+
+        elif self.operator == '<=':
             output.append(LE(reg, lval, rval))
-        if self.operator == '>':
+
+        elif self.operator == '>':
             output.append(GT(reg, lval, rval))
-        if self.operator == '>=':
+
+        elif self.operator == '>=':
             output.append(GE(reg, lval, rval))
-        if self.operator == '==':
+
+        elif self.operator == '==':
             output.append(EQ(reg, lval, rval))
-        if self.operator == '!=':
+
+        elif self.operator == '!=':
             output.append(NE(reg, lval, rval))
-        if self.operator == '&':
+
+        elif self.operator == '&':
             # output.append(  (reg, lval, rval))
             # TODO: what function is this?
-             raise NotImplementedError('Please implement the {} binary operator to3ac method.'.format(self.operator))
-        if self.operator == '|':
+            raise NotImplementedError('Please implement the {} binary operator to3ac method.'.format(self.operator))
+
+        elif self.operator == '|':
             # output.append(   (reg, lval, rval))
             # TODO: what function is this?
-             raise NotImplementedError('Please implement the {} binary operator to3ac method.'.format(self.operator))
-        if self.operator == '^':
+            raise NotImplementedError('Please implement the {} binary operator to3ac method.'.format(self.operator))
+
+        elif self.operator == '^':
             # output.append(    (reg, lval, rval))
             # TODO: what function is this?
-             raise NotImplementedError('Please implement the {} binary operator to3ac method.'.format(self.operator))
-        if self.operator == '&&':
-            # output.append(  (reg, lval, rval))
-            # TODO: what function is this?
-             raise NotImplementedError('Please implement the {} binary operator to3ac method.'.format(self.operator))
-        if self.operator == '||':
-            # output.append(   (reg, lval, rval))
-            # TODO: what function is this?
-             raise NotImplementedError('Please implement the {} binary operator to3ac method.'.format(self.operator))
+            raise NotImplementedError('Please implement the {} binary operator to3ac method.'.format(self.operator))
+
+        elif self.operator == '&&':
+            output.append(LAND(reg, lval, rval))
+
+        elif self.operator == '||':
+            output.append(LOR(reg, lval, rval))
 
         # TODO: since don't have the value since not calculating anything, can't store it to the table yet
         # register_allocation_table[reg] = value
@@ -340,6 +357,7 @@ class Cast(BaseAstNode):
     Output:   An rvalue register containing the casted value (which might have changed over the course of the casting
               process).
     """
+
     def __init__(self, to_type, expression, **kwargs):
         super(Cast, self).__init__(**kwargs)
 
@@ -358,8 +376,7 @@ class Cast(BaseAstNode):
 
     @property
     def children(self):
-        children = []
-        children.append(self.expression)
+        children = [self.expression]
         return tuple(children)
 
     def to_3ac(self, get_rval=True, include_source=False):
@@ -375,11 +392,11 @@ class Cast(BaseAstNode):
         # if same, don't cast
         if self.to_type != expression_type:
             if type_utils.is_integral_type(self.to_type):
-                new_register = INT_REGISTER_TICKETS.get()
+                new_register = tickets.INT_REGISTER_TICKETS.get()
                 _3ac.append(CVTSW(new_register, return_register))
                 return_register = new_register
             else:
-                new_register = FLOAT_REGISTER_TICKETS.get()
+                new_register = tickets.FLOAT_REGISTER_TICKETS.get()
                 _3ac.append(CVTWS(new_register, return_register))
                 return_register = new_register
 
@@ -393,6 +410,7 @@ class CompoundStatement(BaseAstNode):
 
     It is unlikely that this node will produce any 3AC, but will simply amalgamate the code generated by its children.
     """
+
     def __init__(self, declaration_list=None, statement_list=None, **kwargs):
         super(CompoundStatement, self).__init__(**kwargs)
 
@@ -444,6 +462,7 @@ class Declaration(BaseAstNode):
     Output:   Probably no direct output in the form of temporary registers, but the memory assigned for the
               thing should be recorded somewhere.
     """
+
     def __init__(self, symbol, initializer=None, **kwargs):
         super(Declaration, self).__init__(**kwargs)
 
@@ -468,19 +487,19 @@ class Declaration(BaseAstNode):
             return {'3ac': output}
 
         # Load the base address
-        base_reg = INT_REGISTER_TICKETS.get()
+        base_reg = tickets.INT_REGISTER_TICKETS.get()
         if self.symbol.global_memory_location:
             base_address = self.symbol.global_memory_location
             output.append(LI(base_reg, base_address))
         else:
-            base_address = create_offset_reference(self.symbol.activation_frame_offset, FP)
+            base_address = create_offset_reference(self.symbol.activation_frame_offset, tacr.FP)
             output.append(LA(base_reg, base_address))
 
         if isinstance(self.initializer, list):
 
             # Initialize offset with base address
-            offset_reg = INT_REGISTER_TICKETS.get()
-            output.append(ADDU(offset_reg, base_reg, ZERO))
+            offset_reg = tickets.INT_REGISTER_TICKETS.get()
+            output.append(ADDU(offset_reg, base_reg, tacr.ZERO))
 
             # Loop through initializer and store
             self.initializer = self.initializer[:min(len(self.initializer), self.symbol.array_dims[0])]
@@ -498,7 +517,7 @@ class Declaration(BaseAstNode):
                         output.append(KICK(item_tac['lvalue']))
 
                 # Store the value into memory, kick the register, and move to next
-                output.append(STORE(offset_reg, item_tac['rvalue'], self.symbol.size_in_bytes()))
+                output.append(STORE(offset_reg, taci.Address(register=item_tac['rvalue']), self.symbol.size_in_bytes()))
                 output.append(KICK(item_tac['rvalue']))
                 output.append(ADDIU(offset_reg, offset_reg, self.symbol.size_in_bytes()))
 
@@ -518,7 +537,7 @@ class Declaration(BaseAstNode):
                 if 'lvalue' in item_tac:
                     output.append(KICK(item_tac['lvalue']))
 
-            output.append(STORE(base_reg, item_tac['rvalue'], self.symbol.size_in_bytes()))
+            output.append(STORE(base_reg, taci.Address(register=item_tac['rvalue']), self.symbol.size_in_bytes()))
 
         # Kick the base address
         output.append(KICK(base_reg))
@@ -535,6 +554,7 @@ class FileAST(BaseAstNode):
 
     Simply amalgamates 3AC. Might not produce any code other than standard boilerplate.
     """
+
     def __init__(self, external_declarations, compiler_state, **kwargs):
         super(FileAST, self).__init__(**kwargs)
 
@@ -565,8 +585,11 @@ class FileAST(BaseAstNode):
 
         output.append(TEXT())
         # insert the call to main
-        output.append(JAL(self.compiler_state.main_function.identifier))  # TODO: craft a function call node and use that
-        # output.append(CALL_PROC(self.compiler_state.main_function.identifier, self.compiler_state.main_function.activation_frame_size))
+        output.append(JAL(self.compiler_state.main_function.identifier))
+        # TODO: craft a function call node and use that
+
+        # output.append(CALL_PROC(self.compiler_state.main_function.identifier,
+        #                         self.compiler_state.main_function.activation_frame_size))
         # if we did the argc, argv versions, that stuff would go here
 
         # output.append(CORP_LLAC(self.compiler_state.main_function.activation_frame_size))
@@ -605,6 +628,7 @@ class FunctionCall(BaseAstNode):
     Output:   An rvalue in a temporary register. Take care to copy the value from the value that is stored in the MIPS
               designated return value register.
     """
+
     def __init__(self, function_symbol, arguments=None, **kwargs):
         super(FunctionCall, self).__init__(**kwargs)
 
@@ -626,13 +650,18 @@ class FunctionCall(BaseAstNode):
     def to_3ac(self, get_rval=True, include_source=False):
         _3ac = []
         return_type = self.function_symbol.get_resulting_type()
-        rvalue = INT_REGISTER_TICKETS.get() if type_utils.is_integral_type(return_type) else FLOAT_REGISTER_TICKETS.get()
+        rvalue = None
+        if type_utils.is_integral_type(return_type):
+            rvalue = tickets.INT_REGISTER_TICKETS.get()
+        else:
+            tickets.FLOAT_REGISTER_TICKETS.get()
 
         # call the prologue macro
         _3ac.append(CALL_PROC(self.function_symbol.identifier, self.function_symbol.activation_frame_size))
 
         # Copy the argument values into
-        for parameter_template, argument in itertools.zip_longest(self.function_symbol.named_parameters, self.arguments):
+        for parameter_template, argument in itertools.zip_longest(self.function_symbol.named_parameters,
+                                                                  self.arguments):
             # evaluate the argument expression
             # get register with value of arg
             arg_result = argument.to_3ac(get_rval=True)
@@ -646,11 +675,11 @@ class FunctionCall(BaseAstNode):
             if arg_type != param_type:
                 # print(arg_type, param_type)
                 if param_type == type_utils.INT:
-                    new_register = INT_REGISTER_TICKETS.get()
+                    new_register = tickets.INT_REGISTER_TICKETS.get()
                     _3ac.append(CVTSW(new_register, arg_rvalue))
                     arg_rvalue = new_register
                 else:
-                    new_register = FLOAT_REGISTER_TICKETS.get()
+                    new_register = tickets.FLOAT_REGISTER_TICKETS.get()
                     _3ac.append(CVTWS(new_register, arg_rvalue))
                     arg_rvalue = new_register
 
@@ -658,11 +687,12 @@ class FunctionCall(BaseAstNode):
             offset = parameter_template.activation_frame_offset
 
             if isinstance(argument, VariableSymbol) and argument.is_array:
-                array_base = INT_REGISTER_TICKETS.get()
-                _3ac.append(LA(array_base, create_offset_reference(argument.activation_frame_offset, SP)))
+                array_base = tickets.INT_REGISTER_TICKETS.get()
+                _3ac.append(LA(array_base,
+                               taci.Address(int_literal=parameter_template.activation_frame_offset, register=tacr.SP)))
                 arg_rvalue = array_base
 
-            _3ac.append(STORE(arg_rvalue, create_offset_reference(offset, FP), 4))
+            _3ac.append(STORE(arg_rvalue, taci.Address(int_literal=offset, register=tacr.FP), EXPECTED_WORD_SIZE))
 
         # jump to function body
         _3ac.append(JAL(self.function_symbol.identifier))
@@ -670,7 +700,8 @@ class FunctionCall(BaseAstNode):
         # the function will jump back to this address at this point
 
         # copy the return value before it gets obliterated
-        _3ac.append(ADD(rvalue, V0, ZERO))  # TODO: handle double word returns if we get there
+        _3ac.append(ADD(rvalue, taci.Register(tacr.RV), taci.Register(tacr.ZERO)))
+        # TODO: handle double word returns if we get there
 
         # Call the epilogue macro
         _3ac.append(CORP_LLAC(self.function_symbol.activation_frame_size))
@@ -683,6 +714,7 @@ class FunctionDeclaration(BaseAstNode):
     Requires: The symbol information of the declaration.
     Output:   Nothing direct
     """
+
     def __init__(self, function_symbol, arguments=None, **kwargs):
         super(FunctionDeclaration, self).__init__(**kwargs)
 
@@ -734,16 +766,15 @@ class FunctionDefinition(BaseAstNode):
     def to_3ac(self, include_source=False):
         _tac = [SOURCE(self.linerange[0], self.linerange[1]), LABEL(self.function_symbol.identifier)]
 
-        WORD_SIZE = 4
-
         parameter_size = 0
         for symbol in self.function_symbol.named_parameters:
             if symbol.is_array:
-                parameter_size += WORD_SIZE * (1 + 1 + len(symbol.array_dims))
+                parameter_size += EXPECTED_WORD_SIZE * (1 + 1 + len(symbol.array_dims))
             else:
                 parameter_size += symbol.size_in_bytes()
 
-        _tac.append(ENTER_PROC(local_variable_size=  self.function_symbol.activation_frame_size - parameter_size   ))
+        # be wary of this, it seems to easy to be correct
+        _tac.append(ENTER_PROC(local_variable_size=self.function_symbol.activation_frame_size - parameter_size))
 
         # Generate 3AC for body (always a compound statement)
         if self.body:
@@ -761,6 +792,7 @@ class If(BaseAstNode):
     Requires: 3AC from child nodes.
     Output:   No direct output, just the 3AC associated with the conditional checking and branching.
     """
+
     def __init__(self, conditional, if_true, if_false, **kwargs):
         super(If, self).__init__(**kwargs)
 
@@ -770,8 +802,7 @@ class If(BaseAstNode):
 
     @property
     def children(self):
-        children = []
-        children.append(self.conditional)
+        children = [self.conditional]
         if self.if_true:
             children.append(self.if_true)
         if self.if_false:
@@ -782,9 +813,9 @@ class If(BaseAstNode):
         output = [SOURCE(self.linerange[0], self.linerange[1])]
 
         # Get two labels
-        label_true = IF_TRUE_TICKETS.get()
-        label_false = IF_FALSE_TICKETS.get()
-        label_end = ENDIF_TICKETS.get()
+        label_true = tickets.IF_TRUE_TICKETS.get()
+        label_false = tickets.IF_FALSE_TICKETS.get()
+        label_end = tickets.ENDIF_TICKETS.get()
 
         # Gen 3ac for conditional
         result = self.conditional.to_3ac()
@@ -792,7 +823,7 @@ class If(BaseAstNode):
 
         # Branch based on the contents of the result register of the conditional
         reg = result['rvalue']
-        output.append(BRNE(label_true, reg, ZERO))
+        output.append(BRNE(label_true, reg, tacr.ZERO))
         output.append(LABEL(label_false))
 
         # Gen 3AC for false branch
@@ -869,9 +900,9 @@ class IterationNode(BaseAstNode):
 
     def to_3ac(self, include_source=False):
         output = [SOURCE(self.linerange[0], self.linerange[1])]
-        condition_check_label = LOOP_CONDITION_TICKETS.get()
-        condition_ok_label = LOOP_BODY_TICKETS.get()
-        loop_exit_label = LOOP_EXIT_TICKETS.get()
+        condition_check_label = tickets.LOOP_CONDITION_TICKETS.get()
+        condition_ok_label = tickets.LOOP_BODY_TICKETS.get()
+        loop_exit_label = tickets.LOOP_EXIT_TICKETS.get()
 
         # Check for pre-test loop
         if not self.is_pre_test_loop:
@@ -897,7 +928,7 @@ class IterationNode(BaseAstNode):
 
             # If condition is false
             output.extend(condition_tac['3ac'])
-            output.append(BRNE(condition_ok_label, ZERO, condition_tac['rvalue']))
+            output.append(BRNE(condition_ok_label, tacr.ZERO, condition_tac['rvalue']))
             output.append(BR(loop_exit_label))
 
         # Add condition okay label
@@ -933,6 +964,7 @@ class Label(BaseAstNode):
     Requires: Only its own name.
     Output:   The 3AC for a label.
     """
+
     def __init__(self, label_name, body_statement, **kwargs):
         super(Label, self).__init__(**kwargs)
 
@@ -944,8 +976,7 @@ class Label(BaseAstNode):
 
     @property
     def children(self):
-        children = []
-        children.append(self.body_statement)
+        children = [self.body_statement]
         return tuple(children)
 
     def to_3ac(self, include_source=False):
@@ -959,6 +990,7 @@ class Return(BaseAstNode):
               empty, then the register should contain the value 0 (zero).
     Output:   None, per se, but it needs to store that rvalue in the designated MIPS return register.
     """
+
     def __init__(self, expression, **kwargs):
         super(Return, self).__init__(**kwargs)
 
@@ -985,7 +1017,7 @@ class Return(BaseAstNode):
             prev_result = self.expression.to_3ac()
             output.extend(prev_result['3ac'])
 
-        output.append(RETURN(prev_result.get('rvalue', ZERO)))
+        output.append(RETURN(prev_result.get('rvalue', tacr.ZERO)))
         return {'3ac': output}
 
 
@@ -995,6 +1027,7 @@ class UnaryOperator(BaseAstNode):
     Output:   An rvalue that is either the result of the operation or the value of the symbol before the operation,
               depending on if the operator is a pre- or post- one.
     """
+
     def __init__(self, operator, pre, expression, **kwargs):
         super(UnaryOperator, self).__init__(**kwargs)
 
@@ -1010,8 +1043,7 @@ class UnaryOperator(BaseAstNode):
 
     @property
     def children(self):
-        children = []
-        children.append(self.expression)
+        children = [self.expression]
         return tuple(children)
 
     def to_3ac(self, include_source=False):
@@ -1024,8 +1056,8 @@ class UnaryOperator(BaseAstNode):
         lvalue = result['lvalue']
 
         # Get the rvalue
-        rvalue = INT_REGISTER_TICKETS.get()
-        output.append(LOAD(rvalue, lvalue, 4))
+        rvalue = tickets.INT_REGISTER_TICKETS.get()
+        output.append(LOAD(rvalue, taci.Address(register=lvalue), EXPECTED_WORD_SIZE))
 
         # if this is a post-increment, copy the register with the current value of the register so we can return that
         # before the plusplus happens
@@ -1033,17 +1065,17 @@ class UnaryOperator(BaseAstNode):
 
             # Copy the contents of the rvalue before the operator is applied
             # It will be returned while the actual variable is updated
-            rvalue_copy = INT_REGISTER_TICKETS.get()
-            output.append(ADD(rvalue_copy, rvalue, '$zero'))
+            rvalue_copy = tickets.INT_REGISTER_TICKETS.get()
+            output.append(ADD(rvalue_copy, rvalue, taci.Register(tacr.ZERO)))
 
             # Determine correct operator and apply to register
             if self.operator == '++':
-                 output.append(ADDIU(rvalue, rvalue, 1))
+                output.append(ADDIU(rvalue, rvalue, 1))
             if self.operator == '--':
-                 output.append(SUBI(rvalue, rvalue, 1))
+                output.append(SUBI(rvalue, rvalue, 1))
 
             # Store updated value and kick the lvalue & rvalue
-            output.append(STORE(rvalue, lvalue, 4))
+            output.append(STORE(rvalue, taci.Address(register=lvalue), EXPECTED_WORD_SIZE))
             output.append(KICK(lvalue))
             output.append(KICK(rvalue))
 
@@ -1053,12 +1085,12 @@ class UnaryOperator(BaseAstNode):
 
             # Determine correct operator and apply to register
             if self.operator == '++':
-                 output.append(ADDIU(rvalue, rvalue, 1))
+                output.append(ADDIU(rvalue, rvalue, 1))
             if self.operator == '--':
-                 output.append(SUBI(rvalue, rvalue, 1))
+                output.append(SUBI(rvalue, rvalue, 1))
 
             # Store updated value and kick the lvalue
-            output.append(STORE(rvalue, lvalue, 4))
+            output.append(STORE(rvalue, taci.Address(register=lvalue), EXPECTED_WORD_SIZE))
             output.append(KICK(lvalue))
 
             return {'3ac': output, 'rvalue': rvalue}
@@ -1107,7 +1139,7 @@ class Constant(BaseAstNode):
     def to_3ac(self, get_rval=True, include_source=False):
         output = [SOURCE(self.linerange[0], self.linerange[1])]
 
-        reg = INT_REGISTER_TICKETS.get()
+        reg = tickets.INT_REGISTER_TICKETS.get()
         output.append(LI(reg, self.value))
 
         # Since value is constant, an rvalue is always returned

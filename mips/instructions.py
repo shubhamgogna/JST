@@ -21,9 +21,6 @@ def offset_from_register_with_immediate(register, offset=0):
     return '{}({})'.format(offset if offset != 0 else '', register)
 
 
-
-
-
 class BaseMipsInstruction(object):
     NULL = None
 
@@ -41,8 +38,8 @@ class BaseMipsInstruction(object):
         __repr__ is supposed to be "unambiguous," but it gets called on all contained objects when you stringify a
         container, so this will be the method that produces the fixed field format string representing the instruction.
         """
-        field_format = '{:>8}'
-        fmt = '{:<8}'
+        field_format = '{!s:>8}'
+        fmt = '{!s:<8}'
         if self.slot_0 is not BaseMipsInstruction.NULL:
             fmt += field_format
         if self.slot_1 is not BaseMipsInstruction.NULL:

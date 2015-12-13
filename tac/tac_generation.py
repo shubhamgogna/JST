@@ -14,17 +14,12 @@
 # along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
 
 import tac.instructions as instructions
+import tac.registers as registers
 
 
-# Special Registers
-ZERO = '$ZERO'
-GP = '$GP'
-FP = '$FP'
-SP = '$SP'
-RA = '$RA'
-V0 = '$v0'
-
-CONSTANT_REGISTERS = {ZERO}
+# these are registers that should be expected to contain values meaningful to program execution and not
+# arbitrary program data (i.e. modifying their values will break the program's execution)
+PERSISTENT_REGISTERS = registers.TAC_REGISTERS
 
 
 class TacInstruction(object):
@@ -55,6 +50,7 @@ class TacInstruction(object):
         __repr__ is supposed to be "unambiguous," but it gets called on all contained objects when you stringify a
         container, so this will be the method that produces the fixed field format string representing the instruction.
         """
+
         ret = ''
         if self.instruction == instructions.COMMENT:
             ret = '# ' + self.dest
@@ -63,7 +59,7 @@ class TacInstruction(object):
         elif self.instruction in (instructions.TEXT, instructions.DATA):
             ret = '.' + self.instruction.lower()
         else:
-            ret = '{:<15}, {:<15}, {:<15}, {:<15}'.format(self.instruction,
+            ret = '{!s:<15}, {!s:<15}, {!s:<15}, {!s:<15}'.format(self.instruction,
                                                           self.dest if self.dest is not TacInstruction.NULL else '-',
                                                           self.src1 if self.src1 is not TacInstruction.NULL else '-',
                                                           self.src2 if self.src2 is not TacInstruction.NULL else '-')
@@ -590,10 +586,16 @@ def CVTSW(result, operand):
 # Memory Access
 #
 def LOAD(result, address, size_in_bytes):
+    if not isinstance(address, instructions.Address):
+        raise ValueError('The LOAD instruction needs an address type object to ensure correctness.')
+
     return TacInstruction(instructions.LOAD, result, address, size_in_bytes)
 
 
 def STORE(result, address, size_in_bytes):
+    if not isinstance(address, instructions.Address):
+        raise ValueError('The STORE instruction needs an address type object to ensure correctness.')
+
     return TacInstruction(instructions.STORE, result, address, size_in_bytes)
 
 

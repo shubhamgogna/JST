@@ -16,8 +16,10 @@
 import copy
 import itertools
 
-from tac.tac_generation import SOURCE, LOAD, LA, FP, create_offset_reference, ZERO
-from ticket_counting.ticket_counters import UUID_TICKETS, FLOAT_REGISTER_TICKETS, INT_REGISTER_TICKETS
+from tac.tac_generation import SOURCE, LOAD, LA
+import tac.registers as tacr
+import tac.instructions as taci
+import ticket_counting.ticket_counters as tickets
 from utils import type_utils
 
 
@@ -31,7 +33,7 @@ class Symbol(object):
         self.activation_frame_offset = None
 
         # UUID for AST
-        self.uuid = UUID_TICKETS.get()
+        self.uuid = tickets.UUID_TICKETS.get()
 
     def clone(self):
         # TODO Verify this is actually a deepcopy
@@ -145,14 +147,14 @@ class VariableSymbol(Symbol):
 
         # Get ticket to copy memory location
         if type_utils.is_floating_point_type(self.get_resulting_type()):
-            reg = FLOAT_REGISTER_TICKETS.get()
+            reg = tickets.FLOAT_REGISTER_TICKETS.get()
         else:
-            reg = INT_REGISTER_TICKETS.get()
+            reg = tickets.INT_REGISTER_TICKETS.get()
 
         if self.global_memory_location:
-            address = self.global_memory_location
+            address = taci.Address(int_literal=self.global_memory_location)
         else:
-            address = create_offset_reference(self.activation_frame_offset, FP)
+            address = taci.Address(int_literal=self.activation_frame_offset, register=tacr.FP)
 
         if get_rval:
             output.append(LOAD(reg, address, self.size_in_bytes()))
