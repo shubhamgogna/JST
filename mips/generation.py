@@ -199,11 +199,23 @@ class MipsGenerator(object):
                 elif instruction.instruction == taci.MUL:
                     self._multiply(instruction)
 
+                elif instruction.instruction == taci.MOD:
+                    self._modulo(instruction)
+
+                # elif instruction.instruction == taci.DIV:
+                #     self._div(instruction)
+                #
+                # elif instruction.instruction == taci.MFHI:
+                #     self._move_from_high(instruction)
+
                 elif instruction.instruction == taci.EQ:
                     self._equality(instruction)
 
                 elif instruction.instruction == taci.LT:
                     self._less_than(instruction)
+
+                elif instruction.instruction == taci.LE:
+                    self._less_than_equal(instruction)
 
                 elif instruction.instruction == taci.GT:
                     self._greater_than(instruction)
@@ -408,6 +420,24 @@ class MipsGenerator(object):
 
         self.mips_output.append(mi.MUL(product, multiplicand, multiplier))
 
+    def _modulo(self, t):
+        result = self.get_resulting_argument(t.dest)
+        multiplicand = self.get_resulting_argument(t.src1)
+        multiplier = self.get_resulting_argument(t.src2)
+
+        self.mips_output.append("DIV          " + multiplicand + ',' + multiplier)
+        self.mips_output.append("MFHI         " + result)
+
+    # def _div(self, t):
+    #     result =
+    #     multiplicand = self.get_resulting_argument(t.src1)
+    #     multiplier = self.get_resulting_argument(t.src2)
+    #
+    #     self.mips_output.append(mi.DIV(multiplicand, multiplier))
+    #     self.mips_output.append(mi.MFHI(result))
+
+
+
     def _equality(self, t):
         dest_register = self.get_resulting_argument(t.dest)
         src1_register = self.get_resulting_argument(t.src1)
@@ -421,6 +451,13 @@ class MipsGenerator(object):
         src2_register = self.get_resulting_argument(t.src2)
 
         self.mips_output.append(mi.SLT(dest_register, src1_register, src2_register))
+
+    def _less_than_equal(self, t):
+        dest_register = self.get_resulting_argument(t.dest)
+        src1_register = self.get_resulting_argument(t.src1)
+        src2_register = self.get_resulting_argument(t.src2)
+
+        self.mips_output.append(mi.SLE(dest_register, src1_register, src2_register))
 
     def _greater_than(self, t):
         dest_register = self.get_resulting_argument(t.dest)
@@ -445,7 +482,7 @@ class MipsGenerator(object):
         src1_register = self.get_resulting_argument(t.src1)
         src2_register = self.get_resulting_argument(t.src2)
 
-        self.mips_output.append(mi.BNE(target, src1_register, src2_register))
+        self.mips_output.append(mi.BNE(src1_register, src2_register, target))
 
     def _jump_to_register_value(self, t):
         register = self.get_resulting_argument(t.dest)

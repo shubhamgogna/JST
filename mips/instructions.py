@@ -292,6 +292,10 @@ class SLT(BaseMipsInstruction):
     def __init__(self, result, src1, src2):
         super(SLT, self).__init__('slt', result, src1, src2)
 
+class SLE(BaseMipsInstruction):
+    def __init__(self, result, src1, src2):
+        super(SLE, self).__init__('sle', result, src1, src2)
+
 class SGT(BaseMipsInstruction):
     def __init__(self, result, src1, src2):
         super(SGT, self).__init__('sgt', result, src1, src2)
@@ -320,8 +324,8 @@ class JR(BaseMipsInstruction):
         super(JR, self).__init__('jr', register)
 
 class BNE(BaseMipsInstruction):
-    def __init__(self, target, src1, src2):
-        super(BNE, self).__init__('bne', target, src1, src2)
+    def __init__(self, src1, src2, target):
+        super(BNE, self).__init__('bne', src1, src2, target)
 
 
 #

@@ -142,3 +142,51 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
         self.generator.translate_tac_to_mips()
         print(self.generator.dumps())
 
+
+    def test_if_elif_else(self):
+        data = """
+            int main() {
+
+                int i = 0;
+
+                // FizzBuzz
+                for( i = 1; i <= 30; i++) {
+                   //FizzBuzz
+                   if( i % 3 == 0){
+
+                        //FizzBuzz
+                        if( i % 5 == 0 ){
+
+                            //print_char('f');
+                            //print_char('b');
+                            print_int(35);
+                        }
+
+                        //Fizz
+                        else {
+                           //print_char('f');
+                            print_int(3);
+                        }
+
+                   }
+                   // Buzz
+                   else if( i % 5 == 0) {
+                       //print_char('b');
+                       print_int(5);
+
+                   }
+                   // Number
+                   else{
+                       print_int(i);
+                   }
+                }
+
+                return 0;
+            }
+            """
+        ast = self.compiler_state.parse(data)
+        source_tac = ast.to_3ac()
+
+        self.generator.load(source_tac)
+        self.generator.translate_tac_to_mips()
+        print(self.generator.dumps())
