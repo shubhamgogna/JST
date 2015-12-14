@@ -94,7 +94,7 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
                 int local_variable = 1;
                 int other_variable = 2;
 
-                // print the garbage that will be in the variable
+                // print the values that will be in the variables
                 print_int(local_variable);
                 print_int(other_variable);
 
@@ -110,3 +110,35 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
         self.generator.load(source_tac)
         self.generator.translate_tac_to_mips()
         print(self.generator.dumps())
+
+
+    def test_global_variables_declaration_and_assignement(self):
+        data = """
+            const int GLOBAL_CONST = 4;
+            int GLOBAL_VAR = 2;
+
+            int main() {
+
+                // print the values that will be in the variables
+                print_int(GLOBAL_CONST);
+                print_int(GLOBAL_VAR);
+
+                // perform the assignment
+                GLOBAL_VAR = GLOBAL_CONST;
+                print_int(GLOBAL_VAR);
+
+                return 0;
+            }
+
+
+            """
+        ast = self.compiler_state.parse(data)
+        source_tac = ast.to_3ac()
+
+        #TODO: Take out debug after fixing test case issues
+        print(source_tac, 'asdfsadf')
+
+        self.generator.load(source_tac)
+        self.generator.translate_tac_to_mips()
+        print(self.generator.dumps())
+

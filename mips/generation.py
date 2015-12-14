@@ -304,6 +304,8 @@ class MipsGenerator(object):
 
     def _load_immediate(self, t):
         result = self.register_table.acquire(t.dest)
+
+
         self.mips_output.extend(result['code'])
         self.mips_output.append(mi.LI(result['register'], t.src1))
 
