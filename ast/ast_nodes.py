@@ -537,7 +537,7 @@ class Declaration(BaseAstNode):
                 if 'lvalue' in item_tac:
                     output.append(KICK(item_tac['lvalue']))
 
-            output.append(STORE(base_reg, taci.Address(register=item_tac['rvalue']), self.symbol.size_in_bytes()))
+            output.append(STORE(item_tac['rvalue'], taci.Address(register=base_reg), self.symbol.size_in_bytes()))
 
         # Kick the base address
         output.append(KICK(base_reg))
@@ -567,7 +567,7 @@ class FileAST(BaseAstNode):
         childrens.extend(self.external_declarations)
         return tuple(childrens)
 
-    def to_3ac(self, include_source=True):
+    def to_3ac(self, include_source=True, get_output_as_str=False):
         output = []
 
         global_data_declarations = []
@@ -601,21 +601,26 @@ class FileAST(BaseAstNode):
 
         output.append(LABEL('PROG_END'))
 
-        last_line = 0
-        for item in output:
-            # print('here', item, type(item))
-            if include_source and item.instruction == 'SOURCE':
-                if item.dest > last_line:
-                    for lineno in range(last_line, item.dest):
-                        print('# ' + self.compiler_state.source_lines[lineno])
-                    last_line = item.dest
-            else:
-                print(item)
+        if not get_output_as_str:
+            return output
 
-        for lineno in range(last_line, len(self.compiler_state.source_lines)):
-            print('# ' + self.compiler_state.source_lines[lineno])
+        else:
+            output_as_str = ''
+            last_line = 0
+            for item in output:
+                # print('here', item, type(item))
+                if include_source and item.instruction == 'SOURCE':
+                    if item.dest > last_line:
+                        for lineno in range(last_line, item.dest):
+                            output_as_str += '# ' + self.compiler_state.source_lines[lineno]
+                        last_line = item.dest
+                else:
+                    output_as_str += str(item)
 
-        return output
+            for lineno in range(last_line, len(self.compiler_state.source_lines)):
+                print('# ' + self.compiler_state.source_lines[lineno])
+
+            return output, output_as_str
 
     def to_graph_viz_str(self):
         return 'digraph {\n' + super(FileAST, self).to_graph_viz_str() + '}'
@@ -692,7 +697,8 @@ class FunctionCall(BaseAstNode):
                                taci.Address(int_literal=parameter_template.activation_frame_offset, register=tacr.SP)))
                 arg_rvalue = array_base
 
-            _3ac.append(STORE(arg_rvalue, taci.Address(int_literal=offset, register=tacr.FP), EXPECTED_WORD_SIZE))
+            _3ac.append(STORE(arg_rvalue, taci.Address(int_literal=offset, register=tacr.SP), EXPECTED_WORD_SIZE))
+            _3ac.append(SUB(taci.Register(tacr.SP), taci.Register(tacr.SP), EXPECTED_WORD_SIZE))
 
         # jump to function body
         _3ac.append(JAL(self.function_symbol.identifier))

@@ -16,9 +16,9 @@
 import copy
 import itertools
 
-from tac.tac_generation import SOURCE, LOAD, LA
 import tac.registers as tacr
 import tac.instructions as taci
+import tac.tac_generation as tac
 import ticket_counting.ticket_counters as tickets
 from utils import type_utils
 
@@ -143,27 +143,35 @@ class VariableSymbol(Symbol):
 
     # Defined for 3AC generation interface compliance
     def to_3ac(self, get_rval=True, include_source=False):
-        output = [SOURCE(self.lineno, self.column)]
+        output = [tac.SOURCE(self.lineno, self.column)]
 
         # Get ticket to copy memory location
         if type_utils.is_floating_point_type(self.get_resulting_type()):
-            reg = tickets.FLOAT_REGISTER_TICKETS.get()
+            value = tickets.FLOAT_REGISTER_TICKETS.get()
         else:
-            reg = tickets.INT_REGISTER_TICKETS.get()
+            value = tickets.INT_REGISTER_TICKETS.get()
 
-        if self.global_memory_location:
-            address = taci.Address(int_literal=self.global_memory_location)
-        else:
-            address = taci.Address(int_literal=self.activation_frame_offset, register=tacr.FP)
 
         if get_rval:
-            output.append(LOAD(reg, address, self.size_in_bytes()))
-            return {'3ac': output, 'rvalue': reg}
+            # load the register with the variable's value
+            if self.global_memory_location:
+                address = taci.Address(int_literal=self.global_memory_location)
+            else:
+                address = taci.Address(int_literal=self.activation_frame_offset, register=tacr.FP)
+            output.append(tac.LOAD(value, address, self.size_in_bytes()))
+
+            return {'3ac': output, 'rvalue': value}
 
         else:
-            # output.append(ADD(reg, address, ZERO))
-            output.append(LA(reg, address))
-            return {'3ac': output, 'lvalue': reg}
+            # load the register with the address of the variable
+            if self.global_memory_location:
+                output.append(tac.LI(value, self.global_memory_location))
+
+            else:
+                # remember, stack grows downward, so look under the FP
+                output.append(tac.SUB(value, taci.Register(tacr.FP), self.activation_frame_offset))
+
+            return {'3ac': output, 'lvalue': value}
 
 
 class FunctionSymbol(Symbol):

@@ -16,5 +16,8 @@
 
 # This file was made to prevent circular dependencies, if we can do something better, let's do it
 
+import mips.registers as mr
+
 SPILL_MEM_LABEL = 'SPILL_MEMORY'
 SPILL_MEM_SIZE = 64  # bytes
+TEMPROARY_REGISTER_SET = mr.T_REGISTERS

@@ -43,7 +43,7 @@ class Label(BaseInstructionArgument):
 
 
 class Address(BaseInstructionArgument):
-    def __init__(self, label: typing.Union(str, Label), int_literal: typing.Union(Immediate, int),
-                 register=typing.Union(Register)): ...
+    def __init__(self, label: typing.Union(str, Label) = None, int_literal: typing.Union(Immediate, int) = None,
+                 register: typing.Union(Register) = None): ...
 
     def __str__(self): ...

@@ -51,6 +51,11 @@ __print_int_body = [
     mi.COMMENT("the first (and only) argument is the value to print"),
     mi.LW(mr.A0, mi.offset_from_register_with_immediate(mr.FP)),
     mi.SYSCALL(),
+    mi.COMMENT("print a newline character for readability"),
+    mi.COMMENT("0x0D is CR or '\\r' - 0x0A is LF for '\\n'"),
+    mi.LI(mr.V0, 11),
+    mi.LI(mr.A0, 0x0A),
+    mi.SYSCALL(),
     mm.CALLEE_FUNCTION_EPILOGUE_MACRO.call()
 ]
 PrintIntDefinition = FunctionDefinition(identifier='print_int', body=__print_int_body)

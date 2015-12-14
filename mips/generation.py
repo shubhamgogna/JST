@@ -27,8 +27,6 @@ import mips.library_functions as library_functions
 
 WORD_SIZE = 4
 
-DEFAULT_TEMPROARY_REGISTER_SET = mr.T_REGISTERS
-
 
 class MipsGenerator(object):
     """ An object to drive translation from 3AC to MIPS.
@@ -36,7 +34,7 @@ class MipsGenerator(object):
     This object conducts the translation from 3AC to MIPS and contains the results within itself.
     """
 
-    def __init__(self, compiler_state, temporary_registers=DEFAULT_TEMPROARY_REGISTER_SET,
+    def __init__(self, compiler_state, temporary_registers=config.TEMPROARY_REGISTER_SET,
                  spill_mem_label=config.SPILL_MEM_LABEL, spill_mem_size=config.SPILL_MEM_SIZE, inject_source=False,
                  inject_3ac=False, inject_comments=False):
         """ The constructor.
@@ -154,7 +152,7 @@ class MipsGenerator(object):
                     self._exit_procedure(instruction)
 
                 elif instruction.instruction == taci.CORP_LLAC:
-                    self.take_control_back_from_procedure_call(instruction)
+                    self._take_control_back_from_procedure_call(instruction)
 
                 elif instruction.instruction == taci.LI:
                     self._load_immediate(instruction)
@@ -268,6 +266,10 @@ class MipsGenerator(object):
     def _text_section(self, t):
         self.mips_output.append(mi.TEXT())
 
+        # this may need to be moved elsewhere, but it's here for now to make it work
+        self.mips_output.append(mi.ADD(mr.FP, mr.SP, mr.ZERO))
+        self.mips_output.append(mi.ADD(mr.A0, mr.FP, mr.ZERO))
+
     def _label(self, t):
         self.mips_output.append(mi.LABEL(t.dest))
 
@@ -288,7 +290,7 @@ class MipsGenerator(object):
     def _exit_procedure(self, t):
         self.mips_output.append(mm.CALLEE_FUNCTION_EPILOGUE_MACRO.call())
 
-    def take_control_back_from_procedure_call(self, t):
+    def _take_control_back_from_procedure_call(self, t):
         self.mips_output.append(mm.CALLER_FUNCTION_EPILOGUE_MACRO.call())
 
     def _return(self, t):
@@ -306,16 +308,15 @@ class MipsGenerator(object):
         self.mips_output.append(mi.LI(result['register'], t.src1))
 
     def _load(self, t):
-        result = self.register_table.acquire(t.dest)
-        self.mips_output.extend(result['code'])
-        dest_register = result['register']
+        destination = self.get_resulting_argument(t.dest)
+        address = self.get_resulting_argument(t.src1)
 
         if t.src2 is 1:
-            self.mips_output.append(mi.LB(dest_register, t.src1))
+            self.mips_output.append(mi.LB(destination, address))
         elif t.src2 is 2:
-            self.mips_output.append(mi.LHW(dest_register, t.src1))
+            self.mips_output.append(mi.LHW(destination, address))
         elif t.src2 is 4:
-            self.mips_output.append(mi.LW(dest_register, t.src1))
+            self.mips_output.append(mi.LW(destination, address))
 
     def _store(self, t):
         # TODO: ensure that the address is handled for all of the variants
@@ -339,11 +340,10 @@ class MipsGenerator(object):
             self.mips_output.append(mi.SW(content, address))
 
     def _load_address(self, t):
-        result = self.register_table.acquire(t.dest)
-        self.mips_output.extend(result['code'])
-        dest_register = result['register']
+        destination = self.get_resulting_argument(t.dest)
+        address = self.get_resulting_argument(t.src1)
 
-        self.mips_output.append(mi.LA(dest_register, t.src1))
+        self.mips_output.append(mi.LA(destination, address))
 
     #
     # def _assign(self, t):

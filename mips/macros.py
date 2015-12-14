@@ -71,20 +71,23 @@ RESTORE_SPILL_MEM_MACRO = Macro(name='RESTORE_SPILL_MEM', args=None, body=__rest
 
 __caller_function_prologue_body = [
     mi.COMMENT("caller should save it's own $ra, $fp, and registers"),
-    mi.SUBIU(mr.SP, mr.SP, mr.WORD_SIZE),
     mi.SW(mr.RA, mi.offset_from_register_with_immediate(mr.SP)),
     mi.SUBIU(mr.SP, mr.SP, mr.WORD_SIZE),
     mi.SW(mr.FP, mi.offset_from_register_with_immediate(mr.SP)),
+    mi.SUBIU(mr.SP, mr.SP, mr.WORD_SIZE),
     mi.COMMENT("caller pushes registers and spill memory onto the stack as well"),
     SAVE_REGISTER_MACRO.call(),
     SAVE_SPILL_MEM_MACRO.call(),
-    mi.COMMENT("update $fp"),
-    mi.ADD(mr.FP, mr.SP, mr.ZERO)
+    mi.COMMENT("save the value of $sp here into $a0 as temporary storage until the arguments are moved"),
+    mi.COMMENT("$fp needs to stay where it's at while the arguments are copied after this macro"),
+    mi.ADD(mr.A0, mr.SP, mr.ZERO)
 ]
 CALLER_FUNCTION_PROLOGUE_MACRO = Macro(name='CALLER_FUNCTION_PROLOGUE', args=None, body=__caller_function_prologue_body)
 
 
 __callee_function_prologue_body = [
+    mi.COMMENT("set $fp to the proper spot by recovering the value from $a0"),
+    mi.ADD(mr.FP, mr.A0, mr.ZERO),
     mi.COMMENT("allocate stack space for variables ($sp = $sp - space for variables)"),
     mi.LI(mr.A0, mr.WORD_SIZE),
     mi.MULU(mr.A1, mr.A0, mi.macro_arg('variable_size')),
@@ -110,10 +113,10 @@ __caller_function_epilogue_body = [
     RESTORE_SPILL_MEM_MACRO.call(),
     RESTORE_REGISTER_MACRO.call(),
     mi.COMMENT("recover the caller's $fp and $ra"),
+    mi.ADDIU(mr.SP, mr.SP, mr.WORD_SIZE),
     mi.LW(mr.FP, mi.offset_from_register_with_immediate(mr.SP)),
     mi.ADDIU(mr.SP, mr.SP, mr.WORD_SIZE),
     mi.LW(mr.RA, mi.offset_from_register_with_immediate(mr.SP)),
-    mi.ADDIU(mr.SP, mr.SP, mr.WORD_SIZE),
 ]
 CALLER_FUNCTION_EPILOGUE_MACRO = Macro(name='CALLER_FUNCTION_EPILOGUE',
                                        args=None,

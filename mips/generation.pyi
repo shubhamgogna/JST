@@ -6,11 +6,16 @@ import typing
 
 from compiler.compiler_state import CompilerState
 from tac.tac_generation import TacInstruction
+import tac.instructions as taci
+import mips.configurations as config
 
 
 class MipsGenerator(object):
-    def __init__(self, compiler_state:CompilerState, temporary_registers: typing.Tuple[str], spill_mem_label: str,
-                 spill_mem_size: int): ...
+    def __init__(self, compiler_state:CompilerState,
+                 temporary_registers:typing.Tuple[str]=config.TEMPROARY_REGISTER_SET,
+                 spill_mem_label:typing.Union(taci.Label, str)=config.SPILL_MEM_LABEL,
+                 spill_mem_size:int=config.SPILL_MEM_SIZE, inject_source:bool=False, inject_3ac:bool=False,
+                 inject_comments:bool=False): ...
 
     def load(self, source_tac: typing.List[TacInstruction]): ...
 
