@@ -27,9 +27,7 @@ import mips.library_functions as library_functions
 
 WORD_SIZE = 4
 
-DEFAULT_TEMPROARY_REGISTER_SET = (mr.T0, mr.T1, mr.T2, mr.T3, mr.T4, mr.T5, mr.T6, mr.T7, mr.T8, mr.T9)
-
-DEFAULT_SPILL_MEMORY_LABEL = 'SPILL_MEMORY'
+DEFAULT_TEMPROARY_REGISTER_SET = mr.T_REGISTERS
 
 
 class MipsGenerator(object):
@@ -39,7 +37,7 @@ class MipsGenerator(object):
     """
 
     def __init__(self, compiler_state, temporary_registers=DEFAULT_TEMPROARY_REGISTER_SET,
-                 spill_mem_label=DEFAULT_SPILL_MEMORY_LABEL, spill_mem_size=config.SPILL_MEM_SIZE, inject_source=False,
+                 spill_mem_label=config.SPILL_MEM_LABEL, spill_mem_size=config.SPILL_MEM_SIZE, inject_source=False,
                  inject_3ac=False, inject_comments=False):
         """ The constructor.
 
@@ -192,7 +190,6 @@ class MipsGenerator(object):
                     self._add_unsigned(instruction)
 
                 elif instruction.instruction == taci.ADD:
-                    print(instruction)
                     self._add(instruction)
 
                 elif instruction.instruction == taci.SUB:
@@ -222,6 +219,13 @@ class MipsGenerator(object):
 
                 # elif instruction.instruction == taci.LT:
 
+
+                elif instruction.instruction == taci.CVTSW:
+                    self._convert_float_to_int(instruction)
+
+                elif instruction.instruction == taci.CVTWS:
+                    self._convert_int_to_float(instruction)
+
                 else:
                     raise NotImplementedError("{} 3AC -> MIPS is not implemented!".format(instruction.instruction))
 
@@ -230,7 +234,7 @@ class MipsGenerator(object):
 
         self._source(len(self.compiler_state.source_lines))
 
-        ## Add any pre-defined library functions here ##
+        #~ Add any pre-defined library functions here ~#
         # This is a really crappy way of doing things, but it will have to do since our compiler only handles
         # 'single file' programs. The declarations (prototypes) must be added to the symbol table in the Parser, in a
         # dummy production "setup_for_program" to allow calls to these functions.
@@ -252,12 +256,14 @@ class MipsGenerator(object):
 
                 self.next_source_line_to_inject = last_line
 
-
     def _comment(self, t):
         self.mips_output.append(mi.COMMENT(text=t.dest))
 
     def _data_section(self, t):
         self.mips_output.append(mi.DATA())
+
+        # this may need to be moved elsewhere, but it's here for now to make it work
+        self.mips_output.append(mi.SPACE(label=config.SPILL_MEM_LABEL, n_bytes=config.SPILL_MEM_SIZE))
 
     def _text_section(self, t):
         self.mips_output.append(mi.TEXT())
@@ -315,26 +321,14 @@ class MipsGenerator(object):
         # TODO: ensure that the address is handled for all of the variants
         # ($t2), 100($t2), 100, label, label + immediate, label($t2), label + immediate($t2)
 
-        content = None
-        address = None
+        if not isinstance(t.dest, (taci.Register, str)):  # TODO: refactor so the str is unnecessary
+            raise ValueError('The first argument of a store instruction must be a register.')
 
-        result = self.register_table.acquire(t.dest)
-        self.mips_output.extend(result['code'])
-        content = result['register']
+        if not isinstance(t.src1, taci.Address):
+            raise ValueError('The second argument of a store instruction must be an address')
 
-
-
-        address_object = t.src1
-        if isinstance(address_object, taci.Register) and address_object.register:
-            if address_object.register in tacr.TAC_REGISTERS:
-                address = self.convert_tac_register_to_mips_register(address_object.register)
-            else:
-                result = self.register_table.acquire(address_object.register)
-                self.mips_output.extend(result['code'])
-                address = result['register']
-
-        else:
-            address = address_object
+        content = self.get_resulting_argument(t.dest)
+        address = self.get_resulting_argument(t.src1)
 
         # Content and then address
         if t.src2 is 1:
@@ -371,85 +365,30 @@ class MipsGenerator(object):
 
 
     def _add_immediate_unsigned(self, t):
-        dest_register = None
-        src1_register = None
-        src2_register = None
+        sum = self.get_resulting_argument(t.dest)
+        addend = self.get_resulting_argument(t.src1)
+        augend = self.get_resulting_argument(t.src2)
 
-        result = self.register_table.acquire(t.dest)
-        self.mips_output.extend(result['code'])
-        dest_register = result['register']
-
-        if t.src1 not in tac_gen.PERSISTENT_REGISTERS:
-            result = self.register_table.acquire(t.src1)
-            self.mips_output.extend(result['code'])
-            src1_register = result['register']
-        else:
-            src1_register = self.convert_tac_register_to_mips_register(t.src1)
-
-        # if t.src2 in tac_gen.CONSTANT_REGISTERS:
-        #     result = self.register_table.acquire(t.src2)
-        #     self.mips_output.extend(result['code'])
-        #     src2_register = result['register']
-
-        self.mips_output.append(mi.ADDIU(dest_register, src1_register, t.src2))
+        self.mips_output.append(mi.ADDIU(sum, addend, augend))
 
     def _add_unsigned(self, t):
-        dest_register = None
-        src1_register = None
-        src2_register = None
+        sum = self.get_resulting_argument(t.dest)
+        addend = self.get_resulting_argument(t.src1)
+        augend = self.get_resulting_argument(t.src2)
 
-        result = self.register_table.acquire(t.dest)
-        self.mips_output.extend(result['code'])
-        dest_register = result['register']
-
-        if t.src1 not in tac_gen.PERSISTENT_REGISTERS:
-            result = self.register_table.acquire(t.src1)
-            self.mips_output.extend(result['code'])
-            src1_register = result['register']
-        else:
-            src1_register = self.convert_tac_register_to_mips_register(t.src1)
-
-        if t.src2 not in tac_gen.PERSISTENT_REGISTERS:
-            result = self.register_table.acquire(t.src2)
-            self.mips_output.extend(result['code'])
-            src2_register = result['register']
-        else:
-            src2_register = self.convert_tac_register_to_mips_register(t.src2)
-
-        self.mips_output.append(mi.ADDU(dest_register, src1_register, src2_register))
+        self.mips_output.append(mi.ADDU(sum, addend, augend))
 
     def _add(self, t):
-
         sum = self.get_resulting_argument(t.dest)
-
         addend = self.get_resulting_argument(t.src1)
-
         augend = self.get_resulting_argument(t.src2)
 
         self.mips_output.append(mi.ADD(sum, addend, augend))
 
     def _sub(self, t):
-        dest_register = None
-        src1_register = None
-        src2_register = None
-
-        result = self.register_table.acquire(t.dest)
-        self.mips_output.extend(result['code'])
-        dest_register = result['register']
-
-        if t.src1 not in tac_gen.PERSISTENT_REGISTERS:
-            result = self.register_table.acquire(t.src1)
-            self.mips_output.extend(result['code'])
-            src1_register = result['register']
-        else:
-            src1_register = self.convert_tac_register_to_mips_register(t.src1)
-
-        if t.src2 not in tac_gen.PERSISTENT_REGISTERS:
-            result = self.register_table.acquire(t.src2)
-            self.mips_output.extend(result['code'])
-            src2_register = result['register']
-        else:
-            src2_register = self.convert_tac_register_to_mips_register(t.src2)
+        dest_register = self.get_resulting_argument(t.dest)
+        src1_register = self.get_resulting_argument(t.src1)
+        src2_register = self.get_resulting_argument(t.src2)
 
         self.mips_output.append(mi.SUB(dest_register, src1_register, src2_register))
 
@@ -468,102 +407,30 @@ class MipsGenerator(object):
         self.mips_output.append(mi.MUL(product, multiplicand, multiplier))
 
     def _equality(self, t):
-        dest_register = None
-        src1_register = None
-        src2_register = None
-
-        result = self.register_table.acquire(t.dest)
-        self.mips_output.extend(result['code'])
-        dest_register = result['register']
-
-        if t.src1 not in tac_gen.PERSISTENT_REGISTERS:
-            result = self.register_table.acquire(t.src1)
-            self.mips_output.extend(result['code'])
-            src1_register = result['register']
-        else:
-            src1_register = self.convert_tac_register_to_mips_register(t.src1)
-
-        if t.src2 not in tac_gen.PERSISTENT_REGISTERS:
-            result = self.register_table.acquire(t.src2)
-            self.mips_output.extend(result['code'])
-            src2_register = result['register']
-        else:
-            src2_register = self.convert_tac_register_to_mips_register(t.src2)
+        dest_register = self.get_resulting_argument(t.dest)
+        src1_register = self.get_resulting_argument(t.src1)
+        src2_register = self.get_resulting_argument(t.src2)
 
         self.mips_output.append(mi.SEQ(dest_register, src1_register, src2_register))
 
     def _less_than(self, t):
-        dest_register = None
-        src1_register = None
-        src2_register = None
-
-        result = self.register_table.acquire(t.dest)
-        self.mips_output.extend(result['code'])
-        dest_register = result['register']
-
-        if t.src1 not in tac_gen.PERSISTENT_REGISTERS:
-            result = self.register_table.acquire(t.src1)
-            self.mips_output.extend(result['code'])
-            src1_register = result['register']
-        else:
-            src1_register = self.convert_tac_register_to_mips_register(t.src1)
-
-        if t.src2 not in tac_gen.PERSISTENT_REGISTERS:
-            result = self.register_table.acquire(t.src2)
-            self.mips_output.extend(result['code'])
-            src2_register = result['register']
-        else:
-            src2_register = self.convert_tac_register_to_mips_register(t.src2)
+        dest_register = self.get_resulting_argument(t.dest)
+        src1_register = self.get_resulting_argument(t.src1)
+        src2_register = self.get_resulting_argument(t.src2)
 
         self.mips_output.append(mi.SLT(dest_register, src1_register, src2_register))
 
     def _greater_than(self, t):
-        dest_register = None
-        src1_register = None
-        src2_register = None
-
-        result = self.register_table.acquire(t.dest)
-        self.mips_output.extend(result['code'])
-        dest_register = result['register']
-
-        if t.src1 not in tac_gen.PERSISTENT_REGISTERS:
-            result = self.register_table.acquire(t.src1)
-            self.mips_output.extend(result['code'])
-            src1_register = result['register']
-        else:
-            src1_register = self.convert_tac_register_to_mips_register(t.src1)
-
-        if t.src2 not in tac_gen.PERSISTENT_REGISTERS:
-            result = self.register_table.acquire(t.src2)
-            self.mips_output.extend(result['code'])
-            src2_register = result['register']
-        else:
-            src2_register = self.convert_tac_register_to_mips_register(t.src2)
+        dest_register = self.get_resulting_argument(t.dest)
+        src1_register = self.get_resulting_argument(t.src1)
+        src2_register = self.get_resulting_argument(t.src2)
 
         self.mips_output.append(mi.SGT(dest_register, src1_register, src2_register))
 
     def _bound(self, t):
-        dest_register = None
-        src1_register = None
-        src2_register = None
-
-        result = self.register_table.acquire(t.dest)
-        self.mips_output.extend(result['code'])
-        dest_register = result['register']
-
-        if t.src1 not in tac_gen.PERSISTENT_REGISTERS:
-            result = self.register_table.acquire(t.src1)
-            self.mips_output.extend(result['code'])
-            src1_register = result['register']
-        else:
-            src1_register = self.convert_tac_register_to_mips_register(t.src1)
-
-        if t.src2 not in tac_gen.PERSISTENT_REGISTERS:
-            result = self.register_table.acquire(t.src2)
-            self.mips_output.extend(result['code'])
-            src2_register = result['register']
-        else:
-            src2_register = self.convert_tac_register_to_mips_register(t.src2)
+        dest_register = self.get_resulting_argument(t.dest)
+        src1_register = self.get_resulting_argument(t.src1)
+        src2_register = self.get_resulting_argument(t.src2)
 
         self.mips_output.append(mi.TLT(dest_register, src1_register))
         self.mips_output.append(mi.TGE(dest_register, src2_register))
@@ -572,37 +439,30 @@ class MipsGenerator(object):
         self.mips_output.append(mi.J(t.dest))
 
     def _branch_not_equal(self, t):
-        dest_register = None
-        src1_register = None
-        src2_register = None
+        target = t.dest
+        src1_register = self.get_resulting_argument(t.src1)
+        src2_register = self.get_resulting_argument(t.src2)
 
-        # result = self.register_table.acquire(t.dest)
-        # self.mips_output.extend(result['code'])
-        # dest_register = result['register']
-
-        if t.src1 not in tac_gen.PERSISTENT_REGISTERS:
-            result = self.register_table.acquire(t.src1)
-            self.mips_output.extend(result['code'])
-            src1_register = result['register']
-        else:
-            src1_register = self.convert_tac_register_to_mips_register(t.src1)
-
-        if t.src2 not in tac_gen.PERSISTENT_REGISTERS:
-            result = self.register_table.acquire(t.src2)
-            self.mips_output.extend(result['code'])
-            src2_register = result['register']
-        else:
-            src2_register = self.convert_tac_register_to_mips_register(t.src2)
-
-        self.mips_output.append(mi.BNE(t.dest, src1_register, src2_register))
+        self.mips_output.append(mi.BNE(target, src1_register, src2_register))
 
     def _jump_to_register_value(self, t):
-        # result = self.register_table.acquire(t.dest)
-        # self.mips_output.extend(result['code'])
-        self.mips_output.append(mi.JR((t.dest).lower()))
+        register = self.get_resulting_argument(t.dest)
+        self.mips_output.append(mi.JR(register))
 
     def _jump_and_link(self, t):
         self.mips_output.append(mi.JAL(t.dest))
+
+    def _convert_int_to_float(self, t):
+        register = t.dest
+        coproc1_register = t.src1
+        self.mips_output.append(mi.MTC1(register, coproc1_register))
+        self.mips_output.append(mi.CVTSW(coproc1_register, coproc1_register))
+
+    def _convert_float_to_int(self, t):
+        coproc1_register = t.dest
+        register = t.src1
+        self.mips_output.append(mi.CVTWS(coproc1_register, coproc1_register))
+        self.mips_output.append(mi.MFC1(register, coproc1_register))
 
     def get_resulting_argument(self, argument):
         """ Returns the correct physical argument for a given argument.
@@ -629,12 +489,23 @@ class MipsGenerator(object):
             return argument.value
 
         elif isinstance(argument, taci.Address):
+
             if argument.register in tacr.TAC_REGISTERS:
                 # this is a little lazy, but it might be good enough, if strange things happen with 3AC, this might be
                 # the culprit
                 argument.register = self.convert_tac_register_to_mips_register(argument.register)
 
+            else:
+                # this is a little lazy, but it might be good enough, if strange things happen with 3AC, this might be
+                # the culprit
+                result = self.register_table.acquire(argument.register)
+                self.mips_output.extend(result['code'])
+                argument.register = result['register']
+
             return str(argument)
+
+        elif isinstance(argument, taci.Label):
+            return argument.label
 
         else:
             # TODO: not sure this is an acceptable base case

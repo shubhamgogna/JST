@@ -78,7 +78,6 @@ class Directive(BaseMipsInstruction):
             type(self).__name__.lower())
 
 
-
 #
 # INFORMATION
 #
@@ -323,6 +322,32 @@ class JR(BaseMipsInstruction):
 class BNE(BaseMipsInstruction):
     def __init__(self, target, src1, src2):
         super(BNE, self).__init__('bne', target, src1, src2)
+
+
+#
+# CASTING
+#
+class CVTSW(BaseMipsInstruction):
+    def __init__(self, result, value):
+        super(CVTSW, self).__init__('cvt.s.w', result, value)
+
+
+class CVTWS(BaseMipsInstruction):
+    def __init__(self, result, value):
+        super(CVTWS, self).__init__('cvt.w.s', result, value)
+
+
+#
+# COPROCESSOR 1
+#
+class MTC1(BaseMipsInstruction):
+    def __init__(self, src, dest):
+        super(MTC1, self).__init__('mfc1', src, dest)
+
+
+class MFC1(BaseMipsInstruction):
+    def __init__(self, dest, src):
+        super(MFC1, self).__init__('mfc1', dest, src)
 
 
 if __name__ == '__main__':

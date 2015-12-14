@@ -50,6 +50,15 @@ class Immediate(BaseInstructionArgument):
         return str(self.value)
 
 
+class Label(BaseInstructionArgument):
+    def __init__(self, label):
+        super(Label, self).__init__()
+        self.label = label
+
+    def __str__(self):
+        return str(self.label)
+
+
 class Address(BaseInstructionArgument):
     def __init__(self, label=None, int_literal=None, register=None):
         super(Address, self).__init__()

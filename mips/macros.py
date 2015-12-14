@@ -60,7 +60,7 @@ SAVE_SPILL_MEM_MACRO = Macro(name='SAVE_SPILL_MEM', args=None, body=__save_spill
 
 
 __restore_spill_mem_macro_body = [mi.COMMENT("brace yourself for a long, unrolled loop...")]
-for i in range(config.SPILL_MEM_SIZE, 0, -mr.WORD_SIZE):
+for i in range(config.SPILL_MEM_SIZE - mr.WORD_SIZE, -mr.WORD_SIZE, -mr.WORD_SIZE):
     __restore_spill_mem_macro_body.extend([
         mi.LW(mr.A3, mi.offset_from_register_with_immediate(mr.SP)),
         mi.SW(mr.A3, mi.offset_label_immediate('SPILL_MEMORY', i)),

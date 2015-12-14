@@ -110,7 +110,7 @@ def SOURCE(line_start, line_end):
 
 
 #
-# THE ALMIGHTY SOURCE
+# KICK indicates when a pseudo-register is not longer useful
 #
 def KICK(register_name):
     """
@@ -132,6 +132,12 @@ def DATA():
 
 def TEXT():
     return TacInstruction(instructions.TEXT)
+
+
+#
+#
+#
+
 
 
 #
@@ -600,10 +606,17 @@ def STORE(result, address, size_in_bytes):
 
 
 def LA(result, address):
+    if not isinstance(address, instructions.Address):
+        raise ValueError('The LA instruction needs an address type object to ensure correctness.')
+
     return TacInstruction(instructions.LA, result, address)
 
 
 def LI(result, immediate):
+    # TODO: refactor the rest of the system so it's safe to remove the str
+    if not isinstance(immediate, (instructions.Immediate, int, float, str)):
+        raise ValueError('The LI instruction needs an integer or Immediate type object to ensure correctness.')
+
     return TacInstruction(instructions.LI, result, immediate)
 
 

@@ -139,10 +139,11 @@ class ArrayReference(BaseAstNode):
                 output.append(ADDIU(offset_reg, offset_reg, self.symbol.global_memory_location))
             else:
                 output.append(
-                    LA(base_address_reg, create_offset_reference(self.symbol.activation_frame_offset, tacr.FP)))
+                    LA(base_address_reg, taci.Address(int_literal=self.symbol.activation_frame_offset,
+                                                      register=tacr.FP)))
                 output.append(LA(end_address_reg,
-                                 create_offset_reference(self.symbol.activation_frame_offset + array_size_in_bytes,
-                                                         tacr.FP)))
+                                 taci.Address(int_literal=self.symbol.activation_frame_offset + array_size_in_bytes,
+                                              register=tacr.FP)))
                 output.append(ADD(offset_reg, offset_reg, base_address_reg))
 
             output.append(BOUND(offset_reg, base_address_reg, end_address_reg))
@@ -492,14 +493,13 @@ class Declaration(BaseAstNode):
             base_address = self.symbol.global_memory_location
             output.append(LI(base_reg, base_address))
         else:
-            base_address = create_offset_reference(self.symbol.activation_frame_offset, tacr.FP)
-            output.append(LA(base_reg, base_address))
+            output.append(LA(base_reg, taci.Address(int_literal=self.symbol.activation_frame_offset, register=tacr.FP)))
 
         if isinstance(self.initializer, list):
 
             # Initialize offset with base address
             offset_reg = tickets.INT_REGISTER_TICKETS.get()
-            output.append(ADDU(offset_reg, base_reg, tacr.ZERO))
+            output.append(ADDU(offset_reg, base_reg, taci.Register(tacr.ZERO)))
 
             # Loop through initializer and store
             self.initializer = self.initializer[:min(len(self.initializer), self.symbol.array_dims[0])]
@@ -823,7 +823,7 @@ class If(BaseAstNode):
 
         # Branch based on the contents of the result register of the conditional
         reg = result['rvalue']
-        output.append(BRNE(label_true, reg, tacr.ZERO))
+        output.append(BRNE(label_true, reg, taci.Register(tacr.ZERO)))
         output.append(LABEL(label_false))
 
         # Gen 3AC for false branch
@@ -928,7 +928,7 @@ class IterationNode(BaseAstNode):
 
             # If condition is false
             output.extend(condition_tac['3ac'])
-            output.append(BRNE(condition_ok_label, tacr.ZERO, condition_tac['rvalue']))
+            output.append(BRNE(condition_ok_label, condition_tac['rvalue'], taci.Register(tacr.ZERO)))
             output.append(BR(loop_exit_label))
 
         # Add condition okay label
@@ -1139,6 +1139,7 @@ class Constant(BaseAstNode):
     def to_3ac(self, get_rval=True, include_source=False):
         output = [SOURCE(self.linerange[0], self.linerange[1])]
 
+        # TODO: handle floats
         reg = tickets.INT_REGISTER_TICKETS.get()
         output.append(LI(reg, self.value))
 

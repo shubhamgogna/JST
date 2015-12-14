@@ -16,5 +16,5 @@
 
 # This file was made to prevent circular dependencies, if we can do something better, let's do it
 
-
-SPILL_MEM_SIZE = 128  # bytes
+SPILL_MEM_LABEL = 'SPILL_MEMORY'
+SPILL_MEM_SIZE = 64  # bytes
