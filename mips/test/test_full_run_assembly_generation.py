@@ -65,6 +65,9 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
         self.generator.translate_tac_to_mips()
         print(self.generator.dumps())
 
+        fout = open("../../res/asm_files/plain_main.asm", 'w')
+        fout.write(self.generator.dumps())
+        fout.close()
 
     def test_local_variable_declaration_and_assignment(self):
         data = """
@@ -92,6 +95,10 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
         self.generator.load(source_tac)
         self.generator.translate_tac_to_mips()
         print(self.generator.dumps())
+
+        fout = open("../../res/asm_files/local_variable_declaration_and_assignment.asm", 'w')
+        fout.write(self.generator.dumps())
+        fout.close()
 
     def test_local_variable_addition(self):
         data = """
@@ -127,6 +134,9 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
         self.generator.translate_tac_to_mips()
         print(self.generator.dumps())
 
+        fout = open("../../res/asm_files/local_variable_addition.asm", 'w')
+        fout.write(self.generator.dumps())
+        fout.close()
 
     def test_global_variables_declaration_and_assignment(self):
         data = """
@@ -164,6 +174,9 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
         self.generator.translate_tac_to_mips()
         print(self.generator.dumps())
 
+        fout = open("../../res/asm_files/global_variables_declaration_and_assignment.asm", 'w')
+        fout.write(self.generator.dumps())
+        fout.close()
 
     def test_if_elif_else(self):
         data = """
@@ -213,6 +226,10 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
         self.generator.translate_tac_to_mips()
         print(self.generator.dumps())
 
+        fout = open("../../res/asm_files/if_elif_else.asm", 'w')
+        fout.write(self.generator.dumps())
+        fout.close()
+
     def test_all_three_loop_types(self):
         data = """
             int main() {
@@ -245,7 +262,7 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
                         j++;
                     }
 
-                    print_int(i);   // expect to see 1-5
+                    print_int(i);   // expect to see 0-5
                 }
 
                 return 0;
@@ -257,6 +274,10 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
         self.generator.load(source_tac)
         self.generator.translate_tac_to_mips()
         print(self.generator.dumps())
+
+        fout = open("../../res/asm_files/all_three_loops.asm", 'w')
+        fout.write(self.generator.dumps())
+        fout.close()
 
     def test_while_loops_nested(self):
         data = """
@@ -290,6 +311,10 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
         self.generator.translate_tac_to_mips()
         print(self.generator.dumps())
 
+        fout = open("../../res/asm_files/while_loops_nested.asm", 'w')
+        fout.write(self.generator.dumps())
+        fout.close()
+
     def test_do_while_loops_nested(self):
         data = """
             int main() {
@@ -320,6 +345,10 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
         self.generator.translate_tac_to_mips()
         print(self.generator.dumps())
 
+        fout = open("../../res/asm_files/do_while_loops_nested.asm", 'w')
+        fout.write(self.generator.dumps())
+        fout.close()
+
     def test_for_loops_nested(self):
         data = """
             int main() {
@@ -343,6 +372,10 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
         self.generator.load(source_tac)
         self.generator.translate_tac_to_mips()
         print(self.generator.dumps())
+
+        fout = open("../../res/asm_files/for_loops_nested.asm", 'w')
+        fout.write(self.generator.dumps())
+        fout.close()
 
     def test_array_declarations_and_manipulation(self):
         data = """
@@ -384,6 +417,10 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
         self.generator.translate_tac_to_mips()
         print(self.generator.dumps())
 
+        fout = open("../../res/asm_files/array_declaration_and_manipulation.asm", 'w')
+        fout.write(self.generator.dumps())
+        fout.close()
+
     def test_function_call(self):
         data = """
             int foo( int a, char b);
@@ -418,6 +455,10 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
         self.generator.translate_tac_to_mips()
         print(self.generator.dumps())
 
+        fout = open("../../res/asm_files/function_call.asm", 'w')
+        fout.write(self.generator.dumps())
+        fout.close()
+
 
     def test_post_and_pre_increment(self):
         data = """
@@ -445,6 +486,9 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
         self.generator.translate_tac_to_mips()
         print(self.generator.dumps())
 
+        fout = open("../../res/asm_files/post_and_pre_increment.asm", 'w')
+        fout.write(self.generator.dumps())
+        fout.close()
 
 # # # # # # # # # # # # # # # # # # #
 # # # # # # # # # # # # # # # # # # #
@@ -460,7 +504,7 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
             int main() {
               int i, j;
               int temp;
-             int things[N_ITEMS] = {5, 1, 4, 3, 2};
+            // int things[N_ITEMS] = {5, 1, 4, 3, 2};
 
               int things[N_ITEMS];
               things[0] = 5;
@@ -469,11 +513,11 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
               things[3] = 3;
               things[4] = 2;
 
-              print_int(things[0]);
-              print_int(things[1]);
-              print_int(things[2]);
-              print_int(things[3]);
-              print_int(things[4]);
+              print_int(things[0]);  // expect to see 5
+              print_int(things[1]);  // expect to see 1
+              print_int(things[2]);  // expect to see 4
+              print_int(things[3]);  // expect to see 3
+              print_int(things[4]);  // expect to see 2
 
               for (i = 0; i < N_ITEMS; i++) {
                 for (j = i; j < N_ITEMS; j++) {
@@ -485,11 +529,11 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
                 }
               }
 
-              print_int(things[0]);
-              print_int(things[1]);
-              print_int(things[2]);
-              print_int(things[3]);
-              print_int(things[4]);
+              print_int(things[0]);  // expect to see 5
+              print_int(things[1]);  // expect to see 4
+              print_int(things[2]);  // expect to see 3
+              print_int(things[3]);  // expect to see 2
+              print_int(things[4]);  // expect to see 1
 
               return 0;
             }
@@ -500,6 +544,10 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
         self.generator.load(source_tac)
         self.generator.translate_tac_to_mips()
         print(self.generator.dumps())
+
+        fout = open("../../res/asm_files/bubble_sort.asm", 'w')
+        fout.write(self.generator.dumps())
+        fout.close()
 
 
     def test_matrix_multiplication(self):
@@ -535,7 +583,7 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
               // print_matrix
               for (i = 0; i < ARRAY_DIM; i++) {
                     for (j = 0; j < ARRAY_DIM; j++) {
-                        print_int(C[i][j]);
+                        print_int(C[i][j]);     // expect to see four 8's
                     }
               }
 
@@ -550,6 +598,10 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
         self.generator.translate_tac_to_mips()
         print(self.generator.dumps())
 
+        fout = open("../../res/asm_files/matrix_multiplication.asm", 'w')
+        fout.write(self.generator.dumps())
+        fout.close()
+
 
     def test_recursive_factorial(self):
         data = """
@@ -558,8 +610,8 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
             int main() {
               int x = 5;
               int result = factorial(x);
-              print_int(x);
-              print_int(result);
+              print_int(x);       // expect to see 5
+              print_int(result);  // expect to see 120
 
               return 0;
             }
@@ -578,3 +630,9 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
         self.generator.load(source_tac)
         self.generator.translate_tac_to_mips()
         print(self.generator.dumps())
+
+        fout = open("../../res/asm_files/recursive_factorial.asm", 'w')
+        fout.write(self.generator.dumps())
+        fout.close()
+
+
