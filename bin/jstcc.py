@@ -39,8 +39,11 @@ def main():
                                  " 2: Productions and Source Code \n 3: Productions, Source, Misc info")
     arg_parser.add_argument("-ast", "--astree", action='store_true',
                             help="Enables the printing of the GraphViz string after parsing.")
-    arg_parser.add_argument("-tac", "--threeac", type=int, choices=[0, 1, 2, 3], default=0,
+    arg_parser.add_argument("-tac", "--threeac", type=int, choices=[0, 1, 2], default=0,
                             help="The debug level for the 3AC. \n 0: No debug \n 1: 3AC \n "
+                                 " 2: 3AC + Source")
+    arg_parser.add_argument("-mips", "--mips", type=int, choices=[0, 1, 2, 3], default=0,
+                            help="The debug level for the MIPS. \n 0: No debug \n 1: 3AC \n "
                                  " 2: 3AC + Source \n 3: Source")
     arg_parser.add_argument("-w", "--warnings", action='store_true',
                             help="Enables warnings being printed.")
@@ -86,14 +89,15 @@ def main():
         ast = compiler_state.parse(data)
         if args['astree']:
             print(ast.to_graph_viz_str())
-        # if args['threeac'] > 0:
-        #     source_tac = ast.to_3ac(include_source=(args['threeac'] is 2))
-        source_tac = ast.to_3ac()
-        if args['threeac'] == 1:
+        if args['threeac'] > 0:
+            source_tac = ast.to_3ac(include_source=(args['threeac'] is 2))
+        else:
+            source_tac = ast.to_3ac()
+        if args['mips'] == 1:
              generator = generation.MipsGenerator(compiler_state, inject_source = False, inject_3ac=True)
-        elif args['threeac'] == 2:
+        elif args['mips'] == 2:
              generator = generation.MipsGenerator(compiler_state, inject_source = True, inject_3ac=True)
-        elif args['threeac'] == 3:
+        elif args['mips'] == 3:
              generator = generation.MipsGenerator(compiler_state, inject_source = True, inject_3ac=False)
         else:
              generator = generation.MipsGenerator(self.compiler_state, inject_source = False, inject_3ac=False)
