@@ -297,7 +297,7 @@ class MipsGenerator(object):
 
     def _enter_procedure(self, t):
         self.register_table.release_all()
-        self.mips_output.append(mm.CALLEE_FUNCTION_PROLOGUE_MACRO.call(t.dest))
+        self.mips_output.append(mm.CALLEE_FUNCTION_PROLOGUE_MACRO.call(int(t.dest / mr.WORD_SIZE)))
 
     def _exit_procedure(self, t):
         self.mips_output.append(mm.CALLEE_FUNCTION_EPILOGUE_MACRO.call())

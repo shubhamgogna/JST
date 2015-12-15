@@ -487,19 +487,27 @@ class Declaration(BaseAstNode):
         if self.initializer is None:
             return {'3ac': output}
 
-        # Load the base address
-        base_reg = tickets.INT_REGISTER_TICKETS.get()
+        # get a register that points to the variable's memory so we can initialize it
+        lvalue = tickets.INT_REGISTER_TICKETS.get()
         if self.symbol.global_memory_location:
             base_address = self.symbol.global_memory_location
-            output.append(LI(base_reg, base_address))
+            output.append(LI(lvalue, base_address))
         else:
-            output.append(LA(base_reg, taci.Address(int_literal=self.symbol.activation_frame_offset, register=tacr.FP)))
+
+
+
+
+            output.append(LA(lvalue, taci.Address(int_literal=-self.symbol.activation_frame_offset, register=tacr.FP)))
+
+
+
+
 
         if isinstance(self.initializer, list):
 
             # Initialize offset with base address
             offset_reg = tickets.INT_REGISTER_TICKETS.get()
-            output.append(ADDU(offset_reg, base_reg, taci.Register(tacr.ZERO)))
+            output.append(ADDU(offset_reg, lvalue, taci.Register(tacr.ZERO)))
 
             # Loop through initializer and store
             self.initializer = self.initializer[:min(len(self.initializer), self.symbol.array_dims[0])]
@@ -526,7 +534,7 @@ class Declaration(BaseAstNode):
                 output.append(ADDIU(offset_reg, offset_reg, self.symbol.size_in_bytes()))
 
             # Kick the offset and base address register
-            output.append(KICK(base_reg))
+            output.append(KICK(lvalue))
             output.append(KICK(offset_reg))
 
         else:
@@ -542,14 +550,14 @@ class Declaration(BaseAstNode):
                 #     output.append(KICK(item_tac['lvalue']))
 
             # Store the value into memory, kick the register,
-            output.append(STORE(item_tac['rvalue'], taci.Address(register=base_reg), self.symbol.size_in_bytes()))
+            output.append(STORE(item_tac['rvalue'], taci.Address(register=lvalue), self.symbol.size_in_bytes()))
             if 'rvalue' in item_tac:
                 output.append(KICK(item_tac['rvalue']))
             if 'lvalue' in item_tac:
                 output.append(KICK(item_tac['lvalue']))
 
         # Kick the base address
-        output.append(KICK(base_reg))
+        output.append(KICK(lvalue))
         return {'3ac': output}
 
 
@@ -698,7 +706,13 @@ class FunctionCall(BaseAstNode):
                     arg_rvalue = new_register
 
             # store value at memory location indicated by parameter_template
-            offset = parameter_template.activation_frame_offset
+            # offset = parameter_template.activation_frame_offset
+            #  ^
+            # likely unnecessary since we are moving the stack pointer as we push arguments
+            # if a bug crops up, be sure to check this out
+            offset = 0
+
+
 
             if isinstance(argument, VariableSymbol) and argument.is_array:
                 array_base = tickets.INT_REGISTER_TICKETS.get()
@@ -714,12 +728,12 @@ class FunctionCall(BaseAstNode):
 
         # the function will jump back to this address at this point
 
-        # copy the return value before it gets obliterated
-        _3ac.append(ADD(rvalue, taci.Register(tacr.RV), taci.Register(tacr.ZERO)))
-        # TODO: handle double word returns if we get there
-
         # Call the epilogue macro
         _3ac.append(CORP_LLAC(self.function_symbol.activation_frame_size))
+
+         # copy the return value before it gets obliterated
+        _3ac.append(ADD(rvalue, taci.Register(tacr.RV), taci.Register(tacr.ZERO)))
+        # TODO: handle double word returns if we get there
 
         return {'3ac': _3ac, 'rvalue': rvalue}
 

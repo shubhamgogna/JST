@@ -100,13 +100,13 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
                 int la = 5;
 
                 // print the values that will be in the variables
-                print_int(local_variable);
-                print_int(other_variable);
+                print_int(local_variable);  // expect to see 1
+                print_int(other_variable);  // expect to see 2
 
                 // perform the addition
-                print_int(local_variable + other_variable);
+                print_int(local_variable + other_variable); // expect to see 3
                 la = local_variable + other_variable;
-                print_int(la);
+                print_int(la);                              // expect to see 3, again
 
                 return 0;
             }
@@ -127,7 +127,7 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
         print(self.generator.dumps())
 
 
-    def test_global_variables_declaration_and_assignement(self):
+    def test_global_variables_declaration_and_assignment(self):
         data = """
             const int GLOBAL_CONST = 4;
             int GLOBAL_VAR = 2;
@@ -215,6 +215,13 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
     def test_all_three_loop_types(self):
         data = """
             int main() {
+                /**
+                 * The following test is an interesting composition of loops.
+                 * First the _do-while_ runs through all of its iterations.
+                 * Then the _while_ loop runs, but with each of its iterations, a "do" is
+                 * forced, so we see a _do-while_ iteration along with each _while_ iteration.
+                 * Finally, the _for_ is allowed to progress without additional _while_ iterations.
+                 */
 
                 int i = 0;
                 int j = 10;
@@ -235,7 +242,8 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
                         print_int(j);
                         j++;
                     }
-                print_int(i);
+
+                    print_int(i);
                 }
 
                 return 0;

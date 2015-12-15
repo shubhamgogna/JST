@@ -157,7 +157,12 @@ class VariableSymbol(Symbol):
             if self.global_memory_location:
                 address = taci.Address(int_literal=self.global_memory_location)
             else:
-                address = taci.Address(int_literal=self.activation_frame_offset, register=tacr.FP)
+
+
+                address = taci.Address(int_literal=-self.activation_frame_offset, register=tacr.FP)
+
+
+
             output.append(tac.LOAD(value, address, self.size_in_bytes()))
 
             return {'3ac': output, 'rvalue': value}
@@ -169,9 +174,14 @@ class VariableSymbol(Symbol):
 
             else:
                 # remember, stack grows downward, so look under the FP
-                output.append(tac.SUB(value, taci.Register(tacr.FP), self.activation_frame_offset))
-                output.append(tac.ADD(value, taci.Register(tacr.FP), self.activation_frame_offset))
-                pass
+
+                # LA is probably better for readability than the SUB instruction, but I'm leaving it around in
+                # case a bug crops up
+                output.append(tac.LA(value, taci.Address(int_literal=-self.activation_frame_offset, register=tacr.FP)))
+                # output.append(tac.SUB(value, taci.Register(tacr.FP), self.activation_frame_offset))
+
+                # output.append(tac.ADD(value, taci.Register(tacr.FP), self.activation_frame_offset))
+                # pass
 
             return {'3ac': output, 'lvalue': value}
 
