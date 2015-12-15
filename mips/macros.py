@@ -38,6 +38,8 @@ __save_register_macro_instructions = [mi.COMMENT("brace yourself for a long, unr
 for __temp_register in __T_REGISTERS:
     __save_register_macro_instructions.append(mi.SUBIU(mr.SP, mr.SP, mr.WORD_SIZE))
     __save_register_macro_instructions.append(mi.SW(__temp_register, mi.offset_from_register_with_immediate(mr.SP)))
+if config.NOT_TESTING_FUNCTIONS:
+    __save_register_macro_instructions = []
 SAVE_REGISTER_MACRO = Macro(name='SAVE_T_REGISTERS', args=None, body=__save_register_macro_instructions)
 
 
@@ -45,6 +47,8 @@ __restore_register_macro_instructions = [mi.COMMENT("brace yourself for a long, 
 for __temp_register in __T_REGISTERS:
     __restore_register_macro_instructions.append(mi.LW(__temp_register, mi.offset_from_register_with_immediate(mr.SP)))
     __restore_register_macro_instructions.append(mi.ADDIU(mr.SP, mr.SP, mr.WORD_SIZE))
+if config.NOT_TESTING_FUNCTIONS:
+    __restore_register_macro_instructions = []
 RESTORE_REGISTER_MACRO = Macro(name='RESTORE_T_REGISTERS', args=None, body=__restore_register_macro_instructions)
 
 
@@ -56,6 +60,8 @@ for i in range(0, config.SPILL_MEM_SIZE, mr.WORD_SIZE):
         mi.LW(mr.A3, mi.offset_label_immediate('SPILL_MEMORY', i)),
         mi.SW(mr.A3, mi.offset_from_register_with_immediate(mr.SP))
     ])
+if config.NOT_TESTING_FUNCTIONS:
+    __save_spill_mem_macro_body = []
 SAVE_SPILL_MEM_MACRO = Macro(name='SAVE_SPILL_MEM', args=None, body=__save_spill_mem_macro_body)
 
 
@@ -66,6 +72,8 @@ for i in range(config.SPILL_MEM_SIZE - mr.WORD_SIZE, -mr.WORD_SIZE, -mr.WORD_SIZ
         mi.SW(mr.A3, mi.offset_label_immediate('SPILL_MEMORY', i)),
         mi.ADDIU(mr.SP, mr.SP, mr.WORD_SIZE),
     ])
+if config.NOT_TESTING_FUNCTIONS:
+    __restore_spill_mem_macro_body = []
 RESTORE_SPILL_MEM_MACRO = Macro(name='RESTORE_SPILL_MEM', args=None, body=__restore_spill_mem_macro_body)
 
 
