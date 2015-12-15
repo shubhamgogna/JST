@@ -213,19 +213,24 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
                 int i = 0;
                 int j = 10;
                 int k = 15;
-                int l = 20;
 
+                // test for loop
+                for( i = 0; i <= 5; i ++ ) {
 
+                    // test while loops
+                    while( j <= 15 ) {
 
-                // test while loops
-                while( i < 5){
-                    print_int(i);
-                    i++;
+                        // test do while loops
+                        do{
+                            print_int(k);
+                            k++;
+                        }while( k <= 20 );
+
+                        print_int(j);
+                        j++;
+                    }
+                print_int(i);
                 }
-
-                // test do while loops
-
-                // test for loops
 
                 return 0;
             }
@@ -236,4 +241,92 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
         self.generator.load(source_tac)
         self.generator.translate_tac_to_mips()
         print(self.generator.dumps())
+
+    def test_while_loops_nested(self):
+        data = """
+            int main() {
+
+                int i = 0;
+                int j = 10;
+                int k = 15;
+
+                // test while loops
+                while( i <= 5 ) {
+                    while( j <= 15 ) {
+                        while( k <= 20 ) {
+                            print_int(k);
+                            k++;
+                        }
+                        print_int(j);
+                        j++;
+                    }
+                    print_int(i);
+                    i++;
+                }
+
+                return 0;
+            }
+            """
+        ast = self.compiler_state.parse(data)
+        source_tac = ast.to_3ac()
+
+        self.generator.load(source_tac)
+        self.generator.translate_tac_to_mips()
+        print(self.generator.dumps())
+
+    def test_do_while_loops_nested(self):
+        data = """
+            int main() {
+
+                int l = 20;
+                int m = 25;
+
+                // test do while loops
+                do{
+                  print_int(l);
+                  l++;
+
+                  do{
+                    print_int(m);
+                    m++;
+
+                  }while ( m < 30 );
+
+                }while (l < 25);
+
+                return 0;
+            }
+            """
+        ast = self.compiler_state.parse(data)
+        source_tac = ast.to_3ac()
+
+        self.generator.load(source_tac)
+        self.generator.translate_tac_to_mips()
+        print(self.generator.dumps())
+
+    def test_for_loops_nested(self):
+        data = """
+            int main() {
+
+                int n = 0;
+                int p = 0;
+
+                // test for loops
+                for( n = 0; n < 5; n++) {
+                    for( p = 0; p < 5; p ++ ) {
+                        print_int(p);
+                    }
+                    print_int(n);
+                }
+                return 0;
+            }
+            """
+        ast = self.compiler_state.parse(data)
+        source_tac = ast.to_3ac()
+
+        self.generator.load(source_tac)
+        self.generator.translate_tac_to_mips()
+        print(self.generator.dumps())
+
+
 
