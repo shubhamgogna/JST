@@ -78,6 +78,10 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
                 local_variable = 123;
                 print_int(local_variable);
 
+                // assign another value to show that it can be overwritten
+                local_variable = 126;
+                print_int(local_variable);
+
                 return 0;
             }
             """
@@ -93,6 +97,7 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
             int main() {
                 int local_variable = 1;
                 int other_variable = 2;
+                int la = 5;
 
                 // print the values that will be in the variables
                 print_int(local_variable);
@@ -100,12 +105,22 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
 
                 // perform the addition
                 print_int(local_variable + other_variable);
+                la = local_variable + other_variable;
+                print_int(la);
 
                 return 0;
             }
             """
         ast = self.compiler_state.parse(data)
         source_tac = ast.to_3ac()
+
+        # i = 0;
+        # for item in source_tac:
+        #     if i% 3 == 0:
+        #         print('\n')
+        #     print(item)
+        #
+        # print('\n\n\n\n')
 
         self.generator.load(source_tac)
         self.generator.translate_tac_to_mips()
@@ -190,3 +205,35 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
         self.generator.load(source_tac)
         self.generator.translate_tac_to_mips()
         print(self.generator.dumps())
+
+    def test_all_three_loop_types(self):
+        data = """
+            int main() {
+
+                int i = 0;
+                int j = 10;
+                int k = 15;
+                int l = 20;
+
+
+
+                // test while loops
+                while( i < 5){
+                    print_int(i);
+                    i++;
+                }
+
+                // test do while loops
+
+                // test for loops
+
+                return 0;
+            }
+            """
+        ast = self.compiler_state.parse(data)
+        source_tac = ast.to_3ac()
+
+        self.generator.load(source_tac)
+        self.generator.translate_tac_to_mips()
+        print(self.generator.dumps())
+

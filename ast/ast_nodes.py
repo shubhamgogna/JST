@@ -510,15 +510,19 @@ class Declaration(BaseAstNode):
                 if '3ac' in item_tac:
                     output.extend(item_tac['3ac'])
 
-                    # Since the result is unused after this point, kick it out
-                    if 'rvalue' in item_tac:
-                        output.append(KICK(item_tac['rvalue']))
-                    if 'lvalue' in item_tac:
-                        output.append(KICK(item_tac['lvalue']))
+                    # Don't kick until after stored!!!
+                    # # Since the result is unused after this point, kick it out
+                    # if 'rvalue' in item_tac:
+                    #     output.append(KICK(item_tac['rvalue']))
+                    # if 'lvalue' in item_tac:
+                    #     output.append(KICK(item_tac['lvalue']))
 
                 # Store the value into memory, kick the register, and move to next
                 output.append(STORE(offset_reg, taci.Address(register=item_tac['rvalue']), self.symbol.size_in_bytes()))
-                output.append(KICK(item_tac['rvalue']))
+                if 'rvalue' in item_tac:
+                    output.append(KICK(item_tac['rvalue']))
+                if 'lvalue' in item_tac:
+                    output.append(KICK(item_tac['lvalue']))
                 output.append(ADDIU(offset_reg, offset_reg, self.symbol.size_in_bytes()))
 
             # Kick the offset and base address register
@@ -532,12 +536,17 @@ class Declaration(BaseAstNode):
                 output.extend(item_tac['3ac'])
 
                 # Since the result is unused after this point, kick it out
-                if 'rvalue' in item_tac:
-                    output.append(KICK(item_tac['rvalue']))
-                if 'lvalue' in item_tac:
-                    output.append(KICK(item_tac['lvalue']))
+                # if 'rvalue' in item_tac:
+                #     output.append(KICK(item_tac['rvalue']))
+                # if 'lvalue' in item_tac:
+                #     output.append(KICK(item_tac['lvalue']))
 
+            # Store the value into memory, kick the register,
             output.append(STORE(item_tac['rvalue'], taci.Address(register=base_reg), self.symbol.size_in_bytes()))
+            if 'rvalue' in item_tac:
+                output.append(KICK(item_tac['rvalue']))
+            if 'lvalue' in item_tac:
+                output.append(KICK(item_tac['lvalue']))
 
         # Kick the base address
         output.append(KICK(base_reg))

@@ -170,6 +170,8 @@ class VariableSymbol(Symbol):
             else:
                 # remember, stack grows downward, so look under the FP
                 output.append(tac.SUB(value, taci.Register(tacr.FP), self.activation_frame_offset))
+                output.append(tac.ADD(value, taci.Register(tacr.FP), self.activation_frame_offset))
+                pass
 
             return {'3ac': output, 'lvalue': value}
 
