@@ -155,7 +155,8 @@ class VariableSymbol(Symbol):
         if get_rval:
             # load the register with the variable's value
             if self.global_memory_location:
-                address = taci.Address(int_literal=self.global_memory_location)
+                address = taci.Address(label=self.global_memory_location)
+
             else:
 
 
@@ -170,7 +171,7 @@ class VariableSymbol(Symbol):
         else:
             # load the register with the address of the variable
             if self.global_memory_location:
-                output.append(tac.LI(value, self.global_memory_location))
+                output.append(tac.LA(value, taci.Address(label=self.global_memory_location)))
 
             else:
                 # remember, stack grows downward, so look under the FP

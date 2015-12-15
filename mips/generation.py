@@ -236,6 +236,9 @@ class MipsGenerator(object):
                 elif instruction.instruction == taci.CVTWS:
                     self._convert_int_to_float(instruction)
 
+                elif instruction.instruction == taci.GLOBLDECL:
+                    self._global_variable_declaration(instruction)
+
                 else:
                     raise NotImplementedError("{} 3AC -> MIPS is not implemented!".format(instruction.instruction))
 
@@ -503,6 +506,13 @@ class MipsGenerator(object):
         self.mips_output.append(mi.CVTWS(coproc1_register, coproc1_register))
         self.mips_output.append(mi.MFC1(register, coproc1_register))
 
+
+
+    def _global_variable_declaration(self, t):
+        self.mips_output.append(mi.GLOBAL_WORD(t.dest, t.src1, t.src2))
+
+
+
     def get_resulting_argument(self, argument):
         """ Returns the correct physical argument for a given argument.
 
@@ -534,7 +544,7 @@ class MipsGenerator(object):
                 # the culprit
                 argument.register = self.convert_tac_register_to_mips_register(argument.register)
 
-            else:
+            elif argument.register:  # if there is one at all                                          <<<-----------------
                 # this is a little lazy, but it might be good enough, if strange things happen with 3AC, this might be
                 # the culprit
                 result = self.register_table.acquire(argument.register)

@@ -487,20 +487,33 @@ class Declaration(BaseAstNode):
         if self.initializer is None:
             return {'3ac': output}
 
+
+
+        if self.symbol.global_memory_location:
+            if self.initializer:
+                if not self.initializer.immutable:
+                    raise Exception('Initializers to global objects must be constants.')
+
+                output.append(GLOBLDECL(self.symbol.global_memory_location, WORD_SPEC, self.initializer.value))
+
+            else:
+                output.append(GLOBLDECL(self.symbol.global_memory_location, WORD_SPEC))
+
+            return {'3ac': output}
+
+
+
+
+
         # get a register that points to the variable's memory so we can initialize it
         lvalue = tickets.INT_REGISTER_TICKETS.get()
         if self.symbol.global_memory_location:
             base_address = self.symbol.global_memory_location
             output.append(LI(lvalue, base_address))
+
         else:
-
-
-
-
+            # remember, stacks grow down, so go below FP
             output.append(LA(lvalue, taci.Address(int_literal=-self.symbol.activation_frame_offset, register=tacr.FP)))
-
-
-
 
 
         if isinstance(self.initializer, list):
@@ -561,11 +574,8 @@ class Declaration(BaseAstNode):
         return {'3ac': output}
 
 
-##
-# Root node of the AST.
-##
 class FileAST(BaseAstNode):
-    """
+    """ Root node of the AST.
     Requires: None.
     Output:   None.
 
@@ -892,11 +902,8 @@ class InitializerList(BaseAstNode):
         raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
 
 
-##
-# Node for all forms of structured iteration (for, while, and do...while).
-##
 class IterationNode(BaseAstNode):
-    """
+    """ Node for all forms of structured iteration (for, while, and do...while).
     Requires: 3AC from child nodes. In the parser, the members of this node should have been initialized in such a way
               as to be correct, i.e. an error was thrown if the continuation condition was not given, so we are OK to
               make assumptions now, i.e. a missing continuation condition indicates an infinite for loop.

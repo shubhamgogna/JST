@@ -78,8 +78,11 @@ class SymbolTable(object):
                 required_byte_size = math.ceil(symbol.size_in_bytes() / 4) * 4
 
             if len(self.table) == 1:
-                symbol.global_memory_location = self.next_data_memory_location
-                self.next_data_memory_location += required_byte_size
+                # symbol.global_memory_location = self.next_data_memory_location
+                # self.next_data_memory_location += required_byte_size
+
+                symbol.global_memory_location = symbol.identifier
+
             else:
                 symbol.activation_frame_offset = self.next_activation_frame_offset
                 self.next_activation_frame_offset += required_byte_size

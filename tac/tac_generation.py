@@ -920,5 +920,15 @@ def COMMENT(text):
     return TacInstruction(instructions.COMMENT, text)
 
 
+
+WORD_SPEC = '.word'
+FLOAT_SPEC = '.float'
+SPACE_SPEC = '.space'
+def GLOBLDECL(label, specifier, initializer=0):
+    return TacInstruction(instructions.GLOBLDECL, label, specifier, str(initializer))
+    # is it a good idea to cast to int?
+
+
+
 def create_offset_reference(offset, register):
     return '{}({})'.format(offset, register)

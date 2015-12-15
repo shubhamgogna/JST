@@ -172,6 +172,20 @@ class SPACE(Directive):
         return super(SPACE, self).__str__() + ' ' + str(self.n_bytes)
 
 
+class GLOBAL_WORD(object):
+    def __init__(self, label, mem_specifier, value):
+        super(GLOBAL_WORD, self).__init__()
+        self.label = label
+        self.mem_specifier = mem_specifier
+        self.value = value
+
+    def __str__(self):
+        return '{}: {} {}'.format(self.label, self.mem_specifier, self.value)
+
+    def __repr__(self):
+        return str(self)
+
+
 #
 # LABEL
 #
