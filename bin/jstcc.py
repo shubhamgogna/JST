@@ -21,6 +21,7 @@ import argparse
 sys.path.insert(1, os.path.join(sys.path[0], '../'))
 from compiler.compiler_state import CompilerState
 from exceptions.compile_error import CompileError
+import mips.generation as generation
 
 
 def main():
@@ -86,7 +87,21 @@ def main():
         if args['astree']:
             print(ast.to_graph_viz_str())
         if args['threeac'] > 0:
-            ast.to_3ac(include_source=(args['threeac'] is 2))
+            source_tac = ast.to_3ac(include_source=(args['threeac'] is 2))
+            generator = generation.MipsGenerator(compiler_state, inject_source = True, inject_3ac=True)
+        else:
+            source_tac = ast.to_3ac()
+            generator = generation.MipsGenerator(self.compiler_state, inject_source = False, inject_3ac=False)
+        generator.load(source_tac)
+        generator.translate_tac_to_mips()
+
+        if args['outfile'] != 'STDOUT':
+            fout = open(args['outfile'], 'w')
+            fout.write(generator.dumps())
+            fout.close()
+        else:
+            print(generator.dumps())
+
     except CompileError as error:
         print(error)
     finally:
