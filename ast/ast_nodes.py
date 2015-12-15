@@ -98,9 +98,11 @@ class ArrayReference(BaseAstNode):
         # range(a,b) is (inclusive, exclusive)
         for i in range(0, dim_count - 1):
             if self.symbol.is_parameter:
-                output.append(MUL(offset_reg, offset_reg,
-                                  taci.Address(int_literal=self.symbol.activation_frame_offset + i + 2,
+                # allocate a new ticked to get the address offset from FP
+                addr_reg = tickets.INT_REGISTER_TICKETS.get()
+                output.append(LA(addr_reg,taci.Address(int_literal=self.symbol.activation_frame_offset + i + 2,
                                                register=tacr.FP)))
+                output.append(MUL(offset_reg, offset_reg, addr_reg))
             else:
                 output.append(MULIU(offset_reg, offset_reg, self.symbol.array_dims[i + 1]))
 
@@ -128,7 +130,7 @@ class ArrayReference(BaseAstNode):
             output.append(LOAD(end_address_reg,
                                taci.Address(int_literal=self.symbol.activation_frame_offset + 4, register=tacr.FP),
                                EXPECTED_WORD_SIZE))
-            output.append(BOUND(offset_reg, base_address_reg, end_address_reg))
+            # output.append(BOUND(offset_reg, base_address_reg, end_address_reg))
 
         else:
 

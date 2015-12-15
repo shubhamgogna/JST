@@ -460,7 +460,7 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
             int main() {
               int i, j;
               int temp;
-//              int things[N_ITEMS] = {5, 1, 4, 3, 2};
+             int things[N_ITEMS] = {5, 1, 4, 3, 2};
 
               int things[N_ITEMS];
               things[0] = 5;
@@ -511,42 +511,37 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
             int print_matrix( int C[ARRAY_DIM][ARRAY_DIM]);
 
             int main() {
-              int i, j;
+              int i, j, k;
+              int sum;
               int A[ARRAY_DIM][ARRAY_DIM], B[ARRAY_DIM][ARRAY_DIM], C[ARRAY_DIM][ARRAY_DIM];
 
               for (i = 0; i < ARRAY_DIM; i++) {
                 for (j = 0; j < ARRAY_DIM; j++) {
-                  A[i][j] = B[i][j] = 1;
+                  A[i][j] = B[i][j] = 2;
                 }
               }
 
-              matrix_multiply(C, A, B);
+              // matrix_multiply
+              for (i = 0; i < ARRAY_DIM; i++) {
+                 for (j = 0; j < ARRAY_DIM; j++) {
+                    sum = 0;
+                    for( k=0; k < ARRAY_DIM; k++) {
+                        sum = sum + A[i][k] * B[k][j];
+                    }
+                    C[i][j] = sum;
+                 }
+              }
+
+              // print_matrix
+              for (i = 0; i < ARRAY_DIM; i++) {
+                    for (j = 0; j < ARRAY_DIM; j++) {
+                        print_int(C[i][j]);
+                    }
+              }
 
               return 0;
             }
 
-            int matrix_multiply(int C[ARRAY_DIM][ARRAY_DIM], int A[ARRAY_DIM][ARRAY_DIM], int B[ARRAY_DIM][ARRAY_DIM]) {
-              int i, j, k;
-
-              for (i = 0; i < ARRAY_DIM; i++) {
-                for (j = 0; j < ARRAY_DIM; j++) {
-                  C[i][j] = 0;
-                  for (k = 0; k < ARRAY_DIM; k++) {
-                    C[i][j] += A[i][j + k] * B[i + k][j];
-                  }
-                }
-              }
-            }
-
-            int print_matrix( int C[ARRAY_DIM][ARRAY_DIM]){
-                int i, j;
-
-                for (i = 0; i < ARRAY_DIM; i++) {
-                    for (j = 0; j < ARRAY_DIM; j++) {
-                    print_int(C[i][j]);
-                    }
-                }
-            }
             """
         ast = self.compiler_state.parse(data)
         source_tac = ast.to_3ac()
