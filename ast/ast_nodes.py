@@ -1061,7 +1061,7 @@ class UnaryOperator(BaseAstNode):
         children = [self.expression]
         return tuple(children)
 
-    def to_3ac(self, include_source=False):
+    def to_3ac(self, get_rval=False, include_source=False):
         output = [SOURCE(self.linerange[0], self.linerange[1])]
 
         # Get memory location of expression by calling to3ac function

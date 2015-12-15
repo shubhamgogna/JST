@@ -151,7 +151,13 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
         source_tac = ast.to_3ac()
 
         #TODO: Take out debug after fixing test case issues
-        print(source_tac, 'asdfsadf')
+        i = 0;
+        for item in source_tac:
+            if i% 3 == 0:
+                print('\n')
+            print(item)
+
+        print('\n\n\n\n')
 
         self.generator.load(source_tac)
         self.generator.translate_tac_to_mips()
@@ -368,4 +374,64 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
         self.generator.translate_tac_to_mips()
         print(self.generator.dumps())
 
+    def test_function_call(self):
+        data = """
+            int foo( int a, char b);
+
+            int main()
+            {
+                int i = foo(1,'a');
+                print_int(i);
+                return 0;
+            }
+
+            int foo( int a, char b)
+            {
+                print_int(a);
+                return 4;
+            }
+            """
+        ast = self.compiler_state.parse(data)
+        source_tac = ast.to_3ac()
+
+        #TODO: Take out debug after fixing test case issues
+        # i = 0;
+        # for item in source_tac:
+        #     if i% 3 == 0:
+        #         print('\n')
+        #     print(item)
+        #
+        # print('\n\n\n\n')
+
+
+        self.generator.load(source_tac)
+        self.generator.translate_tac_to_mips()
+        print(self.generator.dumps())
+
+
+    def test_post_and_pre_increment(self):
+        data = """
+            int main() {
+
+                int i = 1;
+                int j = 1;
+
+                j = i++;
+                print_int(j);
+                print_int(i);
+
+                j = ++i;
+                print_int(j);
+                print_int(i);
+
+
+                return 0;
+            }
+            """
+        ast = self.compiler_state.parse(data)
+        source_tac = ast.to_3ac()
+
+        self.generator.load(source_tac)
+        self.generator.translate_tac_to_mips()
+        print(self.generator.dumps())
 
