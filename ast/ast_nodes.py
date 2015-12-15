@@ -113,6 +113,7 @@ class ArrayReference(BaseAstNode):
 
         # Offset by symbol size
         output.append(MULIU(offset_reg, offset_reg, self.symbol.size_in_bytes()))
+        # output.append(MULIU(offset_reg, offset_reg, EXPECTED_WORD_SIZE))
 
         # Allocate two new registers
         base_address_reg = tickets.INT_REGISTER_TICKETS.get()
@@ -125,13 +126,14 @@ class ArrayReference(BaseAstNode):
                 LOAD(base_address_reg, taci.Address(int_literal=self.symbol.activation_frame_offset, register=tacr.FP),
                      EXPECTED_WORD_SIZE))
             output.append(LOAD(end_address_reg,
-                               taci.Address(int_literal=self.symbol.activation_frame_offset + 1, register=tacr.FP),
+                               taci.Address(int_literal=self.symbol.activation_frame_offset + 4, register=tacr.FP),
                                EXPECTED_WORD_SIZE))
             output.append(BOUND(offset_reg, base_address_reg, end_address_reg))
 
         else:
 
             array_size_in_bytes = self.symbol.array_size * self.symbol.size_in_bytes()
+            # array_size_in_bytes = self.symbol.array_size * EXPECTED_WORD_SIZE
 
             if self.symbol.global_memory_location:
                 output.append(LI(base_address_reg, self.symbol.global_memory_location))
@@ -148,12 +150,14 @@ class ArrayReference(BaseAstNode):
 
             output.append(BOUND(offset_reg, base_address_reg, end_address_reg))
 
+
         # Kick the temporaries
         output.append(KICK(base_address_reg))
         output.append(KICK(end_address_reg))
 
         if get_rval:
             output.append(LOAD(offset_reg, taci.Address(register=offset_reg), self.symbol.size_in_bytes()))
+            # output.append(LOAD(offset_reg, taci.Address(register=offset_reg), EXPECTED_WORD_SIZE))
             return {'3ac': output, 'rvalue': offset_reg}
         else:
             return {'3ac': output, 'lvalue': offset_reg}
@@ -213,6 +217,7 @@ class Assignment(BaseAstNode):
         #       right now both are registers, should the rvalue be the actual value? I don't think so but not sure
         size = self.lvalue.size_in_bytes()
         output.append(STORE(taci.Register(rval), taci.Address(register=lval), size))
+        # output.append(STORE(taci.Register(rval), taci.Address(register=lval), EXPECTED_WORD_SIZE))
         output.append(KICK(lval))
 
         return {'3ac': output, 'rvalue': rval}
@@ -445,6 +450,7 @@ class CompoundStatement(BaseAstNode):
         # Gen 3ac for statement_list
         if self.statement_list is not None:
             for item in self.statement_list:
+
                 result = item.to_3ac()
                 output.extend(result['3ac'])
 
@@ -539,12 +545,15 @@ class Declaration(BaseAstNode):
                     #     output.append(KICK(item_tac['lvalue']))
 
                 # Store the value into memory, kick the register, and move to next
-                output.append(STORE(offset_reg, taci.Address(register=item_tac['rvalue']), self.symbol.size_in_bytes()))
+                output.append(STORE(item_tac['rvalue'], taci.Address(register=offset_reg), self.symbol.size_in_bytes()))
+                # output.append(STORE(item_tac['rvalue'], taci.Address(register=offset_reg), EXPECTED_WORD_SIZE))
+
                 if 'rvalue' in item_tac:
                     output.append(KICK(item_tac['rvalue']))
                 if 'lvalue' in item_tac:
                     output.append(KICK(item_tac['lvalue']))
                 output.append(ADDIU(offset_reg, offset_reg, self.symbol.size_in_bytes()))
+                # output.append(ADDIU(offset_reg, offset_reg, EXPECTED_WORD_SIZE))
 
             # Kick the offset and base address register
             output.append(KICK(lvalue))
@@ -564,6 +573,8 @@ class Declaration(BaseAstNode):
 
             # Store the value into memory, kick the register,
             output.append(STORE(item_tac['rvalue'], taci.Address(register=lvalue), self.symbol.size_in_bytes()))
+            # output.append(STORE(item_tac['rvalue'], taci.Address(register=lvalue), EXPECTED_WORD_SIZE))
+
             if 'rvalue' in item_tac:
                 output.append(KICK(item_tac['rvalue']))
             if 'lvalue' in item_tac:
@@ -743,6 +754,7 @@ class FunctionCall(BaseAstNode):
 
          # copy the return value before it gets obliterated
         _3ac.append(ADD(rvalue, taci.Register(tacr.RV), taci.Register(tacr.ZERO)))
+
         # TODO: handle double word returns if we get there
 
         return {'3ac': _3ac, 'rvalue': rvalue}
@@ -811,6 +823,7 @@ class FunctionDefinition(BaseAstNode):
                 parameter_size += EXPECTED_WORD_SIZE * (1 + 1 + len(symbol.array_dims))
             else:
                 parameter_size += symbol.size_in_bytes()
+                # parameter_size += EXPECTED_WORD_SIZE
 
         # be wary of this, it seems to easy to be correct
         _tac.append(ENTER_PROC(local_variable_size=self.function_symbol.activation_frame_size - parameter_size))
@@ -1103,6 +1116,7 @@ class UnaryOperator(BaseAstNode):
             # It will be returned while the actual variable is updated
             rvalue_copy = tickets.INT_REGISTER_TICKETS.get()
             output.append(ADD(rvalue_copy, rvalue, taci.Register(tacr.ZERO)))
+
 
             # Determine correct operator and apply to register
             if self.operator == '++':

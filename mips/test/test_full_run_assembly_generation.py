@@ -65,21 +65,22 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
         self.generator.translate_tac_to_mips()
         print(self.generator.dumps())
 
+
     def test_local_variable_declaration_and_assignment(self):
         data = """
             int main() {
                 int local_variable;
 
                 // print the garbage that will be in the variable
-                print_int(local_variable);
+                print_int(local_variable);      // will most likely see 0 but could be different since its garbage
 
                 // perform an assignment and print to show that the
                 // value was assigned
-                local_variable = 123;
+                local_variable = 123;           // expect to see 123
                 print_int(local_variable);
 
                 // assign another value to show that it can be overwritten
-                local_variable = 126;
+                local_variable = 126;           // expect to see 126
                 print_int(local_variable);
 
                 return 0;
@@ -96,19 +97,19 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
         data = """
             int main() {
                 int local_variable = 1;
-                int other_variable = 2;
-                int la = 5;
+                int other_variable = 9;
+                int third_variable = 5;
 
                 // print the values that will be in the variables
                 print_int(local_variable);  // expect to see 1
-                print_int(other_variable);  // expect to see 2
+                print_int(other_variable);  // expect to see 9
+                print_int(third_variable);  // expect to see 5
 
                 // perform the addition
-                print_int(local_variable + other_variable); // expect to see 3
-                la = local_variable + other_variable;
-                print_int(la);                              // expect to see 3, again
+                print_int(local_variable + other_variable);         // expect to see 10
+                third_variable = local_variable + other_variable;
+                print_int(third_variable);                          // expect to see 10, again
 
-                return 0;
             }
             """
         ast = self.compiler_state.parse(data)
@@ -135,12 +136,12 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
             int main() {
 
                 // print the values that will be in the variables
-                print_int(GLOBAL_CONST);
-                print_int(GLOBAL_VAR);
+                print_int(GLOBAL_CONST);    // expect to see 4
+                print_int(GLOBAL_VAR);      // expect to see 2
 
                 // perform the assignment
                 GLOBAL_VAR = GLOBAL_CONST;
-                print_int(GLOBAL_VAR);
+                print_int(GLOBAL_VAR);      // expect to see 4
 
                 return 0;
             }
@@ -150,14 +151,14 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
         ast = self.compiler_state.parse(data)
         source_tac = ast.to_3ac()
 
-        #TODO: Take out debug after fixing test case issues
-        i = 0;
-        for item in source_tac:
-            if i% 3 == 0:
-                print('\n')
-            print(item)
-
-        print('\n\n\n\n')
+        # #TODO: Take out debug after fixing test case issues
+        # i = 0;
+        # for item in source_tac:
+        #     if i% 3 == 0:
+        #         print('\n')
+        #     print(item)
+        #
+        # print('\n\n\n\n')
 
         self.generator.load(source_tac)
         self.generator.translate_tac_to_mips()
@@ -180,25 +181,25 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
 
                             //print_char('f');
                             //print_char('b');
-                            print_int(35);
+                            print_int(35);      // expect to see this replacing 15 and 30
                         }
 
                         //Fizz
                         else {
                            //print_char('f');
-                            print_int(3);
+                            print_int(3);   // expect to see this replacing 3,6,9,12,18,21,24,27
                         }
 
                    }
                    // Buzz
                    else if( i % 5 == 0) {
                        //print_char('b');
-                       print_int(5);
+                       print_int(5);    // expect to see this replacing 5,10,15,20,25
 
                    }
                    // Number
                    else{
-                       print_int(i);
+                       print_int(i);    // expect to see all other numbers except those mentioned above
                    }
                 }
 
@@ -221,6 +222,7 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
                  * Then the _while_ loop runs, but with each of its iterations, a "do" is
                  * forced, so we see a _do-while_ iteration along with each _while_ iteration.
                  * Finally, the _for_ is allowed to progress without additional _while_ iterations.
+                 * This is further discussed in the comments on each line
                  */
 
                 int i = 0;
@@ -235,15 +237,15 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
 
                         // test do while loops
                         do{
-                            print_int(k);
+                            print_int(k);  // expect to see 15-20, then 21-25 interspersed with numbers from j's
                             k++;
                         }while( k <= 20 );
 
-                        print_int(j);
+                        print_int(j);       // expect to see 10-15 interspersed with the numbers from the k's do
                         j++;
                     }
 
-                    print_int(i);
+                    print_int(i);   // expect to see 1-5
                 }
 
                 return 0;
@@ -268,13 +270,13 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
                 while( i <= 5 ) {
                     while( j <= 15 ) {
                         while( k <= 20 ) {
-                            print_int(k);
+                            print_int(k);   // expect to see 15-20
                             k++;
                         }
-                        print_int(j);
+                        print_int(j);   // expect to see 10-15
                         j++;
                     }
-                    print_int(i);
+                    print_int(i);       // expect to see 0-5
                     i++;
                 }
 
@@ -297,11 +299,11 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
 
                 // test do while loops
                 do{
-                  print_int(l);
+                  print_int(l);     // expect to see 20, then the m's, then 21-24 interspersed with the m's do
                   l++;
 
                   do{
-                    print_int(m);
+                    print_int(m);   // expect to see 25-29 then 30-33 interspersed with numbers from l's do
                     m++;
 
                   }while ( m < 30 );
@@ -328,9 +330,9 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
                 // test for loops
                 for( n = 0; n < 5; n++) {
                     for( p = 0; p < 5; p ++ ) {
-                        print_int(p);
+                        print_int(p);   // expect to see 0-4 then 0-4 after each increment of p
                     }
-                    print_int(n);
+                    print_int(n); // expect to see 0-4 with the 0-4 from the p's after 0,1,2,3
                 }
                 return 0;
             }
@@ -355,21 +357,21 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
                 i[0] = 2;
                 i[2] = i[0];
                 for( s = 0; s < 3; s++) {
-                    print_int(i[s]);
+                    print_int(i[s]);    // expect to see 2, 0, 2
                 }
 
                 // 2-D manipulation
                 j[0][0] = 20;
-                print_int(j[0][0]);
+                print_int(j[0][0]); // expect to see 20
                 j[1][1] = j[0][0];
-                print_int(j[1][1]);
+                print_int(j[1][1]); // expect to see 20
 
 
                 // 5-D manipulation
                 k[1][0][1][0][1] = 45;
-                print_int(k[1][0][1][0][1]);
+                print_int(k[1][0][1][0][1]);    // expect to see 45
                 k[0][0][0][0][1] = k[1][0][1][0][1];
-                print_int(k[0][0][0][0][1]);
+                print_int(k[0][0][0][0][1]);    // expect to see 45
 
 
                 return 0;
@@ -425,12 +427,12 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
                 int j = 1;
 
                 j = i++;
-                print_int(j);
-                print_int(i);
+                print_int(j);   // expect to see 1
+                print_int(i);   // expect to see 2
 
                 j = ++i;
-                print_int(j);
-                print_int(i);
+                print_int(j);   // expect to see 3
+                print_int(i);   // expect to see 3
 
 
                 return 0;
@@ -443,3 +445,141 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
         self.generator.translate_tac_to_mips()
         print(self.generator.dumps())
 
+
+# # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # #
+#     TESTING THE BIG THREEEEE
+# # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # #
+
+
+    def test_bubble_sort(self):
+        data = """
+            const int N_ITEMS = 5;
+
+            int main() {
+              int i, j;
+              int temp;
+//              int things[N_ITEMS] = {5, 1, 4, 3, 2};
+
+              int things[N_ITEMS];
+              things[0] = 5;
+              things[1] = 1;
+              things[2] = 4;
+              things[3] = 3;
+              things[4] = 2;
+
+              print_int(things[0]);
+              print_int(things[1]);
+              print_int(things[2]);
+              print_int(things[3]);
+              print_int(things[4]);
+
+              for (i = 0; i < N_ITEMS; i++) {
+                for (j = i; j < N_ITEMS; j++) {
+                  if (things[i] < things[j]) {
+                    temp = things[i];
+                    things[i] = things[j];
+                    things[j] = temp;
+                  }
+                }
+              }
+
+              print_int(things[0]);
+              print_int(things[1]);
+              print_int(things[2]);
+              print_int(things[3]);
+              print_int(things[4]);
+
+              return 0;
+            }
+            """
+        ast = self.compiler_state.parse(data)
+        source_tac = ast.to_3ac()
+
+        self.generator.load(source_tac)
+        self.generator.translate_tac_to_mips()
+        print(self.generator.dumps())
+
+
+    def test_matrix_multiplication(self):
+        data = """
+           const int ARRAY_DIM = 2;
+
+            // hard code dimensions for simplicity
+            int matrix_multiply(int C[ARRAY_DIM][ARRAY_DIM], int A[ARRAY_DIM][ARRAY_DIM], int B[ARRAY_DIM][ARRAY_DIM]);
+            int print_matrix( int C[ARRAY_DIM][ARRAY_DIM]);
+
+            int main() {
+              int i, j;
+              int A[ARRAY_DIM][ARRAY_DIM], B[ARRAY_DIM][ARRAY_DIM], C[ARRAY_DIM][ARRAY_DIM];
+
+              for (i = 0; i < ARRAY_DIM; i++) {
+                for (j = 0; j < ARRAY_DIM; j++) {
+                  A[i][j] = B[i][j] = 1;
+                }
+              }
+
+              matrix_multiply(C, A, B);
+
+              return 0;
+            }
+
+            int matrix_multiply(int C[ARRAY_DIM][ARRAY_DIM], int A[ARRAY_DIM][ARRAY_DIM], int B[ARRAY_DIM][ARRAY_DIM]) {
+              int i, j, k;
+
+              for (i = 0; i < ARRAY_DIM; i++) {
+                for (j = 0; j < ARRAY_DIM; j++) {
+                  C[i][j] = 0;
+                  for (k = 0; k < ARRAY_DIM; k++) {
+                    C[i][j] += A[i][j + k] * B[i + k][j];
+                  }
+                }
+              }
+            }
+
+            int print_matrix( int C[ARRAY_DIM][ARRAY_DIM]){
+                int i, j;
+
+                for (i = 0; i < ARRAY_DIM; i++) {
+                    for (j = 0; j < ARRAY_DIM; j++) {
+                    print_int(C[i][j]);
+                    }
+                }
+            }
+            """
+        ast = self.compiler_state.parse(data)
+        source_tac = ast.to_3ac()
+
+        self.generator.load(source_tac)
+        self.generator.translate_tac_to_mips()
+        print(self.generator.dumps())
+
+
+    def test_recursive_factorial(self):
+        data = """
+            int factorial(int x);
+
+            int main() {
+              int x = 5;
+              int result = factorial(x);
+              print_int(x);
+              print_int(result);
+
+              return 0;
+            }
+
+            int factorial(int x) {
+              if (x > 1) {
+                return x*factorial(x - 1);
+              } else {
+                return 1;
+              }
+            }
+            """
+        ast = self.compiler_state.parse(data)
+        source_tac = ast.to_3ac()
+
+        self.generator.load(source_tac)
+        self.generator.translate_tac_to_mips()
+        print(self.generator.dumps())
