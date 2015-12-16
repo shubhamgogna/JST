@@ -1,6 +1,10 @@
+
             int main() {
 
                 int i = 0;
+ //               char FB[] = {"FizzBuzz"};
+   //             char F[] = "Fizz";
+     //           char B[] = "Buzz";
 
                 // FizzBuzz
                 for( i = 1; i <= 30; i++) {
@@ -36,3 +40,4 @@
 
                 return 0;
             }
+            

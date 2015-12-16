@@ -210,39 +210,39 @@ sw           $t1,    ($sp)
 sub          $sp,      $sp,        4
 jal     factorial
 CALLER_FUNCTION_EPILOGUE()
-add          $t2,      $v0,    $zero
-sw           $t2,    ($t0)
+add          $t1,      $v0,    $zero
+sw           $t1,    ($t0)
 CALLER_FUNCTION_PROLOGUE()
 lw           $t0,    ($fp)
 sw           $t0,    ($sp)
 sub          $sp,      $sp,        4
 jal     print_int
 CALLER_FUNCTION_EPILOGUE()
-add          $t2,      $v0,    $zero
+add          $t0,      $v0,    $zero
 CALLER_FUNCTION_PROLOGUE()
-lw           $t2,  -4($fp)
-sw           $t2,    ($sp)
+lw           $t0,  -4($fp)
+sw           $t0,    ($sp)
 sub          $sp,      $sp,        4
 jal     print_int
 CALLER_FUNCTION_EPILOGUE()
-add          $t3,      $v0,    $zero
-li           $t3,        0
-add          $v0,      $t3,    $zero
+add          $t0,      $v0,    $zero
+li           $t0,        0
+add          $v0,      $t0,    $zero
 CALLEE_FUNCTION_EPILOGUE()
 CALLEE_FUNCTION_EPILOGUE()
 factorial:
 CALLEE_FUNCTION_PROLOGUE(0)
-lw           $t1,    ($fp)
-li           $t0,        1
-sgt          $t2,      $t1,      $t0
+lw           $t0,    ($fp)
+li           $t1,        1
+sgt          $t2,      $t0,      $t1
 bne          $t2,    $zero, IF_TRUE_00004
 IF_FALSE_00004:
-li           $t0,        1
-add          $v0,      $t0,    $zero
+li           $t1,        1
+add          $v0,      $t1,    $zero
 CALLEE_FUNCTION_EPILOGUE()
 j       ENDIF_00004
 IF_TRUE_00004:
-lw           $t1,    ($fp)
+lw           $t0,    ($fp)
 CALLER_FUNCTION_PROLOGUE()
 lw           $t3,    ($fp)
 li           $t4,        1
@@ -251,9 +251,9 @@ sw           $t5,    ($sp)
 sub          $sp,      $sp,        4
 jal     factorial
 CALLER_FUNCTION_EPILOGUE()
-add          $t4,      $v0,    $zero
-mul          $t3,      $t1,      $t4
-add          $v0,      $t3,    $zero
+add          $t5,      $v0,    $zero
+mul          $t4,      $t0,      $t5
+add          $v0,      $t4,    $zero
 CALLEE_FUNCTION_EPILOGUE()
 ENDIF_00004:
 CALLEE_FUNCTION_EPILOGUE()

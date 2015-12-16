@@ -206,45 +206,30 @@ sw           $t0,    ($sp)
 sub          $sp,      $sp,        4
 jal     print_int
 CALLER_FUNCTION_EPILOGUE()
-add          $t1,      $v0,    $zero
-la           $t1,    ($fp)
-li           $t2,      123
-sw           $t2,    ($t1)
+add          $t0,      $v0,    $zero
+la           $t0,    ($fp)
+li           $t1,      123
+sw           $t1,    ($t0)
 CALLER_FUNCTION_PROLOGUE()
-lw           $t2,    ($fp)
-sw           $t2,    ($sp)
-sub          $sp,      $sp,        4
-jal     print_int
-CALLER_FUNCTION_EPILOGUE()
-add          $t1,      $v0,    $zero
-CALLER_FUNCTION_PROLOGUE()
-li           $t1,       10
+lw           $t1,    ($fp)
 sw           $t1,    ($sp)
 sub          $sp,      $sp,        4
-jal     print_char
+jal     print_int
 CALLER_FUNCTION_EPILOGUE()
-add          $t3,      $v0,    $zero
-la           $t3,    ($fp)
-li           $t4,      126
-sw           $t4,    ($t3)
+add          $t1,      $v0,    $zero
+la           $t1,    ($fp)
+li           $t0,      126
+sw           $t0,    ($t1)
 CALLER_FUNCTION_PROLOGUE()
-lw           $t4,    ($fp)
-sw           $t4,    ($sp)
+lw           $t0,    ($fp)
+sw           $t0,    ($sp)
 sub          $sp,      $sp,        4
 jal     print_int
 CALLER_FUNCTION_EPILOGUE()
-add          $t3,      $v0,    $zero
-li           $t3,        0
-add          $v0,      $t3,    $zero
+add          $t0,      $v0,    $zero
+li           $t0,        0
+add          $v0,      $t0,    $zero
 CALLEE_FUNCTION_EPILOGUE()
-CALLEE_FUNCTION_EPILOGUE()
-print_char:
-CALLEE_FUNCTION_PROLOGUE(0)
-# load $v0 with the value for the print char syscall
-li           $v0,       11
-# the first (and only) argument is the value to print
-lw           $a0,    ($fp)
-syscall 
 CALLEE_FUNCTION_EPILOGUE()
 print_int:
 CALLEE_FUNCTION_PROLOGUE(0)
@@ -253,10 +238,15 @@ li           $v0,        1
 # the first (and only) argument is the value to print
 lw           $a0,    ($fp)
 syscall 
+# print a newline character for readability
+# 0x0D is CR or '\r' - 0x0A is LF for '\n'
+li           $v0,       11
+li           $a0,       10
+syscall 
 CALLEE_FUNCTION_EPILOGUE()
 print_string:
 CALLEE_FUNCTION_PROLOGUE(0)
-# load $v0 with the value for the print string syscall
+# load $v0 with the value for the print int syscall
 li           $v0,        4
 # the first (and only) argument is the base address of the null terminated ascii string
 la           $a0,    ($fp)
@@ -264,7 +254,7 @@ syscall
 CALLEE_FUNCTION_EPILOGUE()
 print_float:
 CALLEE_FUNCTION_PROLOGUE(0)
-# load $v0 with the value for the print float syscall
+# load $v0 with the value for the print int syscall
 li           $v0,        2
 # the first (and only) argument is the base address of the null terminated ascii string
 lwc1        $f12,    ($fp)

@@ -203,7 +203,7 @@ CALLEE_FUNCTION_PROLOGUE(40)
 li           $t0,        0
 mulu         $t0,      $t0,        4
 la           $t1,    ($fp)
-la           $t2,  12($fp)
+addiu        $t2,      $t1,       12
 add          $t0,      $t0,      $t1
 tlt          $t0,      $t1
 tge          $t0,      $t2
@@ -212,14 +212,14 @@ sw           $t2,    ($t0)
 li           $t2,        2
 mulu         $t2,      $t2,        4
 la           $t0,    ($fp)
-la           $t1,  12($fp)
+addiu        $t1,      $t0,       12
 add          $t2,      $t2,      $t0
 tlt          $t2,      $t0
 tge          $t2,      $t1
 li           $t1,        0
 mulu         $t1,      $t1,        4
 la           $t0,    ($fp)
-la           $t3,  12($fp)
+addiu        $t3,      $t0,       12
 add          $t1,      $t1,      $t0
 tlt          $t1,      $t0
 tge          $t1,      $t3
@@ -239,7 +239,7 @@ CALLER_FUNCTION_PROLOGUE()
 lw           $t1, -156($fp)
 mulu         $t1,      $t1,        4
 la           $t2,    ($fp)
-la           $t0,  12($fp)
+addiu        $t0,      $t2,       12
 add          $t1,      $t1,      $t2
 tlt          $t1,      $t2
 tge          $t1,      $t0
@@ -248,197 +248,197 @@ sw           $t1,    ($sp)
 sub          $sp,      $sp,        4
 jal     print_int
 CALLER_FUNCTION_EPILOGUE()
-add          $t0,      $v0,    $zero
-la           $t0, -156($fp)
-lw           $t2,    ($t0)
-add          $t4,      $t2,    $zero
-addiu        $t2,      $t2,        1
-sw           $t2,    ($t0)
+add          $t1,      $v0,    $zero
+la           $t1, -156($fp)
+lw           $t0,    ($t1)
+add          $t2,      $t0,    $zero
+addiu        $t0,      $t0,        1
+sw           $t0,    ($t1)
 j       LOOP_CONDITION_00003
 LOOP_EXIT_00003:
-li           $t4,        0
-mulu         $t4,      $t4,        2
 li           $t2,        0
-addu         $t4,      $t4,      $t2
-mulu         $t4,      $t4,        4
-la           $t2,  12($fp)
-la           $t0,  28($fp)
-add          $t4,      $t4,      $t2
-tlt          $t4,      $t2
-tge          $t4,      $t0
-li           $t0,       20
-sw           $t0,    ($t4)
-CALLER_FUNCTION_PROLOGUE()
+mulu         $t2,      $t2,        2
 li           $t0,        0
-mulu         $t0,      $t0,        2
-li           $t4,        0
-addu         $t0,      $t0,      $t4
-mulu         $t0,      $t0,        4
-la           $t4,  12($fp)
-la           $t2,  28($fp)
-add          $t0,      $t0,      $t4
-tlt          $t0,      $t4
-tge          $t0,      $t2
-lw           $t0,    ($t0)
-sw           $t0,    ($sp)
+addu         $t2,      $t2,      $t0
+mulu         $t2,      $t2,        4
+la           $t0,  12($fp)
+addiu        $t1,      $t0,       16
+add          $t2,      $t2,      $t0
+tlt          $t2,      $t0
+tge          $t2,      $t1
+li           $t1,       20
+sw           $t1,    ($t2)
+CALLER_FUNCTION_PROLOGUE()
+li           $t1,        0
+mulu         $t1,      $t1,        2
+li           $t2,        0
+addu         $t1,      $t1,      $t2
+mulu         $t1,      $t1,        4
+la           $t2,  12($fp)
+addiu        $t0,      $t2,       16
+add          $t1,      $t1,      $t2
+tlt          $t1,      $t2
+tge          $t1,      $t0
+lw           $t1,    ($t1)
+sw           $t1,    ($sp)
+sub          $sp,      $sp,        4
+jal     print_int
+CALLER_FUNCTION_EPILOGUE()
+add          $t1,      $v0,    $zero
+li           $t1,        1
+mulu         $t1,      $t1,        2
+li           $t0,        1
+addu         $t1,      $t1,      $t0
+mulu         $t1,      $t1,        4
+la           $t0,  12($fp)
+addiu        $t2,      $t0,       16
+add          $t1,      $t1,      $t0
+tlt          $t1,      $t0
+tge          $t1,      $t2
+li           $t2,        0
+mulu         $t2,      $t2,        2
+li           $t0,        0
+addu         $t2,      $t2,      $t0
+mulu         $t2,      $t2,        4
+la           $t0,  12($fp)
+addiu        $t4,      $t0,       16
+add          $t2,      $t2,      $t0
+tlt          $t2,      $t0
+tge          $t2,      $t4
+lw           $t2,    ($t2)
+sw           $t2,    ($t1)
+CALLER_FUNCTION_PROLOGUE()
+li           $t2,        1
+mulu         $t2,      $t2,        2
+li           $t1,        1
+addu         $t2,      $t2,      $t1
+mulu         $t2,      $t2,        4
+la           $t1,  12($fp)
+addiu        $t4,      $t1,       16
+add          $t2,      $t2,      $t1
+tlt          $t2,      $t1
+tge          $t2,      $t4
+lw           $t2,    ($t2)
+sw           $t2,    ($sp)
 sub          $sp,      $sp,        4
 jal     print_int
 CALLER_FUNCTION_EPILOGUE()
 add          $t2,      $v0,    $zero
 li           $t2,        1
+mulu         $t2,      $t2,        2
+li           $t4,        0
+addu         $t2,      $t2,      $t4
+mulu         $t2,      $t2,        2
+li           $t4,        1
+addu         $t2,      $t2,      $t4
+mulu         $t2,      $t2,        2
+li           $t4,        0
+addu         $t2,      $t2,      $t4
 mulu         $t2,      $t2,        2
 li           $t4,        1
 addu         $t2,      $t2,      $t4
 mulu         $t2,      $t2,        4
-la           $t4,  12($fp)
-la           $t5,  28($fp)
+la           $t4,  28($fp)
+addiu        $t1,      $t4,      128
 add          $t2,      $t2,      $t4
 tlt          $t2,      $t4
-tge          $t2,      $t5
-li           $t5,        0
-mulu         $t5,      $t5,        2
-li           $t4,        0
-addu         $t5,      $t5,      $t4
-mulu         $t5,      $t5,        4
-la           $t4,  12($fp)
-la           $t6,  28($fp)
-add          $t5,      $t5,      $t4
-tlt          $t5,      $t4
-tge          $t5,      $t6
-lw           $t5,    ($t5)
-sw           $t5,    ($t2)
+tge          $t2,      $t1
+li           $t1,       45
+sw           $t1,    ($t2)
 CALLER_FUNCTION_PROLOGUE()
-li           $t5,        1
-mulu         $t5,      $t5,        2
+li           $t1,        1
+mulu         $t1,      $t1,        2
+li           $t2,        0
+addu         $t1,      $t1,      $t2
+mulu         $t1,      $t1,        2
 li           $t2,        1
-addu         $t5,      $t5,      $t2
-mulu         $t5,      $t5,        4
-la           $t2,  12($fp)
-la           $t6,  28($fp)
-add          $t5,      $t5,      $t2
-tlt          $t5,      $t2
-tge          $t5,      $t6
-lw           $t5,    ($t5)
-sw           $t5,    ($sp)
+addu         $t1,      $t1,      $t2
+mulu         $t1,      $t1,        2
+li           $t2,        0
+addu         $t1,      $t1,      $t2
+mulu         $t1,      $t1,        2
+li           $t2,        1
+addu         $t1,      $t1,      $t2
+mulu         $t1,      $t1,        4
+la           $t2,  28($fp)
+addiu        $t4,      $t2,      128
+add          $t1,      $t1,      $t2
+tlt          $t1,      $t2
+tge          $t1,      $t4
+lw           $t1,    ($t1)
+sw           $t1,    ($sp)
 sub          $sp,      $sp,        4
 jal     print_int
 CALLER_FUNCTION_EPILOGUE()
-add          $t6,      $v0,    $zero
-li           $t6,        1
-mulu         $t6,      $t6,        2
-li           $t2,        0
-addu         $t6,      $t6,      $t2
-mulu         $t6,      $t6,        2
-li           $t2,        1
-addu         $t6,      $t6,      $t2
-mulu         $t6,      $t6,        2
-li           $t2,        0
-addu         $t6,      $t6,      $t2
-mulu         $t6,      $t6,        2
-li           $t2,        1
-addu         $t6,      $t6,      $t2
-mulu         $t6,      $t6,        4
-la           $t2,  28($fp)
-la           $t4, 156($fp)
-add          $t6,      $t6,      $t2
-tlt          $t6,      $t2
-tge          $t6,      $t4
-li           $t4,       45
-sw           $t4,    ($t6)
-CALLER_FUNCTION_PROLOGUE()
+add          $t1,      $v0,    $zero
+li           $t1,        0
+mulu         $t1,      $t1,        2
+li           $t4,        0
+addu         $t1,      $t1,      $t4
+mulu         $t1,      $t1,        2
+li           $t4,        0
+addu         $t1,      $t1,      $t4
+mulu         $t1,      $t1,        2
+li           $t4,        0
+addu         $t1,      $t1,      $t4
+mulu         $t1,      $t1,        2
 li           $t4,        1
-mulu         $t4,      $t4,        2
-li           $t6,        0
-addu         $t4,      $t4,      $t6
-mulu         $t4,      $t4,        2
-li           $t6,        1
-addu         $t4,      $t4,      $t6
-mulu         $t4,      $t4,        2
-li           $t6,        0
-addu         $t4,      $t4,      $t6
-mulu         $t4,      $t4,        2
-li           $t6,        1
-addu         $t4,      $t4,      $t6
-mulu         $t4,      $t4,        4
-la           $t6,  28($fp)
-la           $t2, 156($fp)
-add          $t4,      $t4,      $t6
-tlt          $t4,      $t6
-tge          $t4,      $t2
-lw           $t4,    ($t4)
-sw           $t4,    ($sp)
+addu         $t1,      $t1,      $t4
+mulu         $t1,      $t1,        4
+la           $t4,  28($fp)
+addiu        $t2,      $t4,      128
+add          $t1,      $t1,      $t4
+tlt          $t1,      $t4
+tge          $t1,      $t2
+li           $t2,        1
+mulu         $t2,      $t2,        2
+li           $t4,        0
+addu         $t2,      $t2,      $t4
+mulu         $t2,      $t2,        2
+li           $t4,        1
+addu         $t2,      $t2,      $t4
+mulu         $t2,      $t2,        2
+li           $t4,        0
+addu         $t2,      $t2,      $t4
+mulu         $t2,      $t2,        2
+li           $t4,        1
+addu         $t2,      $t2,      $t4
+mulu         $t2,      $t2,        4
+la           $t4,  28($fp)
+addiu        $t0,      $t4,      128
+add          $t2,      $t2,      $t4
+tlt          $t2,      $t4
+tge          $t2,      $t0
+lw           $t2,    ($t2)
+sw           $t2,    ($t1)
+CALLER_FUNCTION_PROLOGUE()
+li           $t2,        0
+mulu         $t2,      $t2,        2
+li           $t1,        0
+addu         $t2,      $t2,      $t1
+mulu         $t2,      $t2,        2
+li           $t1,        0
+addu         $t2,      $t2,      $t1
+mulu         $t2,      $t2,        2
+li           $t1,        0
+addu         $t2,      $t2,      $t1
+mulu         $t2,      $t2,        2
+li           $t1,        1
+addu         $t2,      $t2,      $t1
+mulu         $t2,      $t2,        4
+la           $t1,  28($fp)
+addiu        $t0,      $t1,      128
+add          $t2,      $t2,      $t1
+tlt          $t2,      $t1
+tge          $t2,      $t0
+lw           $t2,    ($t2)
+sw           $t2,    ($sp)
 sub          $sp,      $sp,        4
 jal     print_int
 CALLER_FUNCTION_EPILOGUE()
 add          $t2,      $v0,    $zero
 li           $t2,        0
-mulu         $t2,      $t2,        2
-li           $t6,        0
-addu         $t2,      $t2,      $t6
-mulu         $t2,      $t2,        2
-li           $t6,        0
-addu         $t2,      $t2,      $t6
-mulu         $t2,      $t2,        2
-li           $t6,        0
-addu         $t2,      $t2,      $t6
-mulu         $t2,      $t2,        2
-li           $t6,        1
-addu         $t2,      $t2,      $t6
-mulu         $t2,      $t2,        4
-la           $t6,  28($fp)
-la           $t7, 156($fp)
-add          $t2,      $t2,      $t6
-tlt          $t2,      $t6
-tge          $t2,      $t7
-li           $t7,        1
-mulu         $t7,      $t7,        2
-li           $t6,        0
-addu         $t7,      $t7,      $t6
-mulu         $t7,      $t7,        2
-li           $t6,        1
-addu         $t7,      $t7,      $t6
-mulu         $t7,      $t7,        2
-li           $t6,        0
-addu         $t7,      $t7,      $t6
-mulu         $t7,      $t7,        2
-li           $t6,        1
-addu         $t7,      $t7,      $t6
-mulu         $t7,      $t7,        4
-la           $t6,  28($fp)
-la           $t8, 156($fp)
-add          $t7,      $t7,      $t6
-tlt          $t7,      $t6
-tge          $t7,      $t8
-lw           $t7,    ($t7)
-sw           $t7,    ($t2)
-CALLER_FUNCTION_PROLOGUE()
-li           $t7,        0
-mulu         $t7,      $t7,        2
-li           $t2,        0
-addu         $t7,      $t7,      $t2
-mulu         $t7,      $t7,        2
-li           $t2,        0
-addu         $t7,      $t7,      $t2
-mulu         $t7,      $t7,        2
-li           $t2,        0
-addu         $t7,      $t7,      $t2
-mulu         $t7,      $t7,        2
-li           $t2,        1
-addu         $t7,      $t7,      $t2
-mulu         $t7,      $t7,        4
-la           $t2,  28($fp)
-la           $t8, 156($fp)
-add          $t7,      $t7,      $t2
-tlt          $t7,      $t2
-tge          $t7,      $t8
-lw           $t7,    ($t7)
-sw           $t7,    ($sp)
-sub          $sp,      $sp,        4
-jal     print_int
-CALLER_FUNCTION_EPILOGUE()
-add          $t8,      $v0,    $zero
-li           $t8,        0
-add          $v0,      $t8,    $zero
+add          $v0,      $t2,    $zero
 CALLEE_FUNCTION_EPILOGUE()
 CALLEE_FUNCTION_EPILOGUE()
 print_int:

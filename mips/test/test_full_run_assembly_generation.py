@@ -59,11 +59,15 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        source_tac = ast.to_3ac()
+        source_tac, i = ast.to_3ac()
 
         self.generator.load(source_tac)
         self.generator.translate_tac_to_mips()
         print(self.generator.dumps())
+
+        fout = open("../../res/c_files/plain_main.c", 'w')
+        fout.write(data)
+        fout.close()
 
         fout = open("../../res/asm_files/plain_main.asm", 'w')
         fout.write(self.generator.dumps())
@@ -90,11 +94,15 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        source_tac = ast.to_3ac()
+        source_tac, i = ast.to_3ac()
 
         self.generator.load(source_tac)
         self.generator.translate_tac_to_mips()
         print(self.generator.dumps())
+
+        fout = open("../../res/c_files/local_variable_declaration_and_assignment.c", 'w')
+        fout.write(data)
+        fout.close()
 
         fout = open("../../res/asm_files/local_variable_declaration_and_assignment.asm", 'w')
         fout.write(self.generator.dumps())
@@ -120,7 +128,7 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        source_tac = ast.to_3ac()
+        source_tac, i = ast.to_3ac()
 
         # i = 0;
         # for item in source_tac:
@@ -133,6 +141,10 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
         self.generator.load(source_tac)
         self.generator.translate_tac_to_mips()
         print(self.generator.dumps())
+
+        fout = open("../../res/c_files/local_variable_addition.c", 'w')
+        fout.write(data)
+        fout.close()
 
         fout = open("../../res/asm_files/local_variable_addition.asm", 'w')
         fout.write(self.generator.dumps())
@@ -159,7 +171,7 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
 
             """
         ast = self.compiler_state.parse(data)
-        source_tac = ast.to_3ac()
+        source_tac, i = ast.to_3ac()
 
         # #TODO: Take out debug after fixing test case issues
         # i = 0;
@@ -174,6 +186,10 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
         self.generator.translate_tac_to_mips()
         print(self.generator.dumps())
 
+        fout = open("../../res/c_files/global_variables_declaration_and_assignment.c", 'w')
+        fout.write(data)
+        fout.close()
+
         fout = open("../../res/asm_files/global_variables_declaration_and_assignment.asm", 'w')
         fout.write(self.generator.dumps())
         fout.close()
@@ -183,6 +199,9 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
             int main() {
 
                 int i = 0;
+ //               char FB[] = {"FizzBuzz"};
+   //             char F[] = "Fizz";
+     //           char B[] = "Buzz";
 
                 // FizzBuzz
                 for( i = 1; i <= 30; i++) {
@@ -220,11 +239,15 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        source_tac = ast.to_3ac()
+        source_tac, i = ast.to_3ac()
 
         self.generator.load(source_tac)
         self.generator.translate_tac_to_mips()
         print(self.generator.dumps())
+
+        fout = open("../../res/c_files/if_elif_else.c", 'w')
+        fout.write(data)
+        fout.close()
 
         fout = open("../../res/asm_files/if_elif_else.asm", 'w')
         fout.write(self.generator.dumps())
@@ -269,11 +292,15 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        source_tac = ast.to_3ac()
+        source_tac, i = ast.to_3ac()
 
         self.generator.load(source_tac)
         self.generator.translate_tac_to_mips()
         print(self.generator.dumps())
+
+        fout = open("../../res/c_files/all_three_loops.c", 'w')
+        fout.write(data)
+        fout.close()
 
         fout = open("../../res/asm_files/all_three_loops.asm", 'w')
         fout.write(self.generator.dumps())
@@ -305,11 +332,15 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        source_tac = ast.to_3ac()
+        source_tac, i = ast.to_3ac()
 
         self.generator.load(source_tac)
         self.generator.translate_tac_to_mips()
         print(self.generator.dumps())
+
+        fout = open("../../res/c_files/while_loops_nested.c", 'w')
+        fout.write(data)
+        fout.close()
 
         fout = open("../../res/asm_files/while_loops_nested.asm", 'w')
         fout.write(self.generator.dumps())
@@ -339,11 +370,16 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        source_tac = ast.to_3ac()
+        source_tac, i = ast.to_3ac()
 
         self.generator.load(source_tac)
         self.generator.translate_tac_to_mips()
         print(self.generator.dumps())
+
+
+        fout = open("../../res/c_files/do_while_loops_nested.c", 'w')
+        fout.write(data)
+        fout.close()
 
         fout = open("../../res/asm_files/do_while_loops_nested.asm", 'w')
         fout.write(self.generator.dumps())
@@ -367,11 +403,15 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        source_tac = ast.to_3ac()
+        source_tac, i = ast.to_3ac()
 
         self.generator.load(source_tac)
         self.generator.translate_tac_to_mips()
         print(self.generator.dumps())
+
+        fout = open("../../res/c_files/for_loops_nested.c", 'w')
+        fout.write(data)
+        fout.close()
 
         fout = open("../../res/asm_files/for_loops_nested.asm", 'w')
         fout.write(self.generator.dumps())
@@ -411,11 +451,15 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        source_tac = ast.to_3ac()
+        source_tac, i = ast.to_3ac()
 
         self.generator.load(source_tac)
         self.generator.translate_tac_to_mips()
         print(self.generator.dumps())
+
+        fout = open("../../res/c_files/array_declaration_and_manipulation.c", 'w')
+        fout.write(data)
+        fout.close()
 
         fout = open("../../res/asm_files/array_declaration_and_manipulation.asm", 'w')
         fout.write(self.generator.dumps())
@@ -439,7 +483,7 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        source_tac = ast.to_3ac()
+        source_tac, i = ast.to_3ac()
 
         #TODO: Take out debug after fixing test case issues
         # i = 0;
@@ -454,6 +498,10 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
         self.generator.load(source_tac)
         self.generator.translate_tac_to_mips()
         print(self.generator.dumps())
+
+        fout = open("../../res/c_files/function_call.c", 'w')
+        fout.write(data)
+        fout.close()
 
         fout = open("../../res/asm_files/function_call.asm", 'w')
         fout.write(self.generator.dumps())
@@ -480,15 +528,78 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        source_tac = ast.to_3ac()
+        source_tac, i = ast.to_3ac()
 
         self.generator.load(source_tac)
         self.generator.translate_tac_to_mips()
         print(self.generator.dumps())
 
+        fout = open("../../res/c_files/post_and_pre_increment.c", 'w')
+        fout.write(data)
+        fout.close()
+
         fout = open("../../res/asm_files/post_and_pre_increment.asm", 'w')
         fout.write(self.generator.dumps())
         fout.close()
+
+
+    def test_constant_folding(self):
+        data = """
+
+            const int C = 4+4;
+
+            int main() {
+
+                int n = C-2+4*2; // expect to find a li with 14 in the assembly instructions
+                                 // since we have constant folding working correctly
+                print_int(n);  // expect to see the 14 printed to show its loaded into n correctly
+
+                return 0;
+            }
+            """
+        ast = self.compiler_state.parse(data)
+        source_tac, i = ast.to_3ac()
+
+        self.generator.load(source_tac)
+        self.generator.translate_tac_to_mips()
+        print(self.generator.dumps())
+
+        fout = open("../../res/c_files/constant_folding.c", 'w')
+        fout.write(data)
+        fout.close()
+
+        fout = open("../../res/asm_files/constant_folding.asm", 'w')
+        fout.write(self.generator.dumps())
+        fout.close()
+
+
+
+#####################
+# Test cases that are not put to .c or .asm files
+#####################
+
+    def test_parse_error(self):
+        data = """
+            int main() {
+
+                int n = 0;
+
+                // test for loops
+                for( n = 0; n < 5; n++) {
+                   print_int(n); */
+                }
+                return 0;
+            }
+            """
+        ast = self.compiler_state.parse(data)
+        source_tac, i = ast.to_3ac()
+
+        self.generator.load(source_tac)
+        self.generator.translate_tac_to_mips()
+        print(self.generator.dumps())
+
+
+
 
 # # # # # # # # # # # # # # # # # # #
 # # # # # # # # # # # # # # # # # # #
@@ -539,11 +650,15 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        source_tac = ast.to_3ac()
+        source_tac, i = ast.to_3ac()
 
         self.generator.load(source_tac)
         self.generator.translate_tac_to_mips()
         print(self.generator.dumps())
+
+        fout = open("../../res/c_files/bubble_sort.c", 'w')
+        fout.write(data)
+        fout.close()
 
         fout = open("../../res/asm_files/bubble_sort.asm", 'w')
         fout.write(self.generator.dumps())
@@ -592,11 +707,15 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
 
             """
         ast = self.compiler_state.parse(data)
-        source_tac = ast.to_3ac()
+        source_tac, i = ast.to_3ac()
 
         self.generator.load(source_tac)
         self.generator.translate_tac_to_mips()
         print(self.generator.dumps())
+
+        fout = open("../../res/c_files/matrix_multiplication.c", 'w')
+        fout.write(data)
+        fout.close()
 
         fout = open("../../res/asm_files/matrix_multiplication.asm", 'w')
         fout.write(self.generator.dumps())
@@ -625,11 +744,15 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        source_tac = ast.to_3ac()
+        source_tac, i = ast.to_3ac()
 
         self.generator.load(source_tac)
         self.generator.translate_tac_to_mips()
         print(self.generator.dumps())
+
+        fout = open("../../res/c_files/recursive_factorial.c", 'w')
+        fout.write(data)
+        fout.close()
 
         fout = open("../../res/asm_files/recursive_factorial.asm", 'w')
         fout.write(self.generator.dumps())
