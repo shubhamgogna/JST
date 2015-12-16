@@ -116,6 +116,9 @@ class MipsGenerator(object):
         self.mips_output.extend(mm.CALLER_FUNCTION_PROLOGUE_MACRO.definition())
         self.mips_output.extend(mm.CALLER_FUNCTION_EPILOGUE_MACRO.definition())
 
+        self.mips_output.extend(mm.LAND_MACRO.definition())
+        self.mips_output.extend(mm.LOR_MACRO.definition())
+
         for instruction in self.source_tac:
             assert (isinstance(instruction, TacInstruction))
             if instruction.instruction == taci.SOURCE:
@@ -193,6 +196,9 @@ class MipsGenerator(object):
                 elif instruction.instruction == taci.SUB:
                     self._sub(instruction)
 
+                elif instruction.instruction == taci.SUBI:
+                    self._sub_immediate(instruction)
+
                 elif instruction.instruction == taci.MULU:
                     self._multiply_unsigned(instruction)
 
@@ -202,11 +208,18 @@ class MipsGenerator(object):
                 elif instruction.instruction == taci.MOD:
                     self._modulo(instruction)
 
-                # elif instruction.instruction == taci.DIV:
-                #     self._div(instruction)
-                #
+                elif instruction.instruction == taci.DIV:
+                    self._div(instruction)
+
                 # elif instruction.instruction == taci.MFHI:
                 #     self._move_from_high(instruction)
+
+                elif instruction.instruction == taci.LAND:
+                    self._logical_and(instruction)
+
+                elif instruction.instruction == taci.LOR:
+                    self._logical_or(instruction)
+
 
                 elif instruction.instruction == taci.EQ:
                     self._equality(instruction)
@@ -252,11 +265,15 @@ class MipsGenerator(object):
         # 'single file' programs. The declarations (prototypes) must be added to the symbol table in the Parser, in a
         # dummy production "setup_for_program" to allow calls to these functions.
 
+        self.mips_output.extend(library_functions.PrintCharDefinition.get_mips())
         self.mips_output.extend(library_functions.PrintIntDefinition.get_mips())
         self.mips_output.extend(library_functions.PrintStringDefinition.get_mips())
         self.mips_output.extend(library_functions.PrintFloatDefinition.get_mips())
 
         self.mips_output.append(end_of_program_label)
+        self.mips_output.append(mi.ADD(mr.A0, mr.V0, mr.ZERO))
+        self.mips_output.append(mi.LI(mr.V0, 17))
+        self.mips_output.append(mi.SYSCALL())
 
     def _source(self, last_line):
         if self.inject_source:
@@ -409,6 +426,14 @@ class MipsGenerator(object):
 
         self.mips_output.append(mi.SUB(dest_register, src1_register, src2_register))
 
+    def _sub_immediate(self, t):
+        dest_register = self.get_resulting_argument(t.dest)
+        src1_register = self.get_resulting_argument(t.src1)
+        src2_register = self.get_resulting_argument(t.src2)
+
+        self.mips_output.append(mi.SUB(dest_register, src1_register, src2_register))
+
+
     def _multiply_unsigned(self, t):
         product = self.get_resulting_argument(t.dest)
         multiplicand = self.get_resulting_argument(t.src1)
@@ -431,14 +456,29 @@ class MipsGenerator(object):
         self.mips_output.append("DIV          " + multiplicand + ',' + multiplier)
         self.mips_output.append("MFHI         " + result)
 
-    # def _div(self, t):
-    #     result =
-    #     multiplicand = self.get_resulting_argument(t.src1)
-    #     multiplier = self.get_resulting_argument(t.src2)
-    #
-    #     self.mips_output.append(mi.DIV(multiplicand, multiplier))
-    #     self.mips_output.append(mi.MFHI(result))
+    def _div(self, t):
+        result = self.get_resulting_argument(t.dest)
+        dividend = self.get_resulting_argument(t.src1)
+        divisor = self.get_resulting_argument(t.src2)
 
+        self.mips_output.append(mi.DIV(dividend, divisor))
+        self.mips_output.append("MFLO         " + result)
+
+    def _logical_and(self, t):
+        result = self.get_resulting_argument(t.dest)
+        dividend = self.get_resulting_argument(t.src1)
+        divisor = self.get_resulting_argument(t.src2)
+
+        # self.mips_output.append(mm.LAND.call(dividend, divisor))
+        # self.mips_output.append(mi.ADD(result, mr.A2, mr.ZERO))
+
+    def _logical_or(self, t):
+        result = self.get_resulting_argument(t.dest)
+        dividend = self.get_resulting_argument(t.src1)
+        divisor = self.get_resulting_argument(t.src2)
+
+        # self.mips_output.append(mm.LOR.call(dividend, divisor))
+        # self.mips_output.append(mi.ADD(result, mr.A2, mr.ZERO))
 
 
     def _equality(self, t):

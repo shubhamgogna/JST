@@ -84,7 +84,7 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
                 // perform an assignment and print to show that the
                 // value was assigned
                 local_variable = 123;           // expect to see 123
-                print_int(local_variable);
+                print_int(local_variable); print_char('\\n');
 
                 // assign another value to show that it can be overwritten
                 local_variable = 126;           // expect to see 126
@@ -199,9 +199,9 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
             int main() {
 
                 int i = 0;
- //               char FB[] = {"FizzBuzz"};
-   //             char F[] = "Fizz";
-     //           char B[] = "Buzz";
+                //char FB[] = "FizzBuzz";
+                //char F[] = "Fizz";
+                //char B[] = "Buzz";
 
                 // FizzBuzz
                 for( i = 1; i <= 30; i++) {
@@ -471,7 +471,7 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
 
             int main()
             {
-                int i = foo(1,'a');
+                int i = foo(1, 'a');
                 print_int(i);        // expect to see 123
                 return 0;
             }
@@ -621,6 +621,59 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
         fout = open("../../res/asm_files/constant_folding.asm", 'w')
         fout.write(self.generator.dumps())
         fout.close()
+
+
+    def test_binary_operators(self):
+        data = """
+
+            int main() {
+
+                int i = 0;
+                int j = 0;
+                int k = 0;
+
+                i = i + 10; print_int(i);      // prints 10
+                i = i - 2; print_int(i);       // prints 8
+                i = i * 2; print_int(i);       // prints 16
+                i = i / 4; print_int(i);       // prints 4
+                i = i % 3; print_int(i);       // prints 1
+
+                j = i++; print_int(j); print_int(i);   // prints 1 and 2
+                j = ++i; print_int(j); print_int(i);   // prints 3 and 3
+
+                j = i--; print_int(j); print_int(i);   // prints 3 and 2
+                j = --i; print_int(j); print_int(i);   // prints 1 and 1
+
+                //j += i; print_int(j); // prints 2
+                //j -= i; print_int(j); // prints 1
+
+                k = i = j; print_int(k); print_int(i); print_int(j); //prints 1 1 1
+
+                //i = i && 0; print_int(i); // prints 0
+                //j = i || 5; print_int(j); // prints 1
+
+                return 0;
+            }
+            """
+        ast = self.compiler_state.parse(data)
+        source_tac, i = ast.to_3ac()
+
+        # TODO:
+        # finish the cases with // above - && and || just need macros from Terence
+        # the += and -= still need to be done
+
+        self.generator.load(source_tac)
+        self.generator.translate_tac_to_mips()
+        print(self.generator.dumps())
+
+        fout = open("../../res/c_files/binary_operators.c", 'w')
+        fout.write(data)
+        fout.close()
+
+        fout = open("../../res/asm_files/binary_operators.asm", 'w')
+        fout.write(self.generator.dumps())
+        fout.close()
+
 
 
 

@@ -2030,6 +2030,7 @@ class JSTParser(object):
 
         ## Insert library function declarations (prototypes) here ##
         # Super crappy, but it has to be done, blah, blah, blah
+        self.compiler_state.symbol_table.insert(library_functions.PrintCharDeclaration)
         self.compiler_state.symbol_table.insert(library_functions.PrintIntDeclaration)
         self.compiler_state.symbol_table.insert(library_functions.PrintStringDeclaration)
         self.compiler_state.symbol_table.insert(library_functions.PrintFloatDeclaration)
