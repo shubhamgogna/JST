@@ -516,14 +516,14 @@ class Declaration(BaseAstNode):
             # Loop through initializer and store
             self.initializer = self.initializer[:min(len(self.initializer), self.symbol.array_dims[0])]
             for item in self.initializer:
-
                 # Load the value
                 item_tac = item.to_3ac(get_rval=True)
                 if '3ac' in item_tac:
                     _3ac.extend(item_tac['3ac'])
 
                 # Store the value into memory, kick the register, and move to next
-                _3ac.append(STORE(item_tac['rvalue'], taci.Address(register=lvalue), self.symbol.size_in_bytes()))
+                type_size = int(type_utils.type_size_in_bytes(self.symbol.type_specifiers))
+                _3ac.append(STORE(item_tac['rvalue'], taci.Address(register=lvalue), type_size))
 
                 # Kick the temporaries
                 if 'rvalue' in item_tac:
@@ -532,7 +532,7 @@ class Declaration(BaseAstNode):
                     _3ac.append(KICK(item_tac['lvalue']))
 
                 # Go to the next index / offset by subtracting one element size
-                _3ac.append(ADDI(lvalue, lvalue, -self.symbol.size_in_bytes()))
+                _3ac.append(ADDI(lvalue, lvalue, -type_size))
 
         else:
 

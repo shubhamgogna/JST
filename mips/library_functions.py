@@ -4,12 +4,12 @@
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-#  
+#
 # JST is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-#  
+#
 # You should have received a copy of the GNU General Public License
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -107,10 +107,17 @@ PrintStringDeclaration.add_return_type_declaration(__print_string_return_type)
 __print_string_body = [
     mm.CALLEE_FUNCTION_PROLOGUE_MACRO.call('0'),
     mi.COMMENT("load $v0 with the value for the print string syscall"),
-    mi.LI(mr.V0, __PRINT_STRING_SYSCALL),
+    mi.LI(mr.V0, __PRINT_CHAR_SYSCALL),
     mi.COMMENT("the first (and only) argument is the base address of the null terminated ascii string"),
-    mi.LA(mr.A0, mi.offset_from_register_with_immediate(mr.FP)),
+    mi.LW(mr.S0, mi.offset_from_register_with_immediate(mr.FP)),
+    mi.LB(mr.A0, '0($s0)'),
+    mi.LABEL("print_string_loop_start"),
+    mi.BEQZ(mr.A0, "print_string_loop_end"),
     mi.SYSCALL(),
+    mi.ADDI(mr.S0, mr.S0, -1),
+    mi.LB(mr.A0, '0($s0)'),
+    mi.J("print_string_loop_start"),
+    mi.LABEL("print_string_loop_end"),
     mm.CALLEE_FUNCTION_EPILOGUE_MACRO.call()
 ]
 PrintStringDefinition = FunctionDefinition(identifier='print_string', body=__print_string_body)

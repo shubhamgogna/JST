@@ -191,30 +191,6 @@ addiu        $sp,      $sp,        4
 lw           $ra,    ($sp)
 .end_macro
 
-.macro __LAND (%lhs, %rhs)
-beqz        %lhs, __LAND_FALSE
-beqz        %rhs, __LAND_FALSE
-li           $a2,        1
-j       __LAND_END
-
-__LAND_FALSE:
-li           $a2,        0
-
-__LAND_END:
-.end_macro
-
-.macro __LOR (%lhs, %rhs)
-beqz        %lhs, __LOR_TRUE
-beqz        %rhs, __LOR_TRUE
-li           $a2,        0
-j       __LOR_END
-
-__LOR_TRUE:
-li           $a2,        1
-
-__LOR_END:
-.end_macro
-
 
 .data
 SPILL_MEMORY: .space 64
@@ -226,23 +202,55 @@ jal         main
 j       PROG_END
 
 main:
-CALLEE_FUNCTION_PROLOGUE(1)
+CALLEE_FUNCTION_PROLOGUE(5)
 la           $t0,    ($fp)
+li           $t1,       70
+sb           $t1,    ($t0)
+addi         $t0,      $t0,       -1
+li           $t1,      105
+sb           $t1,    ($t0)
+addi         $t0,      $t0,       -1
+li           $t1,      122
+sb           $t1,    ($t0)
+addi         $t0,      $t0,       -1
+li           $t1,      122
+sb           $t1,    ($t0)
+addi         $t0,      $t0,       -1
+li           $t1,        0
+sb           $t1,    ($t0)
+addi         $t0,      $t0,       -1
+la           $t0,  -8($fp)
+li           $t1,       66
+sb           $t1,    ($t0)
+addi         $t0,      $t0,       -1
+li           $t1,      117
+sb           $t1,    ($t0)
+addi         $t0,      $t0,       -1
+li           $t1,      122
+sb           $t1,    ($t0)
+addi         $t0,      $t0,       -1
+li           $t1,      122
+sb           $t1,    ($t0)
+addi         $t0,      $t0,       -1
+li           $t1,        0
+sb           $t1,    ($t0)
+addi         $t0,      $t0,       -1
+la           $t0, -16($fp)
 li           $t1,        0
 sw           $t1,    ($t0)
-la           $t0,    ($fp)
+la           $t0, -16($fp)
 li           $t1,        1
 sw           $t1,    ($t0)
 
 LOOP_CONDITION_00000:
-lw           $t1,    ($fp)
+lw           $t1, -16($fp)
 li           $t0,       30
 sle          $t2,      $t1,      $t0
 bne          $t2,    $zero, LOOP_BODY_00000
 j       LOOP_EXIT_00000
 
 LOOP_BODY_00000:
-lw           $t0,    ($fp)
+lw           $t0, -16($fp)
 li           $t1,        3
 DIV          $t0,$t1
 MFHI         $t3
@@ -251,7 +259,7 @@ seq          $t0,      $t3,      $t1
 bne          $t0,    $zero, IF_TRUE_00000
 
 IF_FALSE_00000:
-lw           $t1,    ($fp)
+lw           $t1, -16($fp)
 li           $t3,        5
 DIV          $t1,$t3
 MFHI         $t4
@@ -261,7 +269,7 @@ bne          $t1,    $zero, IF_TRUE_00001
 
 IF_FALSE_00001:
 CALLER_FUNCTION_PROLOGUE()
-lw           $t3,    ($fp)
+lw           $t3, -16($fp)
 sw           $t3,    ($sp)
 sub          $sp,      $sp,        4
 jal     print_int
@@ -278,7 +286,7 @@ j       ENDIF_00001
 
 IF_TRUE_00001:
 CALLER_FUNCTION_PROLOGUE()
-lw           $t3,    ($fp)
+lw           $t3, -16($fp)
 sw           $t3,    ($sp)
 sub          $sp,      $sp,        4
 jal     print_int
@@ -299,10 +307,17 @@ jal     print_char
 CALLER_FUNCTION_EPILOGUE()
 add          $t3,      $v0,    $zero
 CALLER_FUNCTION_PROLOGUE()
-li           $t3,       98
+lb           $t3,  -8($fp)
+la           $t3,  -8($fp)
 sw           $t3,    ($sp)
 sub          $sp,      $sp,        4
-jal     print_char
+li           $t3,        5
+sw           $t3,    ($sp)
+sub          $sp,      $sp,        4
+li           $t3,        5
+sw           $t3,    ($sp)
+sub          $sp,      $sp,        4
+jal     print_string
 CALLER_FUNCTION_EPILOGUE()
 add          $t3,      $v0,    $zero
 CALLER_FUNCTION_PROLOGUE()
@@ -317,7 +332,7 @@ ENDIF_00001:
 j       ENDIF_00000
 
 IF_TRUE_00000:
-lw           $t1,    ($fp)
+lw           $t1, -16($fp)
 li           $t3,        5
 DIV          $t1,$t3
 MFHI         $t4
@@ -327,7 +342,7 @@ bne          $t1,    $zero, IF_TRUE_00002
 
 IF_FALSE_00002:
 CALLER_FUNCTION_PROLOGUE()
-lw           $t3,    ($fp)
+lw           $t3, -16($fp)
 sw           $t3,    ($sp)
 sub          $sp,      $sp,        4
 jal     print_int
@@ -348,10 +363,17 @@ jal     print_char
 CALLER_FUNCTION_EPILOGUE()
 add          $t3,      $v0,    $zero
 CALLER_FUNCTION_PROLOGUE()
-li           $t3,      102
+lb           $t3,    ($fp)
+la           $t3,    ($fp)
 sw           $t3,    ($sp)
 sub          $sp,      $sp,        4
-jal     print_char
+li           $t3,        5
+sw           $t3,    ($sp)
+sub          $sp,      $sp,        4
+li           $t3,        5
+sw           $t3,    ($sp)
+sub          $sp,      $sp,        4
+jal     print_string
 CALLER_FUNCTION_EPILOGUE()
 add          $t3,      $v0,    $zero
 CALLER_FUNCTION_PROLOGUE()
@@ -365,7 +387,7 @@ j       ENDIF_00002
 
 IF_TRUE_00002:
 CALLER_FUNCTION_PROLOGUE()
-lw           $t3,    ($fp)
+lw           $t3, -16($fp)
 sw           $t3,    ($sp)
 sub          $sp,      $sp,        4
 jal     print_int
@@ -386,17 +408,31 @@ jal     print_char
 CALLER_FUNCTION_EPILOGUE()
 add          $t3,      $v0,    $zero
 CALLER_FUNCTION_PROLOGUE()
-li           $t3,      102
+lb           $t3,    ($fp)
+la           $t3,    ($fp)
 sw           $t3,    ($sp)
 sub          $sp,      $sp,        4
-jal     print_char
+li           $t3,        5
+sw           $t3,    ($sp)
+sub          $sp,      $sp,        4
+li           $t3,        5
+sw           $t3,    ($sp)
+sub          $sp,      $sp,        4
+jal     print_string
 CALLER_FUNCTION_EPILOGUE()
 add          $t3,      $v0,    $zero
 CALLER_FUNCTION_PROLOGUE()
-li           $t3,       98
+lb           $t3,  -8($fp)
+la           $t3,  -8($fp)
 sw           $t3,    ($sp)
 sub          $sp,      $sp,        4
-jal     print_char
+li           $t3,        5
+sw           $t3,    ($sp)
+sub          $sp,      $sp,        4
+li           $t3,        5
+sw           $t3,    ($sp)
+sub          $sp,      $sp,        4
+jal     print_string
 CALLER_FUNCTION_EPILOGUE()
 add          $t3,      $v0,    $zero
 CALLER_FUNCTION_PROLOGUE()
@@ -410,7 +446,7 @@ add          $t3,      $v0,    $zero
 ENDIF_00002:
 
 ENDIF_00000:
-la           $t0,    ($fp)
+la           $t0, -16($fp)
 lw           $t1,    ($t0)
 add          $t3,      $t1,    $zero
 addiu        $t1,      $t1,        1
@@ -444,10 +480,19 @@ CALLEE_FUNCTION_EPILOGUE()
 print_string:
 CALLEE_FUNCTION_PROLOGUE(0)
 # load $v0 with the value for the print string syscall
-li           $v0,        4
+li           $v0,       11
 # the first (and only) argument is the base address of the null terminated ascii string
-la           $a0,    ($fp)
+lw           $s0,    ($fp)
+lb           $a0,   0($s0)
+
+print_string_loop_start:
+beqz         $a0, print_string_loop_end
 syscall 
+addi         $s0,      $s0,       -1
+lb           $a0,   0($s0)
+j       print_string_loop_start
+
+print_string_loop_end:
 CALLEE_FUNCTION_EPILOGUE()
 
 print_float:

@@ -115,9 +115,6 @@ class MipsGenerator(object):
         self.mips_output.extend(mm.CALLER_FUNCTION_PROLOGUE_MACRO.definition())
         self.mips_output.extend(mm.CALLER_FUNCTION_EPILOGUE_MACRO.definition())
 
-        self.mips_output.extend(mm.LAND_MACRO.definition())
-        self.mips_output.extend(mm.LOR_MACRO.definition())
-
         for instruction in self.source_tac:
 
             assert (isinstance(instruction, TacInstruction))

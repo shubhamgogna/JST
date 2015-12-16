@@ -4,12 +4,12 @@
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-#  
+#
 # JST is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-#  
+#
 # You should have received a copy of the GNU General Public License
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -25,7 +25,7 @@ class TestMipsGenerator(unittest.TestCase):
         self.compiler_state = CompilerState(print_productions=False)
         self.enable_debug(False)
 
-        self.generator = generation.MipsGenerator(self.compiler_state, inject_source = True, inject_3ac=True)
+        self.generator = generation.MipsGenerator(self.compiler_state, inject_source=True, inject_3ac=True)
 
     def tearDown(self):
         self.compiler_state.teardown()

@@ -1113,9 +1113,8 @@ class JSTParser(object):
 
         # If the initializer is a string
         if isinstance(t[1], str):
-            t[0] = [x for x in t[1]]
-            t[0][-1] = '\0'
-            t[0] = t[0][1:]
+            t[0] = [Constant(Constant.CHAR, ord(x), linerange=(t.lineno(1), t.lineno(1))) for x in t[1][1:-1]]
+            t[0].append(Constant(Constant.CHAR, 0, linerange=(t.lineno(1), t.lineno(1))))
         else:
             t[0] = t[1]
 

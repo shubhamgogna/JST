@@ -4,12 +4,12 @@
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-#  
+#
 # JST is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-#  
+#
 # You should have received a copy of the GNU General Public License
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -129,31 +129,3 @@ __caller_function_epilogue_body = [
 CALLER_FUNCTION_EPILOGUE_MACRO = Macro(name='CALLER_FUNCTION_EPILOGUE',
                                        args=None,
                                        body=__caller_function_epilogue_body)
-
-
-__logical_and_false_label = '__LAND_FALSE'
-__logical_and_end_label = '__LAND_END'
-__logical_and_body = [
-    mi.BEQZ(mi.macro_arg('lhs'), __logical_and_false_label),
-    mi.BEQZ(mi.macro_arg('rhs'), __logical_and_false_label),
-    mi.LI(mr.A2, 1),
-    mi.J(__logical_and_end_label),
-    mi.LABEL(__logical_and_false_label),
-    mi.LI(mr.A2, 0),
-    mi.LABEL(__logical_and_end_label)
-]
-LAND_MACRO = Macro(name='__LAND', args=['lhs', 'rhs'], body=__logical_and_body)
-
-
-__logical_or_true_label = '__LOR_TRUE'
-__logical_or_end_label = '__LOR_END'
-__logical_and_body = [
-    mi.BEQZ(mi.macro_arg('lhs'), __logical_or_true_label),
-    mi.BEQZ(mi.macro_arg('rhs'), __logical_or_true_label),
-    mi.LI(mr.A2, 0),
-    mi.J(__logical_or_end_label),
-    mi.LABEL(__logical_or_true_label),
-    mi.LI(mr.A2, 1),
-    mi.LABEL(__logical_or_end_label)
-]
-LOR_MACRO = Macro(name='__LOR', args=['lhs', 'rhs'], body=__logical_and_body)

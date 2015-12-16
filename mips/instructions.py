@@ -238,12 +238,12 @@ class LA(BaseMipsInstruction):
 
 class LB(BaseMipsInstruction):
     def __init__(self, register, memory_address):
-        super(LB, self).__init__(lw, register, memory_address)
+        super(LB, self).__init__(lb, register, memory_address)
 
 
 class LHW(BaseMipsInstruction):
     def __init__(self, register, memory_address):
-        super(LHW, self).__init__(lw, register, memory_address)
+        super(LHW, self).__init__(lhw, register, memory_address)
 
 
 class LW(BaseMipsInstruction):
@@ -257,12 +257,12 @@ class LWC1(BaseMipsInstruction):
 
 class SB(BaseMipsInstruction):
     def __init__(self, register, memory_address):
-        super(SB, self).__init__(sw, register, memory_address)
+        super(SB, self).__init__(sb, register, memory_address)
 
 
 class SHW(BaseMipsInstruction):
     def __init__(self, register, memory_address):
-        super(SHW, self).__init__(sw, register, memory_address)
+        super(SHW, self).__init__(shw, register, memory_address)
 
 
 class SW(BaseMipsInstruction):
