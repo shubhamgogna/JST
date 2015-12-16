@@ -81,7 +81,7 @@ class ArrayReference(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, get_rval=True, include_source=False):
-        output = [SOURCE(self.linerange[0], self.linerange[1])]
+        _3ac = [SOURCE(self.linerange[0], self.linerange[1])]
         dim_count = len(self.symbol.array_dims)
 
         if dim_count is 0:
@@ -90,32 +90,40 @@ class ArrayReference(BaseAstNode):
         # Initialize offset_reg to the value of the first subscript
         subscript_tac = self.subscripts[0].to_3ac(get_rval=True)
         if '3ac' in subscript_tac:
-            output.extend(subscript_tac['3ac'])
+            _3ac.extend(subscript_tac['3ac'])
 
         # The first subscript is the initial value for the subscript
         offset_reg = subscript_tac['rvalue']
 
-        # range(a,b) is (inclusive, exclusive)
+        # range(a,b) is [inclusive, exclusive)
         for i in range(0, dim_count - 1):
             if self.symbol.is_parameter:
-                # allocate a new ticked to get the address offset from FP
-                addr_reg = tickets.INT_REGISTER_TICKETS.get()
-                output.append(LA(addr_reg,taci.Address(int_literal=self.symbol.activation_frame_offset + i + 2,
-                                               register=tacr.FP)))
-                output.append(MUL(offset_reg, offset_reg, addr_reg))
-            else:
-                output.append(MULIU(offset_reg, offset_reg, self.symbol.array_dims[i + 1]))
 
+                # Allocate a new ticket to get the address offset from FP
+                dimension_reg = tickets.INT_REGISTER_TICKETS.get()
+                _3ac.append(LOAD(dimension_reg,
+                                   taci.Address(int_literal=self.symbol.activation_frame_offset + i + 2,
+                                                register=tacr.FP),
+                                   EXPECTED_WORD_SIZE))
+                _3ac.append(MUL(offset_reg, offset_reg, dimension_reg))
+                _3ac.append(KICK(dimension_reg))
+
+            else:
+                _3ac.append(MULI(offset_reg, offset_reg, self.symbol.array_dims[i + 1]))
+
+            # Add the 3AC to load the subscript
             subscript_tac = self.subscripts[i + 1].to_3ac(get_rval=True)
             if '3ac' in subscript_tac:
-                output.extend(subscript_tac['3ac'])
+                _3ac.extend(subscript_tac['3ac'])
 
-            output.append(ADDU(offset_reg, offset_reg, subscript_tac['rvalue']))
-            output.append(KICK(subscript_tac['rvalue']))
+            # Add the subscript to the offset
+            _3ac.append(ADDU(offset_reg, offset_reg, subscript_tac['rvalue']))
+
+            # Kick the temporary
+            _3ac.append(KICK(subscript_tac['rvalue']))
 
         # Offset by symbol size
-        output.append(MULIU(offset_reg, offset_reg, self.symbol.size_in_bytes()))
-        # output.append(MULIU(offset_reg, offset_reg, EXPECTED_WORD_SIZE))
+        _3ac.append(MULI(offset_reg, offset_reg, self.symbol.size_in_bytes()))
 
         # Allocate two new registers
         base_address_reg = tickets.INT_REGISTER_TICKETS.get()
@@ -124,45 +132,47 @@ class ArrayReference(BaseAstNode):
         # Check bounds
         if self.symbol.is_parameter:
 
-            output.append(
-                LOAD(base_address_reg, taci.Address(int_literal=self.symbol.activation_frame_offset, register=tacr.FP),
-                     EXPECTED_WORD_SIZE))
-            output.append(LOAD(end_address_reg,
-                               taci.Address(int_literal=self.symbol.activation_frame_offset + 4, register=tacr.FP),
-                               EXPECTED_WORD_SIZE))
-            # output.append(BOUND(offset_reg, base_address_reg, end_address_reg))
+            _3ac.append(LOAD(
+                    base_address_reg,
+                    taci.Address(int_literal=self.symbol.activation_frame_offset, register=tacr.FP),
+                    EXPECTED_WORD_SIZE))
+            _3ac.append(LOAD(
+                    end_address_reg,
+                    taci.Address(int_literal=self.symbol.activation_frame_offset - EXPECTED_WORD_SIZE, register=tacr.FP),
+                    EXPECTED_WORD_SIZE))
+            _3ac.append(BOUND(offset_reg, base_address_reg, end_address_reg))
 
         else:
 
+            # Compute the size in bytes for the entire array
             array_size_in_bytes = self.symbol.array_size * self.symbol.size_in_bytes()
-            # array_size_in_bytes = self.symbol.array_size * EXPECTED_WORD_SIZE
 
             if self.symbol.global_memory_location:
-                output.append(LI(base_address_reg, self.symbol.global_memory_location))
-                output.append(LI(end_address_reg, self.symbol.global_memory_location + array_size_in_bytes))
-                output.append(ADDIU(offset_reg, offset_reg, self.symbol.global_memory_location))
+
+                _3ac.append(LI(base_address_reg, self.symbol.global_memory_location))
+                _3ac.append(LI(end_address_reg, self.symbol.global_memory_location + array_size_in_bytes))
+                _3ac.append(ADDIU(offset_reg, offset_reg, self.symbol.global_memory_location))
+
             else:
-                output.append(
-                    LA(base_address_reg, taci.Address(int_literal=self.symbol.activation_frame_offset,
-                                                      register=tacr.FP)))
-                output.append(LA(end_address_reg,
-                                 taci.Address(int_literal=self.symbol.activation_frame_offset + array_size_in_bytes,
-                                              register=tacr.FP)))
-                output.append(ADD(offset_reg, offset_reg, base_address_reg))
+                _3ac.append(LA(
+                        base_address_reg,
+                        taci.Address(int_literal=self.symbol.activation_frame_offset, register=tacr.FP)))
+                _3ac.append(ADDIU(end_address_reg, base_address_reg, array_size_in_bytes))
+                _3ac.append(ADD(offset_reg, offset_reg, base_address_reg))
 
-            output.append(BOUND(offset_reg, base_address_reg, end_address_reg))
-
+            # Check bounds
+            _3ac.append(BOUND(offset_reg, base_address_reg, end_address_reg))
 
         # Kick the temporaries
-        output.append(KICK(base_address_reg))
-        output.append(KICK(end_address_reg))
+        _3ac.append(KICK(base_address_reg))
+        _3ac.append(KICK(end_address_reg))
 
+        # Return the appropriate dict
         if get_rval:
-            output.append(LOAD(offset_reg, taci.Address(register=offset_reg), self.symbol.size_in_bytes()))
-            # output.append(LOAD(offset_reg, taci.Address(register=offset_reg), EXPECTED_WORD_SIZE))
-            return {'3ac': output, 'rvalue': offset_reg}
+            _3ac.append(LOAD(offset_reg, taci.Address(register=offset_reg), self.symbol.size_in_bytes()))
+            return {'3ac': _3ac, 'rvalue': offset_reg}
         else:
-            return {'3ac': output, 'lvalue': offset_reg}
+            return {'3ac': _3ac, 'lvalue': offset_reg}
 
 
 class Assignment(BaseAstNode):
@@ -192,37 +202,28 @@ class Assignment(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, get_rval=True, include_source=False):
-        output = [SOURCE(self.linerange[0], self.linerange[1])]
+        _3ac = [SOURCE(self.linerange[0], self.linerange[1])]
 
-        # get memory address of lvalue by calling to3ac on lvalue
+        # Get memory address of lvalue by calling to3ac on lvalue
         left = self.lvalue.to_3ac(get_rval=False)
         lval = left['lvalue']
         if '3ac' in left:
-            output.extend(left['3ac'])
+            _3ac.extend(left['3ac'])
 
-        # get memory address of rvalue by calling to3ac on rvalue
+        # Get rvalue by calling to3ac on rvalue
         right = self.rvalue.to_3ac(get_rval=True)
         rval = right['rvalue']
         if '3ac' in right:
-            output.extend(right['3ac'])
+            _3ac.extend(right['3ac'])
 
-        # if values aren't the same type, get cast node. new value will be in rval.
+        # Store the rvalue at the lvalue address
+        _3ac.append(STORE(
+                taci.Register(rval),
+                taci.Address(register=lval),
+                self.lvalue.size_in_bytes()))
+        _3ac.append(KICK(lval))
 
-        # TODO: Fix this??
-        # # load rvalue into register - does this need to happen or not?
-        # is there a 3ac command for this?
-        # value = register_allocation_table[rval]
-
-        # TODO: Fix this??
-        # call 3ac instruction to load value of rval's reg to lval's memory location
-        # Note: not sure how this assign thing is supposed to be used....
-        #       right now both are registers, should the rvalue be the actual value? I don't think so but not sure
-        size = self.lvalue.size_in_bytes()
-        output.append(STORE(taci.Register(rval), taci.Address(register=lval), size))
-        # output.append(STORE(taci.Register(rval), taci.Address(register=lval), EXPECTED_WORD_SIZE))
-        output.append(KICK(lval))
-
-        return {'3ac': output, 'rvalue': rval}
+        return {'3ac': _3ac, 'rvalue': rval}
 
 
 class BinaryOperator(BaseAstNode):
@@ -258,16 +259,10 @@ class BinaryOperator(BaseAstNode):
 
     @property
     def children(self):
-        children = []
-        children.append(self.lvalue)
-        children.append(self.rvalue)
+        children = [self.lvalue, self.rvalue]
         return tuple(children)
 
     def to_3ac(self, get_rval=True, include_source=False):
-        # raise NotImplementedError('Please implement the {}.to_3ac(self) method.'.format(type(self).__name__))
-
-        # since calculating value, should only return rvalue
-
         output = [SOURCE(self.linerange[0], self.linerange[1])]
 
         # get memory address of lvalue by calling to3ac on lvalue
@@ -490,45 +485,34 @@ class Declaration(BaseAstNode):
         return tuple(children)
 
     def to_3ac(self, include_source=False):
-        output = [SOURCE(self.linerange[0], self.linerange[1])]
+        _3ac = [SOURCE(self.linerange[0], self.linerange[1])]
 
         if self.initializer is None:
-            return {'3ac': output}
-
-
+            return {'3ac': _3ac}
 
         if self.symbol.global_memory_location:
             if self.initializer:
                 if not self.initializer.immutable:
                     raise Exception('Initializers to global objects must be constants.')
 
-                output.append(GLOBLDECL(self.symbol.global_memory_location, WORD_SPEC, self.initializer.value))
+                _3ac.append(GLOBLDECL(self.symbol.global_memory_location, WORD_SPEC, self.initializer.value))
 
             else:
-                output.append(GLOBLDECL(self.symbol.global_memory_location, WORD_SPEC))
+                _3ac.append(GLOBLDECL(self.symbol.global_memory_location, WORD_SPEC))
 
-            return {'3ac': output}
+            return {'3ac': _3ac}
 
-
-
-
-
-        # get a register that points to the variable's memory so we can initialize it
+        # Get a register that points to the variable's memory so we can initialize it
         lvalue = tickets.INT_REGISTER_TICKETS.get()
         if self.symbol.global_memory_location:
             base_address = self.symbol.global_memory_location
-            output.append(LI(lvalue, base_address))
-
+            _3ac.append(LI(lvalue, base_address))
         else:
-            # remember, stacks grow down, so go below FP
-            output.append(LA(lvalue, taci.Address(int_literal=-self.symbol.activation_frame_offset, register=tacr.FP)))
+            # Remember, stacks grow down, so go below FP
+            _3ac.append(LA(lvalue, taci.Address(int_literal=-self.symbol.activation_frame_offset, register=tacr.FP)))
 
-
+        # If the initializer is a list (for arrays)
         if isinstance(self.initializer, list):
-
-            # Initialize offset with base address
-            offset_reg = tickets.INT_REGISTER_TICKETS.get()
-            output.append(ADDU(offset_reg, lvalue, taci.Register(tacr.ZERO)))
 
             # Loop through initializer and store
             self.initializer = self.initializer[:min(len(self.initializer), self.symbol.array_dims[0])]
@@ -537,54 +521,39 @@ class Declaration(BaseAstNode):
                 # Load the value
                 item_tac = item.to_3ac(get_rval=True)
                 if '3ac' in item_tac:
-                    output.extend(item_tac['3ac'])
-
-                    # Don't kick until after stored!!!
-                    # # Since the result is unused after this point, kick it out
-                    # if 'rvalue' in item_tac:
-                    #     output.append(KICK(item_tac['rvalue']))
-                    # if 'lvalue' in item_tac:
-                    #     output.append(KICK(item_tac['lvalue']))
+                    _3ac.extend(item_tac['3ac'])
 
                 # Store the value into memory, kick the register, and move to next
-                output.append(STORE(item_tac['rvalue'], taci.Address(register=offset_reg), self.symbol.size_in_bytes()))
-                # output.append(STORE(item_tac['rvalue'], taci.Address(register=offset_reg), EXPECTED_WORD_SIZE))
+                _3ac.append(STORE(item_tac['rvalue'], taci.Address(register=lvalue), self.symbol.size_in_bytes()))
 
+                # Kick the temporaries
                 if 'rvalue' in item_tac:
-                    output.append(KICK(item_tac['rvalue']))
+                    _3ac.append(KICK(item_tac['rvalue']))
                 if 'lvalue' in item_tac:
-                    output.append(KICK(item_tac['lvalue']))
-                output.append(ADDIU(offset_reg, offset_reg, self.symbol.size_in_bytes()))
-                # output.append(ADDIU(offset_reg, offset_reg, EXPECTED_WORD_SIZE))
+                    _3ac.append(KICK(item_tac['lvalue']))
 
-            # Kick the offset and base address register
-            output.append(KICK(lvalue))
-            output.append(KICK(offset_reg))
+                # Go to the next index / offset
+                _3ac.append(ADDIU(lvalue, lvalue, self.symbol.size_in_bytes()))
 
         else:
 
+            # Load the value
             item_tac = self.initializer.to_3ac(get_rval=True)
             if '3ac' in item_tac:
-                output.extend(item_tac['3ac'])
-
-                # Since the result is unused after this point, kick it out
-                # if 'rvalue' in item_tac:
-                #     output.append(KICK(item_tac['rvalue']))
-                # if 'lvalue' in item_tac:
-                #     output.append(KICK(item_tac['lvalue']))
+                _3ac.extend(item_tac['3ac'])
 
             # Store the value into memory, kick the register,
-            output.append(STORE(item_tac['rvalue'], taci.Address(register=lvalue), self.symbol.size_in_bytes()))
-            # output.append(STORE(item_tac['rvalue'], taci.Address(register=lvalue), EXPECTED_WORD_SIZE))
+            _3ac.append(STORE(item_tac['rvalue'], taci.Address(register=lvalue), self.symbol.size_in_bytes()))
 
+            # Kick the temporaries
             if 'rvalue' in item_tac:
-                output.append(KICK(item_tac['rvalue']))
+                _3ac.append(KICK(item_tac['rvalue']))
             if 'lvalue' in item_tac:
-                output.append(KICK(item_tac['lvalue']))
+                _3ac.append(KICK(item_tac['lvalue']))
 
         # Kick the base address
-        output.append(KICK(lvalue))
-        return {'3ac': output}
+        _3ac.append(KICK(lvalue))
+        return {'3ac': _3ac}
 
 
 class FileAST(BaseAstNode):
@@ -603,64 +572,61 @@ class FileAST(BaseAstNode):
 
     @property
     def children(self):
-        childrens = []
-        childrens.extend(self.external_declarations)
-        return tuple(childrens)
+        children = []
+        children.extend(self.external_declarations)
+        return tuple(children)
 
-    def to_3ac(self, include_source=True, get_output_as_str=False):
-        output = []
-
+    def to_3ac(self, include_source=False):
+        _3ac = []
         global_data_declarations = []
         function_definitions = []
+
         for external_declaration in self.external_declarations:
             if isinstance(external_declaration, FunctionDefinition):
                 function_definitions.append(external_declaration)
             else:
                 global_data_declarations.append(external_declaration)
 
-        output.append(DATA())
+        # Start the data section
+        _3ac.append(DATA())
         for external_declaration in global_data_declarations:
             result = external_declaration.to_3ac()
-            output.extend(result['3ac'])
+            _3ac.extend(result['3ac'])
 
-        output.append(TEXT())
-        # insert the call to main
-        output.append(JAL(self.compiler_state.main_function.identifier))
-        # TODO: craft a function call node and use that
+        # Start the text section
+        _3ac.append(TEXT())
 
-        # output.append(CALL_PROC(self.compiler_state.main_function.identifier,
-        #                         self.compiler_state.main_function.activation_frame_size))
-        # if we did the argc, argv versions, that stuff would go here
+        # Insert the call to main
+        _3ac.append(JAL(self.compiler_state.main_function.identifier))
 
-        # output.append(CORP_LLAC(self.compiler_state.main_function.activation_frame_size))
-        output.append(BR('PROG_END'))
+        # End the call to main
+        _3ac.append(BR('PROG_END'))
 
         for function_definition in function_definitions:
             result = function_definition.to_3ac()
-            output.extend(result['3ac'])
+            _3ac.extend(result['3ac'])
 
-        output.append(LABEL('PROG_END'))
+        # Add a program end label
+        _3ac.append(LABEL('PROG_END'))
 
-        if not get_output_as_str:
-            return output
-
-        else:
-            output_as_str = ''
-            last_line = 0
-            for item in output:
-                # print('here', item, type(item))
-                if include_source and item.instruction == 'SOURCE':
+        # Convert 3AC to a string
+        _3ac_as_str = ''
+        last_line = 0
+        for item in _3ac:
+            if item.instruction == 'SOURCE':
+                if include_source:
                     if item.dest > last_line:
                         for lineno in range(last_line, item.dest):
-                            output_as_str += '# ' + self.compiler_state.source_lines[lineno]
+                            _3ac_as_str += '# ' + self.compiler_state.source_lines[lineno]
                         last_line = item.dest
-                else:
-                    output_as_str += str(item)
+            else:
+                _3ac_as_str += str(item)
 
+        if include_source:
             for lineno in range(last_line, len(self.compiler_state.source_lines)):
                 print('# ' + self.compiler_state.source_lines[lineno])
 
-            return output, output_as_str
+        return _3ac, _3ac_as_str
 
     def to_graph_viz_str(self):
         return 'digraph {\n' + super(FileAST, self).to_graph_viz_str() + '}'

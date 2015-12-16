@@ -377,19 +377,6 @@ def SUBIU(difference, minuend, subtrahend):
     return TacInstruction(instructions.SUBIU, difference, minuend, subtrahend)
 
 
-def MULIU(product, multiplicand, multiplier):
-    """
-    args:
-        sum: the register where the addition result is stored.
-        augend: the left operand of the addition.
-        addend: the right operand of the addition.
-
-    function:
-        Performs basic addition.
-    """
-    return TacInstruction(instructions.MULIU, product, multiplicand, multiplier)
-
-
 def DIVIU(quotient, dividend, divisor):
     """
     args:
