@@ -191,13 +191,40 @@ addiu        $sp,      $sp,        4
 lw           $ra,    ($sp)
 .end_macro
 
+.macro __LAND (%lhs, %rhs)
+beqz        %lhs, __LAND_FALSE
+beqz        %rhs, __LAND_FALSE
+li           $a2,        1
+j       __LAND_END
+
+__LAND_FALSE:
+li           $a2,        0
+
+__LAND_END:
+.end_macro
+
+.macro __LOR (%lhs, %rhs)
+beqz        %lhs, __LOR_TRUE
+beqz        %rhs, __LOR_TRUE
+li           $a2,        0
+j       __LOR_END
+
+__LOR_TRUE:
+li           $a2,        1
+
+__LOR_END:
+.end_macro
+
+
 .data
 SPILL_MEMORY: .space 64
+
 .text
 add          $fp,      $sp,    $zero
 add          $a0,      $fp,    $zero
 jal         main
 j       PROG_END
+
 main:
 CALLEE_FUNCTION_PROLOGUE(3)
 la           $t0,    ($fp)
@@ -212,33 +239,67 @@ sw           $t1,    ($t0)
 la           $t0,    ($fp)
 li           $t1,        0
 sw           $t1,    ($t0)
+
 LOOP_CONDITION_00000:
 lw           $t1,    ($fp)
 li           $t0,        5
 sle          $t2,      $t1,      $t0
 bne          $t2,    $zero, LOOP_BODY_00000
 j       LOOP_EXIT_00000
+
 LOOP_BODY_00000:
+
 LOOP_CONDITION_00001:
 lw           $t0,  -4($fp)
 li           $t1,       15
 sle          $t3,      $t0,      $t1
 bne          $t3,    $zero, LOOP_BODY_00001
 j       LOOP_EXIT_00001
+
 LOOP_BODY_00001:
 j       LOOP_BODY_00002
+
 LOOP_CONDITION_00002:
 lw           $t1,  -8($fp)
 li           $t0,       20
 sle          $t4,      $t1,      $t0
 bne          $t4,    $zero, LOOP_BODY_00002
 j       LOOP_EXIT_00002
+
 LOOP_BODY_00002:
+CALLER_FUNCTION_PROLOGUE()
+li           $t0,      107
+sw           $t0,    ($sp)
+sub          $sp,      $sp,        4
+jal     print_char
+CALLER_FUNCTION_EPILOGUE()
+add          $t0,      $v0,    $zero
+CALLER_FUNCTION_PROLOGUE()
+li           $t0,       58
+sw           $t0,    ($sp)
+sub          $sp,      $sp,        4
+jal     print_char
+CALLER_FUNCTION_EPILOGUE()
+add          $t0,      $v0,    $zero
+CALLER_FUNCTION_PROLOGUE()
+li           $t0,       32
+sw           $t0,    ($sp)
+sub          $sp,      $sp,        4
+jal     print_char
+CALLER_FUNCTION_EPILOGUE()
+add          $t0,      $v0,    $zero
 CALLER_FUNCTION_PROLOGUE()
 lw           $t0,  -8($fp)
 sw           $t0,    ($sp)
 sub          $sp,      $sp,        4
 jal     print_int
+CALLER_FUNCTION_EPILOGUE()
+add          $t0,      $v0,    $zero
+CALLER_FUNCTION_PROLOGUE()
+li           $t0,       10
+sw           $t0,    ($sp)
+sub          $sp,      $sp,        4
+jal     print_char
 CALLER_FUNCTION_EPILOGUE()
 add          $t0,      $v0,    $zero
 la           $t0,  -8($fp)
@@ -247,12 +308,41 @@ add          $t5,      $t1,    $zero
 addiu        $t1,      $t1,        1
 sw           $t1,    ($t0)
 j       LOOP_CONDITION_00002
+
 LOOP_EXIT_00002:
+CALLER_FUNCTION_PROLOGUE()
+li           $t5,      106
+sw           $t5,    ($sp)
+sub          $sp,      $sp,        4
+jal     print_char
+CALLER_FUNCTION_EPILOGUE()
+add          $t5,      $v0,    $zero
+CALLER_FUNCTION_PROLOGUE()
+li           $t5,       58
+sw           $t5,    ($sp)
+sub          $sp,      $sp,        4
+jal     print_char
+CALLER_FUNCTION_EPILOGUE()
+add          $t5,      $v0,    $zero
+CALLER_FUNCTION_PROLOGUE()
+li           $t5,       32
+sw           $t5,    ($sp)
+sub          $sp,      $sp,        4
+jal     print_char
+CALLER_FUNCTION_EPILOGUE()
+add          $t5,      $v0,    $zero
 CALLER_FUNCTION_PROLOGUE()
 lw           $t5,  -4($fp)
 sw           $t5,    ($sp)
 sub          $sp,      $sp,        4
 jal     print_int
+CALLER_FUNCTION_EPILOGUE()
+add          $t5,      $v0,    $zero
+CALLER_FUNCTION_PROLOGUE()
+li           $t5,       10
+sw           $t5,    ($sp)
+sub          $sp,      $sp,        4
+jal     print_char
 CALLER_FUNCTION_EPILOGUE()
 add          $t5,      $v0,    $zero
 la           $t5,  -4($fp)
@@ -261,12 +351,41 @@ add          $t0,      $t1,    $zero
 addiu        $t1,      $t1,        1
 sw           $t1,    ($t5)
 j       LOOP_CONDITION_00001
+
 LOOP_EXIT_00001:
+CALLER_FUNCTION_PROLOGUE()
+li           $t0,      105
+sw           $t0,    ($sp)
+sub          $sp,      $sp,        4
+jal     print_char
+CALLER_FUNCTION_EPILOGUE()
+add          $t0,      $v0,    $zero
+CALLER_FUNCTION_PROLOGUE()
+li           $t0,       58
+sw           $t0,    ($sp)
+sub          $sp,      $sp,        4
+jal     print_char
+CALLER_FUNCTION_EPILOGUE()
+add          $t0,      $v0,    $zero
+CALLER_FUNCTION_PROLOGUE()
+li           $t0,       32
+sw           $t0,    ($sp)
+sub          $sp,      $sp,        4
+jal     print_char
+CALLER_FUNCTION_EPILOGUE()
+add          $t0,      $v0,    $zero
 CALLER_FUNCTION_PROLOGUE()
 lw           $t0,    ($fp)
 sw           $t0,    ($sp)
 sub          $sp,      $sp,        4
 jal     print_int
+CALLER_FUNCTION_EPILOGUE()
+add          $t0,      $v0,    $zero
+CALLER_FUNCTION_PROLOGUE()
+li           $t0,       10
+sw           $t0,    ($sp)
+sub          $sp,      $sp,        4
+jal     print_char
 CALLER_FUNCTION_EPILOGUE()
 add          $t0,      $v0,    $zero
 la           $t0,    ($fp)
@@ -275,11 +394,22 @@ add          $t5,      $t1,    $zero
 addiu        $t1,      $t1,        1
 sw           $t1,    ($t0)
 j       LOOP_CONDITION_00000
+
 LOOP_EXIT_00000:
 li           $t5,        0
 add          $v0,      $t5,    $zero
 CALLEE_FUNCTION_EPILOGUE()
 CALLEE_FUNCTION_EPILOGUE()
+
+print_char:
+CALLEE_FUNCTION_PROLOGUE(0)
+# load $v0 with the value for the print char syscall
+li           $v0,       11
+# the first (and only) argument is the value to print
+lw           $a0,    ($fp)
+syscall 
+CALLEE_FUNCTION_EPILOGUE()
+
 print_int:
 CALLEE_FUNCTION_PROLOGUE(0)
 # load $v0 with the value for the print int syscall
@@ -287,26 +417,27 @@ li           $v0,        1
 # the first (and only) argument is the value to print
 lw           $a0,    ($fp)
 syscall 
-# print a newline character for readability
-# 0x0D is CR or '\r' - 0x0A is LF for '\n'
-li           $v0,       11
-li           $a0,       10
-syscall 
 CALLEE_FUNCTION_EPILOGUE()
+
 print_string:
 CALLEE_FUNCTION_PROLOGUE(0)
-# load $v0 with the value for the print int syscall
+# load $v0 with the value for the print string syscall
 li           $v0,        4
 # the first (and only) argument is the base address of the null terminated ascii string
 la           $a0,    ($fp)
 syscall 
 CALLEE_FUNCTION_EPILOGUE()
+
 print_float:
 CALLEE_FUNCTION_PROLOGUE(0)
-# load $v0 with the value for the print int syscall
+# load $v0 with the value for the print float syscall
 li           $v0,        2
 # the first (and only) argument is the base address of the null terminated ascii string
 lwc1        $f12,    ($fp)
 syscall 
 CALLEE_FUNCTION_EPILOGUE()
+
 PROG_END:
+add          $a0,      $v0,    $zero
+li           $v0,       17
+syscall 
