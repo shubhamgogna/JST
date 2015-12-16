@@ -194,7 +194,7 @@ class MipsGenerator(object):
                     self._sub(instruction)
 
                 elif instruction.instruction == taci.MULU:
-                    self._multiply_unsigned=(instruction)
+                    self._multiply_unsigned(instruction)
 
                 elif instruction.instruction == taci.MUL:
                     self._multiply(instruction)
