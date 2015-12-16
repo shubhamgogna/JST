@@ -277,15 +277,22 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
 
                         // test do while loops
                         do{
-                            print_int(k);  // expect to see 15-20, then 21-25 interspersed with numbers from j's
+                            // expect to see 15-20, then 21-25 interspersed with numbers from js
+                            print_char('k'); print_char(':'); print_char(' '); print_int(k);
+                            print_char('\\n');
                             k++;
-                        }while( k <= 20 );
+                        } while( k <= 20 );
 
-                        print_int(j);       // expect to see 10-15 interspersed with the numbers from the k's do
+                        // expect to see 10-15 interspersed with the numbers from the ks do
+                        print_char('j'); print_char(':'); print_char(' '); print_int(j);
+                        print_char('\\n');
+
                         j++;
                     }
 
-                    print_int(i);   // expect to see 0-5
+                    // expect to see 0-5
+                    print_char('i'); print_char(':'); print_char(' '); print_int(i);
+                    print_char('\\n');
                 }
 
                 return 0;
@@ -293,6 +300,9 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
             """
         ast = self.compiler_state.parse(data)
         source_tac, i = ast.to_3ac()
+
+        print(i)
+        print('----------------------------------------------')
 
         self.generator.load(source_tac)
         self.generator.translate_tac_to_mips()
