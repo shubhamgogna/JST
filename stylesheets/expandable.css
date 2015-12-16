@@ -1,0 +1,19 @@
+/**
+ * Adapted from example at
+ * http://jsfiddle.net/hungerpain/eK8X5/7/
+ **/
+.collapse_container {
+    width:100%;
+}
+.collapse_container div {
+    width:100%;
+}
+.collapse_container .heading {
+    cursor: pointer;
+    font-weight: bold;
+    border-bottom: 1px solid black;
+}
+.collapse_container .content {
+    display: none;
+    padding : 0px;
+}
