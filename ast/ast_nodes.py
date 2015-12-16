@@ -281,6 +281,7 @@ class BinaryOperator(BaseAstNode):
 
         # TODO: NEED TO ADD IN OPTIONS BASED ON TYPE OF TICKET PULLED HERE
         # determine operator type and call correct 3ac instruction with registers
+
         if self.operator == '+':
             output.append(ADD(reg, lval, rval))
 
@@ -813,7 +814,7 @@ class FunctionDefinition(BaseAstNode):
                 parameter_size += symbol.size_in_bytes()
                 # parameter_size += EXPECTED_WORD_SIZE
 
-        # be wary of this, it seems to easy to be correct
+        # be wary of this, it seems too easy to be correct
         _tac.append(ENTER_PROC(local_variable_size=self.function_symbol.activation_frame_size - parameter_size))
 
         # Generate 3AC for body (always a compound statement)

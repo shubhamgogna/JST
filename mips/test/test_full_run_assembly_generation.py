@@ -582,25 +582,32 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
                 int j = 0;
                 int k = 0;
 
-                i = i + 10; print_int(i);      // prints 10
-                i = i - 2; print_int(i);       // prints 8
-                i = i * 2; print_int(i);       // prints 16
-                i = i / 4; print_int(i);       // prints 4
-                i = i % 3; print_int(i);       // prints 1
+                i = i + 10; print_int(i); print_char('\\n');     // prints 10
+                i = i - 2; print_int(i); print_char('\\n');      // prints 8
+                i = i * 2; print_int(i); print_char('\\n');      // prints 16
+                i = i / 4; print_int(i); print_char('\\n');      // prints 4
+                i = i % 3; print_int(i); print_char('\\n');      // prints 1
+                print_char('\\n');
 
-                j = i++; print_int(j); print_int(i);   // prints 1 and 2
-                j = ++i; print_int(j); print_int(i);   // prints 3 and 3
+                j = i++; print_int(j); print_char(' '); print_int(i); print_char('\\n');  // prints 1 and 2
+                j = ++i; print_int(j); print_char(' '); print_int(i); print_char('\\n');  // prints 3 and 3
+                print_char('\\n');
 
-                j = i--; print_int(j); print_int(i);   // prints 3 and 2
-                j = --i; print_int(j); print_int(i);   // prints 1 and 1
+                j = i--; print_int(j); print_char(' '); print_int(i); print_char('\\n');   // prints 3 and 2
+                j = --i; print_int(j); print_char(' '); print_int(i); print_char('\\n');   // prints 1 and 1
+                print_char('\\n');
 
-                //j += i; print_int(j); // prints 2
-                //j -= i; print_int(j); // prints 1
+                j += i; print_int(j); print_char('\\n'); // prints 2
+                j -= i; print_int(j); print_char('\\n'); // prints 1
+                print_char('\\n');
 
-                k = i = j; print_int(k); print_int(i); print_int(j); //prints 1 1 1
+                k = i = j;
+                // prints 1 1 1
+                print_int(k); print_char(' '); print_int(i); print_char(' '); print_int(j); print_char('\\n');
+                print_char('\\n');
 
-                //i = i && 0; print_int(i); // prints 0
-                //j = i || 5; print_int(j); // prints 1
+                i = i && 0; print_int(i); print_char('\\n'); // prints 0
+                j = i || 5; print_int(j); print_char('\\n'); // prints 1
 
                 return 0;
             }

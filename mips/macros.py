@@ -145,7 +145,7 @@ __logical_and_body = [
 LAND_MACRO = Macro(name='__LAND', args=['lhs', 'rhs'], body=__logical_and_body)
 
 
-__logical_or_true_label = '__LOR_FALSE'
+__logical_or_true_label = '__LOR_TRUE'
 __logical_or_end_label = '__LOR_END'
 __logical_and_body = [
     mi.BEQZ(mi.macro_arg('lhs'), __logical_or_true_label),

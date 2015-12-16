@@ -1567,7 +1567,15 @@ class JSTParser(object):
 
         cast_result, message = type_utils.can_assign(t[1].get_resulting_type(), t[3].get_resulting_type())
         if cast_result != type_utils.INCOMPATIBLE_TYPES:
-            t[0] = Assignment(t[2], t[1], t[3], linerange=(t.lineno(1), t.lineno(3)))
+
+            if t[2] == '=':
+                t[0] = Assignment(t[2], t[1], t[3], linerange=(t.lineno(1), t.lineno(3)))
+
+            else:
+                operator = t[2].replace('=', '')
+                binary_operation = BinaryOperator(operator, t[1], t[3], linerange=(t.lineno(1), t.lineno(3)))
+                t[0] = Assignment(t[2], t[1], binary_operation, linerange=(t.lineno(1), t.lineno(3)))
+
         else:
             tup = self.compiler_state.get_line_col_source(t.lineno(3), t.lexpos(3))
             raise CompileError(message, tup[0], tup[1], tup[2])

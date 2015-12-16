@@ -50,7 +50,7 @@ class TestMipsGenerator(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        source_tac = ast.to_3ac()
+        source_tac, tac_str = ast.to_3ac()
 
         print('---------------------------')
 
@@ -67,7 +67,7 @@ class TestMipsGenerator(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        source_tac = ast.to_3ac()
+        source_tac, tac_str = ast.to_3ac()
         # print(source_tac)
         print('---------------------------')
 
@@ -83,7 +83,7 @@ class TestMipsGenerator(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        source_tac = ast.to_3ac()
+        source_tac, tac_str = ast.to_3ac()
         # print(source_tac)
         print('---------------------------')
 
@@ -106,7 +106,7 @@ class TestMipsGenerator(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        source_tac = ast.to_3ac()
+        source_tac, tac_str = ast.to_3ac()
         # print(source_tac)
         print('---------------------------')
 
@@ -124,7 +124,7 @@ class TestMipsGenerator(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        source_tac = ast.to_3ac()
+        source_tac, tac_str = ast.to_3ac()
         # print(source_tac)
         print('---------------------------')
 
@@ -142,7 +142,7 @@ class TestMipsGenerator(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        source_tac = ast.to_3ac()
+        source_tac, tac_str = ast.to_3ac()
         # print(source_tac)
         print('---------------------------')
 
@@ -161,7 +161,7 @@ class TestMipsGenerator(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        source_tac = ast.to_3ac()
+        source_tac, tac_str = ast.to_3ac()
         # print(source_tac)
         print('---------------------------')
 
@@ -185,7 +185,7 @@ class TestMipsGenerator(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        source_tac = ast.to_3ac()
+        source_tac, tac_str = ast.to_3ac()
         # print(source_tac)
         print('---------------------------')
 
@@ -213,7 +213,7 @@ class TestMipsGenerator(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        source_tac = ast.to_3ac()
+        source_tac, tac_str = ast.to_3ac()
         # print(source_tac)
         print('---------------------------')
 
@@ -230,7 +230,7 @@ class TestMipsGenerator(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        source_tac = ast.to_3ac()
+        source_tac, tac_str = ast.to_3ac()
         # print(source_tac)
         print('---------------------------')
 
@@ -248,7 +248,7 @@ class TestMipsGenerator(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        source_tac = ast.to_3ac()
+        source_tac, tac_str = ast.to_3ac()
         # print(source_tac)
         print('---------------------------')
 
@@ -267,7 +267,7 @@ class TestMipsGenerator(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        source_tac = ast.to_3ac()
+        source_tac, tac_str = ast.to_3ac()
         # print(source_tac)
         print('---------------------------')
 
@@ -284,7 +284,7 @@ class TestMipsGenerator(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        source_tac = ast.to_3ac()
+        source_tac, tac_str = ast.to_3ac()
         # print(source_tac)
         print('---------------------------')
 
@@ -308,7 +308,7 @@ class TestMipsGenerator(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        source_tac = ast.to_3ac()
+        source_tac, tac_str = ast.to_3ac()
         # print(source_tac)
         print('---------------------------')
 
@@ -330,7 +330,7 @@ class TestMipsGenerator(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        source_tac = ast.to_3ac()
+        source_tac, tac_str = ast.to_3ac()
         # print(source_tac)
         print('---------------------------')
 
@@ -351,7 +351,7 @@ class TestMipsGenerator(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        source_tac = ast.to_3ac()
+        source_tac, tac_str = ast.to_3ac()
         # print(source_tac)
         print('---------------------------')
 
@@ -395,7 +395,7 @@ class TestMipsGenerator(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(test_program)
-        source_tac = ast.to_3ac()
+        source_tac, tac_str = ast.to_3ac()
         # print(source_tac)
         print('---------------------------')
 
@@ -432,7 +432,7 @@ class TestMipsGenerator(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(test_program)
-        source_tac = ast.to_3ac()
+        source_tac, tac_str = ast.to_3ac()
         # print(source_tac)
         print('---------------------------')
 
@@ -461,7 +461,7 @@ class TestMipsGenerator(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(test_program)
-        source_tac = ast.to_3ac()
+        source_tac, tac_str = ast.to_3ac()
         # print(source_tac)
         print('---------------------------')
 
@@ -469,5 +469,23 @@ class TestMipsGenerator(unittest.TestCase):
         self.generator.translate_tac_to_mips()
         print(self.generator.dumps())
 
+
+    def test_land_and_lor(self):
+        test_program = """
+            int main() {
+              int x = 5;
+              x = x && 5;
+
+              return 0;
+            }
+            """
+        ast = self.compiler_state.parse(test_program)
+        source_tac, tac_str = ast.to_3ac()
+        # print(source_tac)
+        print('---------------------------')
+
+        self.generator.load(source_tac)
+        self.generator.translate_tac_to_mips()
+        print(self.generator.dumps())
 
 

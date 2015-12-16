@@ -120,6 +120,7 @@ class MipsGenerator(object):
         self.mips_output.extend(mm.LOR_MACRO.definition())
 
         for instruction in self.source_tac:
+
             assert (isinstance(instruction, TacInstruction))
             if instruction.instruction == taci.SOURCE:
                 self._source(instruction.dest)
@@ -270,6 +271,7 @@ class MipsGenerator(object):
         self.mips_output.extend(library_functions.PrintStringDefinition.get_mips())
         self.mips_output.extend(library_functions.PrintFloatDefinition.get_mips())
 
+        # add the end of the program, including returning the result of main
         self.mips_output.append(end_of_program_label)
         self.mips_output.append(mi.ADD(mr.A0, mr.V0, mr.ZERO))
         self.mips_output.append(mi.LI(mr.V0, 17))
@@ -469,16 +471,16 @@ class MipsGenerator(object):
         dividend = self.get_resulting_argument(t.src1)
         divisor = self.get_resulting_argument(t.src2)
 
-        # self.mips_output.append(mm.LAND.call(dividend, divisor))
-        # self.mips_output.append(mi.ADD(result, mr.A2, mr.ZERO))
+        self.mips_output.append(mm.LAND_MACRO.call(dividend, divisor))
+        self.mips_output.append(mi.ADD(result, mr.A2, mr.ZERO))
 
     def _logical_or(self, t):
         result = self.get_resulting_argument(t.dest)
         dividend = self.get_resulting_argument(t.src1)
         divisor = self.get_resulting_argument(t.src2)
 
-        # self.mips_output.append(mm.LOR.call(dividend, divisor))
-        # self.mips_output.append(mi.ADD(result, mr.A2, mr.ZERO))
+        self.mips_output.append(mm.LOR_MACRO.call(dividend, divisor))
+        self.mips_output.append(mi.ADD(result, mr.A2, mr.ZERO))
 
 
     def _equality(self, t):
