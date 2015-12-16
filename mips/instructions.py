@@ -148,10 +148,16 @@ class DATA(Directive):
     def __init__(self):
         super(DATA, self).__init__('data')
 
+    def __str__(self):
+        return '\n.data'
+
 
 class TEXT(Directive):
     def __init__(self):
         super(TEXT, self).__init__('data')
+
+    def __str__(self):
+        return '\n.text'
 
 
 #
@@ -194,7 +200,7 @@ class LABEL(BaseMipsInstruction):
         super(LABEL, self).__init__('label', label)
 
     def __str__(self):
-        return '{}:'.format(self.slot_0)
+        return '\n{}:'.format(self.slot_0)
 
 
 #
@@ -340,6 +346,10 @@ class JR(BaseMipsInstruction):
 class BNE(BaseMipsInstruction):
     def __init__(self, src1, src2, target):
         super(BNE, self).__init__('bne', src1, src2, target)
+
+class BEQZ(BaseMipsInstruction):
+    def __init__(self, value, target):
+        super(BEQZ, self).__init__('beqz', value, target)
 
 
 #

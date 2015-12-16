@@ -2203,7 +2203,6 @@ class JSTParser(object):
     # Output: Returns an object representing the (constant) result of the operation.
     @staticmethod
     def perform_unary_operation(operator: str, operand: Constant):
-        #
         value = operand.value if type(operand) is Constant else operand
         if operator == '-':
             return -value

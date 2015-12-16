@@ -129,3 +129,31 @@ __caller_function_epilogue_body = [
 CALLER_FUNCTION_EPILOGUE_MACRO = Macro(name='CALLER_FUNCTION_EPILOGUE',
                                        args=None,
                                        body=__caller_function_epilogue_body)
+
+
+__logical_and_false_label = '__LAND_FALSE'
+__logical_and_end_label = '__LAND_END'
+__logical_and_body = [
+    mi.BEQZ(mi.macro_arg('lhs'), __logical_and_false_label),
+    mi.BEQZ(mi.macro_arg('rhs'), __logical_and_false_label),
+    mi.LI(mr.A2, 1),
+    mi.J(__logical_and_end_label),
+    mi.LABEL(__logical_and_false_label),
+    mi.LI(mr.A2, 0),
+    mi.LABEL(__logical_and_end_label)
+]
+LAND_MACRO = Macro(name='__LAND', args=['lhs', 'rhs'], body=__logical_and_body)
+
+
+__logical_or_true_label = '__LOR_FALSE'
+__logical_or_end_label = '__LOR_END'
+__logical_and_body = [
+    mi.BEQZ(mi.macro_arg('lhs'), __logical_or_true_label),
+    mi.BEQZ(mi.macro_arg('rhs'), __logical_or_true_label),
+    mi.LI(mr.A2, 0),
+    mi.J(__logical_or_end_label),
+    mi.LABEL(__logical_or_true_label),
+    mi.LI(mr.A2, 1),
+    mi.LABEL(__logical_or_end_label)
+]
+LOR_MACRO = Macro(name='__LOR', args=['lhs', 'rhs'], body=__logical_and_body)
