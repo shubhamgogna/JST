@@ -156,7 +156,7 @@ class VariableSymbol(Symbol):
             # load the register with the variable's value
 
             if self.immutable:
-                output.append(tac.LOAD(value, taci.Immediate(self.value), self.size_in_bytes()))
+                output.append(tac.LI(value, taci.Immediate(self.value)))
 
 
             if self.global_memory_location:

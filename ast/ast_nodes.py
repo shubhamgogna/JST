@@ -538,8 +538,8 @@ class Declaration(BaseAstNode):
                 if 'lvalue' in item_tac:
                     _3ac.append(KICK(item_tac['lvalue']))
 
-                # Go to the next index / offset
-                _3ac.append(ADDIU(lvalue, lvalue, self.symbol.size_in_bytes()))
+                # Go to the next index / offset by subtracting one element size
+                _3ac.append(ADDI(lvalue, lvalue, -self.symbol.size_in_bytes()))
 
         else:
 
@@ -623,14 +623,14 @@ class FileAST(BaseAstNode):
                 if include_source:
                     if item.dest > last_line:
                         for lineno in range(last_line, item.dest):
-                            _3ac_as_str += '# ' + self.compiler_state.source_lines[lineno]
+                            _3ac_as_str += '# ' + self.compiler_state.source_lines[lineno] + '\n'
                         last_line = item.dest
             else:
-                _3ac_as_str += str(item)
+                _3ac_as_str += str(item) + '\n'
 
         if include_source:
             for lineno in range(last_line, len(self.compiler_state.source_lines)):
-                print('# ' + self.compiler_state.source_lines[lineno])
+                print('# ' + self.compiler_state.source_lines[lineno] + '\n')
 
         return _3ac, _3ac_as_str
 
