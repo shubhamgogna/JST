@@ -49,64 +49,73 @@
       <div><h3><span>Input</span></h3></div>
 <pre><code>int main() {
 
-    int i = 0;
-    int j = 0;
-    int k = 0;
+  int i = 0;
+  int j = 0;
+  int k = 0;
 
-    i = i + 10; print_int(i); print_char('\\n'); // prints 10
-    i = i - 2;  print_int(i); print_char('\\n'); // prints 8
-    i = i * 2;  print_int(i); print_char('\\n'); // prints 16
-    i = i / 4;  print_int(i); print_char('\\n'); // prints 4
-    i = i % 3;  print_int(i); print_char('\\n'); // prints 1
-    print_char('\\n');
+  i = i + 10; print_int(i); print_char('\\n'); // prints 10
+  i = i - 2;  print_int(i); print_char('\\n'); // prints 8
+  i = i * 2;  print_int(i); print_char('\\n'); // prints 16
+  i = i / 4;  print_int(i); print_char('\\n'); // prints 4
+  i = i % 3;  print_int(i); print_char('\\n'); // prints 1
+  print_char('\\n');
 
-    j = i++;
-    // prints 1 and 2
-    print_int(j); print_char(' '); print_int(i); print_char('\\n');
+  j = i++;
+  // prints 1 and 2
+  print_int(j); print_char(' '); print_int(i); print_char('\\n');
 
-    j = ++i;
-    // prints 3 and 3
-    print_int(j); print_char(' '); print_int(i); print_char('\\n');
-    print_char('\\n');
+  j = ++i;
+  // prints 3 and 3
+  print_int(j); print_char(' '); print_int(i); print_char('\\n');
+  print_char('\\n');
 
-    j = i--;
-    // prints 3 and 2
-    print_int(j); print_char(' '); print_int(i); print_char('\\n');
+  j = i--;
+  // prints 3 and 2
+  print_int(j); print_char(' '); print_int(i); print_char('\\n');
 
-    j = --i;
-    // prints 1 and 1
-    print_int(j); print_char(' '); print_int(i); print_char('\\n');
-    print_char('\\n');
+  j = --i;
+  // prints 1 and 1
+  print_int(j); print_char(' '); print_int(i); print_char('\\n');
+  print_char('\\n');
 
-    j += i;
-    // prints 2
-    print_int(j); print_char('\\n');
+  j += i;
+  // prints 2
+  print_int(j); print_char('\\n');
 
-    j -= i;
-    // prints 1
-    print_int(j); print_char('\\n');
-    print_char('\\n');
+  j -= i;
+  // prints 1
+  print_int(j); print_char('\\n');
+  print_char('\\n');
 
-    k = i = j;
-    // prints 1 1 1
-    print_int(k); print_char(' '); print_int(i); print_char(' '); print_int(j);
-    print_char('\\n');
-    print_char('\\n');
+  k = i = j;
+  // prints 1 1 1
+  print_int(k); print_char(' '); print_int(i); print_char(' '); print_int(j);
+  print_char('\\n');
+  print_char('\\n');
 
-    i = i && 0;
-    print_int(i); print_char('\\n'); // prints 0
+  i = i && 0;
+  print_int(i); print_char('\\n'); // prints 0
 
-    i = 1 && 1;
-    print_int(i); print_char('\\n'); // prints 1
-    print_char('\\n');
+  i = 1 && 1;
+  print_int(i); print_char('\\n'); // prints 1
+  print_char('\\n');
 
-    j = i || 5;
-    print_int(j); print_char('\\n'); // prints 1
+  j = i || 5;
+  print_int(j); print_char('\\n'); // prints 1
 
-    j = 0 || 0;
-    print_int(j); print_char('\\n'); // prints 0
+  j = 0 || 1;
+  print_int(j); print_char('\\n'); // prints 1
 
-    return 0;
+  j = 0 ^ 1;
+  print_int(j); print_char('\\n'); // prints 1
+
+  j = 3 & 2;
+  print_int(j); print_char('\\n'); // prints 2
+
+  j = 2 | 1;
+  print_int(j); print_char('\\n'); // prints 3
+
+  return 0;
 }
 </code></pre>
 
@@ -713,8 +722,8 @@
   la           $t2,    ($fp)
   lw           $t3,    ($fp)
   li           $t0,        0
-  __LAND($t3, $t0)
-  add          $t1,      $a2,    $zero
+  and          $t1,      $t3,      $t0
+  sne          $t1,      $t1,    $zero
   sw           $t1,    ($t2)
   CALLER_FUNCTION_PROLOGUE()
   lw           $t1,    ($fp)
@@ -757,8 +766,8 @@
   la           $t2,  -4($fp)
   lw           $t1,    ($fp)
   li           $t0,        5
-  __LOR($t1, $t0)
-  add          $t3,      $a2,    $zero
+  or           $t3,      $t1,      $t0
+  sne          $t3,      $t3,    $zero
   sw           $t3,    ($t2)
   CALLER_FUNCTION_PROLOGUE()
   lw           $t3,  -4($fp)
@@ -775,7 +784,7 @@
   CALLER_FUNCTION_EPILOGUE()
   add          $t3,      $v0,    $zero
   la           $t3,  -4($fp)
-  li           $t2,        0
+  li           $t2,        1
   sw           $t2,    ($t3)
   CALLER_FUNCTION_PROLOGUE()
   lw           $t2,  -4($fp)
@@ -791,8 +800,59 @@
   jal     print_char
   CALLER_FUNCTION_EPILOGUE()
   add          $t2,      $v0,    $zero
-  li           $t2,        0
-  add          $v0,      $t2,    $zero
+  la           $t2,  -4($fp)
+  li           $t3,        1
+  sw           $t3,    ($t2)
+  CALLER_FUNCTION_PROLOGUE()
+  lw           $t3,  -4($fp)
+  sw           $t3,    ($sp)
+  sub          $sp,      $sp,        4
+  jal     print_int
+  CALLER_FUNCTION_EPILOGUE()
+  add          $t3,      $v0,    $zero
+  CALLER_FUNCTION_PROLOGUE()
+  li           $t3,       10
+  sw           $t3,    ($sp)
+  sub          $sp,      $sp,        4
+  jal     print_char
+  CALLER_FUNCTION_EPILOGUE()
+  add          $t3,      $v0,    $zero
+  la           $t3,  -4($fp)
+  li           $t2,        2
+  sw           $t2,    ($t3)
+  CALLER_FUNCTION_PROLOGUE()
+  lw           $t2,  -4($fp)
+  sw           $t2,    ($sp)
+  sub          $sp,      $sp,        4
+  jal     print_int
+  CALLER_FUNCTION_EPILOGUE()
+  add          $t2,      $v0,    $zero
+  CALLER_FUNCTION_PROLOGUE()
+  li           $t2,       10
+  sw           $t2,    ($sp)
+  sub          $sp,      $sp,        4
+  jal     print_char
+  CALLER_FUNCTION_EPILOGUE()
+  add          $t2,      $v0,    $zero
+  la           $t2,  -4($fp)
+  li           $t3,        3
+  sw           $t3,    ($t2)
+  CALLER_FUNCTION_PROLOGUE()
+  lw           $t3,  -4($fp)
+  sw           $t3,    ($sp)
+  sub          $sp,      $sp,        4
+  jal     print_int
+  CALLER_FUNCTION_EPILOGUE()
+  add          $t3,      $v0,    $zero
+  CALLER_FUNCTION_PROLOGUE()
+  li           $t3,       10
+  sw           $t3,    ($sp)
+  sub          $sp,      $sp,        4
+  jal     print_char
+  CALLER_FUNCTION_EPILOGUE()
+  add          $t3,      $v0,    $zero
+  li           $t3,        0
+  add          $v0,      $t3,    $zero
   CALLEE_FUNCTION_EPILOGUE()
   CALLEE_FUNCTION_EPILOGUE()
 
@@ -865,7 +925,10 @@
 1
 
 1
-0
+1
+1
+2
+3
 </code></pre>
 
       <!--!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1379,7 +1442,8 @@
   LA             , ireg_00133     , ($FP)          , -
   LOAD           , ireg_00134     , ($FP)          , 4
   LI             , ireg_00135     , 0              , -
-  LAND           , ireg_00136     , ireg_00134     , ireg_00135
+  AND            , ireg_00136     , ireg_00134     , ireg_00135
+  SNE            , ireg_00136     , ireg_00136     , $ZERO
   KICK           , ireg_00134     , -              , -
   KICK           , ireg_00135     , -              , -
   STORE          , ireg_00136     , (ireg_00133)   , 4
@@ -1438,7 +1502,8 @@
   LA             , ireg_00149     , -4($FP)        , -
   LOAD           , ireg_00150     , ($FP)          , 4
   LI             , ireg_00151     , 5              , -
-  LOR            , ireg_00152     , ireg_00150     , ireg_00151
+  OR             , ireg_00152     , ireg_00150     , ireg_00151
+  SNE            , ireg_00152     , ireg_00152     , $ZERO
   KICK           , ireg_00150     , -              , -
   KICK           , ireg_00151     , -              , -
   STORE          , ireg_00152     , (ireg_00149)   , 4
@@ -1463,7 +1528,7 @@
   ADD            , ireg_00155     , $RV            , $ZERO
   KICK           , ireg_00155     , -              , -
   LA             , ireg_00157     , -4($FP)        , -
-  LI             , ireg_00158     , 0              , -
+  LI             , ireg_00158     , 1              , -
   STORE          , ireg_00158     , (ireg_00157)   , 4
   KICK           , ireg_00157     , -              , -
   KICK           , ireg_00158     , -              , -
@@ -1485,8 +1550,77 @@
   END_PROC       , 0              , -              , -
   ADD            , ireg_00161     , $RV            , $ZERO
   KICK           , ireg_00161     , -              , -
-  LI             , ireg_00163     , 0              , -
-  RETURN         , ireg_00163     , -              , -
+  LA             , ireg_00163     , -4($FP)        , -
+  LI             , ireg_00164     , 1              , -
+  STORE          , ireg_00164     , (ireg_00163)   , 4
+  KICK           , ireg_00163     , -              , -
+  KICK           , ireg_00164     , -              , -
+  CALL_PROC      , print_int      , 0              , -
+  LOAD           , ireg_00166     , -4($FP)        , 4
+  STORE          , ireg_00166     , ($SP)          , 4
+  SUB            , $SP            , $SP            , 4
+  KICK           , ireg_00166     , -              , -
+  JAL            , print_int      , -              , -
+  END_PROC       , 0              , -              , -
+  ADD            , ireg_00165     , $RV            , $ZERO
+  KICK           , ireg_00165     , -              , -
+  CALL_PROC      , print_char     , 0              , -
+  LI             , ireg_00168     , 10             , -
+  STORE          , ireg_00168     , ($SP)          , 4
+  SUB            , $SP            , $SP            , 4
+  KICK           , ireg_00168     , -              , -
+  JAL            , print_char     , -              , -
+  END_PROC       , 0              , -              , -
+  ADD            , ireg_00167     , $RV            , $ZERO
+  KICK           , ireg_00167     , -              , -
+  LA             , ireg_00169     , -4($FP)        , -
+  LI             , ireg_00170     , 2              , -
+  STORE          , ireg_00170     , (ireg_00169)   , 4
+  KICK           , ireg_00169     , -              , -
+  KICK           , ireg_00170     , -              , -
+  CALL_PROC      , print_int      , 0              , -
+  LOAD           , ireg_00172     , -4($FP)        , 4
+  STORE          , ireg_00172     , ($SP)          , 4
+  SUB            , $SP            , $SP            , 4
+  KICK           , ireg_00172     , -              , -
+  JAL            , print_int      , -              , -
+  END_PROC       , 0              , -              , -
+  ADD            , ireg_00171     , $RV            , $ZERO
+  KICK           , ireg_00171     , -              , -
+  CALL_PROC      , print_char     , 0              , -
+  LI             , ireg_00174     , 10             , -
+  STORE          , ireg_00174     , ($SP)          , 4
+  SUB            , $SP            , $SP            , 4
+  KICK           , ireg_00174     , -              , -
+  JAL            , print_char     , -              , -
+  END_PROC       , 0              , -              , -
+  ADD            , ireg_00173     , $RV            , $ZERO
+  KICK           , ireg_00173     , -              , -
+  LA             , ireg_00175     , -4($FP)        , -
+  LI             , ireg_00176     , 3              , -
+  STORE          , ireg_00176     , (ireg_00175)   , 4
+  KICK           , ireg_00175     , -              , -
+  KICK           , ireg_00176     , -              , -
+  CALL_PROC      , print_int      , 0              , -
+  LOAD           , ireg_00178     , -4($FP)        , 4
+  STORE          , ireg_00178     , ($SP)          , 4
+  SUB            , $SP            , $SP            , 4
+  KICK           , ireg_00178     , -              , -
+  JAL            , print_int      , -              , -
+  END_PROC       , 0              , -              , -
+  ADD            , ireg_00177     , $RV            , $ZERO
+  KICK           , ireg_00177     , -              , -
+  CALL_PROC      , print_char     , 0              , -
+  LI             , ireg_00180     , 10             , -
+  STORE          , ireg_00180     , ($SP)          , 4
+  SUB            , $SP            , $SP            , 4
+  KICK           , ireg_00180     , -              , -
+  JAL            , print_char     , -              , -
+  END_PROC       , 0              , -              , -
+  ADD            , ireg_00179     , $RV            , $ZERO
+  KICK           , ireg_00179     , -              , -
+  LI             , ireg_00181     , 0              , -
+  RETURN         , ireg_00181     , -              , -
   ENDPROC        , -              , -              , -
   PROG_END:
 </code></pre>
