@@ -288,8 +288,17 @@ class JSTLexer(object):
     def t_CCONST(self, t):
         r'(L)?\'([^\\\n]|(\\.))*?\''
 
+        # TODO: add [\r\n\t] ?
+
         t.value = t.value.replace("'", "")
-        t.value = ord(t.value)
+        if t.value == '\\n':
+            t.value = ord('\n')
+        elif t.value == '\\r':
+            t.value = ord('\r')
+        elif t.value == '\\t':
+            t.value = ord('\t')
+        else:
+            t.value = ord(t.value)
         self.token_logger.token(str(t))
         return t
 

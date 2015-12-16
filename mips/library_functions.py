@@ -28,10 +28,40 @@ class FunctionDefinition(object):
         return [mi.LABEL(self.identifier)] + self.body
 
 
+#
+# PRINT CHAR
+#
+__PRINT_CHAR_SYSCALL = 11
+
+__print_char_return_type = symbol.TypeDeclaration()
+__print_char_return_type.add_type_specifier('int')
+
+__print_char_parameter = symbol.VariableSymbol('x', 0, 0)
+__print_char_parameter_type = symbol.TypeDeclaration()
+__print_char_parameter_type.add_type_specifier('int')
+__print_char_parameter.add_type_declaration(__print_char_parameter_type)
+
+PrintCharDeclaration = symbol.FunctionSymbol('print_char', 0, 0)
+PrintCharDeclaration.set_named_parameters([__print_char_parameter])
+PrintCharDeclaration.add_return_type_declaration(__print_char_return_type)
+
+__print_char_body = [
+    mm.CALLEE_FUNCTION_PROLOGUE_MACRO.call('0'),
+    mi.COMMENT("load $v0 with the value for the print char syscall"),
+    mi.LI(mr.V0, __PRINT_CHAR_SYSCALL),
+    mi.COMMENT("the first (and only) argument is the value to print"),
+    mi.LW(mr.A0, mi.offset_from_register_with_immediate(mr.FP)),
+    mi.SYSCALL(),
+    mm.CALLEE_FUNCTION_EPILOGUE_MACRO.call()
+]
+PrintCharDefinition = FunctionDefinition(identifier='print_char', body=__print_char_body)
+
 
 #
 # PRINT INTEGER
 #
+__PRINT_INT_SYSCALL = 1
+
 __print_int_return_type = symbol.TypeDeclaration()
 __print_int_return_type.add_type_specifier('int')
 
@@ -47,14 +77,9 @@ PrintIntDeclaration.add_return_type_declaration(__print_int_return_type)
 __print_int_body = [
     mm.CALLEE_FUNCTION_PROLOGUE_MACRO.call('0'),
     mi.COMMENT("load $v0 with the value for the print int syscall"),
-    mi.LI(mr.V0, 1),
+    mi.LI(mr.V0, __PRINT_INT_SYSCALL),
     mi.COMMENT("the first (and only) argument is the value to print"),
     mi.LW(mr.A0, mi.offset_from_register_with_immediate(mr.FP)),
-    mi.SYSCALL(),
-    mi.COMMENT("print a newline character for readability"),
-    mi.COMMENT("0x0D is CR or '\\r' - 0x0A is LF for '\\n'"),
-    mi.LI(mr.V0, 11),
-    mi.LI(mr.A0, 0x0A),
     mi.SYSCALL(),
     mm.CALLEE_FUNCTION_EPILOGUE_MACRO.call()
 ]
@@ -64,6 +89,8 @@ PrintIntDefinition = FunctionDefinition(identifier='print_int', body=__print_int
 #
 # PRINT STRING
 #
+__PRINT_STRING_SYSCALL = 4
+
 __print_string_return_type = symbol.TypeDeclaration()
 __print_string_return_type.add_type_specifier('int')
 
@@ -79,8 +106,8 @@ PrintStringDeclaration.add_return_type_declaration(__print_string_return_type)
 
 __print_string_body = [
     mm.CALLEE_FUNCTION_PROLOGUE_MACRO.call('0'),
-    mi.COMMENT("load $v0 with the value for the print int syscall"),
-    mi.LI(mr.V0, 4),
+    mi.COMMENT("load $v0 with the value for the print string syscall"),
+    mi.LI(mr.V0, __PRINT_STRING_SYSCALL),
     mi.COMMENT("the first (and only) argument is the base address of the null terminated ascii string"),
     mi.LA(mr.A0, mi.offset_from_register_with_immediate(mr.FP)),
     mi.SYSCALL(),
@@ -92,6 +119,8 @@ PrintStringDefinition = FunctionDefinition(identifier='print_string', body=__pri
 #
 # PRINT FLOAT
 #
+__PRINT_FLOAT_SYSCALL = 2
+
 __print_float_return_type = symbol.TypeDeclaration()
 __print_float_return_type.add_type_specifier('int')
 
@@ -106,8 +135,8 @@ PrintFloatDeclaration.add_return_type_declaration(__print_float_return_type)
 
 __print_float_body = [
     mm.CALLEE_FUNCTION_PROLOGUE_MACRO.call('0'),
-    mi.COMMENT("load $v0 with the value for the print int syscall"),
-    mi.LI(mr.V0, 2),
+    mi.COMMENT("load $v0 with the value for the print float syscall"),
+    mi.LI(mr.V0, __PRINT_FLOAT_SYSCALL),
     mi.COMMENT("the first (and only) argument is the base address of the null terminated ascii string"),
     mi.LWC1(mr.F12, mi.offset_from_register_with_immediate(mr.FP)),
     mi.SYSCALL(),

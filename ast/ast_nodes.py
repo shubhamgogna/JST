@@ -24,7 +24,7 @@ import tac.instructions as taci
 import tac.registers as tacr
 
 
-EXPECTED_WORD_SIZE = 4
+WORD_SIZE = 4
 
 
 ##
@@ -102,14 +102,14 @@ class ArrayReference(BaseAstNode):
                 # Allocate a new ticket to get the address offset from FP
                 dimension_reg = tickets.INT_REGISTER_TICKETS.get()
                 _3ac.append(LOAD(dimension_reg,
-                                   taci.Address(int_literal=self.symbol.activation_frame_offset + i + 2,
+                                 taci.Address(int_literal=self.symbol.activation_frame_offset + i + 2,
                                                 register=tacr.FP),
-                                   EXPECTED_WORD_SIZE))
+                                 WORD_SIZE))
                 _3ac.append(MUL(offset_reg, offset_reg, dimension_reg))
                 _3ac.append(KICK(dimension_reg))
 
             else:
-                _3ac.append(MULI(offset_reg, offset_reg, self.symbol.array_dims[i + 1]))
+                _3ac.append(MUL(offset_reg, offset_reg, self.symbol.array_dims[i + 1]))
 
             # Add the 3AC to load the subscript
             subscript_tac = self.subscripts[i + 1].to_3ac(get_rval=True)
@@ -123,7 +123,7 @@ class ArrayReference(BaseAstNode):
             _3ac.append(KICK(subscript_tac['rvalue']))
 
         # Offset by symbol size
-        _3ac.append(MULI(offset_reg, offset_reg, self.symbol.size_in_bytes()))
+        _3ac.append(MUL(offset_reg, offset_reg, self.symbol.size_in_bytes()))
 
         # Allocate two new registers
         base_address_reg = tickets.INT_REGISTER_TICKETS.get()
@@ -135,11 +135,11 @@ class ArrayReference(BaseAstNode):
             _3ac.append(LOAD(
                     base_address_reg,
                     taci.Address(int_literal=self.symbol.activation_frame_offset, register=tacr.FP),
-                    EXPECTED_WORD_SIZE))
+                    WORD_SIZE))
             _3ac.append(LOAD(
                     end_address_reg,
-                    taci.Address(int_literal=self.symbol.activation_frame_offset - EXPECTED_WORD_SIZE, register=tacr.FP),
-                    EXPECTED_WORD_SIZE))
+                    taci.Address(int_literal=self.symbol.activation_frame_offset - WORD_SIZE, register=tacr.FP),
+                    WORD_SIZE))
             _3ac.append(BOUND(offset_reg, base_address_reg, end_address_reg))
 
         else:
@@ -713,22 +713,22 @@ class FunctionCall(BaseAstNode):
                         taci.Address(int_literal=parameter_template.activation_frame_offset, register=tacr.SP)))
 
                 # Store the base address
-                _3ac.append(STORE(arg_rvalue, taci.Address(int_literal=offset, register=tacr.SP), EXPECTED_WORD_SIZE))
-                _3ac.append(SUB(taci.Register(tacr.SP), taci.Register(tacr.SP), EXPECTED_WORD_SIZE))
+                _3ac.append(STORE(arg_rvalue, taci.Address(int_literal=offset, register=tacr.SP), WORD_SIZE))
+                _3ac.append(SUB(taci.Register(tacr.SP), taci.Register(tacr.SP), WORD_SIZE))
 
                 # Store the total array size
                 _3ac.append(LI(arg_rvalue, argument.size_in_bytes() * argument.array_size))
-                _3ac.append(SUB(taci.Register(tacr.SP), taci.Register(tacr.SP), EXPECTED_WORD_SIZE))
+                _3ac.append(SUB(taci.Register(tacr.SP), taci.Register(tacr.SP), WORD_SIZE))
 
                 # Store the size of each dimension
                 for dim in argument.array_dims:
                     _3ac.append(LI(arg_rvalue, dim))
-                    _3ac.append(SUB(taci.Register(tacr.SP), taci.Register(tacr.SP), EXPECTED_WORD_SIZE))
+                    _3ac.append(SUB(taci.Register(tacr.SP), taci.Register(tacr.SP), WORD_SIZE))
 
             else:
                 # Store the value and move the stack pointer
-                _3ac.append(STORE(arg_rvalue, taci.Address(int_literal=offset, register=tacr.SP), EXPECTED_WORD_SIZE))
-                _3ac.append(SUB(taci.Register(tacr.SP), taci.Register(tacr.SP), EXPECTED_WORD_SIZE))
+                _3ac.append(STORE(arg_rvalue, taci.Address(int_literal=offset, register=tacr.SP), WORD_SIZE))
+                _3ac.append(SUB(taci.Register(tacr.SP), taci.Register(tacr.SP), WORD_SIZE))
 
             # Kick out the temporary at the end of the argument iterating loop
             _3ac.append(KICK(arg_rvalue))
@@ -808,7 +808,7 @@ class FunctionDefinition(BaseAstNode):
         parameter_size = 0
         for symbol in self.function_symbol.named_parameters:
             if symbol.is_array:
-                parameter_size += EXPECTED_WORD_SIZE * (1 + 1 + len(symbol.array_dims))
+                parameter_size += WORD_SIZE * (1 + 1 + len(symbol.array_dims))
             else:
                 parameter_size += symbol.size_in_bytes()
                 # parameter_size += EXPECTED_WORD_SIZE
@@ -1094,7 +1094,7 @@ class UnaryOperator(BaseAstNode):
 
         # Get the rvalue
         rvalue = tickets.INT_REGISTER_TICKETS.get()
-        output.append(LOAD(rvalue, taci.Address(register=lvalue), EXPECTED_WORD_SIZE))
+        output.append(LOAD(rvalue, taci.Address(register=lvalue), WORD_SIZE))
 
         # if this is a post-increment, copy the register with the current value of the register so we can return that
         # before the plusplus happens
@@ -1113,7 +1113,7 @@ class UnaryOperator(BaseAstNode):
                 output.append(SUBI(rvalue, rvalue, 1))
 
             # Store updated value and kick the lvalue & rvalue
-            output.append(STORE(rvalue, taci.Address(register=lvalue), EXPECTED_WORD_SIZE))
+            output.append(STORE(rvalue, taci.Address(register=lvalue), WORD_SIZE))
             output.append(KICK(lvalue))
             output.append(KICK(rvalue))
 
@@ -1128,7 +1128,7 @@ class UnaryOperator(BaseAstNode):
                 output.append(SUBI(rvalue, rvalue, 1))
 
             # Store updated value and kick the lvalue
-            output.append(STORE(rvalue, taci.Address(register=lvalue), EXPECTED_WORD_SIZE))
+            output.append(STORE(rvalue, taci.Address(register=lvalue), WORD_SIZE))
             output.append(KICK(lvalue))
 
             return {'3ac': output, 'rvalue': rvalue}

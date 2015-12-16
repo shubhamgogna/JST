@@ -800,12 +800,12 @@ class TestParser(unittest.TestCase):
 
         function_symbol_table, global_symbol_table = self.compiler_state.cloned_tables[0:2]
 
-        g_char, _ = global_symbol_table.find('g_char')
-        self.assertEqual(0x10010000, g_char.global_memory_location)
-        g_int, _ = global_symbol_table.find('g_int')
-        self.assertEqual(0x10010004, g_int.global_memory_location)
-        g_float, _ = global_symbol_table.find('g_float')
-        self.assertEqual(0x10010008, g_float.global_memory_location)
+        # g_char, _ = global_symbol_table.find('g_char')
+        # self.assertEqual(0x10010000, g_char.global_memory_location)
+        # g_int, _ = global_symbol_table.find('g_int')
+        # self.assertEqual(0x10010004, g_int.global_memory_location)
+        # g_float, _ = global_symbol_table.find('g_float')
+        # self.assertEqual(0x10010008, g_float.global_memory_location)
 
         f_a, _ = function_symbol_table.find('a')
         self.assertEqual(0, f_a.activation_frame_offset)
