@@ -154,21 +154,25 @@ class VariableSymbol(Symbol):
 
         if get_rval:
             # load the register with the variable's value
+
+            if self.immutable:
+                output.append(tac.LOAD(value, taci.Immediate(self.value), self.size_in_bytes()))
+
+
             if self.global_memory_location:
                 address = taci.Address(label=self.global_memory_location)
 
             else:
-
-
                 address = taci.Address(int_literal=-self.activation_frame_offset, register=tacr.FP)
-
-
 
             output.append(tac.LOAD(value, address, self.size_in_bytes()))
 
             return {'3ac': output, 'rvalue': value}
 
         else:
+            if self.immutable:
+                raise Exception('Immutable symbols should not provide lvalues.')
+
             # load the register with the address of the variable
             if self.global_memory_location:
                 output.append(tac.LA(value, taci.Address(label=self.global_memory_location)))

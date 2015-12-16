@@ -252,11 +252,15 @@ class MipsGenerator(object):
         # 'single file' programs. The declarations (prototypes) must be added to the symbol table in the Parser, in a
         # dummy production "setup_for_program" to allow calls to these functions.
 
+        self.mips_output.extend(library_functions.PrintCharDefinition.get_mips())
         self.mips_output.extend(library_functions.PrintIntDefinition.get_mips())
         self.mips_output.extend(library_functions.PrintStringDefinition.get_mips())
         self.mips_output.extend(library_functions.PrintFloatDefinition.get_mips())
 
         self.mips_output.append(end_of_program_label)
+        self.mips_output.append(mi.ADD(mr.A0, mr.V0, mr.ZERO))
+        self.mips_output.append(mi.LI(mr.V0, 17))
+        self.mips_output.append(mi.SYSCALL())
 
     def _source(self, last_line):
         if self.inject_source:

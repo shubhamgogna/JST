@@ -295,6 +295,15 @@ class TestLexer(unittest.TestCase):
         """
         self.compare_token_output(data, expected_token_types=TestLexer.TEST_FPTR_TOKEN_TYPES)
 
+    def test_escaped_chars(self):
+        data = """
+            '\n' '\t' '\r'
+        """
+
+        self.compare_token_output(data, expected_token_types=['CCONST'] * 3)
+
+
+
     def test_int_verify_no_overflow(self):
         self.assertFalse(JSTLexer.string_to_int_fails("4"), "4 should be acceptable")
 

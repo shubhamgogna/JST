@@ -80,7 +80,7 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
                 // perform an assignment and print to show that the
                 // value was assigned
                 local_variable = 123;           // expect to see 123
-                print_int(local_variable);
+                print_int(local_variable); print_char('\n');
 
                 // assign another value to show that it can be overwritten
                 local_variable = 126;           // expect to see 126
@@ -427,7 +427,7 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
 
             int main()
             {
-                int i = foo(1,'a');
+                int i = foo(1, 'a');
                 print_int(i);        // expect to see 123
                 return 0;
             }
