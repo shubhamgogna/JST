@@ -102,7 +102,7 @@ class ArrayReference(BaseAstNode):
                 # Allocate a new ticket to get the address offset from FP
                 dimension_reg = tickets.INT_REGISTER_TICKETS.get()
                 _3ac.append(LOAD(dimension_reg,
-                                 taci.Address(int_literal=self.symbol.activation_frame_offset - (4*i) - 8,
+                                 taci.Address(int_literal=-(self.symbol.activation_frame_offset + 8 + (4 * (i + 1))),
                                               register=tacr.FP),
                                  WORD_SIZE))
                 _3ac.append(MUL(offset_reg, offset_reg, dimension_reg))
@@ -134,14 +134,16 @@ class ArrayReference(BaseAstNode):
 
             _3ac.append(LOAD(
                     base_address_reg,
-                    taci.Address(int_literal=self.symbol.activation_frame_offset, register=tacr.FP),
+                    taci.Address(int_literal=-(self.symbol.activation_frame_offset), register=tacr.FP),
                     WORD_SIZE))
             _3ac.append(LOAD(
                     end_address_reg,
-                    taci.Address(int_literal=self.symbol.activation_frame_offset - WORD_SIZE, register=tacr.FP),
+                    taci.Address(int_literal=-(self.symbol.activation_frame_offset + WORD_SIZE), register=tacr.FP),
                     WORD_SIZE))
-            _3ac.append(ADDU(end_address_reg, end_address_reg, base_address_reg))
-            _3ac.append(ADDU(offset_reg, offset_reg, base_address_reg))
+            _3ac.append(SUB(end_address_reg, base_address_reg, end_address_reg))
+            _3ac.append(SUB(offset_reg, base_address_reg, offset_reg))
+
+            # Check base_address_reg >= offset_reg > end_address_reg (because upside-down stack)
             _3ac.append(BOUND(offset_reg, base_address_reg, end_address_reg))
 
         else:
@@ -152,17 +154,18 @@ class ArrayReference(BaseAstNode):
             if self.symbol.global_memory_location:
 
                 _3ac.append(LI(base_address_reg, self.symbol.global_memory_location))
-                _3ac.append(LI(end_address_reg, self.symbol.global_memory_location + array_size_in_bytes))
-                _3ac.append(ADDIU(offset_reg, offset_reg, self.symbol.global_memory_location))
+                _3ac.append(LI(end_address_reg, self.symbol.global_memory_location - array_size_in_bytes))
+                # TODO This doesn't look right. Global is a 154235345 type number right?
+                _3ac.append(SUB(offset_reg, self.symbol.global_memory_location, offset_reg))
 
             else:
                 _3ac.append(LA(
                         base_address_reg,
-                        taci.Address(int_literal=self.symbol.activation_frame_offset, register=tacr.FP)))
-                _3ac.append(ADDIU(end_address_reg, base_address_reg, array_size_in_bytes))
-                _3ac.append(ADD(offset_reg, offset_reg, base_address_reg))
+                        taci.Address(int_literal=-(self.symbol.activation_frame_offset), register=tacr.FP)))
+                _3ac.append(ADDI(end_address_reg, base_address_reg, -array_size_in_bytes))
+                _3ac.append(SUB(offset_reg, base_address_reg, offset_reg))
 
-            # Check bounds
+            # Check base_address_reg >= offset_reg > end_address_reg (because upside-down stack)
             _3ac.append(BOUND(offset_reg, base_address_reg, end_address_reg))
 
         # Kick the temporaries

@@ -547,27 +547,31 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
             int foo(int a[][])
             {
                 int i, j;
-                for(i = 0; i < 2; ++i)
+                for(i = 0; i < 3; ++i)
                 {
-                    for(j = 0; j < 2; ++j)
+                    for(j = 0; j < 7; ++j)
                     {
-                        print_char(i);
-                        print_int(j);
+                        print_char(i + '0');
+                        print_char(' ');
+                        print_char(j + '0');
+                        print_char(' ');
+                        print_char(' ');
+                        print_char(' ');
                         print_int(a[i][j]);
-                        print_int(1111111);
+                        print_char('\\n');
                     }
                 }
             }
 
             int main() {
 
-                int b[2][2];
+                int b[3][7];
                 int i, j;
-                for(i = 0; i < 2; ++i)
+                for(i = 0; i < 3; ++i)
                 {
-                    for(j = 0; j < 2; ++j)
+                    for(j = 0; j < 7; ++j)
                     {
-                        b[i][j] = (i*2) + j;
+                        b[i][j] = (i*7) + j;
                     }
                 }
 
