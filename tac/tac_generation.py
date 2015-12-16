@@ -247,19 +247,6 @@ def SUBI(difference, minuend, subtrahend):
     return TacInstruction(instructions.SUBI, difference, minuend, subtrahend)
 
 
-def MULI(product, multiplicand, multiplier):
-    """
-    args:
-        sum: the register where the addition result is stored.
-        augend: the left operand of the addition.
-        addend: the right operand of the addition.
-
-    function:
-        Performs basic addition.
-    """
-    return TacInstruction(instructions.MULI, product, multiplicand, multiplier)
-
-
 def DIVI(quotient, dividend, divisor):
     """
     args:

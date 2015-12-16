@@ -109,7 +109,7 @@ class ArrayReference(BaseAstNode):
                 _3ac.append(KICK(dimension_reg))
 
             else:
-                _3ac.append(MULI(offset_reg, offset_reg, self.symbol.array_dims[i + 1]))
+                _3ac.append(MUL(offset_reg, offset_reg, self.symbol.array_dims[i + 1]))
 
             # Add the 3AC to load the subscript
             subscript_tac = self.subscripts[i + 1].to_3ac(get_rval=True)
@@ -123,7 +123,7 @@ class ArrayReference(BaseAstNode):
             _3ac.append(KICK(subscript_tac['rvalue']))
 
         # Offset by symbol size
-        _3ac.append(MULI(offset_reg, offset_reg, self.symbol.size_in_bytes()))
+        _3ac.append(MUL(offset_reg, offset_reg, self.symbol.size_in_bytes()))
 
         # Allocate two new registers
         base_address_reg = tickets.INT_REGISTER_TICKETS.get()
