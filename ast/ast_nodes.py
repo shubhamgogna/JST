@@ -661,13 +661,13 @@ class FunctionCall(BaseAstNode):
     def to_3ac(self, get_rval=True, include_source=False):
         _3ac = []
         return_type = self.function_symbol.get_resulting_type()
-        rvalue = None
+
         if type_utils.is_integral_type(return_type):
             rvalue = tickets.INT_REGISTER_TICKETS.get()
         else:
-            tickets.FLOAT_REGISTER_TICKETS.get()
+            rvalue = tickets.FLOAT_REGISTER_TICKETS.get()
 
-        # call the prologue macro
+        # Call the prologue macro
         _3ac.append(CALL_PROC(self.function_symbol.identifier, self.function_symbol.activation_frame_size))
 
         # Copy the argument values into
@@ -682,16 +682,17 @@ class FunctionCall(BaseAstNode):
             arg_type = type_utils.INT if arg_rvalue[0] == 'i' else type_utils.FLOAT
             param_type = type_utils.INT if type_utils.is_integral_type(return_type) else type_utils.FLOAT
 
-            # get casted value if necessary
+            # Get casted value if necessary
             if arg_type != param_type:
-                # print(arg_type, param_type)
                 if param_type == type_utils.INT:
                     new_register = tickets.INT_REGISTER_TICKETS.get()
                     _3ac.append(CVTSW(new_register, arg_rvalue))
+                    _3ac.append(KICK(arg_rvalue))
                     arg_rvalue = new_register
                 else:
                     new_register = tickets.FLOAT_REGISTER_TICKETS.get()
                     _3ac.append(CVTWS(new_register, arg_rvalue))
+                    _3ac.append(KICK(arg_rvalue))
                     arg_rvalue = new_register
 
             # store value at memory location indicated by parameter_template
@@ -701,30 +702,49 @@ class FunctionCall(BaseAstNode):
             # if a bug crops up, be sure to check this out
             offset = 0
 
-
-
             if isinstance(argument, VariableSymbol) and argument.is_array:
-                array_base = tickets.INT_REGISTER_TICKETS.get()
-                _3ac.append(LA(array_base,
-                               taci.Address(int_literal=parameter_template.activation_frame_offset, register=tacr.SP)))
-                arg_rvalue = array_base
+                # Kick the old register in case it was a float register
+                _3ac.append(KICK(arg_rvalue))
 
-            _3ac.append(STORE(arg_rvalue, taci.Address(int_literal=offset, register=tacr.SP), EXPECTED_WORD_SIZE))
-            _3ac.append(SUB(taci.Register(tacr.SP), taci.Register(tacr.SP), EXPECTED_WORD_SIZE))
+                # Get a new integer register
+                arg_rvalue = tickets.INT_REGISTER_TICKETS.get()
+                _3ac.append(LA(
+                        arg_rvalue,
+                        taci.Address(int_literal=parameter_template.activation_frame_offset, register=tacr.SP)))
 
-        # jump to function body
+                # Store the base address
+                _3ac.append(STORE(arg_rvalue, taci.Address(int_literal=offset, register=tacr.SP), EXPECTED_WORD_SIZE))
+                _3ac.append(SUB(taci.Register(tacr.SP), taci.Register(tacr.SP), EXPECTED_WORD_SIZE))
+
+                # Store the total array size
+                _3ac.append(LI(arg_rvalue, argument.size_in_bytes() * argument.array_size))
+                _3ac.append(SUB(taci.Register(tacr.SP), taci.Register(tacr.SP), EXPECTED_WORD_SIZE))
+
+                # Store the size of each dimension
+                for dim in argument.array_dims:
+                    _3ac.append(LI(arg_rvalue, dim))
+                    _3ac.append(SUB(taci.Register(tacr.SP), taci.Register(tacr.SP), EXPECTED_WORD_SIZE))
+
+            else:
+                # Store the value and move the stack pointer
+                _3ac.append(STORE(arg_rvalue, taci.Address(int_literal=offset, register=tacr.SP), EXPECTED_WORD_SIZE))
+                _3ac.append(SUB(taci.Register(tacr.SP), taci.Register(tacr.SP), EXPECTED_WORD_SIZE))
+
+            # Kick out the temporary at the end of the argument iterating loop
+            _3ac.append(KICK(arg_rvalue))
+
+        # Jump to function body
         _3ac.append(JAL(self.function_symbol.identifier))
 
-        # the function will jump back to this address at this point
+        # The function will jump back to this address at this point
 
         # Call the epilogue macro
         _3ac.append(CORP_LLAC(self.function_symbol.activation_frame_size))
 
-         # copy the return value before it gets obliterated
+        # Copy the return value before it gets obliterated
         _3ac.append(ADD(rvalue, taci.Register(tacr.RV), taci.Register(tacr.ZERO)))
 
         # TODO: handle double word returns if we get there
-
         return {'3ac': _3ac, 'rvalue': rvalue}
 
 

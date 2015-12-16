@@ -96,13 +96,14 @@ def main():
             source_tac, tac_as_str = ast.to_3ac()
 
         if args['mips'] == 1:
-             generator = generation.MipsGenerator(compiler_state, inject_source=False, inject_3ac=True)
+            generator = generation.MipsGenerator(compiler_state, inject_source=False, inject_3ac=True)
         elif args['mips'] == 2:
-             generator = generation.MipsGenerator(compiler_state, inject_source=True, inject_3ac=False)
+            generator = generation.MipsGenerator(compiler_state, inject_source=True, inject_3ac=False)
         elif args['mips'] == 3:
-             generator = generation.MipsGenerator(compiler_state, inject_source=True, inject_3ac=True)
+            generator = generation.MipsGenerator(compiler_state, inject_source=True, inject_3ac=True)
         else:
-             generator = generation.MipsGenerator(compiler_state, inject_source=False, inject_3ac=False)
+            generator = generation.MipsGenerator(compiler_state, inject_source=False, inject_3ac=False)
+
         generator.load(source_tac)
         generator.translate_tac_to_mips()
 
