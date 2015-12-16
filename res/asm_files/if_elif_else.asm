@@ -235,54 +235,54 @@ sw           $t3,    ($sp)
 sub          $sp,      $sp,        4
 jal     print_int
 CALLER_FUNCTION_EPILOGUE()
-add          $t4,      $v0,    $zero
+add          $t3,      $v0,    $zero
 j       ENDIF_00002
 IF_TRUE_00002:
 CALLER_FUNCTION_PROLOGUE()
-li           $t4,        5
-sw           $t4,    ($sp)
+li           $t3,        5
+sw           $t3,    ($sp)
 sub          $sp,      $sp,        4
 jal     print_int
 CALLER_FUNCTION_EPILOGUE()
-add          $t5,      $v0,    $zero
+add          $t3,      $v0,    $zero
 ENDIF_00002:
 j       ENDIF_00001
 IF_TRUE_00001:
 lw           $t1,    ($fp)
-li           $t5,        5
-DIV          $t1,$t5
-MFHI         $t6
-li           $t5,        0
-seq          $t1,      $t6,      $t5
+li           $t3,        5
+DIV          $t1,$t3
+MFHI         $t4
+li           $t3,        0
+seq          $t1,      $t4,      $t3
 bne          $t1,    $zero, IF_TRUE_00003
 IF_FALSE_00003:
 CALLER_FUNCTION_PROLOGUE()
-li           $t5,        3
-sw           $t5,    ($sp)
+li           $t3,        3
+sw           $t3,    ($sp)
 sub          $sp,      $sp,        4
 jal     print_int
 CALLER_FUNCTION_EPILOGUE()
-add          $t6,      $v0,    $zero
+add          $t3,      $v0,    $zero
 j       ENDIF_00003
 IF_TRUE_00003:
 CALLER_FUNCTION_PROLOGUE()
-li           $t6,       35
-sw           $t6,    ($sp)
+li           $t3,       35
+sw           $t3,    ($sp)
 sub          $sp,      $sp,        4
 jal     print_int
 CALLER_FUNCTION_EPILOGUE()
-add          $t7,      $v0,    $zero
+add          $t3,      $v0,    $zero
 ENDIF_00003:
 ENDIF_00001:
 la           $t0,    ($fp)
 lw           $t1,    ($t0)
-add          $t7,      $t1,    $zero
+add          $t3,      $t1,    $zero
 addiu        $t1,      $t1,        1
 sw           $t1,    ($t0)
 j       LOOP_CONDITION_00010
 LOOP_EXIT_00010:
-li           $t7,        0
-add          $v0,      $t7,    $zero
+li           $t3,        0
+add          $v0,      $t3,    $zero
 CALLEE_FUNCTION_EPILOGUE()
 CALLEE_FUNCTION_EPILOGUE()
 print_int:

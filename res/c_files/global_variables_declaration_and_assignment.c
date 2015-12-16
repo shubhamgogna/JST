@@ -1,3 +1,4 @@
+
             const int GLOBAL_CONST = 4;
             int GLOBAL_VAR = 2;
 
@@ -13,3 +14,6 @@
 
                 return 0;
             }
+
+
+            

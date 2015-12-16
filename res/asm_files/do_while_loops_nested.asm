@@ -220,38 +220,38 @@ sw           $t1,    ($sp)
 sub          $sp,      $sp,        4
 jal     print_int
 CALLER_FUNCTION_EPILOGUE()
+add          $t1,      $v0,    $zero
+la           $t1,    ($fp)
+lw           $t0,    ($t1)
+add          $t3,      $t0,    $zero
+addiu        $t0,      $t0,        1
+sw           $t0,    ($t1)
+j       LOOP_BODY_00007
+LOOP_CONDITION_00007:
+lw           $t3,  -4($fp)
+li           $t0,       30
+slt          $t1,      $t3,      $t0
+bne          $t1,    $zero, LOOP_BODY_00007
+j       LOOP_EXIT_00007
+LOOP_BODY_00007:
+CALLER_FUNCTION_PROLOGUE()
+lw           $t0,  -4($fp)
+sw           $t0,    ($sp)
+sub          $sp,      $sp,        4
+jal     print_int
+CALLER_FUNCTION_EPILOGUE()
 add          $t0,      $v0,    $zero
-la           $t0,    ($fp)
+la           $t0,  -4($fp)
 lw           $t3,    ($t0)
 add          $t4,      $t3,    $zero
 addiu        $t3,      $t3,        1
 sw           $t3,    ($t0)
-j       LOOP_BODY_00007
-LOOP_CONDITION_00007:
-lw           $t4,  -4($fp)
-li           $t3,       30
-slt          $t0,      $t4,      $t3
-bne          $t0,    $zero, LOOP_BODY_00007
-j       LOOP_EXIT_00007
-LOOP_BODY_00007:
-CALLER_FUNCTION_PROLOGUE()
-lw           $t3,  -4($fp)
-sw           $t3,    ($sp)
-sub          $sp,      $sp,        4
-jal     print_int
-CALLER_FUNCTION_EPILOGUE()
-add          $t4,      $v0,    $zero
-la           $t4,  -4($fp)
-lw           $t5,    ($t4)
-add          $t6,      $t5,    $zero
-addiu        $t5,      $t5,        1
-sw           $t5,    ($t4)
 j       LOOP_CONDITION_00007
 LOOP_EXIT_00007:
 j       LOOP_CONDITION_00006
 LOOP_EXIT_00006:
-li           $t6,        0
-add          $v0,      $t6,    $zero
+li           $t4,        0
+add          $v0,      $t4,    $zero
 CALLEE_FUNCTION_EPILOGUE()
 CALLEE_FUNCTION_EPILOGUE()
 print_int:

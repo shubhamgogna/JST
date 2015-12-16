@@ -1,9 +1,10 @@
+
             const int N_ITEMS = 5;
 
             int main() {
               int i, j;
               int temp;
-             int things[N_ITEMS] = {5, 1, 4, 3, 2};
+            // int things[N_ITEMS] = {5, 1, 4, 3, 2};
 
               int things[N_ITEMS];
               things[0] = 5;
@@ -28,7 +29,7 @@
                 }
               }
 
-              print_int(things[0]);  // expect to see 5 
+              print_int(things[0]);  // expect to see 5
               print_int(things[1]);  // expect to see 4
               print_int(things[2]);  // expect to see 3
               print_int(things[3]);  // expect to see 2
@@ -36,3 +37,4 @@
 
               return 0;
             }
+            

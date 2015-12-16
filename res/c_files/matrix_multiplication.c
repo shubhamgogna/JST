@@ -1,3 +1,4 @@
+
            const int ARRAY_DIM = 2;
 
             // hard code dimensions for simplicity
@@ -30,9 +31,10 @@
               for (i = 0; i < ARRAY_DIM; i++) {
                     for (j = 0; j < ARRAY_DIM; j++) {
                         print_int(C[i][j]);     // expect to see four 8's
-
                     }
               }
 
               return 0;
             }
+
+            
