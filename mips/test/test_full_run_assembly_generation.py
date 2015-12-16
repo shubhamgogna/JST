@@ -613,19 +613,24 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
     def test_constant_folding(self):
         data = """
 
-            const int C = 4+4;
+            const int C = 4 + 4;
 
             int main() {
+                // expect to find a li with 14 in the assembly instructions
+                // since we have constant folding working correctly
+                int n = C - 2 + 4 * 2;
 
-                int n = C-2+4*2; // expect to find a li with 14 in the assembly instructions
-                                 // since we have constant folding working correctly
-                print_int(n);  // expect to see the 14 printed to show its loaded into n correctly
+                // expect to see the 14 printed to show its loaded into n correctly
+                print_int(n);
 
                 return 0;
             }
             """
         ast = self.compiler_state.parse(data)
         source_tac, i = ast.to_3ac()
+
+        print(i)
+        print('--------------------------')
 
         self.generator.load(source_tac)
         self.generator.translate_tac_to_mips()
