@@ -716,7 +716,7 @@ class FunctionCall(BaseAstNode):
                 arg_rvalue = tickets.INT_REGISTER_TICKETS.get()
                 _3ac.append(LA(
                         arg_rvalue,
-                        taci.Address(int_literal=-parameter_template.activation_frame_offset, register=tacr.FP)))
+                        taci.Address(int_literal=-argument.activation_frame_offset, register=tacr.FP)))
 
                 # Store the base address
                 _3ac.append(STORE(arg_rvalue, taci.Address(int_literal=offset, register=tacr.SP), WORD_SIZE))

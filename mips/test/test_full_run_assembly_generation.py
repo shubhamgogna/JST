@@ -4,12 +4,12 @@
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-#  
+#
 # JST is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-#  
+#
 # You should have received a copy of the GNU General Public License
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -768,16 +768,9 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
         data = """
             const int N_ITEMS = 5;
 
-            int main() {
+            int bubble_sort(int things[])
+            {
               int i, j, temp;
-            // int things[N_ITEMS] = {5, 1, 4, 3, 2};
-
-              int things[N_ITEMS];
-              things[0] = 5;
-              things[1] = 1;
-              things[2] = 4;
-              things[3] = 3;
-              things[4] = 2;
 
               print_int(things[0]);  // expect to see 5
               print_char('\\n');
@@ -810,13 +803,18 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
               print_int(things[3]);  // expect to see 2
               print_char('\\n');
               print_int(things[4]);  // expect to see 1
+            }
+
+            int main() {
+              int things[N_ITEMS] = {5, 1, 4, 3, 2};
+
+              bubble_sort(things);
 
               return 0;
             }
             """
         ast = self.compiler_state.parse(data)
         source_tac, i = ast.to_3ac()
-        print(i);
 
         self.generator.load(source_tac)
         self.generator.translate_tac_to_mips()
