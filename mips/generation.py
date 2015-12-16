@@ -188,6 +188,9 @@ class MipsGenerator(object):
                 elif instruction.instruction == taci.ADDIU:
                     self._add_immediate_unsigned(instruction)
 
+                elif instruction.instruction == taci.ADDI:
+                    self._add_immediate(instruction)
+
                 elif instruction.instruction == taci.ADDU:
                     self._add_unsigned(instruction)
 
@@ -407,6 +410,13 @@ class MipsGenerator(object):
 
         self.mips_output.append(mi.ADDIU(sum, addend, augend))
 
+    def _add_immediate(self, t):
+        sum = self.get_resulting_argument(t.dest)
+        addend = self.get_resulting_argument(t.src1)
+        augend = self.get_resulting_argument(t.src2)
+
+        self.mips_output.append(mi.ADDI(sum, addend, augend))
+
     def _add_unsigned(self, t):
         sum = self.get_resulting_argument(t.dest)
         addend = self.get_resulting_argument(t.src1)
@@ -516,8 +526,8 @@ class MipsGenerator(object):
         src1_register = self.get_resulting_argument(t.src1)
         src2_register = self.get_resulting_argument(t.src2)
 
-        self.mips_output.append(mi.TLT(dest_register, src1_register))
-        self.mips_output.append(mi.TGE(dest_register, src2_register))
+        self.mips_output.append(mi.TLT(src1_register, dest_register))
+        self.mips_output.append(mi.TGE(src2_register, dest_register))
 
     def _branch(self, t):
         self.mips_output.append(mi.J(t.dest))

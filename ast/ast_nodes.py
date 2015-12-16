@@ -102,8 +102,8 @@ class ArrayReference(BaseAstNode):
                 # Allocate a new ticket to get the address offset from FP
                 dimension_reg = tickets.INT_REGISTER_TICKETS.get()
                 _3ac.append(LOAD(dimension_reg,
-                                 taci.Address(int_literal=self.symbol.activation_frame_offset + i + 2,
-                                                register=tacr.FP),
+                                 taci.Address(int_literal=-(self.symbol.activation_frame_offset + 8 + (4 * (i + 1))),
+                                              register=tacr.FP),
                                  WORD_SIZE))
                 _3ac.append(MUL(offset_reg, offset_reg, dimension_reg))
                 _3ac.append(KICK(dimension_reg))
@@ -134,12 +134,16 @@ class ArrayReference(BaseAstNode):
 
             _3ac.append(LOAD(
                     base_address_reg,
-                    taci.Address(int_literal=self.symbol.activation_frame_offset, register=tacr.FP),
+                    taci.Address(int_literal=-(self.symbol.activation_frame_offset), register=tacr.FP),
                     WORD_SIZE))
             _3ac.append(LOAD(
                     end_address_reg,
-                    taci.Address(int_literal=self.symbol.activation_frame_offset - WORD_SIZE, register=tacr.FP),
+                    taci.Address(int_literal=-(self.symbol.activation_frame_offset + WORD_SIZE), register=tacr.FP),
                     WORD_SIZE))
+            _3ac.append(SUB(end_address_reg, base_address_reg, end_address_reg))
+            _3ac.append(SUB(offset_reg, base_address_reg, offset_reg))
+
+            # Check base_address_reg >= offset_reg > end_address_reg (because upside-down stack)
             _3ac.append(BOUND(offset_reg, base_address_reg, end_address_reg))
 
         else:
@@ -150,17 +154,18 @@ class ArrayReference(BaseAstNode):
             if self.symbol.global_memory_location:
 
                 _3ac.append(LI(base_address_reg, self.symbol.global_memory_location))
-                _3ac.append(LI(end_address_reg, self.symbol.global_memory_location + array_size_in_bytes))
-                _3ac.append(ADDIU(offset_reg, offset_reg, self.symbol.global_memory_location))
+                _3ac.append(LI(end_address_reg, self.symbol.global_memory_location - array_size_in_bytes))
+                # TODO This doesn't look right. Global is a 154235345 type number right?
+                _3ac.append(SUB(offset_reg, self.symbol.global_memory_location, offset_reg))
 
             else:
                 _3ac.append(LA(
                         base_address_reg,
-                        taci.Address(int_literal=self.symbol.activation_frame_offset, register=tacr.FP)))
-                _3ac.append(ADDIU(end_address_reg, base_address_reg, array_size_in_bytes))
-                _3ac.append(ADD(offset_reg, offset_reg, base_address_reg))
+                        taci.Address(int_literal=-(self.symbol.activation_frame_offset), register=tacr.FP)))
+                _3ac.append(ADDI(end_address_reg, base_address_reg, -array_size_in_bytes))
+                _3ac.append(SUB(offset_reg, base_address_reg, offset_reg))
 
-            # Check bounds
+            # Check base_address_reg >= offset_reg > end_address_reg (because upside-down stack)
             _3ac.append(BOUND(offset_reg, base_address_reg, end_address_reg))
 
         # Kick the temporaries
@@ -663,10 +668,10 @@ class FunctionCall(BaseAstNode):
         _3ac = []
         return_type = self.function_symbol.get_resulting_type()
 
-        if type_utils.is_integral_type(return_type):
-            rvalue = tickets.INT_REGISTER_TICKETS.get()
-        else:
+        if type_utils.is_floating_point_type(return_type):
             rvalue = tickets.FLOAT_REGISTER_TICKETS.get()
+        else:
+            rvalue = tickets.INT_REGISTER_TICKETS.get()
 
         # Call the prologue macro
         _3ac.append(CALL_PROC(self.function_symbol.identifier, self.function_symbol.activation_frame_size))
@@ -685,7 +690,7 @@ class FunctionCall(BaseAstNode):
 
             # Get casted value if necessary
             if arg_type != param_type:
-                if param_type == type_utils.INT:
+                if type_utils.is_integral_type(param_type):
                     new_register = tickets.INT_REGISTER_TICKETS.get()
                     _3ac.append(CVTSW(new_register, arg_rvalue))
                     _3ac.append(KICK(arg_rvalue))
@@ -711,7 +716,7 @@ class FunctionCall(BaseAstNode):
                 arg_rvalue = tickets.INT_REGISTER_TICKETS.get()
                 _3ac.append(LA(
                         arg_rvalue,
-                        taci.Address(int_literal=parameter_template.activation_frame_offset, register=tacr.SP)))
+                        taci.Address(int_literal=-parameter_template.activation_frame_offset, register=tacr.FP)))
 
                 # Store the base address
                 _3ac.append(STORE(arg_rvalue, taci.Address(int_literal=offset, register=tacr.SP), WORD_SIZE))
@@ -719,11 +724,13 @@ class FunctionCall(BaseAstNode):
 
                 # Store the total array size
                 _3ac.append(LI(arg_rvalue, argument.size_in_bytes() * argument.array_size))
+                _3ac.append(STORE(arg_rvalue, taci.Address(int_literal=offset, register=tacr.SP), WORD_SIZE))
                 _3ac.append(SUB(taci.Register(tacr.SP), taci.Register(tacr.SP), WORD_SIZE))
 
                 # Store the size of each dimension
                 for dim in argument.array_dims:
                     _3ac.append(LI(arg_rvalue, dim))
+                    _3ac.append(STORE(arg_rvalue, taci.Address(int_literal=offset, register=tacr.SP), WORD_SIZE))
                     _3ac.append(SUB(taci.Register(tacr.SP), taci.Register(tacr.SP), WORD_SIZE))
 
             else:

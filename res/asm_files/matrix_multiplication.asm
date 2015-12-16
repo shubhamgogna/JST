@@ -222,20 +222,20 @@ bne          $t3,    $zero, LOOP_BODY_00012
 j       LOOP_EXIT_00012
 LOOP_BODY_00012:
 lw           $t0,    ($fp)
-mulu         $t0,      $t0,        2
+mul          $t0,      $t0,        2
 lw           $t1,  -4($fp)
 addu         $t0,      $t0,      $t1
-mulu         $t0,      $t0,        4
+mul          $t0,      $t0,        4
 la           $t1,  16($fp)
 addiu        $t4,      $t1,       16
 add          $t0,      $t0,      $t1
 tlt          $t0,      $t1
 tge          $t0,      $t4
 lw           $t4,    ($fp)
-mulu         $t4,      $t4,        2
+mul          $t4,      $t4,        2
 lw           $t1,  -4($fp)
 addu         $t4,      $t4,      $t1
-mulu         $t4,      $t4,        4
+mul          $t4,      $t4,        4
 la           $t1,  32($fp)
 addiu        $t5,      $t1,       16
 add          $t4,      $t4,      $t1
@@ -294,10 +294,10 @@ LOOP_BODY_00015:
 la           $t0, -12($fp)
 lw           $t5, -12($fp)
 lw           $t7,    ($fp)
-mulu         $t7,      $t7,        2
+mul          $t7,      $t7,        2
 lw           $t8,  -8($fp)
 addu         $t7,      $t7,      $t8
-mulu         $t7,      $t7,        4
+mul          $t7,      $t7,        4
 la           $t8,  16($fp)
 addiu        $t9,      $t8,       16
 add          $t7,      $t7,      $t8
@@ -305,10 +305,10 @@ tlt          $t7,      $t8
 tge          $t7,      $t9
 lw           $t7,    ($t7)
 lw           $t9,  -8($fp)
-mulu         $t9,      $t9,        2
+mul          $t9,      $t9,        2
 lw           $t8,  -4($fp)
 addu         $t9,      $t9,      $t8
-mulu         $t9,      $t9,        4
+mul          $t9,      $t9,        4
 la           $t8,  32($fp)
 sw           $t2, SPILL_MEMORY
 addiu        $t2,      $t8,       16
@@ -327,10 +327,10 @@ sw           $t0,    ($t9)
 j       LOOP_CONDITION_00015
 LOOP_EXIT_00015:
 lw           $t2,    ($fp)
-mulu         $t2,      $t2,        2
+mul          $t2,      $t2,        2
 lw           $t0,  -4($fp)
 addu         $t2,      $t2,      $t0
-mulu         $t2,      $t2,        4
+mul          $t2,      $t2,        4
 la           $t0,  48($fp)
 addiu        $t9,      $t0,       16
 add          $t2,      $t2,      $t0
@@ -374,10 +374,10 @@ j       LOOP_EXIT_00017
 LOOP_BODY_00017:
 CALLER_FUNCTION_PROLOGUE()
 lw           $t9,    ($fp)
-mulu         $t9,      $t9,        2
+mul          $t9,      $t9,        2
 lw           $t2,  -4($fp)
 addu         $t9,      $t9,      $t2
-mulu         $t9,      $t9,        4
+mul          $t9,      $t9,        4
 la           $t2,  48($fp)
 addiu        $t7,      $t2,       16
 add          $t9,      $t9,      $t2

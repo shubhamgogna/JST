@@ -202,7 +202,7 @@ j       PROG_END
 main:
 CALLEE_FUNCTION_PROLOGUE(8)
 li           $t0,        0
-mulu         $t0,      $t0,        4
+mul          $t0,      $t0,        4
 la           $t1,  12($fp)
 addiu        $t2,      $t1,       20
 add          $t0,      $t0,      $t1
@@ -211,7 +211,7 @@ tge          $t0,      $t2
 li           $t2,        5
 sw           $t2,    ($t0)
 li           $t2,        1
-mulu         $t2,      $t2,        4
+mul          $t2,      $t2,        4
 la           $t0,  12($fp)
 addiu        $t1,      $t0,       20
 add          $t2,      $t2,      $t0
@@ -220,7 +220,7 @@ tge          $t2,      $t1
 li           $t1,        1
 sw           $t1,    ($t2)
 li           $t1,        2
-mulu         $t1,      $t1,        4
+mul          $t1,      $t1,        4
 la           $t2,  12($fp)
 addiu        $t0,      $t2,       20
 add          $t1,      $t1,      $t2
@@ -229,7 +229,7 @@ tge          $t1,      $t0
 li           $t0,        4
 sw           $t0,    ($t1)
 li           $t0,        3
-mulu         $t0,      $t0,        4
+mul          $t0,      $t0,        4
 la           $t1,  12($fp)
 addiu        $t2,      $t1,       20
 add          $t0,      $t0,      $t1
@@ -238,7 +238,7 @@ tge          $t0,      $t2
 li           $t2,        3
 sw           $t2,    ($t0)
 li           $t2,        4
-mulu         $t2,      $t2,        4
+mul          $t2,      $t2,        4
 la           $t0,  12($fp)
 addiu        $t1,      $t0,       20
 add          $t2,      $t2,      $t0
@@ -248,7 +248,7 @@ li           $t1,        2
 sw           $t1,    ($t2)
 CALLER_FUNCTION_PROLOGUE()
 li           $t1,        0
-mulu         $t1,      $t1,        4
+mul          $t1,      $t1,        4
 la           $t2,  12($fp)
 addiu        $t0,      $t2,       20
 add          $t1,      $t1,      $t2
@@ -262,7 +262,7 @@ CALLER_FUNCTION_EPILOGUE()
 add          $t1,      $v0,    $zero
 CALLER_FUNCTION_PROLOGUE()
 li           $t1,        1
-mulu         $t1,      $t1,        4
+mul          $t1,      $t1,        4
 la           $t0,  12($fp)
 addiu        $t2,      $t0,       20
 add          $t1,      $t1,      $t0
@@ -276,7 +276,7 @@ CALLER_FUNCTION_EPILOGUE()
 add          $t1,      $v0,    $zero
 CALLER_FUNCTION_PROLOGUE()
 li           $t1,        2
-mulu         $t1,      $t1,        4
+mul          $t1,      $t1,        4
 la           $t2,  12($fp)
 addiu        $t0,      $t2,       20
 add          $t1,      $t1,      $t2
@@ -290,7 +290,7 @@ CALLER_FUNCTION_EPILOGUE()
 add          $t1,      $v0,    $zero
 CALLER_FUNCTION_PROLOGUE()
 li           $t1,        3
-mulu         $t1,      $t1,        4
+mul          $t1,      $t1,        4
 la           $t0,  12($fp)
 addiu        $t2,      $t0,       20
 add          $t1,      $t1,      $t0
@@ -304,7 +304,7 @@ CALLER_FUNCTION_EPILOGUE()
 add          $t1,      $v0,    $zero
 CALLER_FUNCTION_PROLOGUE()
 li           $t1,        4
-mulu         $t1,      $t1,        4
+mul          $t1,      $t1,        4
 la           $t2,  12($fp)
 addiu        $t0,      $t2,       20
 add          $t1,      $t1,      $t2
@@ -337,7 +337,7 @@ bne          $t3,    $zero, LOOP_BODY_00005
 j       LOOP_EXIT_00005
 LOOP_BODY_00005:
 lw           $t1,    ($fp)
-mulu         $t1,      $t1,        4
+mul          $t1,      $t1,        4
 la           $t0,  12($fp)
 addiu        $t4,      $t0,       20
 add          $t1,      $t1,      $t0
@@ -345,7 +345,7 @@ tlt          $t1,      $t0
 tge          $t1,      $t4
 lw           $t1,    ($t1)
 lw           $t4,  -4($fp)
-mulu         $t4,      $t4,        4
+mul          $t4,      $t4,        4
 la           $t0,  12($fp)
 addiu        $t5,      $t0,       20
 add          $t4,      $t4,      $t0
@@ -359,7 +359,7 @@ j       ENDIF_00000
 IF_TRUE_00000:
 la           $t4,  -8($fp)
 lw           $t1,    ($fp)
-mulu         $t1,      $t1,        4
+mul          $t1,      $t1,        4
 la           $t0,  12($fp)
 addiu        $t6,      $t0,       20
 add          $t1,      $t1,      $t0
@@ -368,14 +368,14 @@ tge          $t1,      $t6
 lw           $t1,    ($t1)
 sw           $t1,    ($t4)
 lw           $t1,    ($fp)
-mulu         $t1,      $t1,        4
+mul          $t1,      $t1,        4
 la           $t4,  12($fp)
 addiu        $t6,      $t4,       20
 add          $t1,      $t1,      $t4
 tlt          $t1,      $t4
 tge          $t1,      $t6
 lw           $t6,  -4($fp)
-mulu         $t6,      $t6,        4
+mul          $t6,      $t6,        4
 la           $t4,  12($fp)
 addiu        $t0,      $t4,       20
 add          $t6,      $t6,      $t4
@@ -384,7 +384,7 @@ tge          $t6,      $t0
 lw           $t6,    ($t6)
 sw           $t6,    ($t1)
 lw           $t6,  -4($fp)
-mulu         $t6,      $t6,        4
+mul          $t6,      $t6,        4
 la           $t1,  12($fp)
 addiu        $t0,      $t1,       20
 add          $t6,      $t6,      $t1
@@ -409,7 +409,7 @@ j       LOOP_CONDITION_00004
 LOOP_EXIT_00004:
 CALLER_FUNCTION_PROLOGUE()
 li           $t5,        0
-mulu         $t5,      $t5,        4
+mul          $t5,      $t5,        4
 la           $t0,  12($fp)
 addiu        $t6,      $t0,       20
 add          $t5,      $t5,      $t0
@@ -423,7 +423,7 @@ CALLER_FUNCTION_EPILOGUE()
 add          $t5,      $v0,    $zero
 CALLER_FUNCTION_PROLOGUE()
 li           $t5,        1
-mulu         $t5,      $t5,        4
+mul          $t5,      $t5,        4
 la           $t6,  12($fp)
 addiu        $t0,      $t6,       20
 add          $t5,      $t5,      $t6
@@ -437,7 +437,7 @@ CALLER_FUNCTION_EPILOGUE()
 add          $t5,      $v0,    $zero
 CALLER_FUNCTION_PROLOGUE()
 li           $t5,        2
-mulu         $t5,      $t5,        4
+mul          $t5,      $t5,        4
 la           $t0,  12($fp)
 addiu        $t6,      $t0,       20
 add          $t5,      $t5,      $t0
@@ -451,7 +451,7 @@ CALLER_FUNCTION_EPILOGUE()
 add          $t5,      $v0,    $zero
 CALLER_FUNCTION_PROLOGUE()
 li           $t5,        3
-mulu         $t5,      $t5,        4
+mul          $t5,      $t5,        4
 la           $t6,  12($fp)
 addiu        $t0,      $t6,       20
 add          $t5,      $t5,      $t6
@@ -465,7 +465,7 @@ CALLER_FUNCTION_EPILOGUE()
 add          $t5,      $v0,    $zero
 CALLER_FUNCTION_PROLOGUE()
 li           $t5,        4
-mulu         $t5,      $t5,        4
+mul          $t5,      $t5,        4
 la           $t0,  12($fp)
 addiu        $t6,      $t0,       20
 add          $t5,      $t5,      $t0

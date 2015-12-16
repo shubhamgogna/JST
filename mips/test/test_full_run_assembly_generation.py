@@ -542,6 +542,60 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
         fout.write(self.generator.dumps())
         fout.close()
 
+    def test_arrays_in_functions(self):
+        data = """
+            int foo(int a[][])
+            {
+                int i, j;
+                for(i = 0; i < 3; ++i)
+                {
+                    for(j = 0; j < 7; ++j)
+                    {
+                        print_char(i + '0');
+                        print_char(' ');
+                        print_char(j + '0');
+                        print_char(' ');
+                        print_char(' ');
+                        print_char(' ');
+                        print_int(a[i][j]);
+                        print_char('\\n');
+                    }
+                }
+            }
+
+            int main() {
+
+                int b[3][7];
+                int i, j;
+                for(i = 0; i < 3; ++i)
+                {
+                    for(j = 0; j < 7; ++j)
+                    {
+                        b[i][j] = (i*7) + j;
+                    }
+                }
+
+                foo(b);
+
+                return 0;
+            }
+            """
+        ast = self.compiler_state.parse(data)
+        source_tac, i = ast.to_3ac()
+
+        self.generator.inject_source = True
+
+        self.generator.load(source_tac)
+        self.generator.translate_tac_to_mips()
+        print(self.generator.dumps())
+
+        fout = open("../../res/c_files/arrays_in_functions.c", 'w')
+        fout.write(data)
+        fout.close()
+
+        fout = open("../../res/asm_files/arrays_in_functions.asm", 'w')
+        fout.write(self.generator.dumps())
+        fout.close()
 
     def test_constant_folding(self):
         data = """
