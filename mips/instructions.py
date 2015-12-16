@@ -298,6 +298,10 @@ class MUL(BaseMipsInstruction):
     def __init__(self, product, multiplicand, multiplier):
         super(MUL, self).__init__('mul', product, multiplicand, multiplier)
 
+class DIV(BaseMipsInstruction):
+    def __init__(self, dividend, divisor):
+        super(DIV, self).__init__('div', dividend, divisor)
+
 class SEQ(BaseMipsInstruction):
     def __init__(self, result, src1, src2):
         super(SEQ, self).__init__('seq', result, src1, src2)

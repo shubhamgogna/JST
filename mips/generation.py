@@ -193,6 +193,9 @@ class MipsGenerator(object):
                 elif instruction.instruction == taci.SUB:
                     self._sub(instruction)
 
+                elif instruction.instruction == taci.SUBI:
+                    self._sub_immediate(instruction)
+
                 elif instruction.instruction == taci.MULU:
                     self._multiply_unsigned=(instruction)
 
@@ -202,11 +205,18 @@ class MipsGenerator(object):
                 elif instruction.instruction == taci.MOD:
                     self._modulo(instruction)
 
-                # elif instruction.instruction == taci.DIV:
-                #     self._div(instruction)
-                #
+                elif instruction.instruction == taci.DIV:
+                    self._div(instruction)
+
                 # elif instruction.instruction == taci.MFHI:
                 #     self._move_from_high(instruction)
+
+                elif instruction.instruction == taci.LAND:
+                    self._logical_and(instruction)
+
+                elif instruction.instruction == taci.LOR:
+                    self._logical_or(instruction)
+
 
                 elif instruction.instruction == taci.EQ:
                     self._equality(instruction)
@@ -409,6 +419,14 @@ class MipsGenerator(object):
 
         self.mips_output.append(mi.SUB(dest_register, src1_register, src2_register))
 
+    def _sub_immediate(self, t):
+        dest_register = self.get_resulting_argument(t.dest)
+        src1_register = self.get_resulting_argument(t.src1)
+        src2_register = self.get_resulting_argument(t.src2)
+
+        self.mips_output.append(mi.SUB(dest_register, src1_register, src2_register))
+
+
     def _multiply_unsigned(self, t):
         product = self.get_resulting_argument(t.dest)
         multiplicand = self.get_resulting_argument(t.src1)
@@ -431,14 +449,29 @@ class MipsGenerator(object):
         self.mips_output.append("DIV          " + multiplicand + ',' + multiplier)
         self.mips_output.append("MFHI         " + result)
 
-    # def _div(self, t):
-    #     result =
-    #     multiplicand = self.get_resulting_argument(t.src1)
-    #     multiplier = self.get_resulting_argument(t.src2)
-    #
-    #     self.mips_output.append(mi.DIV(multiplicand, multiplier))
-    #     self.mips_output.append(mi.MFHI(result))
+    def _div(self, t):
+        result = self.get_resulting_argument(t.dest)
+        dividend = self.get_resulting_argument(t.src1)
+        divisor = self.get_resulting_argument(t.src2)
 
+        self.mips_output.append(mi.DIV(dividend, divisor))
+        self.mips_output.append("MFLO         " + result)
+
+    def _logical_and(self, t):
+        result = self.get_resulting_argument(t.dest)
+        dividend = self.get_resulting_argument(t.src1)
+        divisor = self.get_resulting_argument(t.src2)
+
+        # self.mips_output.append(mm.LAND.call(dividend, divisor))
+        # self.mips_output.append(mi.ADD(result, mr.A2, mr.ZERO))
+
+    def _logical_or(self, t):
+        result = self.get_resulting_argument(t.dest)
+        dividend = self.get_resulting_argument(t.src1)
+        divisor = self.get_resulting_argument(t.src2)
+
+        # self.mips_output.append(mm.LOR.call(dividend, divisor))
+        # self.mips_output.append(mi.ADD(result, mr.A2, mr.ZERO))
 
 
     def _equality(self, t):
