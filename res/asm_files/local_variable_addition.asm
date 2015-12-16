@@ -215,42 +215,42 @@ sw           $t0,    ($sp)
 sub          $sp,      $sp,        4
 jal     print_int
 CALLER_FUNCTION_EPILOGUE()
-add          $t1,      $v0,    $zero
+add          $t0,      $v0,    $zero
 CALLER_FUNCTION_PROLOGUE()
-lw           $t1,  -4($fp)
-sw           $t1,    ($sp)
+lw           $t0,  -4($fp)
+sw           $t0,    ($sp)
 sub          $sp,      $sp,        4
 jal     print_int
 CALLER_FUNCTION_EPILOGUE()
-add          $t2,      $v0,    $zero
+add          $t0,      $v0,    $zero
 CALLER_FUNCTION_PROLOGUE()
-lw           $t2,  -8($fp)
+lw           $t0,  -8($fp)
+sw           $t0,    ($sp)
+sub          $sp,      $sp,        4
+jal     print_int
+CALLER_FUNCTION_EPILOGUE()
+add          $t0,      $v0,    $zero
+CALLER_FUNCTION_PROLOGUE()
+lw           $t0,    ($fp)
+lw           $t1,  -4($fp)
+add          $t2,      $t0,      $t1
 sw           $t2,    ($sp)
 sub          $sp,      $sp,        4
 jal     print_int
 CALLER_FUNCTION_EPILOGUE()
+add          $t2,      $v0,    $zero
+la           $t2,  -8($fp)
+lw           $t1,    ($fp)
+lw           $t0,  -4($fp)
+add          $t3,      $t1,      $t0
+sw           $t3,    ($t2)
+CALLER_FUNCTION_PROLOGUE()
+lw           $t3,  -8($fp)
+sw           $t3,    ($sp)
+sub          $sp,      $sp,        4
+jal     print_int
+CALLER_FUNCTION_EPILOGUE()
 add          $t3,      $v0,    $zero
-CALLER_FUNCTION_PROLOGUE()
-lw           $t3,    ($fp)
-lw           $t4,  -4($fp)
-add          $t5,      $t3,      $t4
-sw           $t5,    ($sp)
-sub          $sp,      $sp,        4
-jal     print_int
-CALLER_FUNCTION_EPILOGUE()
-add          $t4,      $v0,    $zero
-la           $t4,  -8($fp)
-lw           $t3,    ($fp)
-lw           $t6,  -4($fp)
-add          $t7,      $t3,      $t6
-sw           $t7,    ($t4)
-CALLER_FUNCTION_PROLOGUE()
-lw           $t7,  -8($fp)
-sw           $t7,    ($sp)
-sub          $sp,      $sp,        4
-jal     print_int
-CALLER_FUNCTION_EPILOGUE()
-add          $t4,      $v0,    $zero
 CALLEE_FUNCTION_EPILOGUE()
 print_int:
 CALLEE_FUNCTION_PROLOGUE(0)

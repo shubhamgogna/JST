@@ -1,3 +1,4 @@
+
             int main() {
                 int local_variable = 1;
                 int other_variable = 9;
@@ -14,3 +15,4 @@
                 print_int(third_variable);                          // expect to see 10, again
 
             }
+            

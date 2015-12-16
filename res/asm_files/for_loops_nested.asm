@@ -232,30 +232,30 @@ sw           $t0,    ($sp)
 sub          $sp,      $sp,        4
 jal     print_int
 CALLER_FUNCTION_EPILOGUE()
-add          $t1,      $v0,    $zero
-la           $t1,  -4($fp)
-lw           $t4,    ($t1)
-add          $t5,      $t4,    $zero
-addiu        $t4,      $t4,        1
-sw           $t4,    ($t1)
+add          $t0,      $v0,    $zero
+la           $t0,  -4($fp)
+lw           $t1,    ($t0)
+add          $t4,      $t1,    $zero
+addiu        $t1,      $t1,        1
+sw           $t1,    ($t0)
 j       LOOP_CONDITION_00009
 LOOP_EXIT_00009:
 CALLER_FUNCTION_PROLOGUE()
-lw           $t5,    ($fp)
-sw           $t5,    ($sp)
+lw           $t4,    ($fp)
+sw           $t4,    ($sp)
 sub          $sp,      $sp,        4
 jal     print_int
 CALLER_FUNCTION_EPILOGUE()
 add          $t4,      $v0,    $zero
 la           $t4,    ($fp)
 lw           $t1,    ($t4)
-add          $t6,      $t1,    $zero
+add          $t0,      $t1,    $zero
 addiu        $t1,      $t1,        1
 sw           $t1,    ($t4)
 j       LOOP_CONDITION_00008
 LOOP_EXIT_00008:
-li           $t6,        0
-add          $v0,      $t6,    $zero
+li           $t0,        0
+add          $v0,      $t0,    $zero
 CALLEE_FUNCTION_EPILOGUE()
 CALLEE_FUNCTION_EPILOGUE()
 print_int:

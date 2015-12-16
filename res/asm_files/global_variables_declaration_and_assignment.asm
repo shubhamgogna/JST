@@ -208,26 +208,26 @@ sw           $t0,    ($sp)
 sub          $sp,      $sp,        4
 jal     print_int
 CALLER_FUNCTION_EPILOGUE()
-add          $t1,      $v0,    $zero
+add          $t0,      $v0,    $zero
+CALLER_FUNCTION_PROLOGUE()
+lw           $t0, GLOBAL_VAR
+sw           $t0,    ($sp)
+sub          $sp,      $sp,        4
+jal     print_int
+CALLER_FUNCTION_EPILOGUE()
+add          $t0,      $v0,    $zero
+la           $t0, GLOBAL_VAR
+lw           $t1, GLOBAL_CONST
+sw           $t1,    ($t0)
 CALLER_FUNCTION_PROLOGUE()
 lw           $t1, GLOBAL_VAR
 sw           $t1,    ($sp)
 sub          $sp,      $sp,        4
 jal     print_int
 CALLER_FUNCTION_EPILOGUE()
-add          $t2,      $v0,    $zero
-la           $t2, GLOBAL_VAR
-lw           $t3, GLOBAL_CONST
-sw           $t3,    ($t2)
-CALLER_FUNCTION_PROLOGUE()
-lw           $t3, GLOBAL_VAR
-sw           $t3,    ($sp)
-sub          $sp,      $sp,        4
-jal     print_int
-CALLER_FUNCTION_EPILOGUE()
-add          $t2,      $v0,    $zero
-li           $t2,        0
-add          $v0,      $t2,    $zero
+add          $t1,      $v0,    $zero
+li           $t1,        0
+add          $v0,      $t1,    $zero
 CALLEE_FUNCTION_EPILOGUE()
 CALLEE_FUNCTION_EPILOGUE()
 print_int:

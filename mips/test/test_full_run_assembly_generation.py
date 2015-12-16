@@ -59,7 +59,7 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        source_tac = ast.to_3ac()
+        source_tac, i = ast.to_3ac()
 
         self.generator.load(source_tac)
         self.generator.translate_tac_to_mips()
@@ -94,7 +94,7 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        source_tac = ast.to_3ac()
+        source_tac, i = ast.to_3ac()
 
         self.generator.load(source_tac)
         self.generator.translate_tac_to_mips()
@@ -128,7 +128,7 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        source_tac = ast.to_3ac()
+        source_tac, i = ast.to_3ac()
 
         # i = 0;
         # for item in source_tac:
@@ -171,7 +171,7 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
 
             """
         ast = self.compiler_state.parse(data)
-        source_tac = ast.to_3ac()
+        source_tac, i = ast.to_3ac()
 
         # #TODO: Take out debug after fixing test case issues
         # i = 0;
@@ -199,9 +199,9 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
             int main() {
 
                 int i = 0;
-                char FB[] = {"FizzBuzz"};
-                char F[] = "Fizz";
-                char B[] = "Buzz";
+ //               char FB[] = {"FizzBuzz"};
+   //             char F[] = "Fizz";
+     //           char B[] = "Buzz";
 
                 // FizzBuzz
                 for( i = 1; i <= 30; i++) {
@@ -239,7 +239,7 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        source_tac = ast.to_3ac()
+        source_tac, i = ast.to_3ac()
 
         self.generator.load(source_tac)
         self.generator.translate_tac_to_mips()
@@ -292,7 +292,7 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        source_tac = ast.to_3ac()
+        source_tac, i = ast.to_3ac()
 
         self.generator.load(source_tac)
         self.generator.translate_tac_to_mips()
@@ -332,7 +332,7 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        source_tac = ast.to_3ac()
+        source_tac, i = ast.to_3ac()
 
         self.generator.load(source_tac)
         self.generator.translate_tac_to_mips()
@@ -370,7 +370,7 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        source_tac = ast.to_3ac()
+        source_tac, i = ast.to_3ac()
 
         self.generator.load(source_tac)
         self.generator.translate_tac_to_mips()
@@ -403,7 +403,7 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        source_tac = ast.to_3ac()
+        source_tac, i = ast.to_3ac()
 
         self.generator.load(source_tac)
         self.generator.translate_tac_to_mips()
@@ -451,7 +451,7 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        source_tac = ast.to_3ac()
+        source_tac, i = ast.to_3ac()
 
         self.generator.load(source_tac)
         self.generator.translate_tac_to_mips()
@@ -483,7 +483,7 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        source_tac = ast.to_3ac()
+        source_tac, i = ast.to_3ac()
 
         #TODO: Take out debug after fixing test case issues
         # i = 0;
@@ -528,7 +528,7 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        source_tac = ast.to_3ac()
+        source_tac, i = ast.to_3ac()
 
         self.generator.load(source_tac)
         self.generator.translate_tac_to_mips()
@@ -558,7 +558,7 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        source_tac = ast.to_3ac()
+        source_tac, i = ast.to_3ac()
 
         self.generator.load(source_tac)
         self.generator.translate_tac_to_mips()
@@ -592,7 +592,7 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        source_tac = ast.to_3ac()
+        source_tac, i = ast.to_3ac()
 
         self.generator.load(source_tac)
         self.generator.translate_tac_to_mips()
@@ -650,7 +650,7 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        source_tac = ast.to_3ac()
+        source_tac, i = ast.to_3ac()
 
         self.generator.load(source_tac)
         self.generator.translate_tac_to_mips()
@@ -707,7 +707,7 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
 
             """
         ast = self.compiler_state.parse(data)
-        source_tac = ast.to_3ac()
+        source_tac, i = ast.to_3ac()
 
         self.generator.load(source_tac)
         self.generator.translate_tac_to_mips()
@@ -744,7 +744,7 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
             }
             """
         ast = self.compiler_state.parse(data)
-        source_tac = ast.to_3ac()
+        source_tac, i = ast.to_3ac()
 
         self.generator.load(source_tac)
         self.generator.translate_tac_to_mips()

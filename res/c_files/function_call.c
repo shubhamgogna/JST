@@ -1,3 +1,4 @@
+
             int foo( int a, char b);
 
             int main()
@@ -12,3 +13,4 @@
                 print_int(a);        // expect to see 1
                 return 123;
             }
+            
