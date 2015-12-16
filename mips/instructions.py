@@ -4,12 +4,12 @@
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-#  
+#
 # JST is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-#  
+#
 # You should have received a copy of the GNU General Public License
 # along with JST.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -315,6 +315,22 @@ class DIV(BaseMipsInstruction):
 class SEQ(BaseMipsInstruction):
     def __init__(self, result, src1, src2):
         super(SEQ, self).__init__('seq', result, src1, src2)
+
+class SNE(BaseMipsInstruction):
+    def __init__(self, result, src1, src2):
+        super(SNE, self).__init__('sne', result, src1, src2)
+
+class OR(BaseMipsInstruction):
+    def __init__(self, result, src1, src2):
+        super(OR, self).__init__('or', result, src1, src2)
+
+class AND(BaseMipsInstruction):
+    def __init__(self, result, src1, src2):
+        super(AND, self).__init__('and', result, src1, src2)
+
+class XOR(BaseMipsInstruction):
+    def __init__(self, result, src1, src2):
+        super(XOR, self).__init__('xor', result, src1, src2)
 
 class SLT(BaseMipsInstruction):
     def __init__(self, result, src1, src2):

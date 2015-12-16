@@ -419,12 +419,24 @@ def NEGS(result, operand):
 #
 # LOGICAL
 #
-def LAND(result, left_operand, right_operand):
-    return TacInstruction(instructions.LAND, result, left_operand, right_operand)
+def SEQ(result, left_operand, right_operand):
+    return TacInstruction(instructions.SEQ, result, left_operand, right_operand)
 
 
-def LOR(result, left_operand, right_operand):
-    return TacInstruction(instructions.LOR, result, left_operand, right_operand)
+def SNE(result, left_operand, right_operand):
+    return TacInstruction(instructions.SNE, result, left_operand, right_operand)
+
+
+def OR(result, left_operand, right_operand):
+    return TacInstruction(instructions.OR, result, left_operand, right_operand)
+
+
+def AND(result, left_operand, right_operand):
+    return TacInstruction(instructions.AND, result, left_operand, right_operand)
+
+
+def XOR(result, left_operand, right_operand):
+    return TacInstruction(instructions.XOR, result, left_operand, right_operand)
 
 
 def NOT(result, operand):

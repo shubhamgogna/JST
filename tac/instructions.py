@@ -126,10 +126,11 @@ DIVS = 'DIVS'
 NEGS = 'NEGS'
 
 # Logical Operations
-# These won't correspond directly to MIPS instructions, but it seems like good practice to have them in the 3AC for
-# decoupling the instruction from assembly.
-LAND = 'LAND'
-LOR = 'LOR'
+SNE = 'SNE'
+SEQ = 'SEQ'
+OR = 'OR'
+AND = 'AND'
+XOR = 'XOR'
 
 NOT = 'NOT'
 EQ = 'EQ'
@@ -142,9 +143,6 @@ LE = 'LE'
 # Casting
 CVTSW = 'CVTSW'
 CVTWS = 'CVTWS'
-
-# Assignment
-# ASSIGN = 'ASSIGN'
 
 # Memory Accesses
 LOAD = 'LOAD'

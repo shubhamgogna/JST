@@ -331,28 +331,21 @@ class BinaryOperator(BaseAstNode):
             output.append(NE(reg, lval, rval))
 
         elif self.operator == '&':
-            # output.append(  (reg, lval, rval))
-            # TODO: what function is this?
-            raise NotImplementedError('Please implement the {} binary operator to3ac method.'.format(self.operator))
+            output.append(AND(reg, lval, rval))
 
         elif self.operator == '|':
-            # output.append(   (reg, lval, rval))
-            # TODO: what function is this?
-            raise NotImplementedError('Please implement the {} binary operator to3ac method.'.format(self.operator))
+            output.append(OR(reg, lval, rval))
 
         elif self.operator == '^':
-            # output.append(    (reg, lval, rval))
-            # TODO: what function is this?
-            raise NotImplementedError('Please implement the {} binary operator to3ac method.'.format(self.operator))
+            output.append(XOR(reg, lval, rval))
 
         elif self.operator == '&&':
-            output.append(LAND(reg, lval, rval))
+            output.append(AND(reg, lval, rval))
+            output.append(SNE(reg, reg, taci.Register(tacr.ZERO)))
 
         elif self.operator == '||':
-            output.append(LOR(reg, lval, rval))
-
-        # TODO: since don't have the value since not calculating anything, can't store it to the table yet
-        # register_allocation_table[reg] = value
+            output.append(OR(reg, lval, rval))
+            output.append(SNE(reg, reg, taci.Register(tacr.ZERO)))
 
         # Kick the temporaries
         output.append(KICK(lval))

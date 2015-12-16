@@ -594,8 +594,8 @@ add          $t2,      $v0,    $zero
 la           $t2,    ($fp)
 lw           $t3,    ($fp)
 li           $t0,        0
-__LAND($t3, $t0)
-add          $t1,      $a2,    $zero
+and          $t1,      $t3,      $t0
+sne          $t1,      $t1,    $zero
 sw           $t1,    ($t2)
 CALLER_FUNCTION_PROLOGUE()
 lw           $t1,    ($fp)
@@ -638,8 +638,8 @@ add          $t2,      $v0,    $zero
 la           $t2,  -4($fp)
 lw           $t1,    ($fp)
 li           $t0,        5
-__LOR($t1, $t0)
-add          $t3,      $a2,    $zero
+or           $t3,      $t1,      $t0
+sne          $t3,      $t3,    $zero
 sw           $t3,    ($t2)
 CALLER_FUNCTION_PROLOGUE()
 lw           $t3,  -4($fp)
@@ -656,7 +656,7 @@ jal     print_char
 CALLER_FUNCTION_EPILOGUE()
 add          $t3,      $v0,    $zero
 la           $t3,  -4($fp)
-li           $t2,        0
+li           $t2,        1
 sw           $t2,    ($t3)
 CALLER_FUNCTION_PROLOGUE()
 lw           $t2,  -4($fp)
@@ -672,8 +672,59 @@ sub          $sp,      $sp,        4
 jal     print_char
 CALLER_FUNCTION_EPILOGUE()
 add          $t2,      $v0,    $zero
-li           $t2,        0
-add          $v0,      $t2,    $zero
+la           $t2,  -4($fp)
+li           $t3,        1
+sw           $t3,    ($t2)
+CALLER_FUNCTION_PROLOGUE()
+lw           $t3,  -4($fp)
+sw           $t3,    ($sp)
+sub          $sp,      $sp,        4
+jal     print_int
+CALLER_FUNCTION_EPILOGUE()
+add          $t3,      $v0,    $zero
+CALLER_FUNCTION_PROLOGUE()
+li           $t3,       10
+sw           $t3,    ($sp)
+sub          $sp,      $sp,        4
+jal     print_char
+CALLER_FUNCTION_EPILOGUE()
+add          $t3,      $v0,    $zero
+la           $t3,  -4($fp)
+li           $t2,        2
+sw           $t2,    ($t3)
+CALLER_FUNCTION_PROLOGUE()
+lw           $t2,  -4($fp)
+sw           $t2,    ($sp)
+sub          $sp,      $sp,        4
+jal     print_int
+CALLER_FUNCTION_EPILOGUE()
+add          $t2,      $v0,    $zero
+CALLER_FUNCTION_PROLOGUE()
+li           $t2,       10
+sw           $t2,    ($sp)
+sub          $sp,      $sp,        4
+jal     print_char
+CALLER_FUNCTION_EPILOGUE()
+add          $t2,      $v0,    $zero
+la           $t2,  -4($fp)
+li           $t3,        3
+sw           $t3,    ($t2)
+CALLER_FUNCTION_PROLOGUE()
+lw           $t3,  -4($fp)
+sw           $t3,    ($sp)
+sub          $sp,      $sp,        4
+jal     print_int
+CALLER_FUNCTION_EPILOGUE()
+add          $t3,      $v0,    $zero
+CALLER_FUNCTION_PROLOGUE()
+li           $t3,       10
+sw           $t3,    ($sp)
+sub          $sp,      $sp,        4
+jal     print_char
+CALLER_FUNCTION_EPILOGUE()
+add          $t3,      $v0,    $zero
+li           $t3,        0
+add          $v0,      $t3,    $zero
 CALLEE_FUNCTION_EPILOGUE()
 CALLEE_FUNCTION_EPILOGUE()
 

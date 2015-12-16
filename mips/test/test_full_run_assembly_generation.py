@@ -703,8 +703,17 @@ class TestFullRunAssemblyGeneration(unittest.TestCase):
                 j = i || 5;
                 print_int(j); print_char('\\n'); // prints 1
 
-                j = 0 || 0;
-                print_int(j); print_char('\\n'); // prints 0
+                j = 0 || 1;
+                print_int(j); print_char('\\n'); // prints 1
+
+                j = 0 ^ 1;
+                print_int(j); print_char('\\n'); // prints 1
+
+                j = 3 & 2;
+                print_int(j); print_char('\\n'); // prints 2
+
+                j = 2 | 1;
+                print_int(j); print_char('\\n'); // prints 3
 
                 return 0;
             }

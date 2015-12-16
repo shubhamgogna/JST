@@ -17,7 +17,6 @@ import mips.register_management as mrm
 import mips.registers as mr
 import mips.instructions as mi
 from tac.tac_generation import TacInstruction
-import tac.tac_generation as tac_gen
 import tac.instructions as taci
 import tac.registers as tacr
 import mips.macros as mm
@@ -148,7 +147,6 @@ class MipsGenerator(object):
                 elif instruction.instruction == taci.CALL_PROC:
                     self._call_procedure(instruction)
 
-
                 elif instruction.instruction == taci.ENTER_PROC:
                     self._enter_procedure(instruction)
 
@@ -218,12 +216,20 @@ class MipsGenerator(object):
                 # elif instruction.instruction == taci.MFHI:
                 #     self._move_from_high(instruction)
 
-                elif instruction.instruction == taci.LAND:
-                    self._logical_and(instruction)
+                elif instruction.instruction == taci.SEQ:
+                    self._set_equal(instruction)
 
-                elif instruction.instruction == taci.LOR:
-                    self._logical_or(instruction)
+                elif instruction.instruction == taci.SNE:
+                    self._set_not_equal(instruction)
 
+                elif instruction.instruction == taci.OR:
+                    self._bitwise_or(instruction)
+
+                elif instruction.instruction == taci.AND:
+                    self._bitwise_and(instruction)
+
+                elif instruction.instruction == taci.XOR:
+                    self._bitwise_xor(instruction)
 
                 elif instruction.instruction == taci.EQ:
                     self._equality(instruction)
@@ -476,22 +482,40 @@ class MipsGenerator(object):
         self.mips_output.append(mi.DIV(dividend, divisor))
         self.mips_output.append("MFLO         " + result)
 
-    def _logical_and(self, t):
+    def _set_equal(self, t):
         result = self.get_resulting_argument(t.dest)
-        dividend = self.get_resulting_argument(t.src1)
-        divisor = self.get_resulting_argument(t.src2)
+        first = self.get_resulting_argument(t.src1)
+        second = self.get_resulting_argument(t.src2)
 
-        self.mips_output.append(mm.LAND_MACRO.call(dividend, divisor))
-        self.mips_output.append(mi.ADD(result, mr.A2, mr.ZERO))
+        self.mips_output.append(mi.SEQ(result, first, second))
 
-    def _logical_or(self, t):
+    def _set_not_equal(self, t):
         result = self.get_resulting_argument(t.dest)
-        dividend = self.get_resulting_argument(t.src1)
-        divisor = self.get_resulting_argument(t.src2)
+        first = self.get_resulting_argument(t.src1)
+        second = self.get_resulting_argument(t.src2)
 
-        self.mips_output.append(mm.LOR_MACRO.call(dividend, divisor))
-        self.mips_output.append(mi.ADD(result, mr.A2, mr.ZERO))
+        self.mips_output.append(mi.SNE(result, first, second))
 
+    def _bitwise_or(self, t):
+        result = self.get_resulting_argument(t.dest)
+        first = self.get_resulting_argument(t.src1)
+        second = self.get_resulting_argument(t.src2)
+
+        self.mips_output.append(mi.OR(result, first, second))
+
+    def _bitwise_and(self, t):
+        result = self.get_resulting_argument(t.dest)
+        first = self.get_resulting_argument(t.src1)
+        second = self.get_resulting_argument(t.src2)
+
+        self.mips_output.append(mi.AND(result, first, second))
+
+    def _bitwise_xor(self, t):
+        result = self.get_resulting_argument(t.dest)
+        first = self.get_resulting_argument(t.src1)
+        second = self.get_resulting_argument(t.src2)
+
+        self.mips_output.append(mi.XOR(result, first, second))
 
     def _equality(self, t):
         dest_register = self.get_resulting_argument(t.dest)
