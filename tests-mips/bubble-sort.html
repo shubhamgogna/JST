@@ -47,10 +47,54 @@
       Input Section
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!-->
       <div><h3><span>Input</span></h3></div>
-      <div>
-<pre><code>
+<pre><code>const int N_ITEMS = 5;
+
+int main() {
+  int i, j, temp;
+// int things[N_ITEMS] = {5, 1, 4, 3, 2};
+
+  int things[N_ITEMS];
+  things[0] = 5;
+  things[1] = 1;
+  things[2] = 4;
+  things[3] = 3;
+  things[4] = 2;
+
+  print_int(things[0]);  // expect to see 5
+  print_char('\\n');
+  print_int(things[1]);  // expect to see 1
+  print_char('\\n');
+  print_int(things[2]);  // expect to see 4
+  print_char('\\n');
+  print_int(things[3]);  // expect to see 3
+  print_char('\\n');
+  print_int(things[4]);  // expect to see 2
+  print_char('\\n');
+
+  for (i = 0; i < N_ITEMS; i++) {
+    for (j = i; j < N_ITEMS; j++) {
+      if (things[i] < things[j]) {
+        temp = things[i];
+        things[i] = things[j];
+        things[j] = temp;
+      }
+    }
+  }
+
+  print_char('\\n');
+  print_int(things[0]);  // expect to see 5
+  print_char('\\n');
+  print_int(things[1]);  // expect to see 4
+  print_char('\\n');
+  print_int(things[2]);  // expect to see 3
+  print_char('\\n');
+  print_int(things[3]);  // expect to see 2
+  print_char('\\n');
+  print_int(things[4]);  // expect to see 1
+
+  return 0;
+}
 </code></pre>
-    </div>
 
       <!--!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       MIPS Code
@@ -59,6 +103,638 @@
         <div class="heading"><h3><span>MIPS</span></h3></div>
         <div class="content">
 <pre><code>
+  .macro SAVE_T_REGISTERS
+  # brace yourself for a long, unrolled loop...
+  sw           $t0,    ($sp)
+  subiu        $sp,      $sp,        4
+  sw           $t1,    ($sp)
+  subiu        $sp,      $sp,        4
+  sw           $t2,    ($sp)
+  subiu        $sp,      $sp,        4
+  sw           $t3,    ($sp)
+  subiu        $sp,      $sp,        4
+  sw           $t4,    ($sp)
+  subiu        $sp,      $sp,        4
+  sw           $t5,    ($sp)
+  subiu        $sp,      $sp,        4
+  sw           $t6,    ($sp)
+  subiu        $sp,      $sp,        4
+  sw           $t7,    ($sp)
+  subiu        $sp,      $sp,        4
+  sw           $t8,    ($sp)
+  subiu        $sp,      $sp,        4
+  sw           $t9,    ($sp)
+  subiu        $sp,      $sp,        4
+  .end_macro
+
+  .macro RESTORE_T_REGISTERS
+  # brace yourself for a long, unrolled loop...
+  addiu        $sp,      $sp,        4
+  lw           $t9,    ($sp)
+  addiu        $sp,      $sp,        4
+  lw           $t8,    ($sp)
+  addiu        $sp,      $sp,        4
+  lw           $t7,    ($sp)
+  addiu        $sp,      $sp,        4
+  lw           $t6,    ($sp)
+  addiu        $sp,      $sp,        4
+  lw           $t5,    ($sp)
+  addiu        $sp,      $sp,        4
+  lw           $t4,    ($sp)
+  addiu        $sp,      $sp,        4
+  lw           $t3,    ($sp)
+  addiu        $sp,      $sp,        4
+  lw           $t2,    ($sp)
+  addiu        $sp,      $sp,        4
+  lw           $t1,    ($sp)
+  addiu        $sp,      $sp,        4
+  lw           $t0,    ($sp)
+  .end_macro
+
+  .macro SAVE_SPILL_MEM
+  # brace yourself for a long, unrolled loop...
+  lw           $a3, SPILL_MEMORY
+  sw           $a3,    ($sp)
+  subiu        $sp,      $sp,        4
+  lw           $a3, SPILL_MEMORY + 4
+  sw           $a3,    ($sp)
+  subiu        $sp,      $sp,        4
+  lw           $a3, SPILL_MEMORY + 8
+  sw           $a3,    ($sp)
+  subiu        $sp,      $sp,        4
+  lw           $a3, SPILL_MEMORY + 12
+  sw           $a3,    ($sp)
+  subiu        $sp,      $sp,        4
+  lw           $a3, SPILL_MEMORY + 16
+  sw           $a3,    ($sp)
+  subiu        $sp,      $sp,        4
+  lw           $a3, SPILL_MEMORY + 20
+  sw           $a3,    ($sp)
+  subiu        $sp,      $sp,        4
+  lw           $a3, SPILL_MEMORY + 24
+  sw           $a3,    ($sp)
+  subiu        $sp,      $sp,        4
+  lw           $a3, SPILL_MEMORY + 28
+  sw           $a3,    ($sp)
+  subiu        $sp,      $sp,        4
+  lw           $a3, SPILL_MEMORY + 32
+  sw           $a3,    ($sp)
+  subiu        $sp,      $sp,        4
+  lw           $a3, SPILL_MEMORY + 36
+  sw           $a3,    ($sp)
+  subiu        $sp,      $sp,        4
+  lw           $a3, SPILL_MEMORY + 40
+  sw           $a3,    ($sp)
+  subiu        $sp,      $sp,        4
+  lw           $a3, SPILL_MEMORY + 44
+  sw           $a3,    ($sp)
+  subiu        $sp,      $sp,        4
+  lw           $a3, SPILL_MEMORY + 48
+  sw           $a3,    ($sp)
+  subiu        $sp,      $sp,        4
+  lw           $a3, SPILL_MEMORY + 52
+  sw           $a3,    ($sp)
+  subiu        $sp,      $sp,        4
+  lw           $a3, SPILL_MEMORY + 56
+  sw           $a3,    ($sp)
+  subiu        $sp,      $sp,        4
+  lw           $a3, SPILL_MEMORY + 60
+  sw           $a3,    ($sp)
+  subiu        $sp,      $sp,        4
+  .end_macro
+
+  .macro RESTORE_SPILL_MEM
+  # brace yourself for a long, unrolled loop...
+  addiu        $sp,      $sp,        4
+  lw           $a3,    ($sp)
+  sw           $a3, SPILL_MEMORY + 60
+  addiu        $sp,      $sp,        4
+  lw           $a3,    ($sp)
+  sw           $a3, SPILL_MEMORY + 56
+  addiu        $sp,      $sp,        4
+  lw           $a3,    ($sp)
+  sw           $a3, SPILL_MEMORY + 52
+  addiu        $sp,      $sp,        4
+  lw           $a3,    ($sp)
+  sw           $a3, SPILL_MEMORY + 48
+  addiu        $sp,      $sp,        4
+  lw           $a3,    ($sp)
+  sw           $a3, SPILL_MEMORY + 44
+  addiu        $sp,      $sp,        4
+  lw           $a3,    ($sp)
+  sw           $a3, SPILL_MEMORY + 40
+  addiu        $sp,      $sp,        4
+  lw           $a3,    ($sp)
+  sw           $a3, SPILL_MEMORY + 36
+  addiu        $sp,      $sp,        4
+  lw           $a3,    ($sp)
+  sw           $a3, SPILL_MEMORY + 32
+  addiu        $sp,      $sp,        4
+  lw           $a3,    ($sp)
+  sw           $a3, SPILL_MEMORY + 28
+  addiu        $sp,      $sp,        4
+  lw           $a3,    ($sp)
+  sw           $a3, SPILL_MEMORY + 24
+  addiu        $sp,      $sp,        4
+  lw           $a3,    ($sp)
+  sw           $a3, SPILL_MEMORY + 20
+  addiu        $sp,      $sp,        4
+  lw           $a3,    ($sp)
+  sw           $a3, SPILL_MEMORY + 16
+  addiu        $sp,      $sp,        4
+  lw           $a3,    ($sp)
+  sw           $a3, SPILL_MEMORY + 12
+  addiu        $sp,      $sp,        4
+  lw           $a3,    ($sp)
+  sw           $a3, SPILL_MEMORY + 8
+  addiu        $sp,      $sp,        4
+  lw           $a3,    ($sp)
+  sw           $a3, SPILL_MEMORY + 4
+  addiu        $sp,      $sp,        4
+  lw           $a3,    ($sp)
+  sw           $a3, SPILL_MEMORY
+  .end_macro
+
+  .macro CALLEE_FUNCTION_PROLOGUE (%variable_size)
+  # set $fp to the proper spot by recovering the value from $a0
+  add          $fp,      $a0,    $zero
+  # allocate stack space for variables ($sp = $sp - space for variables)
+  li           $a0,        4
+  mulu         $a1,      $a0, %variable_size
+  sub          $sp,      $sp,      $a1
+  .end_macro
+
+  .macro CALLEE_FUNCTION_EPILOGUE
+  # de-allocate the memory used for local variables and parameters
+  add          $sp,      $fp,    $zero
+  # jump back to the caller
+  jr           $ra
+  .end_macro
+
+  .macro CALLER_FUNCTION_PROLOGUE
+  # caller should save it's own $ra, $fp, and registers
+  sw           $ra,    ($sp)
+  subiu        $sp,      $sp,        4
+  sw           $fp,    ($sp)
+  subiu        $sp,      $sp,        4
+  # caller pushes registers and spill memory onto the stack as well
+  SAVE_T_REGISTERS()
+  SAVE_SPILL_MEM()
+  # save the value of $sp here into $a0 as temporary storage until the arguments are moved
+  # $fp needs to stay where it's at while the arguments are copied after this macro
+  add          $a0,      $sp,    $zero
+  .end_macro
+
+  .macro CALLER_FUNCTION_EPILOGUE
+  # recover the spill memory and the stored registers
+  RESTORE_SPILL_MEM()
+  RESTORE_T_REGISTERS()
+  # recover the caller's $fp and $ra
+  addiu        $sp,      $sp,        4
+  lw           $fp,    ($sp)
+  addiu        $sp,      $sp,        4
+  lw           $ra,    ($sp)
+  .end_macro
+
+  .macro __LAND (%lhs, %rhs)
+  beqz        %lhs, __LAND_FALSE
+  beqz        %rhs, __LAND_FALSE
+  li           $a2,        1
+  j       __LAND_END
+
+  __LAND_FALSE:
+  li           $a2,        0
+
+  __LAND_END:
+  .end_macro
+
+  .macro __LOR (%lhs, %rhs)
+  beqz        %lhs, __LOR_TRUE
+  beqz        %rhs, __LOR_TRUE
+  li           $a2,        0
+  j       __LOR_END
+
+  __LOR_TRUE:
+  li           $a2,        1
+
+  __LOR_END:
+  .end_macro
+
+
+  .data
+  SPILL_MEMORY: .space 64
+  N_ITEMS: .word 5
+
+  .text
+  add          $fp,      $sp,    $zero
+  add          $a0,      $fp,    $zero
+  jal         main
+  j       PROG_END
+
+  main:
+  CALLEE_FUNCTION_PROLOGUE(8)
+  li           $t0,        0
+  mul          $t0,      $t0,        4
+  la           $t1, -12($fp)
+  addi         $t2,      $t1,      -20
+  sub          $t0,      $t1,      $t0
+  tlt          $t1,      $t0
+  tge          $t2,      $t0
+  li           $t2,        5
+  sw           $t2,    ($t0)
+  li           $t2,        1
+  mul          $t2,      $t2,        4
+  la           $t0, -12($fp)
+  addi         $t1,      $t0,      -20
+  sub          $t2,      $t0,      $t2
+  tlt          $t0,      $t2
+  tge          $t1,      $t2
+  li           $t1,        1
+  sw           $t1,    ($t2)
+  li           $t1,        2
+  mul          $t1,      $t1,        4
+  la           $t2, -12($fp)
+  addi         $t0,      $t2,      -20
+  sub          $t1,      $t2,      $t1
+  tlt          $t2,      $t1
+  tge          $t0,      $t1
+  li           $t0,        4
+  sw           $t0,    ($t1)
+  li           $t0,        3
+  mul          $t0,      $t0,        4
+  la           $t1, -12($fp)
+  addi         $t2,      $t1,      -20
+  sub          $t0,      $t1,      $t0
+  tlt          $t1,      $t0
+  tge          $t2,      $t0
+  li           $t2,        3
+  sw           $t2,    ($t0)
+  li           $t2,        4
+  mul          $t2,      $t2,        4
+  la           $t0, -12($fp)
+  addi         $t1,      $t0,      -20
+  sub          $t2,      $t0,      $t2
+  tlt          $t0,      $t2
+  tge          $t1,      $t2
+  li           $t1,        2
+  sw           $t1,    ($t2)
+  CALLER_FUNCTION_PROLOGUE()
+  li           $t1,        0
+  mul          $t1,      $t1,        4
+  la           $t2, -12($fp)
+  addi         $t0,      $t2,      -20
+  sub          $t1,      $t2,      $t1
+  tlt          $t2,      $t1
+  tge          $t0,      $t1
+  lw           $t1,    ($t1)
+  sw           $t1,    ($sp)
+  sub          $sp,      $sp,        4
+  jal     print_int
+  CALLER_FUNCTION_EPILOGUE()
+  add          $t1,      $v0,    $zero
+  CALLER_FUNCTION_PROLOGUE()
+  li           $t1,       10
+  sw           $t1,    ($sp)
+  sub          $sp,      $sp,        4
+  jal     print_char
+  CALLER_FUNCTION_EPILOGUE()
+  add          $t1,      $v0,    $zero
+  CALLER_FUNCTION_PROLOGUE()
+  li           $t1,        1
+  mul          $t1,      $t1,        4
+  la           $t0, -12($fp)
+  addi         $t2,      $t0,      -20
+  sub          $t1,      $t0,      $t1
+  tlt          $t0,      $t1
+  tge          $t2,      $t1
+  lw           $t1,    ($t1)
+  sw           $t1,    ($sp)
+  sub          $sp,      $sp,        4
+  jal     print_int
+  CALLER_FUNCTION_EPILOGUE()
+  add          $t1,      $v0,    $zero
+  CALLER_FUNCTION_PROLOGUE()
+  li           $t1,       10
+  sw           $t1,    ($sp)
+  sub          $sp,      $sp,        4
+  jal     print_char
+  CALLER_FUNCTION_EPILOGUE()
+  add          $t1,      $v0,    $zero
+  CALLER_FUNCTION_PROLOGUE()
+  li           $t1,        2
+  mul          $t1,      $t1,        4
+  la           $t2, -12($fp)
+  addi         $t0,      $t2,      -20
+  sub          $t1,      $t2,      $t1
+  tlt          $t2,      $t1
+  tge          $t0,      $t1
+  lw           $t1,    ($t1)
+  sw           $t1,    ($sp)
+  sub          $sp,      $sp,        4
+  jal     print_int
+  CALLER_FUNCTION_EPILOGUE()
+  add          $t1,      $v0,    $zero
+  CALLER_FUNCTION_PROLOGUE()
+  li           $t1,       10
+  sw           $t1,    ($sp)
+  sub          $sp,      $sp,        4
+  jal     print_char
+  CALLER_FUNCTION_EPILOGUE()
+  add          $t1,      $v0,    $zero
+  CALLER_FUNCTION_PROLOGUE()
+  li           $t1,        3
+  mul          $t1,      $t1,        4
+  la           $t0, -12($fp)
+  addi         $t2,      $t0,      -20
+  sub          $t1,      $t0,      $t1
+  tlt          $t0,      $t1
+  tge          $t2,      $t1
+  lw           $t1,    ($t1)
+  sw           $t1,    ($sp)
+  sub          $sp,      $sp,        4
+  jal     print_int
+  CALLER_FUNCTION_EPILOGUE()
+  add          $t1,      $v0,    $zero
+  CALLER_FUNCTION_PROLOGUE()
+  li           $t1,       10
+  sw           $t1,    ($sp)
+  sub          $sp,      $sp,        4
+  jal     print_char
+  CALLER_FUNCTION_EPILOGUE()
+  add          $t1,      $v0,    $zero
+  CALLER_FUNCTION_PROLOGUE()
+  li           $t1,        4
+  mul          $t1,      $t1,        4
+  la           $t2, -12($fp)
+  addi         $t0,      $t2,      -20
+  sub          $t1,      $t2,      $t1
+  tlt          $t2,      $t1
+  tge          $t0,      $t1
+  lw           $t1,    ($t1)
+  sw           $t1,    ($sp)
+  sub          $sp,      $sp,        4
+  jal     print_int
+  CALLER_FUNCTION_EPILOGUE()
+  add          $t1,      $v0,    $zero
+  CALLER_FUNCTION_PROLOGUE()
+  li           $t1,       10
+  sw           $t1,    ($sp)
+  sub          $sp,      $sp,        4
+  jal     print_char
+  CALLER_FUNCTION_EPILOGUE()
+  add          $t1,      $v0,    $zero
+  la           $t1,    ($fp)
+  li           $t0,        0
+  sw           $t0,    ($t1)
+
+  LOOP_CONDITION_00000:
+  lw           $t0,    ($fp)
+  li           $t1,        5
+  lw           $t1,  N_ITEMS
+  slt          $t2,      $t0,      $t1
+  bne          $t2,    $zero, LOOP_BODY_00000
+  j       LOOP_EXIT_00000
+
+  LOOP_BODY_00000:
+  la           $t1,  -4($fp)
+  lw           $t0,    ($fp)
+  sw           $t0,    ($t1)
+
+  LOOP_CONDITION_00001:
+  lw           $t0,  -4($fp)
+  li           $t1,        5
+  lw           $t1,  N_ITEMS
+  slt          $t3,      $t0,      $t1
+  bne          $t3,    $zero, LOOP_BODY_00001
+  j       LOOP_EXIT_00001
+
+  LOOP_BODY_00001:
+  lw           $t1,    ($fp)
+  mul          $t1,      $t1,        4
+  la           $t0, -12($fp)
+  addi         $t4,      $t0,      -20
+  sub          $t1,      $t0,      $t1
+  tlt          $t0,      $t1
+  tge          $t4,      $t1
+  lw           $t1,    ($t1)
+  lw           $t4,  -4($fp)
+  mul          $t4,      $t4,        4
+  la           $t0, -12($fp)
+  addi         $t5,      $t0,      -20
+  sub          $t4,      $t0,      $t4
+  tlt          $t0,      $t4
+  tge          $t5,      $t4
+  lw           $t4,    ($t4)
+  slt          $t5,      $t1,      $t4
+  bne          $t5,    $zero, IF_TRUE_00000
+
+  IF_FALSE_00000:
+  j       ENDIF_00000
+
+  IF_TRUE_00000:
+  la           $t4,  -8($fp)
+  lw           $t1,    ($fp)
+  mul          $t1,      $t1,        4
+  la           $t0, -12($fp)
+  addi         $t6,      $t0,      -20
+  sub          $t1,      $t0,      $t1
+  tlt          $t0,      $t1
+  tge          $t6,      $t1
+  lw           $t1,    ($t1)
+  sw           $t1,    ($t4)
+  lw           $t1,    ($fp)
+  mul          $t1,      $t1,        4
+  la           $t4, -12($fp)
+  addi         $t6,      $t4,      -20
+  sub          $t1,      $t4,      $t1
+  tlt          $t4,      $t1
+  tge          $t6,      $t1
+  lw           $t6,  -4($fp)
+  mul          $t6,      $t6,        4
+  la           $t4, -12($fp)
+  addi         $t0,      $t4,      -20
+  sub          $t6,      $t4,      $t6
+  tlt          $t4,      $t6
+  tge          $t0,      $t6
+  lw           $t6,    ($t6)
+  sw           $t6,    ($t1)
+  lw           $t6,  -4($fp)
+  mul          $t6,      $t6,        4
+  la           $t1, -12($fp)
+  addi         $t0,      $t1,      -20
+  sub          $t6,      $t1,      $t6
+  tlt          $t1,      $t6
+  tge          $t0,      $t6
+  lw           $t0,  -8($fp)
+  sw           $t0,    ($t6)
+
+  ENDIF_00000:
+  la           $t5,  -4($fp)
+  lw           $t0,    ($t5)
+  add          $t6,      $t0,    $zero
+  addiu        $t0,      $t0,        1
+  sw           $t0,    ($t5)
+  j       LOOP_CONDITION_00001
+
+  LOOP_EXIT_00001:
+  la           $t6,    ($fp)
+  lw           $t0,    ($t6)
+  add          $t5,      $t0,    $zero
+  addiu        $t0,      $t0,        1
+  sw           $t0,    ($t6)
+  j       LOOP_CONDITION_00000
+
+  LOOP_EXIT_00000:
+  CALLER_FUNCTION_PROLOGUE()
+  li           $t5,       10
+  sw           $t5,    ($sp)
+  sub          $sp,      $sp,        4
+  jal     print_char
+  CALLER_FUNCTION_EPILOGUE()
+  add          $t5,      $v0,    $zero
+  CALLER_FUNCTION_PROLOGUE()
+  li           $t5,        0
+  mul          $t5,      $t5,        4
+  la           $t0, -12($fp)
+  addi         $t6,      $t0,      -20
+  sub          $t5,      $t0,      $t5
+  tlt          $t0,      $t5
+  tge          $t6,      $t5
+  lw           $t5,    ($t5)
+  sw           $t5,    ($sp)
+  sub          $sp,      $sp,        4
+  jal     print_int
+  CALLER_FUNCTION_EPILOGUE()
+  add          $t5,      $v0,    $zero
+  CALLER_FUNCTION_PROLOGUE()
+  li           $t5,       10
+  sw           $t5,    ($sp)
+  sub          $sp,      $sp,        4
+  jal     print_char
+  CALLER_FUNCTION_EPILOGUE()
+  add          $t5,      $v0,    $zero
+  CALLER_FUNCTION_PROLOGUE()
+  li           $t5,        1
+  mul          $t5,      $t5,        4
+  la           $t6, -12($fp)
+  addi         $t0,      $t6,      -20
+  sub          $t5,      $t6,      $t5
+  tlt          $t6,      $t5
+  tge          $t0,      $t5
+  lw           $t5,    ($t5)
+  sw           $t5,    ($sp)
+  sub          $sp,      $sp,        4
+  jal     print_int
+  CALLER_FUNCTION_EPILOGUE()
+  add          $t5,      $v0,    $zero
+  CALLER_FUNCTION_PROLOGUE()
+  li           $t5,       10
+  sw           $t5,    ($sp)
+  sub          $sp,      $sp,        4
+  jal     print_char
+  CALLER_FUNCTION_EPILOGUE()
+  add          $t5,      $v0,    $zero
+  CALLER_FUNCTION_PROLOGUE()
+  li           $t5,        2
+  mul          $t5,      $t5,        4
+  la           $t0, -12($fp)
+  addi         $t6,      $t0,      -20
+  sub          $t5,      $t0,      $t5
+  tlt          $t0,      $t5
+  tge          $t6,      $t5
+  lw           $t5,    ($t5)
+  sw           $t5,    ($sp)
+  sub          $sp,      $sp,        4
+  jal     print_int
+  CALLER_FUNCTION_EPILOGUE()
+  add          $t5,      $v0,    $zero
+  CALLER_FUNCTION_PROLOGUE()
+  li           $t5,       10
+  sw           $t5,    ($sp)
+  sub          $sp,      $sp,        4
+  jal     print_char
+  CALLER_FUNCTION_EPILOGUE()
+  add          $t5,      $v0,    $zero
+  CALLER_FUNCTION_PROLOGUE()
+  li           $t5,        3
+  mul          $t5,      $t5,        4
+  la           $t6, -12($fp)
+  addi         $t0,      $t6,      -20
+  sub          $t5,      $t6,      $t5
+  tlt          $t6,      $t5
+  tge          $t0,      $t5
+  lw           $t5,    ($t5)
+  sw           $t5,    ($sp)
+  sub          $sp,      $sp,        4
+  jal     print_int
+  CALLER_FUNCTION_EPILOGUE()
+  add          $t5,      $v0,    $zero
+  CALLER_FUNCTION_PROLOGUE()
+  li           $t5,       10
+  sw           $t5,    ($sp)
+  sub          $sp,      $sp,        4
+  jal     print_char
+  CALLER_FUNCTION_EPILOGUE()
+  add          $t5,      $v0,    $zero
+  CALLER_FUNCTION_PROLOGUE()
+  li           $t5,        4
+  mul          $t5,      $t5,        4
+  la           $t0, -12($fp)
+  addi         $t6,      $t0,      -20
+  sub          $t5,      $t0,      $t5
+  tlt          $t0,      $t5
+  tge          $t6,      $t5
+  lw           $t5,    ($t5)
+  sw           $t5,    ($sp)
+  sub          $sp,      $sp,        4
+  jal     print_int
+  CALLER_FUNCTION_EPILOGUE()
+  add          $t5,      $v0,    $zero
+  li           $t5,        0
+  add          $v0,      $t5,    $zero
+  CALLEE_FUNCTION_EPILOGUE()
+  CALLEE_FUNCTION_EPILOGUE()
+
+  print_char:
+  CALLEE_FUNCTION_PROLOGUE(0)
+  # load $v0 with the value for the print char syscall
+  li           $v0,       11
+  # the first (and only) argument is the value to print
+  lw           $a0,    ($fp)
+  syscall
+  CALLEE_FUNCTION_EPILOGUE()
+
+  print_int:
+  CALLEE_FUNCTION_PROLOGUE(0)
+  # load $v0 with the value for the print int syscall
+  li           $v0,        1
+  # the first (and only) argument is the value to print
+  lw           $a0,    ($fp)
+  syscall
+  CALLEE_FUNCTION_EPILOGUE()
+
+  print_string:
+  CALLEE_FUNCTION_PROLOGUE(0)
+  # load $v0 with the value for the print string syscall
+  li           $v0,        4
+  # the first (and only) argument is the base address of the null terminated ascii string
+  la           $a0,    ($fp)
+  syscall
+  CALLEE_FUNCTION_EPILOGUE()
+
+  print_float:
+  CALLEE_FUNCTION_PROLOGUE(0)
+  # load $v0 with the value for the print float syscall
+  li           $v0,        2
+  # the first (and only) argument is the base address of the null terminated ascii string
+  lwc1        $f12,    ($fp)
+  syscall
+  CALLEE_FUNCTION_EPILOGUE()
+
+  PROG_END:
+  add          $a0,      $v0,    $zero
+  li           $v0,       17
+  syscall
 </code></pre>
         </div>
       </div>
@@ -66,13 +742,19 @@
       <!--!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       Standard Output
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!-->
-      <div id="output" class="collapse_container">
-        <div class="heading"><h3><span>Output</span></h3></div>
-        <div class="content">
-<pre><code>
+      <div><h3><span>Output</span></h3></div>
+<pre><code>5
+1
+4
+3
+2
+
+5
+4
+3
+2
+1
 </code></pre>
-        </div>
-      </div>
 
       <!--!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       3AC
@@ -81,6 +763,459 @@
         <div class="heading"><h3><span>3AC (Three-Address Code)</span></h3></div>
         <div class="content">
 <pre><code>
+  .data
+  GLOBLDECL      , N_ITEMS        , .word          , 5
+  .text
+  JAL            , main           , -              , -
+  BR             , PROG_END       , -              , -
+  main:
+  PROCENTRY      , 32             , -              , -
+  LI             , ireg_00000     , 0              , -
+  MUL            , ireg_00000     , ireg_00000     , 4
+  LA             , ireg_00001     , -12($FP)       , -
+  ADDI           , ireg_00002     , ireg_00001     , -20
+  SUB            , ireg_00000     , ireg_00001     , ireg_00000
+  BOUND          , ireg_00000     , ireg_00001     , ireg_00002
+  KICK           , ireg_00001     , -              , -
+  KICK           , ireg_00002     , -              , -
+  LI             , ireg_00003     , 5              , -
+  STORE          , ireg_00003     , (ireg_00000)   , 4
+  KICK           , ireg_00000     , -              , -
+  KICK           , ireg_00003     , -              , -
+  LI             , ireg_00004     , 1              , -
+  MUL            , ireg_00004     , ireg_00004     , 4
+  LA             , ireg_00005     , -12($FP)       , -
+  ADDI           , ireg_00006     , ireg_00005     , -20
+  SUB            , ireg_00004     , ireg_00005     , ireg_00004
+  BOUND          , ireg_00004     , ireg_00005     , ireg_00006
+  KICK           , ireg_00005     , -              , -
+  KICK           , ireg_00006     , -              , -
+  LI             , ireg_00007     , 1              , -
+  STORE          , ireg_00007     , (ireg_00004)   , 4
+  KICK           , ireg_00004     , -              , -
+  KICK           , ireg_00007     , -              , -
+  LI             , ireg_00008     , 2              , -
+  MUL            , ireg_00008     , ireg_00008     , 4
+  LA             , ireg_00009     , -12($FP)       , -
+  ADDI           , ireg_00010     , ireg_00009     , -20
+  SUB            , ireg_00008     , ireg_00009     , ireg_00008
+  BOUND          , ireg_00008     , ireg_00009     , ireg_00010
+  KICK           , ireg_00009     , -              , -
+  KICK           , ireg_00010     , -              , -
+  LI             , ireg_00011     , 4              , -
+  STORE          , ireg_00011     , (ireg_00008)   , 4
+  KICK           , ireg_00008     , -              , -
+  KICK           , ireg_00011     , -              , -
+  LI             , ireg_00012     , 3              , -
+  MUL            , ireg_00012     , ireg_00012     , 4
+  LA             , ireg_00013     , -12($FP)       , -
+  ADDI           , ireg_00014     , ireg_00013     , -20
+  SUB            , ireg_00012     , ireg_00013     , ireg_00012
+  BOUND          , ireg_00012     , ireg_00013     , ireg_00014
+  KICK           , ireg_00013     , -              , -
+  KICK           , ireg_00014     , -              , -
+  LI             , ireg_00015     , 3              , -
+  STORE          , ireg_00015     , (ireg_00012)   , 4
+  KICK           , ireg_00012     , -              , -
+  KICK           , ireg_00015     , -              , -
+  LI             , ireg_00016     , 4              , -
+  MUL            , ireg_00016     , ireg_00016     , 4
+  LA             , ireg_00017     , -12($FP)       , -
+  ADDI           , ireg_00018     , ireg_00017     , -20
+  SUB            , ireg_00016     , ireg_00017     , ireg_00016
+  BOUND          , ireg_00016     , ireg_00017     , ireg_00018
+  KICK           , ireg_00017     , -              , -
+  KICK           , ireg_00018     , -              , -
+  LI             , ireg_00019     , 2              , -
+  STORE          , ireg_00019     , (ireg_00016)   , 4
+  KICK           , ireg_00016     , -              , -
+  KICK           , ireg_00019     , -              , -
+  CALL_PROC      , print_int      , 0              , -
+  LI             , ireg_00021     , 0              , -
+  MUL            , ireg_00021     , ireg_00021     , 4
+  LA             , ireg_00022     , -12($FP)       , -
+  ADDI           , ireg_00023     , ireg_00022     , -20
+  SUB            , ireg_00021     , ireg_00022     , ireg_00021
+  BOUND          , ireg_00021     , ireg_00022     , ireg_00023
+  KICK           , ireg_00022     , -              , -
+  KICK           , ireg_00023     , -              , -
+  LOAD           , ireg_00021     , (ireg_00021)   , 4
+  STORE          , ireg_00021     , ($SP)          , 4
+  SUB            , $SP            , $SP            , 4
+  KICK           , ireg_00021     , -              , -
+  JAL            , print_int      , -              , -
+  END_PROC       , 0              , -              , -
+  ADD            , ireg_00020     , $RV            , $ZERO
+  KICK           , ireg_00020     , -              , -
+  CALL_PROC      , print_char     , 0              , -
+  LI             , ireg_00025     , 10             , -
+  STORE          , ireg_00025     , ($SP)          , 4
+  SUB            , $SP            , $SP            , 4
+  KICK           , ireg_00025     , -              , -
+  JAL            , print_char     , -              , -
+  END_PROC       , 0              , -              , -
+  ADD            , ireg_00024     , $RV            , $ZERO
+  KICK           , ireg_00024     , -              , -
+  CALL_PROC      , print_int      , 0              , -
+  LI             , ireg_00027     , 1              , -
+  MUL            , ireg_00027     , ireg_00027     , 4
+  LA             , ireg_00028     , -12($FP)       , -
+  ADDI           , ireg_00029     , ireg_00028     , -20
+  SUB            , ireg_00027     , ireg_00028     , ireg_00027
+  BOUND          , ireg_00027     , ireg_00028     , ireg_00029
+  KICK           , ireg_00028     , -              , -
+  KICK           , ireg_00029     , -              , -
+  LOAD           , ireg_00027     , (ireg_00027)   , 4
+  STORE          , ireg_00027     , ($SP)          , 4
+  SUB            , $SP            , $SP            , 4
+  KICK           , ireg_00027     , -              , -
+  JAL            , print_int      , -              , -
+  END_PROC       , 0              , -              , -
+  ADD            , ireg_00026     , $RV            , $ZERO
+  KICK           , ireg_00026     , -              , -
+  CALL_PROC      , print_char     , 0              , -
+  LI             , ireg_00031     , 10             , -
+  STORE          , ireg_00031     , ($SP)          , 4
+  SUB            , $SP            , $SP            , 4
+  KICK           , ireg_00031     , -              , -
+  JAL            , print_char     , -              , -
+  END_PROC       , 0              , -              , -
+  ADD            , ireg_00030     , $RV            , $ZERO
+  KICK           , ireg_00030     , -              , -
+  CALL_PROC      , print_int      , 0              , -
+  LI             , ireg_00033     , 2              , -
+  MUL            , ireg_00033     , ireg_00033     , 4
+  LA             , ireg_00034     , -12($FP)       , -
+  ADDI           , ireg_00035     , ireg_00034     , -20
+  SUB            , ireg_00033     , ireg_00034     , ireg_00033
+  BOUND          , ireg_00033     , ireg_00034     , ireg_00035
+  KICK           , ireg_00034     , -              , -
+  KICK           , ireg_00035     , -              , -
+  LOAD           , ireg_00033     , (ireg_00033)   , 4
+  STORE          , ireg_00033     , ($SP)          , 4
+  SUB            , $SP            , $SP            , 4
+  KICK           , ireg_00033     , -              , -
+  JAL            , print_int      , -              , -
+  END_PROC       , 0              , -              , -
+  ADD            , ireg_00032     , $RV            , $ZERO
+  KICK           , ireg_00032     , -              , -
+  CALL_PROC      , print_char     , 0              , -
+  LI             , ireg_00037     , 10             , -
+  STORE          , ireg_00037     , ($SP)          , 4
+  SUB            , $SP            , $SP            , 4
+  KICK           , ireg_00037     , -              , -
+  JAL            , print_char     , -              , -
+  END_PROC       , 0              , -              , -
+  ADD            , ireg_00036     , $RV            , $ZERO
+  KICK           , ireg_00036     , -              , -
+  CALL_PROC      , print_int      , 0              , -
+  LI             , ireg_00039     , 3              , -
+  MUL            , ireg_00039     , ireg_00039     , 4
+  LA             , ireg_00040     , -12($FP)       , -
+  ADDI           , ireg_00041     , ireg_00040     , -20
+  SUB            , ireg_00039     , ireg_00040     , ireg_00039
+  BOUND          , ireg_00039     , ireg_00040     , ireg_00041
+  KICK           , ireg_00040     , -              , -
+  KICK           , ireg_00041     , -              , -
+  LOAD           , ireg_00039     , (ireg_00039)   , 4
+  STORE          , ireg_00039     , ($SP)          , 4
+  SUB            , $SP            , $SP            , 4
+  KICK           , ireg_00039     , -              , -
+  JAL            , print_int      , -              , -
+  END_PROC       , 0              , -              , -
+  ADD            , ireg_00038     , $RV            , $ZERO
+  KICK           , ireg_00038     , -              , -
+  CALL_PROC      , print_char     , 0              , -
+  LI             , ireg_00043     , 10             , -
+  STORE          , ireg_00043     , ($SP)          , 4
+  SUB            , $SP            , $SP            , 4
+  KICK           , ireg_00043     , -              , -
+  JAL            , print_char     , -              , -
+  END_PROC       , 0              , -              , -
+  ADD            , ireg_00042     , $RV            , $ZERO
+  KICK           , ireg_00042     , -              , -
+  CALL_PROC      , print_int      , 0              , -
+  LI             , ireg_00045     , 4              , -
+  MUL            , ireg_00045     , ireg_00045     , 4
+  LA             , ireg_00046     , -12($FP)       , -
+  ADDI           , ireg_00047     , ireg_00046     , -20
+  SUB            , ireg_00045     , ireg_00046     , ireg_00045
+  BOUND          , ireg_00045     , ireg_00046     , ireg_00047
+  KICK           , ireg_00046     , -              , -
+  KICK           , ireg_00047     , -              , -
+  LOAD           , ireg_00045     , (ireg_00045)   , 4
+  STORE          , ireg_00045     , ($SP)          , 4
+  SUB            , $SP            , $SP            , 4
+  KICK           , ireg_00045     , -              , -
+  JAL            , print_int      , -              , -
+  END_PROC       , 0              , -              , -
+  ADD            , ireg_00044     , $RV            , $ZERO
+  KICK           , ireg_00044     , -              , -
+  CALL_PROC      , print_char     , 0              , -
+  LI             , ireg_00049     , 10             , -
+  STORE          , ireg_00049     , ($SP)          , 4
+  SUB            , $SP            , $SP            , 4
+  KICK           , ireg_00049     , -              , -
+  JAL            , print_char     , -              , -
+  END_PROC       , 0              , -              , -
+  ADD            , ireg_00048     , $RV            , $ZERO
+  KICK           , ireg_00048     , -              , -
+  LA             , ireg_00050     , ($FP)          , -
+  LI             , ireg_00051     , 0              , -
+  STORE          , ireg_00051     , (ireg_00050)   , 4
+  KICK           , ireg_00050     , -              , -
+  KICK           , ireg_00051     , -              , -
+  LOOP_CONDITION_00000:
+  LOAD           , ireg_00052     , ($FP)          , 4
+  LI             , ireg_00053     , 5              , -
+  LOAD           , ireg_00053     , N_ITEMS        , 4
+  LT             , ireg_00054     , ireg_00052     , ireg_00053
+  KICK           , ireg_00052     , -              , -
+  KICK           , ireg_00053     , -              , -
+  BRNE           , LOOP_BODY_00000, ireg_00054     , $ZERO
+  BR             , LOOP_EXIT_00000, -              , -
+  LOOP_BODY_00000:
+  LA             , ireg_00055     , -4($FP)        , -
+  LOAD           , ireg_00056     , ($FP)          , 4
+  STORE          , ireg_00056     , (ireg_00055)   , 4
+  KICK           , ireg_00055     , -              , -
+  KICK           , ireg_00056     , -              , -
+  LOOP_CONDITION_00001:
+  LOAD           , ireg_00057     , -4($FP)        , 4
+  LI             , ireg_00058     , 5              , -
+  LOAD           , ireg_00058     , N_ITEMS        , 4
+  LT             , ireg_00059     , ireg_00057     , ireg_00058
+  KICK           , ireg_00057     , -              , -
+  KICK           , ireg_00058     , -              , -
+  BRNE           , LOOP_BODY_00001, ireg_00059     , $ZERO
+  BR             , LOOP_EXIT_00001, -              , -
+  LOOP_BODY_00001:
+  LOAD           , ireg_00060     , ($FP)          , 4
+  MUL            , ireg_00060     , ireg_00060     , 4
+  LA             , ireg_00061     , -12($FP)       , -
+  ADDI           , ireg_00062     , ireg_00061     , -20
+  SUB            , ireg_00060     , ireg_00061     , ireg_00060
+  BOUND          , ireg_00060     , ireg_00061     , ireg_00062
+  KICK           , ireg_00061     , -              , -
+  KICK           , ireg_00062     , -              , -
+  LOAD           , ireg_00060     , (ireg_00060)   , 4
+  LOAD           , ireg_00063     , -4($FP)        , 4
+  MUL            , ireg_00063     , ireg_00063     , 4
+  LA             , ireg_00064     , -12($FP)       , -
+  ADDI           , ireg_00065     , ireg_00064     , -20
+  SUB            , ireg_00063     , ireg_00064     , ireg_00063
+  BOUND          , ireg_00063     , ireg_00064     , ireg_00065
+  KICK           , ireg_00064     , -              , -
+  KICK           , ireg_00065     , -              , -
+  LOAD           , ireg_00063     , (ireg_00063)   , 4
+  LT             , ireg_00066     , ireg_00060     , ireg_00063
+  KICK           , ireg_00060     , -              , -
+  KICK           , ireg_00063     , -              , -
+  BRNE           , IF_TRUE_00000  , ireg_00066     , $ZERO
+  IF_FALSE_00000:
+  BR             , ENDIF_00000    , -              , -
+  IF_TRUE_00000:
+  LA             , ireg_00067     , -8($FP)        , -
+  LOAD           , ireg_00068     , ($FP)          , 4
+  MUL            , ireg_00068     , ireg_00068     , 4
+  LA             , ireg_00069     , -12($FP)       , -
+  ADDI           , ireg_00070     , ireg_00069     , -20
+  SUB            , ireg_00068     , ireg_00069     , ireg_00068
+  BOUND          , ireg_00068     , ireg_00069     , ireg_00070
+  KICK           , ireg_00069     , -              , -
+  KICK           , ireg_00070     , -              , -
+  LOAD           , ireg_00068     , (ireg_00068)   , 4
+  STORE          , ireg_00068     , (ireg_00067)   , 4
+  KICK           , ireg_00067     , -              , -
+  KICK           , ireg_00068     , -              , -
+  LOAD           , ireg_00071     , ($FP)          , 4
+  MUL            , ireg_00071     , ireg_00071     , 4
+  LA             , ireg_00072     , -12($FP)       , -
+  ADDI           , ireg_00073     , ireg_00072     , -20
+  SUB            , ireg_00071     , ireg_00072     , ireg_00071
+  BOUND          , ireg_00071     , ireg_00072     , ireg_00073
+  KICK           , ireg_00072     , -              , -
+  KICK           , ireg_00073     , -              , -
+  LOAD           , ireg_00074     , -4($FP)        , 4
+  MUL            , ireg_00074     , ireg_00074     , 4
+  LA             , ireg_00075     , -12($FP)       , -
+  ADDI           , ireg_00076     , ireg_00075     , -20
+  SUB            , ireg_00074     , ireg_00075     , ireg_00074
+  BOUND          , ireg_00074     , ireg_00075     , ireg_00076
+  KICK           , ireg_00075     , -              , -
+  KICK           , ireg_00076     , -              , -
+  LOAD           , ireg_00074     , (ireg_00074)   , 4
+  STORE          , ireg_00074     , (ireg_00071)   , 4
+  KICK           , ireg_00071     , -              , -
+  KICK           , ireg_00074     , -              , -
+  LOAD           , ireg_00077     , -4($FP)        , 4
+  MUL            , ireg_00077     , ireg_00077     , 4
+  LA             , ireg_00078     , -12($FP)       , -
+  ADDI           , ireg_00079     , ireg_00078     , -20
+  SUB            , ireg_00077     , ireg_00078     , ireg_00077
+  BOUND          , ireg_00077     , ireg_00078     , ireg_00079
+  KICK           , ireg_00078     , -              , -
+  KICK           , ireg_00079     , -              , -
+  LOAD           , ireg_00080     , -8($FP)        , 4
+  STORE          , ireg_00080     , (ireg_00077)   , 4
+  KICK           , ireg_00077     , -              , -
+  KICK           , ireg_00080     , -              , -
+  ENDIF_00000:
+  KICK           , ireg_00066     , -              , -
+  LA             , ireg_00081     , -4($FP)        , -
+  LOAD           , ireg_00082     , (ireg_00081)   , 4
+  ADD            , ireg_00083     , ireg_00082     , $ZERO
+  ADDIU          , ireg_00082     , ireg_00082     , 1
+  STORE          , ireg_00082     , (ireg_00081)   , 4
+  KICK           , ireg_00081     , -              , -
+  KICK           , ireg_00082     , -              , -
+  KICK           , ireg_00083     , -              , -
+  BR             , LOOP_CONDITION_00001, -              , -
+  LOOP_EXIT_00001:
+  LA             , ireg_00084     , ($FP)          , -
+  LOAD           , ireg_00085     , (ireg_00084)   , 4
+  ADD            , ireg_00086     , ireg_00085     , $ZERO
+  ADDIU          , ireg_00085     , ireg_00085     , 1
+  STORE          , ireg_00085     , (ireg_00084)   , 4
+  KICK           , ireg_00084     , -              , -
+  KICK           , ireg_00085     , -              , -
+  KICK           , ireg_00086     , -              , -
+  BR             , LOOP_CONDITION_00000, -              , -
+  LOOP_EXIT_00000:
+  CALL_PROC      , print_char     , 0              , -
+  LI             , ireg_00088     , 10             , -
+  STORE          , ireg_00088     , ($SP)          , 4
+  SUB            , $SP            , $SP            , 4
+  KICK           , ireg_00088     , -              , -
+  JAL            , print_char     , -              , -
+  END_PROC       , 0              , -              , -
+  ADD            , ireg_00087     , $RV            , $ZERO
+  KICK           , ireg_00087     , -              , -
+  CALL_PROC      , print_int      , 0              , -
+  LI             , ireg_00090     , 0              , -
+  MUL            , ireg_00090     , ireg_00090     , 4
+  LA             , ireg_00091     , -12($FP)       , -
+  ADDI           , ireg_00092     , ireg_00091     , -20
+  SUB            , ireg_00090     , ireg_00091     , ireg_00090
+  BOUND          , ireg_00090     , ireg_00091     , ireg_00092
+  KICK           , ireg_00091     , -              , -
+  KICK           , ireg_00092     , -              , -
+  LOAD           , ireg_00090     , (ireg_00090)   , 4
+  STORE          , ireg_00090     , ($SP)          , 4
+  SUB            , $SP            , $SP            , 4
+  KICK           , ireg_00090     , -              , -
+  JAL            , print_int      , -              , -
+  END_PROC       , 0              , -              , -
+  ADD            , ireg_00089     , $RV            , $ZERO
+  KICK           , ireg_00089     , -              , -
+  CALL_PROC      , print_char     , 0              , -
+  LI             , ireg_00094     , 10             , -
+  STORE          , ireg_00094     , ($SP)          , 4
+  SUB            , $SP            , $SP            , 4
+  KICK           , ireg_00094     , -              , -
+  JAL            , print_char     , -              , -
+  END_PROC       , 0              , -              , -
+  ADD            , ireg_00093     , $RV            , $ZERO
+  KICK           , ireg_00093     , -              , -
+  CALL_PROC      , print_int      , 0              , -
+  LI             , ireg_00096     , 1              , -
+  MUL            , ireg_00096     , ireg_00096     , 4
+  LA             , ireg_00097     , -12($FP)       , -
+  ADDI           , ireg_00098     , ireg_00097     , -20
+  SUB            , ireg_00096     , ireg_00097     , ireg_00096
+  BOUND          , ireg_00096     , ireg_00097     , ireg_00098
+  KICK           , ireg_00097     , -              , -
+  KICK           , ireg_00098     , -              , -
+  LOAD           , ireg_00096     , (ireg_00096)   , 4
+  STORE          , ireg_00096     , ($SP)          , 4
+  SUB            , $SP            , $SP            , 4
+  KICK           , ireg_00096     , -              , -
+  JAL            , print_int      , -              , -
+  END_PROC       , 0              , -              , -
+  ADD            , ireg_00095     , $RV            , $ZERO
+  KICK           , ireg_00095     , -              , -
+  CALL_PROC      , print_char     , 0              , -
+  LI             , ireg_00100     , 10             , -
+  STORE          , ireg_00100     , ($SP)          , 4
+  SUB            , $SP            , $SP            , 4
+  KICK           , ireg_00100     , -              , -
+  JAL            , print_char     , -              , -
+  END_PROC       , 0              , -              , -
+  ADD            , ireg_00099     , $RV            , $ZERO
+  KICK           , ireg_00099     , -              , -
+  CALL_PROC      , print_int      , 0              , -
+  LI             , ireg_00102     , 2              , -
+  MUL            , ireg_00102     , ireg_00102     , 4
+  LA             , ireg_00103     , -12($FP)       , -
+  ADDI           , ireg_00104     , ireg_00103     , -20
+  SUB            , ireg_00102     , ireg_00103     , ireg_00102
+  BOUND          , ireg_00102     , ireg_00103     , ireg_00104
+  KICK           , ireg_00103     , -              , -
+  KICK           , ireg_00104     , -              , -
+  LOAD           , ireg_00102     , (ireg_00102)   , 4
+  STORE          , ireg_00102     , ($SP)          , 4
+  SUB            , $SP            , $SP            , 4
+  KICK           , ireg_00102     , -              , -
+  JAL            , print_int      , -              , -
+  END_PROC       , 0              , -              , -
+  ADD            , ireg_00101     , $RV            , $ZERO
+  KICK           , ireg_00101     , -              , -
+  CALL_PROC      , print_char     , 0              , -
+  LI             , ireg_00106     , 10             , -
+  STORE          , ireg_00106     , ($SP)          , 4
+  SUB            , $SP            , $SP            , 4
+  KICK           , ireg_00106     , -              , -
+  JAL            , print_char     , -              , -
+  END_PROC       , 0              , -              , -
+  ADD            , ireg_00105     , $RV            , $ZERO
+  KICK           , ireg_00105     , -              , -
+  CALL_PROC      , print_int      , 0              , -
+  LI             , ireg_00108     , 3              , -
+  MUL            , ireg_00108     , ireg_00108     , 4
+  LA             , ireg_00109     , -12($FP)       , -
+  ADDI           , ireg_00110     , ireg_00109     , -20
+  SUB            , ireg_00108     , ireg_00109     , ireg_00108
+  BOUND          , ireg_00108     , ireg_00109     , ireg_00110
+  KICK           , ireg_00109     , -              , -
+  KICK           , ireg_00110     , -              , -
+  LOAD           , ireg_00108     , (ireg_00108)   , 4
+  STORE          , ireg_00108     , ($SP)          , 4
+  SUB            , $SP            , $SP            , 4
+  KICK           , ireg_00108     , -              , -
+  JAL            , print_int      , -              , -
+  END_PROC       , 0              , -              , -
+  ADD            , ireg_00107     , $RV            , $ZERO
+  KICK           , ireg_00107     , -              , -
+  CALL_PROC      , print_char     , 0              , -
+  LI             , ireg_00112     , 10             , -
+  STORE          , ireg_00112     , ($SP)          , 4
+  SUB            , $SP            , $SP            , 4
+  KICK           , ireg_00112     , -              , -
+  JAL            , print_char     , -              , -
+  END_PROC       , 0              , -              , -
+  ADD            , ireg_00111     , $RV            , $ZERO
+  KICK           , ireg_00111     , -              , -
+  CALL_PROC      , print_int      , 0              , -
+  LI             , ireg_00114     , 4              , -
+  MUL            , ireg_00114     , ireg_00114     , 4
+  LA             , ireg_00115     , -12($FP)       , -
+  ADDI           , ireg_00116     , ireg_00115     , -20
+  SUB            , ireg_00114     , ireg_00115     , ireg_00114
+  BOUND          , ireg_00114     , ireg_00115     , ireg_00116
+  KICK           , ireg_00115     , -              , -
+  KICK           , ireg_00116     , -              , -
+  LOAD           , ireg_00114     , (ireg_00114)   , 4
+  STORE          , ireg_00114     , ($SP)          , 4
+  SUB            , $SP            , $SP            , 4
+  KICK           , ireg_00114     , -              , -
+  JAL            , print_int      , -              , -
+  END_PROC       , 0              , -              , -
+  ADD            , ireg_00113     , $RV            , $ZERO
+  KICK           , ireg_00113     , -              , -
+  LI             , ireg_00117     , 0              , -
+  RETURN         , ireg_00117     , -              , -
+  ENDPROC        , -              , -              , -
+  PROG_END:
 </code></pre>
         </div>
       </div>
@@ -106,7 +1241,6 @@
   <script type="text/javascript" src="../javascripts/jquery-2.1.4.min.js"></script>
   <script type="text/javascript" src="../javascripts/expandable.js"></script>
   <script>makeCollapseable('#mips');</script>
-  <script>makeCollapseable('#output');</script>
   <script>makeCollapseable('#3ac');</script>
 
 </body>

@@ -9,6 +9,6 @@ function makeCollapseable(object) {
 
 function createToggleCallback(parent) {
   return function() {
-    parent.children(".content").slideToggle(500);
+    parent.children(".content").slideToggle(600);
   }
 }
